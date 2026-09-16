@@ -137,13 +137,22 @@ function devFlat(obj){
   walk(obj,'',0);
   return out;
 }
-// Un objeto o array vacío se aplana como '{}' / '[]'. Cuando gana su primer hijo, ese
-// marcador desaparece: no es un cambio en sí (el hijo nuevo ya sale en la lista).
+// Cuando un valor suelto (null, un número, un objeto o array vacío, que se aplana como
+// '{}' / '[]') pasa a tener hijos, o al revés, sale una sola línea «ruta: null → {5 valores}»
+// en vez de una por cada hijo.
 function devDiffList(a,b){
   const out=[];
-  const hueco=v=>v==='{}'||v==='[]';
-  for(const k in b)if(!(k in a)||!Object.is(a[k],b[k])){if(!(k in a)&&hueco(b[k])&&Object.keys(a).some(x=>x.startsWith(k+'.')))continue;out.push([k,a[k],b[k]]);}
-  for(const k in a)if(!(k in b)){if(hueco(a[k]))continue;out.push([k,a[k],undefined]);}
+  const pref=(obj,k)=>{const p=k+'.';for(const x in obj)if(x.startsWith(p))return true;return false;};
+  const tapado=new Set();
+  const resumen=(obj,k)=>{let n=0;const p=k+'.';for(const x in obj)if(x.startsWith(p))n++;return '{'+n+' valores}';};
+  for(const k in a)if(!(k in b)&&pref(b,k)){out.push([k,a[k],resumen(b,k)]);tapado.add(k+'.');}
+  for(const k in b)if(!(k in a)&&pref(a,k)){out.push([k,resumen(a,k),b[k]]);tapado.add(k+'.');}
+  const bajo=k=>{for(const t of tapado)if(k.startsWith(t))return true;return false;};
+  for(const k in b)if(!(k in a)||!Object.is(a[k],b[k])){
+    if(bajo(k)||(!(k in a)&&pref(a,k)))continue;
+    out.push([k,a[k],b[k]]);
+  }
+  for(const k in a)if(!(k in b)){if(bajo(k)||pref(b,k))continue;out.push([k,a[k],undefined]);}
   return out;
 }
 function devFmt(v){
