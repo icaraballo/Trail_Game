@@ -31,7 +31,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'coachViewActive','initClubModeData','simClubRace','CLUB_RACES','CLUB_ROLES','TOAST_QUEUE',
   'LIFE_EXTRA_ATHLETES','CLUB_SOCIOS_SOFT_CAP',
   'DEV','DAY_CONDITIONS','MAX_IMPORT_CHARS','MONTHLY_EVENTS_POOL','BETWEEN_EVENTS','TRAINING_EVENTS_POOL',
-  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS']);
+  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -879,6 +879,34 @@ console.log('\n── v98 · modo desarrollador (Diseno-Modo-Desarrollador §13)
   }
 
   ctx.render=_render;ctx.showToast=_toast;ctx.Math=_M;
+}
+
+console.log('\n── v98 · CR-81 · las precarreras no cambian la partida al pintarse ──');
+{
+  const _render=ctx.render,_toast=ctx.showToast;
+  const pinta=domStub(ctx);
+  ctx.render=()=>{};ctx.showToast=()=>{};
+  const foto=()=>{const g={...T.getG()};delete g._raceResultHTML;return JSON.stringify(g);};
+  setG({gameMode:'medio',money:500,gelsCarried:2,selectedRaces:T.RACES_DB.slice(0,3).map(r=>({...r})),currentRaceIdx:0,screen:'preRacePrep'});
+  const antes=foto();
+  pinta(()=>ctx.renderPreRace());
+  t('pintar preRace sin haber preparado la carrera no toca nada', foto()===antes);
+  ctx.goPreRace();
+  const g=T.getG();
+  t('goPreRace prepara la carrera (rivales, clima, condición del día, geles cobrados)', g.screen==='preRace'&&g.rivals.length>0&&g.dayConditionGenerated&&g.money<500, g.money);
+  const tras=foto();
+  pinta(()=>ctx.renderPreRace());pinta(()=>ctx.renderPreRace());
+  t('y repintarla tampoco cambia nada', foto()===tras);
+  t('ningún botón lleva a preRace a mano', !['race.js','render-clasico.js'].some(f=>/onclick="G\.screen='preRace'/.test(src[f])));
+  const a=T.COACH_ATHLETE_POOL[0];
+  setG({gameMode:'coach',coachAthlete:{...a,currentStats:{...a.baseStats}},coachSelectedRaces:T.RACES_DB.slice(0,2),coachRaceIdx:0,coachDayCondition:null});
+  const antesC=foto();
+  pinta(()=>ctx.renderCoachPreRace());
+  t('pintar la precarrera de Entrenador no sortea la condición del día', foto()===antesC&&T.getG().coachDayCondition===null);
+  ctx.doCoachStartRace();
+  const dc=T.getG().coachDayCondition;
+  t('la sortea doCoachStartRace, y una vez', !!dc&&(ctx.doCoachStartRace(),T.getG().coachDayCondition===dc));
+  ctx.render=_render;ctx.showToast=_toast;
 }
 
 t.done('TODO OK');

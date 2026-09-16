@@ -773,7 +773,7 @@ function renderExpresPreRacePrep(){
         </div>`;
       }).join('')}
     </div>
-    <button class="main" onclick="G.screen='preRace';render()">Salir a correr →</button>`;
+    <button class="main" onclick="goPreRace()">Salir a correr →</button>`;
 }
 
 function renderExpresSeasonBalance(){
@@ -1471,7 +1471,7 @@ function renderPreRacePrep(){
       </div>
     </div>
 
-    <button class="main" style="margin-top:12px" onclick="G.screen='preRace';render()">Confirmar y ver briefing →</button>`;
+    <button class="main" style="margin-top:12px" onclick="goPreRace()">Confirmar y ver briefing →</button>`;
 }
 window.setPreNutrition=id=>{G.preRaceNutrition=id;render();};
 window.toggleDropbag=id=>{

@@ -653,11 +653,26 @@ window.doCoachConfirmCalendar=()=>{
   G.screen='coachHome';G.activeTab='game';render();
 };
 
+// v98 (CR-81): la condición del día se sorteaba al pintar la precarrera. Se sortea aquí, al
+// empezar la carrera, justo antes de pintar: la misma tirada en el mismo orden.
+function coachRollDayCondition(){
+  const dc=COACH_DAY_CONDITIONS[Math.floor(Math.random()*COACH_DAY_CONDITIONS.length)];
+  // Estado emocional modifica los mods del día de carrera
+  const es=G.coachEmotionalState||'fresco';
+  let modDc={...dc};
+  if(es==='confiado'){modDc.energyMod=(modDc.energyMod||0)+4;modDc.legsMod=(modDc.legsMod||0)+3;modDc.text=modDc.text+' (Estado confiado: +ligero extra)';}
+  else if(es==='quemado'){modDc.energyMod=(modDc.energyMod||0)-6;modDc.legsMod=(modDc.legsMod||0)-5;modDc.text='Se le ve apagado en el calentamiento. Llevas demasiadas semanas apretando.';}
+  else if(es==='recuperado'){modDc.energyMod=(modDc.energyMod||0)+3;modDc.text=modDc.text+' (Recuperado: vuelve con ganas)';}
+  else if(es==='dudoso'){modDc.energyMod=(modDc.energyMod||0)-2;modDc.text='Cara seria en el warming up. Algo le ronda la cabeza.';}
+  return modDc;
+}
+
 window.doCoachStartRace=()=>{
   const race=(G.coachSelectedRaces||[])[G.coachRaceIdx];
   if(!race)return;
   G.coachGels=3;G.coachGelsUsed=0;
   G.coachRadioUsed={};G.coachAidExtras={};G.coachPreRaceBlock=null;
+  if(!G.coachDayCondition)G.coachDayCondition=coachRollDayCondition();
   G.screen='coachPreRace';render();
 };
 
@@ -667,17 +682,8 @@ function renderCoachPreRace(){
   if(!race){G.screen='coachHome';render();return;}
   const a=G.coachAthlete;
   const gels=G.coachGels||3;
-  const dc=G.coachDayCondition||(COACH_DAY_CONDITIONS[Math.floor(Math.random()*COACH_DAY_CONDITIONS.length)]);
-  if(!G.coachDayCondition){
-    // Estado emocional modifica los mods del día de carrera
-    const es=G.coachEmotionalState||'fresco';
-    let modDc={...dc};
-    if(es==='confiado'){modDc.energyMod=(modDc.energyMod||0)+4;modDc.legsMod=(modDc.legsMod||0)+3;modDc.text=modDc.text+' (Estado confiado: +ligero extra)';}
-    else if(es==='quemado'){modDc.energyMod=(modDc.energyMod||0)-6;modDc.legsMod=(modDc.legsMod||0)-5;modDc.text='Se le ve apagado en el calentamiento. Llevas demasiadas semanas apretando.';}
-    else if(es==='recuperado'){modDc.energyMod=(modDc.energyMod||0)+3;modDc.text=modDc.text+' (Recuperado: vuelve con ganas)';}
-    else if(es==='dudoso'){modDc.energyMod=(modDc.energyMod||0)-2;modDc.text='Cara seria en el warming up. Algo le ronda la cabeza.';}
-    G.coachDayCondition=modDc;
-  }
+  // CR-81: la sortea doCoachStartRace(); aquí solo se lee (sin ella, la neutra, como coachBuildRaceData)
+  const dc=G.coachDayCondition||COACH_DAY_CONDITIONS[0];
   const MONTH_NAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
   el.innerHTML=`

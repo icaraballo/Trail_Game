@@ -418,13 +418,19 @@ function endSeasonRaces(balanceScreen){
   applyTraining();
   G.screen=balanceScreen||(G.gameMode==='expres'?'expresSeasonBalance':'seasonBalance');
 }
+// v98 (CR-81): renderPreRace() llamaba a initRace() al pintarse: sorteaba clima, terreno,
+// condición del día y rivales, y cobraba nutrición y geles, la primera vez que se dibujaba la
+// pantalla. Ahora lo hace el botón que lleva a ella; la pantalla solo lee. initRace() sigue
+// protegida por _raceInitialized, así que volver al briefing no repite nada.
+window.goPreRace=()=>{
+  initRace();
+  G.screen='preRace';render();
+};
 function renderPreRace(){
   const race=G.selectedRaces[G.currentRaceIdx];
   // No debería llegarse aquí sin carrera: los tres caminos normales ya llaman a
   // endSeasonRaces(). Se deja como red de seguridad, ahora idempotente.
   if(!race){endSeasonRaces();render();return;}
-  // Init race state only once per race (safe to re-render without side effects)
-  initRace();
   const el=$main();
   const wlabel={soleado:'Soleado ☀',nublado:'Nublado ☁',extremo:'Condiciones extremas ⚠',tormenta:'Tormenta ⛈'};
   const hint=bodyLoadHint();
@@ -585,7 +591,7 @@ function renderStartStrategy(){
         </div>`).join('')}
     </div>
     <div class="grid-2">
-      <button class="main" onclick="G.screen='preRace';render()" style="margin-top:0">← Volver</button>
+      <button class="main" onclick="goPreRace()" style="margin-top:0">← Volver</button>
       <button class="main" onclick="G.screen='segment';G.raceEvent='';render()" style="margin-top:0">¡Salir a correr! →</button>
     </div>`;
 }
