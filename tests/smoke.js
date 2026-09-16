@@ -849,6 +849,14 @@ console.log('\n── v98 · modo desarrollador (Diseno-Modo-Desarrollador §13)
       }catch(e){fallan.push(id+':'+e.message);}
     }
     t('lanzar cualquiera en segment lleva a midRaceEvent y resolverlo vuelve a segment', !fallan.length, fallan.join(', '));
+    // Paso 10 · condiciones como datos
+    const corta={...T.RACES_DB[0],km:21,segs:Array.from({length:10},(_,j)=>({name:'t',km:2.1,type:'flat',gain:0,base:600}))};
+    setG({gameMode:'medio',selectedRaces:[corta],currentRaceIdx:0,seg:5,midRaceEventTriggered:{}});
+    const w=ctx.devWhyNot('storm');
+    t('devWhyNot dice la primera condición que falla y su valor', w&&w.label==='Carrera de 35 km o más'&&w.val==='21 km', JSON.stringify(w));
+    T.getG().midRaceEventTriggered={hat:true};
+    t('y distingue lo que ya salió (por su marca, no por el id)', ctx.devWhyNot('hat_blown').label==='Ya salió en esta carrera');
+    t('todas las entradas tienen conds y chance', ids.every(id=>Array.isArray(C[id].conds)&&C[id].conds.length&&typeof C[id].chance==='function'));
   }
 
   // Carga única: tres formatos y tope de tamaño

@@ -1953,10 +1953,30 @@ function devEligibleBody(){
     ${can.length?can.map(e=>`<div class="dev-ev"><span class="t">${esc(e.title||e.id)} <small>${esc(e.id)} · ${DEV_SYS_LABEL[e.sys]||e.sys}</small></span></div>`).join(''):'<div class="dev-note">Ninguno.</div>'}
     <div class="dev-note"><b>Ya salió en esta carrera</b> (${done.length})</div>
     <div class="dev-note">${done.length?done.map(esc).join(' · '):'—'}</div>
-    <details><summary class="dev-note"><b>No puede salir ahora</b> (${rest.length})</summary>${rest.map(id=>`<div class="dev-ev"><span class="t"><small>${esc(id)}</small>${devWhyNotHtml(id)}</span></div>`).join('')}</details>
+    <details open><summary class="dev-note"><b>No puede salir ahora</b> (${rest.length})</summary>${rest.map(id=>`<div class="dev-ev"><span class="t"><small>${esc(id)}</small>${devWhyNotHtml(id)}</span></div>`).join('')}</details>
     <div class="dev-note">Salvedad: los narrativos de Exprés dependen del mes y la altitud, y como mucho salen dos por carrera; con probabilidad 0 un evento nunca aparece aunque se cumpla todo lo demás.</div>`;
 }
-function devWhyNotHtml(){return '';}
+// Paso 10: la primera condición que falla, con su valor actual.
+function devWhyNot(id){
+  const c=CLASSIC_MID_RACE_EVENTS[id];
+  if(!c)return null;
+  if((G.midRaceEventTriggered||{})[c.key])return {label:'Ya salió en esta carrera',val:''};
+  const ctx=raceProgressCtx();if(!ctx)return {label:'Sin carrera en curso',val:''};
+  const env={...ctx,mental:getEffStat('mental')};
+  for(const k of c.conds){
+    let ok=false,val='';
+    try{ok=!!k.ok(env);val=k.val?k.val(env):'';}catch(e){val='error: '+e.message;}
+    if(!ok)return {label:k.label,val};
+  }
+  let p=0;try{p=c.chance(env);}catch(e){}
+  return {label:'Todas se cumplen: depende de la tirada ('+Math.round(p*100)+' % por tramo)',val:'',ok:true};
+}
+window.devWhyNot=devWhyNot;
+function devWhyNotHtml(id){
+  const w=devWhyNot(id);
+  if(!w)return String(id).startsWith('xp_')?' · <small>Exprés con contador: condiciones en checkExpressTimedEvents()</small>':String(id).startsWith('xn_')?' · <small>Exprés narrativo: condiciones en checkExpressNarrativeEvents()</small>':'';
+  return ` · ${w.ok?'':'✗ '}${esc(w.label)}${w.val?' <small>(ahora: '+esc(String(w.val))+')</small>':''}`;
+}
 
 // ── 9.7 Diagnóstico ──
 function devTabDiagnostico(){
