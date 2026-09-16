@@ -144,7 +144,7 @@ function devDiffList(a,b){
   const out=[];
   const pref=(obj,k)=>{const p=k+'.';for(const x in obj)if(x.startsWith(p))return true;return false;};
   const tapado=new Set();
-  const resumen=(obj,k)=>{let n=0;const p=k+'.';for(const x in obj)if(x.startsWith(p))n++;return '{'+n+' valores}';};
+  const resumen=(obj,k)=>{let n=0;const p=k+'.';for(const x in obj)if(x.startsWith(p))n++;return '{'+n+(n===1?' valor}':' valores}');};
   for(const k in a)if(!(k in b)&&pref(b,k)){out.push([k,a[k],resumen(b,k)]);tapado.add(k+'.');}
   for(const k in b)if(!(k in a)&&pref(a,k)){out.push([k,resumen(a,k),b[k]]);tapado.add(k+'.');}
   const bajo=k=>{for(const t of tapado)if(k.startsWith(t))return true;return false;};
