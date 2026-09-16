@@ -65,7 +65,8 @@ function serializableState(){
   // real en vez del desbloqueo de prueba — así el botón de dev sigue siendo
   // "solo en memoria" de verdad, sin importar cuántos guardados ocurran mientras
   // dure la sesión (unlockedAchievements no es una clave '_', se guarda siempre).
-  if(G._devAchievementsDirty) clean.unlockedAchievements=G._devAchievementsBackup||[];
+  // v98: el estado del panel vive en window.DEV, fuera de G (devmode.js).
+  const da=window.DEV&&window.DEV.ach; if(da&&da.dirty) clean.unlockedAchievements=da.backup||[];
   return JSON.parse(JSON.stringify(clean));
 }
 

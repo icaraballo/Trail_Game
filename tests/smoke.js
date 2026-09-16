@@ -29,7 +29,9 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'applyInjuryStatPenalty','recoverInjurySequel','INJURY_SEQUEL_RECOVERY','recordDNF','careerAgg','ACHIEVEMENTS',
   'CLUB_SOCIO_FEE','CLUB_RED_SEASONS_MAX','clubSponsorObjectiveMet','clubObjectiveDeltas',
   'coachViewActive','initClubModeData','simClubRace','CLUB_RACES','CLUB_ROLES','TOAST_QUEUE',
-  'LIFE_EXTRA_ATHLETES','CLUB_SOCIOS_SOFT_CAP']);
+  'LIFE_EXTRA_ATHLETES','CLUB_SOCIOS_SOFT_CAP',
+  'DEV','DAY_CONDITIONS','MAX_IMPORT_CHARS','MONTHLY_EVENTS_POOL','BETWEEN_EVENTS','TRAINING_EVENTS_POOL',
+  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -700,6 +702,148 @@ console.log('\n── Carrera de Vida: de Entrenador a Club · economía del Clu
   };
   const g0=ganancia(0),g60=ganancia(60),g120=ganancia(120);
   t('socios por resultados: a 60 la mitad, a 120 ninguno', T.CLUB_SOCIOS_SOFT_CAP===120&&g0>0&&g60===Math.round(g0/2)&&g120===0, g0+' · '+g60+' · '+g120);
+
+  ctx.render=_render;ctx.showToast=_toast;ctx.Math=_M;
+}
+
+console.log('\n── v98 · modo desarrollador (Diseno-Modo-Desarrollador §13) ──');
+{
+  const _render=ctx.render,_toast=ctx.showToast,_M=ctx.Math,_atob=ctx.atob;
+  const pinta=domStub(ctx);
+  ctx.render=()=>{};ctx.showToast=()=>{};
+  const D=T.DEV;
+
+  // P1 · el estado del panel no vive en G
+  t('freshState() ya no declara campos _dev', !Object.keys(T.freshState()).some(k=>k.startsWith('_dev')));
+  D.god.clasico=true;ctx.devArm('weather','extremo');
+  setG({money:777});
+  T.setG(T.migrateState(T.serializableState()));
+  ctx.devLoadState(JSON.stringify(T.serializableState()),'test');
+  t('migrar, rehacer G o cargar no apaga el modo dios ni lo armado', D.god.clasico===true&&D.armed.weather==='extremo'&&T.getG().money===777);
+
+  // devTake / devPeek
+  t('devPeek no consume', ctx.devPeek('weather')==='extremo'&&ctx.devPeek('weather')==='extremo');
+  t('devTake devuelve lo armado una vez y después undefined', ctx.devTake('weather')==='extremo'&&ctx.devTake('weather')===undefined);
+  D.god.clasico=false;
+
+  // Sin devmode.js (sin ?dev=1) el juego sigue funcionando
+  {
+    const saved={devTake:ctx.devTake,devPeek:ctx.devPeek,devGod:ctx.devGod,devBuildMidRaceEvent:ctx.devBuildMidRaceEvent};
+    for(const k of Object.keys(saved))delete ctx[k];
+    let err='';
+    try{
+      const races=T.RACES_DB.slice(0,3).map(r=>({...r}));
+      setG({gameMode:'medio',selectedRaces:races,currentRaceIdx:0,seg:2});
+      ctx.initRace();ctx.checkMidRaceEvents();ctx.getTrainingEvent('base');
+      const d=T.initClubModeData('Sin dev','mixto','montanero','equilibrado');
+      T.simClubRace(d.plantilla[0],T.CLUB_RACES[0],d);
+    }catch(e){err=e.message;}
+    Object.assign(ctx,saved);
+    t('sin window.devTake: initRace, checkMidRaceEvents, getTrainingEvent y simClubRace funcionan', !err, err);
+  }
+
+  // P15 · Club cierra con sus cuentas
+  {
+    ctx.Math=Object.assign(Object.create(Math),{random:()=>0.5});
+    setG({gameMode:'club'});
+    const d=T.initClubModeData('Cierre','mixto','montanero','equilibrado');
+    d.socios=40;d.reputacion=30;T.getG().clubModeData=d;
+    d.calAssignments={};T.CLUB_RACES.forEach(r=>{d.calAssignments[r.id]=d.plantilla.map(x=>x.id);});
+    ctx.doClubSimulateSeason();
+    const c=T.clubSeasonClosing(d);
+    const h=pinta(()=>ctx.renderClubSeasonEnd());
+    const m=h.match(/doClubNextSeason\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)/)||[];
+    t('clubSeasonClosing da las cifras que pasa la pantalla', +m[1]===c.socioGain&&+m[2]===c.socioLoss&&+m[3]===c.closing, m.slice(1).join(',')+' vs '+[c.socioGain,c.socioLoss,c.closing]);
+    const antes=d.presupuesto;
+    ctx.devClubClose();
+    t('devClubClose aplica el cierre al presupuesto (antes, doClubNextSeason(0,0,0))', T.getG().clubModeData.presupuesto===antes+c.closing&&c.closing!==0, antes+' + '+c.closing+' → '+T.getG().clubModeData.presupuesto);
+    ctx.Math=_M;
+  }
+
+  // Club · abandono y sponsors armados
+  {
+    setG({gameMode:'club'});
+    const d=T.initClubModeData('Dnf','mixto','montanero','equilibrado');T.getG().clubModeData=d;
+    ctx.devArm('clubDnf','*');D.god.club=true;
+    const r1=T.simClubRace(d.plantilla[0],T.CLUB_RACES[0],d);
+    const r2=T.simClubRace(d.plantilla[0],T.CLUB_RACES[0],d);
+    D.god.club=false;
+    t('clubDnf «*»: la primera carrera simulada sale DNF (gana al modo dios) y la clave se consume', r1.dnf===true&&r1.pos===99&&r1.prize===0&&r2.dnf===false&&ctx.devPeek('clubDnf')===undefined);
+    ctx.devArm('clubSponsorMet',false);
+    t('clubSponsorMet manda sobre el objetivo', ctx.clubSponsorObjectiveMet({objKey:'part5'},[1,2,3,4,5,6],d)===false);
+    d.clubSponsors=[];d.calAssignments={};
+    ctx.doClubSimulateSeason();
+    t('y se consume al final de la simulación', ctx.devPeek('clubSponsorMet')===undefined);
+  }
+
+  // Entrenador · applyCoachInjury
+  {
+    const base={resistencia:60,velocidad:60,subida:60,bajada:60,nutricion:60,mental:60};
+    const inj=T.COACH_INJURY_TYPES[0];
+    setG({gameMode:'coach',coachAthlete:{id:'x',name:'X',currentStats:{...base}},coachTrust:50,coachDecisionLog:[]});
+    T.applyCoachInjury(inj);
+    const g=T.getG();
+    const esperado=Object.fromEntries(Object.entries(base).map(([k,v])=>[k,inj.statPenalty&&inj.statPenalty[k]!==undefined?Math.max(10,v+inj.statPenalty[k]):v]));
+    t('applyCoachInjury: baja, stats, −4 de confianza y entrada en el log', g.coachInjury.id===inj.id&&g.coachInjury.racesLeft===inj.racesOut
+      &&JSON.stringify(g.coachAthlete.currentStats)===JSON.stringify(esperado)&&g.coachTrust===46&&g.coachDecisionLog.length===1);
+    t('doCoachRaceFinish usa esa misma función', /applyCoachInjury\(inj\)/.test(src['coach.js'])&&!/G\.coachInjury=\{\.\.\.inj/.test(src['coach.js'].replace(/function applyCoachInjury[\s\S]*?\n\}/,'')));
+  }
+
+  // P7 · forzar un mensual no borra los pendientes
+  setG({gameMode:'medio',monthlyEvents:[{...T.MONTHLY_EVENTS_POOL[1],resolved:false}]});
+  ctx.devLaunchMonthly(T.MONTHLY_EVENTS_POOL[0].id);
+  t('forzar un evento mensual con otro pendiente deja los dos', T.getG().monthlyEvents.length===2&&T.getG().monthlyEvents.every(e=>!e.resolved));
+
+  // Clásico · enganches
+  {
+    ctx.Math=Object.assign(Object.create(Math),{random:()=>0.99});   // sin evento entre carreras por azar
+    const ev=T.BETWEEN_EVENTS[T.BETWEEN_EVENTS.length-1];
+    ctx.devArm('betweenEvent',ev.id);
+    setG({gameMode:'medio',selectedRaces:[{id:'a',name:'A',month:3},{id:'b',name:'B',month:5}],currentRaceIdx:0});
+    ctx.afterRace();
+    t('betweenEvent armado: al terminar la carrera sale ese evento', T.getG().pendingEvent&&T.getG().pendingEvent.id===ev.id&&T.getG().screen==='betweenRace', T.getG().screen);
+    const te=T.TRAINING_EVENTS_POOL[0];
+    ctx.devArm('trainingEvent',te.id);
+    t('trainingEvent armado sale aunque el dado diga que no', ctx.getTrainingEvent('base')===te&&ctx.getTrainingEvent('base')===null);
+    const races=T.RACES_DB.slice(0,2).map(r=>({...r}));
+    ctx.devArm('weather','extremo');ctx.devArm('dayCondition','dia_especial');
+    setG({gameMode:'medio',selectedRaces:races,currentRaceIdx:0,_raceInitialized:false,dayConditionGenerated:false});
+    ctx.initRace();
+    t('weather y dayCondition armados salen en la siguiente carrera', T.getG().weather==='extremo'&&T.getG().dayCondition&&T.getG().dayCondition.id==='dia_especial'&&ctx.devPeek('weather')===undefined);
+    ctx.Math=_M;
+  }
+  t('DAY_CONDITIONS: los 7 de v97, con sus pesos y en el mismo orden',
+    JSON.stringify(T.DAY_CONDITIONS.map(c=>[c.id,c.w]))===JSON.stringify([['normal',0.40],['buena_noche',0.12],['mala_noche',0.12],['estomago',0.10],['piernas_mal',0.10],['dia_especial',0.08],['calor_extra',0.08]]));
+
+  // ¿Qué puede salir ahora?
+  {
+    const races=T.RACES_DB.filter(r=>r.km>=35).slice(0,1).map(r=>({...r}));
+    setG({gameMode:'medio',selectedRaces:races,currentRaceIdx:0,seg:3,weather:'extremo',midRaceEventTriggered:{storm:true}});
+    ctx.initRace();T.getG().seg=3;T.getG().weather='extremo';T.getG().midRaceEventTriggered={storm:true};
+    const antes=JSON.stringify(T.getG().midRaceEventTriggered);const rnd=ctx.Math.random;
+    const lista=ctx.devEligibleNow();
+    t('devEligibleNow no cambia midRaceEventTriggered ni Math.random', JSON.stringify(T.getG().midRaceEventTriggered)===antes&&ctx.Math.random===rnd&&Array.isArray(lista));
+    t('y no ofrece lo que ya salió en esta carrera', !lista.some(e=>e.id==='storm'));
+  }
+
+  // Carga única: tres formatos y tope de tamaño
+  {
+    setG({money:111});
+    const st=T.serializableState();
+    ctx.atob=b=>Buffer.from(b,'base64').toString('binary');
+    const b64=T.SAVE_VERSION+'::'+Buffer.from(JSON.stringify({...st,money:333}),'utf8').toString('base64');
+    let ok=true;
+    try{
+      ctx.devLoadState(JSON.stringify({_devExport:1,build:97,state:{...st,money:222}}),'t');ok=ok&&T.getG().money===222;
+      ctx.devLoadState(JSON.stringify({...st,money:444}),'t');ok=ok&&T.getG().money===444;
+      ctx.devLoadState(b64,'t');ok=ok&&T.getG().money===333;
+    }catch(e){ok=false;}
+    let rechaza=false;
+    try{ctx.devLoadState(' '.repeat(T.MAX_IMPORT_CHARS+1),'t');}catch(e){rechaza=/grande/.test(e.message);}
+    t('devLoadState acepta el export del panel, el estado crudo y el texto del juego', ok);
+    t('y rechaza un texto mayor que MAX_IMPORT_CHARS', rechaza);
+    ctx.atob=_atob;
+  }
 
   ctx.render=_render;ctx.showToast=_toast;ctx.Math=_M;
 }

@@ -1349,8 +1349,12 @@ window.afterRace=()=>{
   resetRaceFlags();resetRaceDayState();
   if(isExpres){G.pendingEvent=null;G.screen='expresPrep';render();return;}
   const hasFisioVal=G.spending.fisio||G.club?.hasFisio;
-  if(Math.random()<0.65){
-    const ev={...BETWEEN_EVENTS[Math.floor(Math.random()*BETWEEN_EVENTS.length)]};
+  // DEV: evento armado desde el panel. Con él no se tira el dado, así que la secuencia
+  // aleatoria solo cambia cuando hay algo armado.
+  const fb=window.devTake?.('betweenEvent');
+  const forcedBetween=fb?BETWEEN_EVENTS.find(e=>e.id===fb):null;
+  if(forcedBetween||Math.random()<0.65){
+    const ev={...(forcedBetween||BETWEEN_EVENTS[Math.floor(Math.random()*BETWEEN_EVENTS.length)])};
     // T18: el fisio solo neutraliza el susto si el cuerpo está por debajo del
     // umbral en el que deja de cubrir. Cargado, el evento se resuelve normal.
     if(ev.id==='injury'&&hasFisioVal&&getBodyLoad()<(modeCfg().fisio?.onset??65)){

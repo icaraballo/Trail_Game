@@ -14,7 +14,14 @@ function simClubRace(runner,race,clubData){
   // Modo desarrollador — "modo dios": fuerza 1er puesto en toda carrera de Club
   // simulada mientras esté activo (Club resuelve la temporada entera de golpe,
   // no hay "carrera en curso" única). Ver js/devmode.js.
-  if(G._devGodModeClub){
+  const devDnf=window.devPeek?.('clubDnf');
+  if(devDnf!==undefined&&(devDnf==='*'||devDnf===runner.id)){
+    // DEV: abandono armado desde el panel. Gana al modo dios si están los dos.
+    window.devTake('clubDnf');
+    const rivals=(CLUB_TIER_FIELD[race.tier||'local']||CLUB_TIER_FIELD.local).rivals;
+    return{pos:99,perf:10,prize:0,rivals,dnf:true};
+  }
+  if(window.devGod?.('club')){
     const rivals=(CLUB_TIER_FIELD[race.tier||'local']||CLUB_TIER_FIELD.local).rivals;
     return{pos:1,perf:98,prize:race.prize,rivals,dnf:false};
   }
@@ -678,6 +685,8 @@ window.doClubToggleAssign=(raceId,runnerId)=>{
 // v96 · Objetivos de los sponsors del club. Estaban escritos en CLUB_SPONSORS_POOL
 // (objKey, duration) y nada los leía: el sponsor pagaba entero y para siempre.
 function clubSponsorObjectiveMet(sp,results,d){
+  const devMet=window.devPeek?.('clubSponsorMet');   // DEV: resultado armado desde el panel
+  if(devMet!==undefined)return devMet;
   const fin=(results||[]).filter(r=>!r.dnf);
   switch(sp.objKey){
     case 'top10x3': return fin.filter(r=>r.pos<=10).length>=3;
@@ -756,6 +765,7 @@ window.doClubSimulateSeason=()=>{
     if(!met)d.reputacion=Math.max(0,(d.reputacion||0)-CLUB_SPONSOR_SPLIT.failRep);
     return {id:sp.id,name:sp.name,objective:sp.objective,met,base,bonus};
   });
+  window.devTake?.('clubSponsorMet');
 
   checkAndUnlockAchievements(); // CR-38 (v76)
   autoSave();
@@ -1051,10 +1061,11 @@ function clubObjectiveDeltas(d){
   return {rep:r.rep||0,socios:r.socios||0,cohesion:r.cohesion||0};
 }
 
-function renderClubSeasonEnd(){
-  const el=$main();
-  hideChrome();
-  const d=G.clubModeData;if(!d){G.screen='clubHub';render();return;}
+// v98 · Las cuentas del cierre de temporada, fuera de la pantalla. Vivían dentro de
+// renderClubSeasonEnd(), así que el modo dev cerraba con doClubNextSeason(0,0,0): no cobraba
+// cuotas ni pagaba sueldos ni staff, y los socios no crecían (el mismo fallo que H19 en
+// Clásico). Pura: solo lee. Las fórmulas son las de v97, copiadas tal cual.
+function clubSeasonClosing(d){
   const results=d.seasonResults||[];
   const podiums=results.filter(r=>r.pos<=3&&!r.dnf).length;
   const top10=results.filter(r=>r.pos<=10&&!r.dnf).length;
@@ -1075,6 +1086,16 @@ function renderClubSeasonEnd(){
   const closing=socioIncome-wages-staffCost;
   const socioGain=Math.round((podiums*4+top10*1.5+(d.reputacion/20))*Math.max(0,1-d.socios/CLUB_SOCIOS_SOFT_CAP));   // v96: techo blando
   const socioLoss=results.length===0?3:0;
+  return {podiums,top10,wins,dnfs,totalPrize,staffCost,sponsorIncome,raceCosts,wages,socioIncome,netBalance,closing,socioGain,socioLoss};
+}
+
+function renderClubSeasonEnd(){
+  const el=$main();
+  hideChrome();
+  const d=G.clubModeData;if(!d){G.screen='clubHub';render();return;}
+  const results=d.seasonResults||[];
+  const sponsorOutcomes=d.sponsorOutcomes||[];
+  const {podiums,wins,dnfs,totalPrize,staffCost,raceCosts,wages,socioIncome,netBalance,closing,socioGain,socioLoss}=clubSeasonClosing(d);
 
   // C18 — Resultado del objetivo. v96: esta pantalla solo lo ENSEÑA; se aplica una vez en
   // doClubNextSeason(). Antes la reputación se sumaba aquí, en cada redibujo.

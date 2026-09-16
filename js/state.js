@@ -273,7 +273,6 @@ function freshState(){
     _achPrevTab:null,            // pestaña a la que volver
     _prevScreen:null,            // pantalla previa a abrir el guardado
     _saveFailed:false,           // el último autoSave() no cupo en localStorage
-    _devMode:false,              // ?dev=1 en la URL
     // race — estado de la carrera en curso
     _lastRadioSeg:-99,           // último tramo con mensaje de radio (se lee con ??-99)
     _raceResultHTML:null,        // T122: markup de la pantalla de resultado (no se persiste)
@@ -307,20 +306,6 @@ function freshState(){
     _cnAgingWarned:false,        // ya se avisó de que el perro envejece
     _cnDislasiaEvent:false,      // el evento de displasia ya saltó
     _cnHadInjuryLastRace:false,
-    // devmode — solo con ?dev=1, ninguno llega a un guardado
-    _devAchievementsBackup:null, // respaldo real de unlockedAchievements
-    _devAchievementsDirty:false, // hay desbloqueo de prueba en memoria
-    _devInspectorOpen:false,
-    _devBalancePreviewMode:null,
-    _devEvtMode:null,
-    _devEvtType:null,
-    _devGodMode:false,
-    _devGodModeCoach:false,
-    _devGodModeClub:false,
-    _devGodModeCn:false,
-    _devForceDescentFall:false,
-    _devForceCoachMidEvent:false,
-    _devForceCnEvent:false,
   };
 }
 let G=freshState();
@@ -1038,6 +1023,8 @@ function getSeasonEffects(month){
   }[s];
 }
 function getTrainingEvent(blockId){
+  const ft=window.devTake?.('trainingEvent');   // DEV: evento armado desde el panel
+  if(ft)return TRAINING_EVENTS_POOL.find(e=>e.id===ft)||null;
   // Solo se activa ~1 de cada 4 trimestres
   if(Math.random()>0.28) return null;
   // Momentum: si llevas 2+ trimestres con el mismo bloque, subir prob de revelation/plateau

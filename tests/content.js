@@ -144,6 +144,14 @@ for(const [f,txt] of Object.entries(LIMPIO)){
     citados.get(m[1]).add(f);
   }
 }
+// v98: el estado del modo dev salió de G (vive en window.DEV, devmode.js). Si vuelve a
+// entrar, cargar una partida lo apaga otra vez (P1 de Diseno-Modo-Desarrollador).
+const devEnG=[...declarados].filter(k=>k.startsWith('_dev'));
+if(devEnG.length) err('freshState() vuelve a declarar campos del modo dev', devEnG.join(', '));
+else ok('ningún campo _dev en freshState()');
+const lecturasDev=[...citados.entries()].filter(([k])=>k.startsWith('_dev')).map(([k,fs])=>k+' ['+[...fs].join(' ')+']');
+if(lecturasDev.length) err('el código lee G._dev*: el estado del panel vive en window.DEV', lecturasDev.join(', '));
+else ok('ninguna lectura de G._dev en js/');
 const huerfanos=[...citados.keys()].filter(k=>!declarados.has(k)).sort();
 if(huerfanos.length){
   err(huerfanos.length+' campos de G usados y no declarados en freshState() (T48/T49)',

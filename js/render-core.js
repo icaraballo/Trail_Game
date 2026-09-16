@@ -380,7 +380,7 @@ function render(){
   // Refresca el panel dev si está abierto, para que sus datos (carrera en
   // curso, placeholders del editor de estado...) sigan en vivo sin importar
   // qué pantalla del juego se acabe de renderizar debajo.
-  if(G._devMode&&typeof renderDevOverlay==='function')renderDevOverlay(); // T70 (v90): devmode.js solo se carga con ?dev=1
+  if(window.DEV_ON&&typeof renderDevOverlay==='function')renderDevOverlay(); // T70 (v90): devmode.js solo se carga con ?dev=1 · v98: DEV_ON lo pone index.html
   renderModeSwitcher();
   // Clear any pending Express timer if we've left the mid-race event screen
   if(G.screen!=='midRaceEvent')clearExpressTimer();

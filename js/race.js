@@ -277,24 +277,22 @@ function initRace(){
   if(!race||G._raceInitialized)return;
   G._raceInitialized=true;
 
-  G.weather=Math.random()<race.weather_risk?'extremo':Math.random()>0.5?'soleado':'nublado';
+  const fw=window.devTake?.('weather');   // DEV: clima armado desde el panel
+  G.weather=fw||(Math.random()<race.weather_risk?'extremo':Math.random()>0.5?'soleado':'nublado');
   G.runner.energy=100;G.runner.hydration=100;
   G.time=0;G.seg=0;G.raceEvent='';G.aidSelected=[];
   // ── Condición del día (genera solo una vez por carrera) ───────────
   if(!G.dayConditionGenerated){
-    const dayRoll=Math.random();
-    const conditions=[
-      {id:'normal',        w:0.40, icon:'', label:'',             energyMod:0,  legsMod:0, hydMod:0},
-      {id:'buena_noche',   w:0.12, icon:'😴', label:'Dormiste como un tronco.',   energyMod:5,  legsMod:0,  hydMod:0},
-      {id:'mala_noche',    w:0.12, icon:'😶', label:'Noche irregular. Las piernas no están finas.', energyMod:0, legsMod:-5, hydMod:0},
-      {id:'estomago',      w:0.10, icon:'🤢', label:'El estómago no está fino esta mañana.',energyMod:0, legsMod:0,  hydMod:-8},
-      {id:'piernas_mal',   w:0.10, icon:'🦵', label:'Las piernas llevan días sin recuperar del todo.', energyMod:0, legsMod:-8, hydMod:0},
-      {id:'dia_especial',  w:0.08, icon:'⚡', label:'Sin explicación, esta mañana todo fluye.',energyMod:7, legsMod:5,  hydMod:0},
-      {id:'calor_extra',   w:0.08, icon:'🌡', label:'Más calor de lo previsto. Bebe antes de salir.',energyMod:-3,legsMod:0, hydMod:-5},
-    ];
-    let cumul=0;
+    const conditions=DAY_CONDITIONS;
+    const fd=window.devTake?.('dayCondition');   // DEV: condición armada desde el panel
+    const forcedDay=fd?conditions.find(c=>c.id===fd):null;
     let picked=conditions[0];
-    for(const c of conditions){cumul+=c.w;if(dayRoll<=cumul){picked=c;break;}}
+    if(forcedDay)picked=forcedDay;
+    else{
+      const dayRoll=Math.random();
+      let cumul=0;
+      for(const c of conditions){cumul+=c.w;if(dayRoll<=cumul){picked=c;break;}}
+    }
     G.dayCondition=picked.id==='normal'?null:picked;
     G.dayConditionGenerated=true;
   }
@@ -826,7 +824,7 @@ function checkSegInjury(p,seg,alloutStreak,sb,injuryRiskBase){
     else if(load>=55)fallRisk+=0.07;
     fallRisk=Math.min(0.95,fallRisk*modeCfg().injuryRiskMult);
     fallRisk*=fisioInjuryMult(load);
-    if(G._devForceDescentFall){descentFall=true;G._devForceDescentFall=false;}
+    if(window.devTake?.('descentFall')){descentFall=true;}
     else if(Math.random()<fallRisk)descentFall=true;
   }
   if(alloutStreak>=3&&load>=70){
@@ -1627,6 +1625,9 @@ function checkMidRaceEvents(){
   const race=G.selectedRaces[G.currentRaceIdx];
   if(!race)return null;
   if(!G.midRaceEventTriggered)G.midRaceEventTriggered={};
+  // DEV: evento armado desde el panel (devmode.js lo construye; sin ?dev=1 no existe)
+  const forcedId=window.devTake?.('midRaceEvent');
+  if(forcedId){ const f=window.devBuildMidRaceEvent?.(forcedId); if(f)return f; }
 
   // Orden aleatorio en cada tick (Fisher-Yates) — con orden fijo, el primer
   // sistema de la lista (clima) ganaba siempre los empates de elegibilidad
@@ -2499,9 +2500,9 @@ function applyPostRaceTracking(race,res){
 }
 
 function finishRace(){
-  // Modo desarrollador — "modo dios": fuerza victoria en cualquier carrera Clásico.
-  // Ver js/devmode.js. No afecta a partidas normales (flag inexistente).
-  if(G._devGodMode&&G.rivals&&G.rivals.length){
+  // Modo desarrollador — "modo dios": fuerza victoria en cualquier carrera de Clásico o
+  // Exprés (comparten este final). Ver js/devmode.js. Sin ?dev=1, devGod no existe.
+  if(window.devGod?.('clasico')&&G.rivals&&G.rivals.length){
     G.time=Math.max(1,Math.min(...G.rivals.map(r=>r.time))-60);
   }
   G.screen='raceResult';

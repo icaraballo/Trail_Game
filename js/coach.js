@@ -797,9 +797,9 @@ function coachBuildRaceData(race, extraEnergyBonus=0){
   // Pick one mid-race event to inject (Tanda 2)
   // DEV: fuerza un evento concreto por id, consumido una sola vez. Ver js/devmode.js.
   let midEvt;
-  if(G._devForceCoachMidEvent){
-    midEvt=COACH_MID_RACE_EVENTS.find(e=>e.id===G._devForceCoachMidEvent)||COACH_MID_RACE_EVENTS[Math.floor(Math.random()*COACH_MID_RACE_EVENTS.length)];
-    G._devForceCoachMidEvent=null;
+  const forcedMid=window.devTake?.('coachMidEvent');
+  if(forcedMid){
+    midEvt=COACH_MID_RACE_EVENTS.find(e=>e.id===forcedMid)||COACH_MID_RACE_EVENTS[Math.floor(Math.random()*COACH_MID_RACE_EVENTS.length)];
   } else {
     midEvt=COACH_MID_RACE_EVENTS[Math.floor(Math.random()*COACH_MID_RACE_EVENTS.length)];
   }
@@ -1208,11 +1208,25 @@ window.doCoachTacticInfo=aidNum=>{
   render();
 };
 
+// v98 · La lesión del atleta, fuera de doCoachRaceFinish para que el modo dev la aplique
+// igual que el juego: baja, stats, confianza, entrada en el log y aviso.
+function applyCoachInjury(inj){
+  G.coachInjury={...inj,racesLeft:inj.racesOut};
+  // Apply stat penalties
+  Object.entries(inj.statPenalty||{}).forEach(([k,v])=>{
+    if(G.coachAthlete.currentStats[k]!==undefined)
+      G.coachAthlete.currentStats[k]=Math.max(10,G.coachAthlete.currentStats[k]+v);
+  });
+  G.coachTrust=Math.max(0,G.coachTrust-4); // coach pushed too hard
+  logCoachDecision('forced_injury','Forzaste al atleta hasta la lesión',false);
+  showToast(`⚠️ ${inj.label} — ${inj.racesOut} carrera${inj.racesOut>1?'s':''} de baja`,'#c0392b');
+}
+
 window.doCoachRaceFinish=()=>{
   const data=G.coachRaceData;if(!data)return;
   // Modo desarrollador — "modo dios": fuerza 1er puesto en cualquier carrera de Entrenador.
-  // Ver js/devmode.js. No afecta a partidas normales (flag inexistente).
-  if(G._devGodModeCoach)data.finalPos=1;
+  // Ver js/devmode.js. No afecta a partidas normales (sin ?dev=1, devGod no existe).
+  if(window.devGod?.('coach'))data.finalPos=1;
   const race=data.race;const pos=data.finalPos;
   const pct2=PRIZE_TABLE[pos-1]||0;
   const prize=pos<=8?Math.round(race.prize*pct2):0;
@@ -1275,15 +1289,7 @@ window.doCoachRaceFinish=()=>{
     const candidates=COACH_INJURY_TYPES.filter(t=>load>=t.causeLoad);
     if(candidates.length&&Math.random()<(load-65)/100){
       const inj=candidates[Math.floor(Math.random()*candidates.length)];
-      G.coachInjury={...inj,racesLeft:inj.racesOut};
-      // Apply stat penalties
-      Object.entries(inj.statPenalty||{}).forEach(([k,v])=>{
-        if(G.coachAthlete.currentStats[k]!==undefined)
-          G.coachAthlete.currentStats[k]=Math.max(10,G.coachAthlete.currentStats[k]+v);
-      });
-      G.coachTrust=Math.max(0,G.coachTrust-4); // coach pushed too hard
-      logCoachDecision('forced_injury','Forzaste al atleta hasta la lesión',false);
-      showToast(`⚠️ ${inj.label} — ${inj.racesOut} carrera${inj.racesOut>1?'s':''} de baja`,'#c0392b');
+      applyCoachInjury(inj);
     }
   } else {
     // Recover: each race ticks down

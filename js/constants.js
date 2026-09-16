@@ -787,6 +787,19 @@ const SPEC_LABEL={fondista:'Fondista',montanero:'Montañero',tecnico:'Técnico',
 //   bg/fg son los colores de la insignia del encabezado de Clásico. Los tres
 // modos que no la tenían (coach, club, canicross) pintaban `background:undefined`
 // si alguna vez llegaban ahí; ahora tienen paleta propia.
+// v98 · Condición del día de Clásico/Exprés (initRace). Estaba escrita dentro de initRace;
+// sale aquí para que el modo dev pueda ofrecerla y armarla. Mismo orden y pesos: el sorteo
+// recorre la lista acumulando `w`, así que reordenarla cambiaría qué sale.
+const DAY_CONDITIONS=[
+  {id:'normal',        w:0.40, icon:'', label:'',             energyMod:0,  legsMod:0, hydMod:0},
+  {id:'buena_noche',   w:0.12, icon:'😴', label:'Dormiste como un tronco.',   energyMod:5,  legsMod:0,  hydMod:0},
+  {id:'mala_noche',    w:0.12, icon:'😶', label:'Noche irregular. Las piernas no están finas.', energyMod:0, legsMod:-5, hydMod:0},
+  {id:'estomago',      w:0.10, icon:'🤢', label:'El estómago no está fino esta mañana.',energyMod:0, legsMod:0,  hydMod:-8},
+  {id:'piernas_mal',   w:0.10, icon:'🦵', label:'Las piernas llevan días sin recuperar del todo.', energyMod:0, legsMod:-8, hydMod:0},
+  {id:'dia_especial',  w:0.08, icon:'⚡', label:'Sin explicación, esta mañana todo fluye.',energyMod:7, legsMod:5,  hydMod:0},
+  {id:'calor_extra',   w:0.08, icon:'🌡', label:'Más calor de lo previsto. Bebe antes de salir.',energyMod:-3,legsMod:0, hydMod:-5},
+];
+
 const MODE_LABELS={
   facil:    {label:'Fácil',     emoji:'🟢', bg:'#EAF3DE', fg:'#27500A'},
   medio:    {label:'Medio',     emoji:'🟡', bg:'#FAEEDA', fg:'#633806'},
