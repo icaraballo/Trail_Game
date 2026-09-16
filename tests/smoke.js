@@ -706,7 +706,7 @@ console.log('\n── Carrera de Vida: de Entrenador a Club · economía del Clu
   ctx.render=_render;ctx.showToast=_toast;ctx.Math=_M;
 }
 
-console.log('\n── v98 · modo desarrollador (Diseno-Modo-Desarrollador §13) ──');
+console.log('\n── v98 · modo desarrollador (CR-80) ──');
 {
   const _render=ctx.render,_toast=ctx.showToast,_M=ctx.Math,_atob=ctx.atob;
   const pinta=domStub(ctx);

@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════════
 //  MODO DESARROLLADOR — solo con ?dev=1 en la URL
 //
-//  Reescrito entero en v98 (Tareas/Diseno-Modo-Desarrollador.md en el vault). No forma
+//  Reescrito entero en v98 (vault: Código/devmode.md y QA/Bugs-Corregidos-Sin-Verificar § CR-80). No forma
 //  parte del juego: index.html solo lo descarga con ?dev=1, y el juego lo llama siempre
 //  con encadenamiento opcional (window.devTake?.('x')), así que sin él no pasa nada.
 //

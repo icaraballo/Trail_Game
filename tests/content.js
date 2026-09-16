@@ -145,7 +145,7 @@ for(const [f,txt] of Object.entries(LIMPIO)){
   }
 }
 // v98: el estado del modo dev salió de G (vive en window.DEV, devmode.js). Si vuelve a
-// entrar, cargar una partida lo apaga otra vez (P1 de Diseno-Modo-Desarrollador).
+// entrar, cargar una partida lo apaga otra vez (P1 de CR-80).
 const devEnG=[...declarados].filter(k=>k.startsWith('_dev'));
 if(devEnG.length) err('freshState() vuelve a declarar campos del modo dev', devEnG.join(', '));
 else ok('ningún campo _dev en freshState()');
