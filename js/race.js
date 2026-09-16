@@ -969,6 +969,349 @@ function raceProgressCtx(){
   return {race,segs,totalKm,doneKm,pct:totalKm>0?doneKm/totalKm:0};
 }
 
+// Paso 9 del rediseño del modo dev (v98). Catálogo de los eventos de carrera de Clásico.
+// Las check*() deciden CUÁNDO sale cada uno (condiciones y tirada, sin cambios); aquí solo
+// vive QUÉ sale. `key` es la marca de G.midRaceEventTriggered, que no siempre es el id
+// (hat → hat_blown). `env` trae las variables locales de la check*() que usa el texto; sin
+// ellas (el modo dev lanza el evento a mano) se calculan igual que allí.
+// Comprobado con un diferencial contra v97: mismos eventos y mismas marcas con la misma semilla.
+function classicEvtKm(env){return env&&env.doneKm!==undefined?env.doneKm:((raceProgressCtx()||{}).doneKm||0);}
+function classicEvtMental(env){return env&&env.mental!==undefined?env.mental:getEffStat('mental');}
+const CLASSIC_MID_RACE_EVENTS={
+  storm:{key:'storm',system:'clima',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'storm',
+      title:'⛈ Tormenta sorpresa',
+      desc:`En el km ${Math.round(doneKm)} el cielo se cierra de golpe. Granizo y viento lateral azotan la cresta. Los avitualladores bloquean el paso durante unos minutos.`,
+      choices:[
+        {text:'Refugiarse y ponerse el chubasquero (+3 min · hidratación protegida)',id:'shelter'},
+        {text:'Apretar y cruzar sin parar (pierde más hidratación en todos los tramos)',id:'push_through'},
+      ]
+    };
+  }},
+  hat_blown:{key:'hat',system:'clima',build:env=>{
+    return{id:'hat_blown',
+      title:'💨 ¡La gorra sale volando!',
+      desc:'Una ráfaga inesperada te arranca la gorra y la manda a unos metros cuesta abajo. Puedes recuperarla rápido o seguir sin protección solar.',
+      choices:[
+        {text:'Volver a por ella (+1:30 min, protección solar mantenida)',id:'get_hat'},
+        {text:'Olvidarse y seguir (sin pausa, pero el sol/viento pica más)',id:'ignore_hat'},
+      ]
+    };
+  }},
+  temp_change:{key:'temp_change',system:'clima',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'temp_change',
+      title:'🌡 El frío llega de golpe',
+      desc:`Al salir de la ladera protegida, el viento frío de cresta te da de pleno. En minutos, la temperatura ha bajado diez grados. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Parar a ponerse el cortavientos (+1:30 min, protección térmica completa)',id:'put_jacket'},
+        {text:'Apretar el paso para entrar en calor (sin pausa, −5 hidratación por el esfuerzo extra)',id:'run_warm'},
+      ]
+    };
+  }},
+  frozen_hands:{key:'frozen_hands',system:'clima',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'frozen_hands',
+      title:'🥶 Las manos dejan de responder',
+      desc:`En la cresta el viento corta y las manos se te han quedado blancas. Los bastones se mueven solos y no sientes los dedos. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Parar 2 min a calentar con el cuerpo (+2 min, agarre recuperado al 100%)',id:'warm_hands'},
+        {text:'Guardar los bastones y seguir sin ellos (+ritmo en llano, −piernas en subidas)',id:'no_poles'},
+        {text:'Aguantar — el frío es temporal (sin pausa, −8 piernas por mal apoyo de bastones)',id:'push_cold'},
+      ]
+    };
+  }},
+  lost:{key:'lost',system:'terreno',build:env=>{
+    const doneKm=classicEvtKm(env);
+    const mental=classicEvtMental(env);
+    return{id:'lost',
+      title:'🌫 Visibilidad cero',
+      desc:`La niebla y la tormenta borran las marcas. En el km ${Math.round(doneKm)} llevas unos minutos sin ver ninguna señal. El GPS parpadea.`,
+      choices:[
+        {text:'Usar el GPS (pierdes batería y 2:30 min, pero llegas seguro)',id:'gps'},
+        {text:`Buscar la senda a ojo (Mental ${mental} — resultado incierto)`,id:'find_trail'},
+      ]
+    };
+  }},
+  mud_fall:{key:'mud',system:'terreno',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'mud_fall',
+      title:'🟫 ¡Pisas barro y te caes!',
+      desc:`Tramo resbaladizo, el pie se va y caes. Te levantas enseguida — nada grave — pero el golpe se nota en las piernas. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Levantarse y seguir sin perder tiempo (−5 piernas, −2 energía)',id:'get_up_fast'},
+        {text:'Tomarse 30 seg para evaluarte (+30 seg, −3 piernas)',id:'check_first'},
+      ]
+    };
+  }},
+  trail_blocked:{key:'trail_blocked',system:'terreno',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'trail_blocked',
+      title:'🐐 ¡Rebaño en el sendero!',
+      desc:`Un rebaño de cabras ocupa completamente el camino en el km ${Math.round(doneKm)}. El pastor está lejos y las cabras no tienen prisa. Clásico de los Pirineos.`,
+      choices:[
+        {text:'Esperar pacientemente a que pasen (+1:30 min, sin gasto extra)',id:'wait_herd'},
+        {text:'Rodear por la ladera (±2 min, −4 piernas por el desnivel extra)',id:'detour_herd'},
+        {text:'Abrirte paso con calma — las cabras son curiosas (+40 seg, +1 Mental)',id:'weave_herd'},
+      ]
+    };
+  }},
+  confusing_fork:{key:'confusing_fork',system:'terreno',build:env=>{
+    const doneKm=classicEvtKm(env);
+    const mental=classicEvtMental(env);
+    return{id:'confusing_fork',
+      title:'🔀 Bifurcación sin señal',
+      desc:`El viento (o alguien) ha tumbado la marca de ruta. Hay dos sendas que podrían ser la correcta. Detrás de ti vienen tres corredores que tampoco saben. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Sacar el GPS y confirmar (+45 seg, 100% seguro)',id:'gps_fork'},
+        {text:`Confiar en el instinto — recuerdas el perfil (sin pausa, Mental ${mental} define el resultado)`,id:'gut_fork'},
+        {text:'Esperar a que llegue otro corredor que sepa (+30 seg, decisión compartida)',id:'wait_fork'},
+      ]
+    };
+  }},
+  ankle_mud:{key:'ankle_mud',system:'terreno',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'ankle_mud',
+      title:'🥾 Barro hasta el tobillo',
+      desc:`La bajada se ha convertido en un lodazal. Con cada paso las zapatillas se hunden y el esfuerzo de sacar el pie se multiplica. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Cambiar a la trazada de roca lateral (+30 seg, piernas conservadas)',id:'rock_line'},
+        {text:'Atravesar directo — cada segundo cuenta (−10 piernas, sin pausa)',id:'mud_direct'},
+      ]
+    };
+  }},
+  false_flat:{key:'false_flat',system:'terreno',build:env=>{
+    return{id:'false_flat',
+      title:'📐 Parece llano pero no lo es',
+      desc:`Llevas 10 minutos a un ritmo que debería ser cómodo pero el GPS no cuadra y la respiración se dispara. El perfil te estaba mintiendo — es un repecho sostenido del 4% que parece llano.`,
+      choices:[
+        {text:'Bajar el ritmo y leer bien el terreno (−0 tiempo extra, −6 energía)',id:'read_terrain'},
+        {text:'Mantener el esfuerzo creyendo que es llano (−14 energía, forzando el cuerpo)',id:'ignore_flat'},
+      ]
+    };
+  }},
+  endless_climb:{key:'endless_climb',system:'terreno',build:env=>{
+    return{id:'endless_climb',
+      title:'🏔 La subida no tiene fin',
+      desc:`Llevas 20 minutos subiendo y el collado no aparece. El mapa dice que ya debería estar aquí. Mentira. La montaña se burla del papel. Sientes las piernas llenarse de lava.`,
+      choices:[
+        {text:'Gestionar: marchar rápido y conservar energía para la cima (−8 energía, llegada estable)',id:'manage_climb'},
+        {text:'Empujar hasta arriba — la cima tiene que aparecer ya (−20 energía, ganas 2 min)',id:'push_climb'},
+      ]
+    };
+  }},
+  injured_runner:{key:'injured_runner',system:'lesiones',build:env=>{
+    return{id:'injured_runner',
+      title:'🩹 Corredor en el suelo',
+      desc:'Hay un corredor caído al lado de la senda. Parece que se ha torcido el tobillo. Nadie más está cerca. Te mira buscando ayuda.',
+      choices:[
+        {text:'Parar y ayudarle hasta que llegue un voluntario (+2 min · +2 Mental)',id:'help'},
+        {text:'Avisarle de que llamarás en el siguiente avituallamiento y seguir',id:'warn'},
+        {text:'Seguir tu ritmo (eres competidor, hay voluntarios para esto)',id:'ignore'},
+      ]
+    };
+  }},
+  slip_nf:{key:'slip_nf',system:'lesiones',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'slip_nf',
+      title:'😬 El pie patina — no llegas a caer',
+      desc:`Un resbalón brusco en una raíz mojada. El cuerpo reacciona solo, recuperas el equilibrio, pero el esfuerzo de frenada lo notan los isquios. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Bajar el ritmo un tramo — el cuerpo manda (−4 piernas, sin tiempo extra)',id:'ease_slip'},
+        {text:'Sacudir la cabeza y seguir igual (−6 piernas, riesgo si el terreno continúa así)',id:'push_slip'},
+      ]
+    };
+  }},
+  bad_fall:{key:'bad_fall',system:'lesiones',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'bad_fall',
+      title:'💥 Caída de verdad',
+      desc:`El pie se va en una raíz y caes de rodillas sobre la roca. Un segundo de blanco. Te levantas — las manos y la rodilla sangran — pero todo parece moverse. Km ${Math.round(doneKm)}.`,
+      choices:[
+        {text:'Evaluarte 2 min antes de seguir (+2 min, evitas agravar lesión)',id:'check_fall'},
+        {text:'Levantarse y correr — si puedes caminar puedes correr (sin pausa, −14 piernas, −8 energía)',id:'run_fall'},
+      ]
+    };
+  }},
+  sock_adjust:{key:'sock',system:'fatiga',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'sock_adjust',
+      title:'🧦 Rozadura en el pie',
+      desc:`Algo se ha desplazado dentro de la zapatilla y notas un punto de roce que va a más. En el km ${Math.round(doneKm)} aún puedes cortarlo.`,
+      choices:[
+        {text:'Parar 1 minuto a recolocar (+1 min, evitas ampollas)',id:'fix_sock'},
+        {text:'Ignorar y aguantar (sin pausa, riesgo de ampolla real)',id:'push_sock'},
+      ]
+    };
+  }},
+  empty_aid:{key:'empty_aid',system:'fatiga',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'empty_aid',
+      title:'🫗 El avituallamiento está vacío',
+      desc:`Llegas al puesto del km ${Math.round(doneKm)} y no hay ni agua ni comida. Los voluntarios se disculpan — el suministro se ha agotado. El siguiente puesto está en varios kilómetros.`,
+      choices:[
+        {text:'Racionarte estrictamente hasta el siguiente (−5 hidratación, −4 energía)',id:'ration'},
+        {text:'Beber de un arroyo cercano (recuperas hidratación, pero riesgo digestivo)',id:'stream'},
+        {text:'Forzar sin recargar (sigues a ritmo pero el cuerpo lo pagará más adelante)',id:'push_empty'},
+      ]
+    };
+  }},
+  bad_gel:{key:'bad_gel',system:'fatiga',build:env=>{
+    return{id:'bad_gel',
+      title:'🤢 El gel sabe raro',
+      desc:'Abres un gel y el olor no es el habitual. El calor o la fecha de caducidad han hecho de las suyas. Queda poco y lo necesitas, pero el estómago ya da señales.',
+      choices:[
+        {text:'Tomarlo de todas formas (+5 energía, riesgo estomacal)',id:'eat_gel'},
+        {text:'Tirarlo y continuar sin gel (sin riesgo, pero sin recarga)',id:'discard_gel'},
+      ]
+    };
+  }},
+  hunger_crisis:{key:'hunger_crisis',system:'fatiga',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'hunger_crisis',
+      title:'🍬 Bajón de glucosa',
+      desc:`Sin aviso, las piernas se vuelven de plomo y la cabeza se nubla un momento. El reloj marca km ${Math.round(doneKm)} y reconoces la sensación: el cuerpo pide azúcar ahora.`,
+      choices:[
+        {text:'Usar un gel de emergencia ahora (+12 energía, gastas tu reserva)',id:'use_gel_now'},
+        {text:'Bajar el ritmo y aguantar hasta el avituallamiento (−10 energía extra, sin gastar gel)',id:'slow_hunger'},
+        {text:'Tomar una fecha o barrita que llevas (−8 energía, +5 sostenido)',id:'snack_bar'},
+      ]
+    };
+  }},
+  mid_trap:{key:'mid_trap',system:'fatiga',build:env=>{
+    return{id:'mid_trap',
+      title:'⛰ La montaña te engaña',
+      desc:`Parece que llegas al collado pero hay otro detrás. Y otro más. El perfil miente en terreno de media montaña — las cumbres se ocultan entre sí. El cuerpo empieza a pedir explicaciones.`,
+      choices:[
+        {text:'Gestionar el esfuerzo — bajar la potencia y adaptarse (−5 energía controlada)',id:'manage_trap'},
+        {text:'Seguir empujando — ya llegará el plano (−15 energía, pero mantienes el ritmo)',id:'push_trap'},
+      ]
+    };
+  }},
+  heavy_legs:{key:'heavy_legs',system:'fatiga',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'heavy_legs',
+      title:'🧱 Piernas de piedra',
+      desc:`Sin aviso, las piernas pesan el doble. No es dolor — es un cansancio muscular profundo que sube desde las pantorrillas. Km ${Math.round(doneKm)}. El entrenamiento acumulado pasa factura.`,
+      choices:[
+        {text:'Parar 1 min a estirar y activar la circulación (+1 min, −3 piernas)',id:'stretch_legs'},
+        {text:'Cambiar la zancada — pasos cortos, mayor cadencia (sin pausa, −8 piernas)',id:'shuffle_legs'},
+        {text:'Aguantar y forzar — esto es trail (−15 piernas, riesgo calambre posterior)',id:'force_legs'},
+      ]
+    };
+  }},
+  stone_legs:{key:'stone_legs',system:'fatiga',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'stone_legs',
+      title:'🪨 Los cuádriceps ya no responden',
+      desc:`Km ${Math.round(doneKm)}. La bajada que antes era tu punto fuerte ahora duele. Los cuádriceps están saturados — cada paso hacia abajo es un impacto. La meta parece muy lejos.`,
+      choices:[
+        {text:'Andar las bajadas — conservar lo que queda (sin tiempo extra, −5 piernas)',id:'walk_descents'},
+        {text:'Seguir corriendo bajadas con bastones de apoyo (−10 piernas, ganas 1:30 min)',id:'run_descents'},
+        {text:'Buscar la trazada más suave aunque sea más larga (+1 min, −6 piernas)',id:'soft_line'},
+      ]
+    };
+  }},
+  friends_cheer:{key:'friends',system:'social',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'friends_cheer',
+      title:'👥 ¡Tus amigos están aquí!',
+      desc:`Al girar un recodo, un grupo te reconoce y se pone a gritar tu nombre. Carteles, silbatos y todo el equipo. El km ${Math.round(doneKm)} de repente parece mucho más corto.`,
+      choices:[
+        {text:'Acelerar con esa energía (−3 min extra, −3 energía, +4 Mental)',id:'sprint'},
+        {text:'Saludar y seguir tu ritmo (+4 Mental, sin coste)',id:'wave'},
+      ]
+    };
+  }},
+  sabotage:{key:'sabotage',system:'social',
+    // La check*() sortea el escenario (Math.random se queda allí) y lo pasa en env.
+    scenarios:[
+      {title:'😈 Un rival te pregunta por dónde es',
+       desc:'Llevas varios kms batallando con el mismo corredor. En una bifurcación te pregunta: "¿Por cuál es?" Tú lo sabes perfectamente. Una pequeña voz te dice que podrías aprovechar el momento.',
+       opts:[
+         {text:'Señalar el camino correcto — fair play (+2 Mental)',id:'honest'},
+         {text:'Señalarle el camino equivocado (ganas ~5 min, −5 popularidad, −3 Mental)',id:'deceive'},
+       ]},
+      {title:'😈 Una señal de ruta está caída',
+       desc:'Hay una marca de ruta en el suelo, tumbada por el viento. Dos corredores vienen justo detrás. Podrías colocarla mal sin que nadie lo vea.',
+       opts:[
+         {text:'Dejarla como está y seguir (+1 Mental)',id:'honest'},
+         {text:'Colocarla en dirección incorrecta (pueden perderse, −6 popularidad)',id:'deceive'},
+       ]},
+    ],
+    build:env=>{
+      const s=(env&&env.scenario)||CLASSIC_MID_RACE_EVENTS.sabotage.scenarios[0];
+      return{id:'sabotage',title:s.title,desc:s.desc,choices:s.opts.map(o=>({...o}))};
+    }},
+  rival_pass:{key:'rival_pass',system:'social',build:env=>{
+    return{id:'rival_pass',
+      title:'🏃 «¡Paso, por favor!»',
+      desc:'Un corredor más rápido viene por detrás y te pide paso en un tramo estrecho. Estás en buen ritmo y cederle significa perder la posición que llevas km manteniendo.',
+      choices:[
+        {text:'Ceder limpiamente y dejarle pasar (+20 seg, +2 Mental, +fair play)',id:'give_way'},
+        {text:'Aguantar el ritmo — que te pase si puede (sin pausa, rivalidad activada)',id:'hold_pace'},
+        {text:'Dejarte llevar por su rueda — intentas seguirle (−8 energía, opción de adelantarle después)',id:'follow_wheel'},
+      ]
+    };
+  }},
+  crowd_cameras:{key:'crowd_cameras',system:'social',build:env=>{
+    return{id:'crowd_cameras',
+      title:'📸 ¡Hay cámaras y público!',
+      desc:'Entras en un núcleo de montaña con aficionados a ambos lados. Hay cámaras de la organización y varios móviles apuntando. El ambiente es eléctrico.',
+      choices:[
+        {text:'Saludar y seguir a tu ritmo (+3 Mental, +100 seguidores)',id:'wave_crowd'},
+        {text:'Subir el ritmo para la cámara — parece que vuela (+50 seg ganados, −6 energía)',id:'show_off'},
+        {text:'Bajar la cabeza y mantener el foco (sin cambio, máxima concentración)',id:'focus_crowd'},
+      ]
+    };
+  }},
+  bottleneck:{key:'bottleneck',system:'social',build:env=>{
+    const doneKm=classicEvtKm(env);
+    return{id:'bottleneck',
+      title:'🚧 Embotellamiento en la subida',
+      desc:`Un grupo de cinco corredores bloquea una canal técnica en el km ${Math.round(doneKm)}. El paso es de uno en uno y nadie cede. Llevas 1:30 min a su sombra.`,
+      choices:[
+        {text:'Esperar tu turno con calma (+1:30 min, energía conservada)',id:'wait_jam'},
+        {text:'Buscar línea alternativa por roca (±45 seg, −5 piernas por el terreno)',id:'alt_line'},
+        {text:'Pedir paso con educación — a veces funciona (+30 seg, posible hueco)',id:'ask_jam'},
+      ]
+    };
+  }},
+  nickname_shout:{key:'nickname_shout',system:'social',build:env=>{
+    const nick=G.runner.name||'crack';
+    return{id:'nickname_shout',
+      title:'📣 «¡Vamos, '+nick+'!»',
+      desc:`Un grupo de aficionados locales te grita por tu nombre. No "venga corredor" — por tu nombre. Alguien te conoce, alguien ha venido a verte a ti. Se te pone la piel de gallina.`,
+      choices:[
+        {text:'Levantar el puño y acelerar (+6 Mental, −5 energía por el sprint espontáneo)',id:'fist_pump'},
+        {text:'Sonreír y mantener el ritmo (+4 Mental, +150 seguidores)',id:'smile_fans'},
+      ]
+    };
+  }},
+  lent_pole:{key:'lent_pole',system:'social',build:env=>{
+    return{id:'lent_pole',
+      title:'🥢 Un bastón en el suelo',
+      desc:`Hay un bastón de carbono en el sendero, boca abajo. Su dueño está unos metros más adelante, cojeando. Se le ha partido la correa. Te lo está mirando.`,
+      choices:[
+        {text:'Correr y dárselo — +2 min y +3 Mental, pero le sacas del problema',id:'give_pole'},
+        {text:'Señalarle el bastón sin parar (él puede volver, tú no pierdes tiempo)',id:'point_pole'},
+        {text:'Llevártelo temporalmente hasta el avituallamiento y dejarlo allí (+1 min)',id:'carry_pole'},
+      ]
+    };
+  }},
+  dog_fan:{key:'dog_fan',system:'social',build:env=>{
+    return{id:'dog_fan',
+      title:'🐕 Un perro te sigue',
+      desc:`Un labrador con collar aparece de la nada y decide que tú eres su corredor favorito. Te sigue a metro y medio, lengua fuera, feliz como nadie. Lleva ya 400 metros contigo.`,
+      choices:[
+        {text:'Disfrutarlo — corres un tramo con compañía (+5 Mental, +5 seg, +seguidores)',id:'enjoy_dog'},
+        {text:'Ahuyentarlo para no distraerte (sin coste, pero +10 seg en el intento)',id:'shoo_dog'},
+      ]
+    };
+  }},
+};
+
 function checkWeatherAndEnvironmentEvents(ctx){
   ctx=ctx||raceProgressCtx();
   if(!ctx)return null;
@@ -979,14 +1322,7 @@ function checkWeatherAndEnvironmentEvents(ctx){
     const stormChance=(race.weather_risk||0.2)*2.2;
     if(Math.random()<stormChance){
       G.midRaceEventTriggered.storm=true;
-      return{id:'storm',
-        title:'⛈ Tormenta sorpresa',
-        desc:`En el km ${Math.round(doneKm)} el cielo se cierra de golpe. Granizo y viento lateral azotan la cresta. Los avitualladores bloquean el paso durante unos minutos.`,
-        choices:[
-          {text:'Refugiarse y ponerse el chubasquero (+3 min · hidratación protegida)',id:'shelter'},
-          {text:'Apretar y cruzar sin parar (pierde más hidratación en todos los tramos)',id:'push_through'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.storm.build({doneKm});
     }
   }
 
@@ -994,14 +1330,7 @@ function checkWeatherAndEnvironmentEvents(ctx){
   if(!G.midRaceEventTriggered.hat&&(G.weather==='extremo'||G.stormActive)&&pct>=0.1&&pct<0.7){
     if(Math.random()<0.22){
       G.midRaceEventTriggered.hat=true;
-      return{id:'hat_blown',
-        title:'💨 ¡La gorra sale volando!',
-        desc:'Una ráfaga inesperada te arranca la gorra y la manda a unos metros cuesta abajo. Puedes recuperarla rápido o seguir sin protección solar.',
-        choices:[
-          {text:'Volver a por ella (+1:30 min, protección solar mantenida)',id:'get_hat'},
-          {text:'Olvidarse y seguir (sin pausa, pero el sol/viento pica más)',id:'ignore_hat'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.hat_blown.build();
     }
   }
 
@@ -1009,14 +1338,7 @@ function checkWeatherAndEnvironmentEvents(ctx){
   if(!G.midRaceEventTriggered.temp_change&&(G.selectedRaces[G.currentRaceIdx]?.altitude||[10,11,3,4,12,1,2].includes(G.selectedRaces[G.currentRaceIdx]?.month||6))&&pct>=0.15&&pct<0.65){
     if(Math.random()<0.14){
       G.midRaceEventTriggered.temp_change=true;
-      return{id:'temp_change',
-        title:'🌡 El frío llega de golpe',
-        desc:`Al salir de la ladera protegida, el viento frío de cresta te da de pleno. En minutos, la temperatura ha bajado diez grados. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Parar a ponerse el cortavientos (+1:30 min, protección térmica completa)',id:'put_jacket'},
-          {text:'Apretar el paso para entrar en calor (sin pausa, −5 hidratación por el esfuerzo extra)',id:'run_warm'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.temp_change.build({doneKm});
     }
   }
 
@@ -1024,15 +1346,7 @@ function checkWeatherAndEnvironmentEvents(ctx){
   if(!G.midRaceEventTriggered.frozen_hands&&(G.weather==='extremo'||[12,1,2].includes(G.selectedRaces[G.currentRaceIdx]?.month||6))&&pct>=0.15&&pct<0.7){
     if(Math.random()<0.16){
       G.midRaceEventTriggered.frozen_hands=true;
-      return{id:'frozen_hands',
-        title:'🥶 Las manos dejan de responder',
-        desc:`En la cresta el viento corta y las manos se te han quedado blancas. Los bastones se mueven solos y no sientes los dedos. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Parar 2 min a calentar con el cuerpo (+2 min, agarre recuperado al 100%)',id:'warm_hands'},
-          {text:'Guardar los bastones y seguir sin ellos (+ritmo en llano, −piernas en subidas)',id:'no_poles'},
-          {text:'Aguantar — el frío es temporal (sin pausa, −8 piernas por mal apoyo de bastones)',id:'push_cold'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.frozen_hands.build({doneKm});
     }
   }
 
@@ -1050,14 +1364,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.lost&&(G.weather==='extremo'||G.stormActive)&&mental<45&&pct>=0.3&&pct<0.8){
     if(Math.random()<0.35){
       G.midRaceEventTriggered.lost=true;
-      return{id:'lost',
-        title:'🌫 Visibilidad cero',
-        desc:`La niebla y la tormenta borran las marcas. En el km ${Math.round(doneKm)} llevas unos minutos sin ver ninguna señal. El GPS parpadea.`,
-        choices:[
-          {text:'Usar el GPS (pierdes batería y 2:30 min, pero llegas seguro)',id:'gps'},
-          {text:`Buscar la senda a ojo (Mental ${mental} — resultado incierto)`,id:'find_trail'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.lost.build({doneKm,mental});
     }
   }
 
@@ -1065,14 +1372,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.mud&&(G.terrainCondition.id==='barro'||G.terrainCondition.id==='nieve')&&pct>=0.3&&pct<0.8){
     if(Math.random()<0.22){
       G.midRaceEventTriggered.mud=true;
-      return{id:'mud_fall',
-        title:'🟫 ¡Pisas barro y te caes!',
-        desc:`Tramo resbaladizo, el pie se va y caes. Te levantas enseguida — nada grave — pero el golpe se nota en las piernas. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Levantarse y seguir sin perder tiempo (−5 piernas, −2 energía)',id:'get_up_fast'},
-          {text:'Tomarse 30 seg para evaluarte (+30 seg, −3 piernas)',id:'check_first'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.mud_fall.build({doneKm});
     }
   }
 
@@ -1080,15 +1380,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.trail_blocked&&pct>=0.1&&pct<0.6){
     if(Math.random()<0.09){
       G.midRaceEventTriggered.trail_blocked=true;
-      return{id:'trail_blocked',
-        title:'🐐 ¡Rebaño en el sendero!',
-        desc:`Un rebaño de cabras ocupa completamente el camino en el km ${Math.round(doneKm)}. El pastor está lejos y las cabras no tienen prisa. Clásico de los Pirineos.`,
-        choices:[
-          {text:'Esperar pacientemente a que pasen (+1:30 min, sin gasto extra)',id:'wait_herd'},
-          {text:'Rodear por la ladera (±2 min, −4 piernas por el desnivel extra)',id:'detour_herd'},
-          {text:'Abrirte paso con calma — las cabras son curiosas (+40 seg, +1 Mental)',id:'weave_herd'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.trail_blocked.build({doneKm});
     }
   }
 
@@ -1096,15 +1388,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.confusing_fork&&totalKm>=15&&pct>=0.15&&pct<0.7){
     if(Math.random()<0.11){
       G.midRaceEventTriggered.confusing_fork=true;
-      return{id:'confusing_fork',
-        title:'🔀 Bifurcación sin señal',
-        desc:`El viento (o alguien) ha tumbado la marca de ruta. Hay dos sendas que podrían ser la correcta. Detrás de ti vienen tres corredores que tampoco saben. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Sacar el GPS y confirmar (+45 seg, 100% seguro)',id:'gps_fork'},
-          {text:`Confiar en el instinto — recuerdas el perfil (sin pausa, Mental ${mental} define el resultado)`,id:'gut_fork'},
-          {text:'Esperar a que llegue otro corredor que sepa (+30 seg, decisión compartida)',id:'wait_fork'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.confusing_fork.build({doneKm,mental});
     }
   }
 
@@ -1112,14 +1396,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.ankle_mud&&(G.terrainCondition.id==='barro'||G.weather==='extremo')&&pct>=0.3&&pct<0.8){
     if(Math.random()<0.15){
       G.midRaceEventTriggered.ankle_mud=true;
-      return{id:'ankle_mud',
-        title:'🥾 Barro hasta el tobillo',
-        desc:`La bajada se ha convertido en un lodazal. Con cada paso las zapatillas se hunden y el esfuerzo de sacar el pie se multiplica. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Cambiar a la trazada de roca lateral (+30 seg, piernas conservadas)',id:'rock_line'},
-          {text:'Atravesar directo — cada segundo cuenta (−10 piernas, sin pausa)',id:'mud_direct'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.ankle_mud.build({doneKm});
     }
   }
 
@@ -1127,14 +1404,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.false_flat&&pct>=0.15&&pct<0.65){
     if(Math.random()<0.09){
       G.midRaceEventTriggered.false_flat=true;
-      return{id:'false_flat',
-        title:'📐 Parece llano pero no lo es',
-        desc:`Llevas 10 minutos a un ritmo que debería ser cómodo pero el GPS no cuadra y la respiración se dispara. El perfil te estaba mintiendo — es un repecho sostenido del 4% que parece llano.`,
-        choices:[
-          {text:'Bajar el ritmo y leer bien el terreno (−0 tiempo extra, −6 energía)',id:'read_terrain'},
-          {text:'Mantener el esfuerzo creyendo que es llano (−14 energía, forzando el cuerpo)',id:'ignore_flat'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.false_flat.build();
     }
   }
 
@@ -1148,14 +1418,7 @@ function checkTerrainNavigationEvents(ctx){
   if(!G.midRaceEventTriggered.endless_climb&&_totalGain>=2000&&pct>=0.3&&pct<0.65){
     if(Math.random()<0.13){
       G.midRaceEventTriggered.endless_climb=true;
-      return{id:'endless_climb',
-        title:'🏔 La subida no tiene fin',
-        desc:`Llevas 20 minutos subiendo y el collado no aparece. El mapa dice que ya debería estar aquí. Mentira. La montaña se burla del papel. Sientes las piernas llenarse de lava.`,
-        choices:[
-          {text:'Gestionar: marchar rápido y conservar energía para la cima (−8 energía, llegada estable)',id:'manage_climb'},
-          {text:'Empujar hasta arriba — la cima tiene que aparecer ya (−20 energía, ganas 2 min)',id:'push_climb'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.endless_climb.build();
     }
   }
 
@@ -1172,15 +1435,7 @@ function checkInjuryAndFallEvents(ctx){
   if(!G.midRaceEventTriggered.injured_runner&&totalKm>=18&&pct>=0.25&&pct<0.75){
     if(Math.random()<0.15){
       G.midRaceEventTriggered.injured_runner=true;
-      return{id:'injured_runner',
-        title:'🩹 Corredor en el suelo',
-        desc:'Hay un corredor caído al lado de la senda. Parece que se ha torcido el tobillo. Nadie más está cerca. Te mira buscando ayuda.',
-        choices:[
-          {text:'Parar y ayudarle hasta que llegue un voluntario (+2 min · +2 Mental)',id:'help'},
-          {text:'Avisarle de que llamarás en el siguiente avituallamiento y seguir',id:'warn'},
-          {text:'Seguir tu ritmo (eres competidor, hay voluntarios para esto)',id:'ignore'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.injured_runner.build();
     }
   }
 
@@ -1188,14 +1443,7 @@ function checkInjuryAndFallEvents(ctx){
   if(!G.midRaceEventTriggered.slip_nf&&(G.terrainCondition.id==='barro'||G.terrainCondition.id==='nieve')&&pct>=0.2&&pct<0.75){
     if(Math.random()<0.18){
       G.midRaceEventTriggered.slip_nf=true;
-      return{id:'slip_nf',
-        title:'😬 El pie patina — no llegas a caer',
-        desc:`Un resbalón brusco en una raíz mojada. El cuerpo reacciona solo, recuperas el equilibrio, pero el esfuerzo de frenada lo notan los isquios. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Bajar el ritmo un tramo — el cuerpo manda (−4 piernas, sin tiempo extra)',id:'ease_slip'},
-          {text:'Sacudir la cabeza y seguir igual (−6 piernas, riesgo si el terreno continúa así)',id:'push_slip'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.slip_nf.build({doneKm});
     }
   }
 
@@ -1203,14 +1451,7 @@ function checkInjuryAndFallEvents(ctx){
   if(!G.midRaceEventTriggered.bad_fall&&(G.terrainCondition.id==='barro'||G.terrainCondition.id==='nieve')&&pct>=0.3&&pct<0.7){
     if(Math.random()<0.08){
       G.midRaceEventTriggered.bad_fall=true;
-      return{id:'bad_fall',
-        title:'💥 Caída de verdad',
-        desc:`El pie se va en una raíz y caes de rodillas sobre la roca. Un segundo de blanco. Te levantas — las manos y la rodilla sangran — pero todo parece moverse. Km ${Math.round(doneKm)}.`,
-        choices:[
-          {text:'Evaluarte 2 min antes de seguir (+2 min, evitas agravar lesión)',id:'check_fall'},
-          {text:'Levantarse y correr — si puedes caminar puedes correr (sin pausa, −14 piernas, −8 energía)',id:'run_fall'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.bad_fall.build({doneKm});
     }
   }
 
@@ -1227,14 +1468,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.sock&&pct>=0.2&&pct<0.7){
     if(Math.random()<0.12){
       G.midRaceEventTriggered.sock=true;
-      return{id:'sock_adjust',
-        title:'🧦 Rozadura en el pie',
-        desc:`Algo se ha desplazado dentro de la zapatilla y notas un punto de roce que va a más. En el km ${Math.round(doneKm)} aún puedes cortarlo.`,
-        choices:[
-          {text:'Parar 1 minuto a recolocar (+1 min, evitas ampollas)',id:'fix_sock'},
-          {text:'Ignorar y aguantar (sin pausa, riesgo de ampolla real)',id:'push_sock'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.sock_adjust.build({doneKm});
     }
   }
 
@@ -1242,15 +1476,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.empty_aid&&pct>=0.2&&pct<0.7){
     if(Math.random()<0.12){
       G.midRaceEventTriggered.empty_aid=true;
-      return{id:'empty_aid',
-        title:'🫗 El avituallamiento está vacío',
-        desc:`Llegas al puesto del km ${Math.round(doneKm)} y no hay ni agua ni comida. Los voluntarios se disculpan — el suministro se ha agotado. El siguiente puesto está en varios kilómetros.`,
-        choices:[
-          {text:'Racionarte estrictamente hasta el siguiente (−5 hidratación, −4 energía)',id:'ration'},
-          {text:'Beber de un arroyo cercano (recuperas hidratación, pero riesgo digestivo)',id:'stream'},
-          {text:'Forzar sin recargar (sigues a ritmo pero el cuerpo lo pagará más adelante)',id:'push_empty'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.empty_aid.build({doneKm});
     }
   }
 
@@ -1258,14 +1484,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.bad_gel&&pct>=0.25&&pct<0.65){
     if(Math.random()<0.10){
       G.midRaceEventTriggered.bad_gel=true;
-      return{id:'bad_gel',
-        title:'🤢 El gel sabe raro',
-        desc:'Abres un gel y el olor no es el habitual. El calor o la fecha de caducidad han hecho de las suyas. Queda poco y lo necesitas, pero el estómago ya da señales.',
-        choices:[
-          {text:'Tomarlo de todas formas (+5 energía, riesgo estomacal)',id:'eat_gel'},
-          {text:'Tirarlo y continuar sin gel (sin riesgo, pero sin recarga)',id:'discard_gel'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.bad_gel.build();
     }
   }
 
@@ -1273,15 +1492,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.hunger_crisis&&pct>=0.35&&pct<0.75){
     if(Math.random()<0.13){
       G.midRaceEventTriggered.hunger_crisis=true;
-      return{id:'hunger_crisis',
-        title:'🍬 Bajón de glucosa',
-        desc:`Sin aviso, las piernas se vuelven de plomo y la cabeza se nubla un momento. El reloj marca km ${Math.round(doneKm)} y reconoces la sensación: el cuerpo pide azúcar ahora.`,
-        choices:[
-          {text:'Usar un gel de emergencia ahora (+12 energía, gastas tu reserva)',id:'use_gel_now'},
-          {text:'Bajar el ritmo y aguantar hasta el avituallamiento (−10 energía extra, sin gastar gel)',id:'slow_hunger'},
-          {text:'Tomar una fecha o barrita que llevas (−8 energía, +5 sostenido)',id:'snack_bar'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.hunger_crisis.build({doneKm});
     }
   }
 
@@ -1289,14 +1500,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.mid_trap&&G.selectedRaces[G.currentRaceIdx]?.altitude&&pct>=0.25&&pct<0.65){
     if(Math.random()<0.11){
       G.midRaceEventTriggered.mid_trap=true;
-      return{id:'mid_trap',
-        title:'⛰ La montaña te engaña',
-        desc:`Parece que llegas al collado pero hay otro detrás. Y otro más. El perfil miente en terreno de media montaña — las cumbres se ocultan entre sí. El cuerpo empieza a pedir explicaciones.`,
-        choices:[
-          {text:'Gestionar el esfuerzo — bajar la potencia y adaptarse (−5 energía controlada)',id:'manage_trap'},
-          {text:'Seguir empujando — ya llegará el plano (−15 energía, pero mantienes el ritmo)',id:'push_trap'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.mid_trap.build();
     }
   }
 
@@ -1304,15 +1508,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.heavy_legs&&(G.bodyLoad||0)>=55&&pct>=0.35&&pct<0.75){
     if(Math.random()<0.14){
       G.midRaceEventTriggered.heavy_legs=true;
-      return{id:'heavy_legs',
-        title:'🧱 Piernas de piedra',
-        desc:`Sin aviso, las piernas pesan el doble. No es dolor — es un cansancio muscular profundo que sube desde las pantorrillas. Km ${Math.round(doneKm)}. El entrenamiento acumulado pasa factura.`,
-        choices:[
-          {text:'Parar 1 min a estirar y activar la circulación (+1 min, −3 piernas)',id:'stretch_legs'},
-          {text:'Cambiar la zancada — pasos cortos, mayor cadencia (sin pausa, −8 piernas)',id:'shuffle_legs'},
-          {text:'Aguantar y forzar — esto es trail (−15 piernas, riesgo calambre posterior)',id:'force_legs'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.heavy_legs.build({doneKm});
     }
   }
 
@@ -1320,15 +1516,7 @@ function checkFatigueAndEnergyEvents(ctx){
   if(!G.midRaceEventTriggered.stone_legs&&(G.bodyLoad||0)>=60&&pct>=0.55&&pct<0.85){
     if(Math.random()<0.14){
       G.midRaceEventTriggered.stone_legs=true;
-      return{id:'stone_legs',
-        title:'🪨 Los cuádriceps ya no responden',
-        desc:`Km ${Math.round(doneKm)}. La bajada que antes era tu punto fuerte ahora duele. Los cuádriceps están saturados — cada paso hacia abajo es un impacto. La meta parece muy lejos.`,
-        choices:[
-          {text:'Andar las bajadas — conservar lo que queda (sin tiempo extra, −5 piernas)',id:'walk_descents'},
-          {text:'Seguir corriendo bajadas con bastones de apoyo (−10 piernas, ganas 1:30 min)',id:'run_descents'},
-          {text:'Buscar la trazada más suave aunque sea más larga (+1 min, −6 piernas)',id:'soft_line'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.stone_legs.build({doneKm});
     }
   }
 
@@ -1346,14 +1534,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.friends&&pct>=0.15&&pct<0.85){
     if(Math.random()<0.18){
       G.midRaceEventTriggered.friends=true;
-      return{id:'friends_cheer',
-        title:'👥 ¡Tus amigos están aquí!',
-        desc:`Al girar un recodo, un grupo te reconoce y se pone a gritar tu nombre. Carteles, silbatos y todo el equipo. El km ${Math.round(doneKm)} de repente parece mucho más corto.`,
-        choices:[
-          {text:'Acelerar con esa energía (−3 min extra, −3 energía, +4 Mental)',id:'sprint'},
-          {text:'Saludar y seguir tu ritmo (+4 Mental, sin coste)',id:'wave'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.friends_cheer.build({doneKm});
     }
   }
 
@@ -1362,22 +1543,9 @@ function checkSocialAndRivalEvents(ctx){
     const sabotageChance=mental<50?0.18:0.10;
     if(Math.random()<sabotageChance){
       G.midRaceEventTriggered.sabotage=true;
-      const scenarios=[
-        {title:'😈 Un rival te pregunta por dónde es',
-         desc:'Llevas varios kms batallando con el mismo corredor. En una bifurcación te pregunta: "¿Por cuál es?" Tú lo sabes perfectamente. Una pequeña voz te dice que podrías aprovechar el momento.',
-         opts:[
-           {text:'Señalar el camino correcto — fair play (+2 Mental)',id:'honest'},
-           {text:'Señalarle el camino equivocado (ganas ~5 min, −5 popularidad, −3 Mental)',id:'deceive'},
-         ]},
-        {title:'😈 Una señal de ruta está caída',
-         desc:'Hay una marca de ruta en el suelo, tumbada por el viento. Dos corredores vienen justo detrás. Podrías colocarla mal sin que nadie lo vea.',
-         opts:[
-           {text:'Dejarla como está y seguir (+1 Mental)',id:'honest'},
-           {text:'Colocarla en dirección incorrecta (pueden perderse, −6 popularidad)',id:'deceive'},
-         ]},
-      ];
+      const scenarios=CLASSIC_MID_RACE_EVENTS.sabotage.scenarios;
       const s=scenarios[Math.floor(Math.random()*scenarios.length)];
-      return{id:'sabotage',title:s.title,desc:s.desc,choices:s.opts};
+      return CLASSIC_MID_RACE_EVENTS.sabotage.build({scenario:s});
     }
   }
 
@@ -1385,15 +1553,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.rival_pass&&pct>=0.2&&pct<0.75){
     if(Math.random()<0.13){
       G.midRaceEventTriggered.rival_pass=true;
-      return{id:'rival_pass',
-        title:'🏃 «¡Paso, por favor!»',
-        desc:'Un corredor más rápido viene por detrás y te pide paso en un tramo estrecho. Estás en buen ritmo y cederle significa perder la posición que llevas km manteniendo.',
-        choices:[
-          {text:'Ceder limpiamente y dejarle pasar (+20 seg, +2 Mental, +fair play)',id:'give_way'},
-          {text:'Aguantar el ritmo — que te pase si puede (sin pausa, rivalidad activada)',id:'hold_pace'},
-          {text:'Dejarte llevar por su rueda — intentas seguirle (−8 energía, opción de adelantarle después)',id:'follow_wheel'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.rival_pass.build();
     }
   }
 
@@ -1401,15 +1561,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.crowd_cameras&&pct>=0.2&&pct<0.8){
     if(Math.random()<0.10){
       G.midRaceEventTriggered.crowd_cameras=true;
-      return{id:'crowd_cameras',
-        title:'📸 ¡Hay cámaras y público!',
-        desc:'Entras en un núcleo de montaña con aficionados a ambos lados. Hay cámaras de la organización y varios móviles apuntando. El ambiente es eléctrico.',
-        choices:[
-          {text:'Saludar y seguir a tu ritmo (+3 Mental, +100 seguidores)',id:'wave_crowd'},
-          {text:'Subir el ritmo para la cámara — parece que vuela (+50 seg ganados, −6 energía)',id:'show_off'},
-          {text:'Bajar la cabeza y mantener el foco (sin cambio, máxima concentración)',id:'focus_crowd'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.crowd_cameras.build();
     }
   }
 
@@ -1417,15 +1569,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.bottleneck&&pct>=0.2&&pct<0.65){
     if(Math.random()<0.11){
       G.midRaceEventTriggered.bottleneck=true;
-      return{id:'bottleneck',
-        title:'🚧 Embotellamiento en la subida',
-        desc:`Un grupo de cinco corredores bloquea una canal técnica en el km ${Math.round(doneKm)}. El paso es de uno en uno y nadie cede. Llevas 1:30 min a su sombra.`,
-        choices:[
-          {text:'Esperar tu turno con calma (+1:30 min, energía conservada)',id:'wait_jam'},
-          {text:'Buscar línea alternativa por roca (±45 seg, −5 piernas por el terreno)',id:'alt_line'},
-          {text:'Pedir paso con educación — a veces funciona (+30 seg, posible hueco)',id:'ask_jam'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.bottleneck.build({doneKm});
     }
   }
 
@@ -1433,15 +1577,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.nickname_shout&&(G.followers||0)>=500&&pct>=0.2&&pct<0.8){
     if(Math.random()<0.13){
       G.midRaceEventTriggered.nickname_shout=true;
-      const nick=G.runner.name||'crack';
-      return{id:'nickname_shout',
-        title:'📣 «¡Vamos, '+nick+'!»',
-        desc:`Un grupo de aficionados locales te grita por tu nombre. No "venga corredor" — por tu nombre. Alguien te conoce, alguien ha venido a verte a ti. Se te pone la piel de gallina.`,
-        choices:[
-          {text:'Levantar el puño y acelerar (+6 Mental, −5 energía por el sprint espontáneo)',id:'fist_pump'},
-          {text:'Sonreír y mantener el ritmo (+4 Mental, +150 seguidores)',id:'smile_fans'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.nickname_shout.build();
     }
   }
 
@@ -1449,15 +1585,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.lent_pole&&totalKm>=30&&pct>=0.15&&pct<0.55){
     if(Math.random()<0.08){
       G.midRaceEventTriggered.lent_pole=true;
-      return{id:'lent_pole',
-        title:'🥢 Un bastón en el suelo',
-        desc:`Hay un bastón de carbono en el sendero, boca abajo. Su dueño está unos metros más adelante, cojeando. Se le ha partido la correa. Te lo está mirando.`,
-        choices:[
-          {text:'Correr y dárselo — +2 min y +3 Mental, pero le sacas del problema',id:'give_pole'},
-          {text:'Señalarle el bastón sin parar (él puede volver, tú no pierdes tiempo)',id:'point_pole'},
-          {text:'Llevártelo temporalmente hasta el avituallamiento y dejarlo allí (+1 min)',id:'carry_pole'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.lent_pole.build();
     }
   }
 
@@ -1465,14 +1593,7 @@ function checkSocialAndRivalEvents(ctx){
   if(!G.midRaceEventTriggered.dog_fan&&pct>=0.2&&pct<0.75){
     if(Math.random()<0.09){
       G.midRaceEventTriggered.dog_fan=true;
-      return{id:'dog_fan',
-        title:'🐕 Un perro te sigue',
-        desc:`Un labrador con collar aparece de la nada y decide que tú eres su corredor favorito. Te sigue a metro y medio, lengua fuera, feliz como nadie. Lleva ya 400 metros contigo.`,
-        choices:[
-          {text:'Disfrutarlo — corres un tramo con compañía (+5 Mental, +5 seg, +seguidores)',id:'enjoy_dog'},
-          {text:'Ahuyentarlo para no distraerte (sin coste, pero +10 seg en el intento)',id:'shoo_dog'},
-        ]
-      };
+      return CLASSIC_MID_RACE_EVENTS.dog_fan.build();
     }
   }
 

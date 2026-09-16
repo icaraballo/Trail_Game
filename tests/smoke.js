@@ -31,7 +31,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'coachViewActive','initClubModeData','simClubRace','CLUB_RACES','CLUB_ROLES','TOAST_QUEUE',
   'LIFE_EXTRA_ATHLETES','CLUB_SOCIOS_SOFT_CAP',
   'DEV','DAY_CONDITIONS','MAX_IMPORT_CHARS','MONTHLY_EVENTS_POOL','BETWEEN_EVENTS','TRAINING_EVENTS_POOL',
-  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury']);
+  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -824,6 +824,31 @@ console.log('\n── v98 · modo desarrollador (Diseno-Modo-Desarrollador §13)
     const lista=ctx.devEligibleNow();
     t('devEligibleNow no cambia midRaceEventTriggered ni Math.random', JSON.stringify(T.getG().midRaceEventTriggered)===antes&&ctx.Math.random===rnd&&Array.isArray(lista));
     t('y no ofrece lo que ya salió en esta carrera', !lista.some(e=>e.id==='storm'));
+  }
+
+  // Paso 9 · catálogo de los eventos clásicos de carrera
+  {
+    const C=T.CLASSIC_MID_RACE_EVENTS;
+    const ids=Object.keys(C);
+    const races=T.RACES_DB.slice(0,1).map(r=>({...r}));
+    setG({gameMode:'medio',selectedRaces:races,currentRaceIdx:0,seg:1,followers:900});
+    ctx.initRace();
+    const malos=ids.filter(id=>{const e=C[id].build();return !(e.id===id&&e.title&&e.desc&&Array.isArray(e.choices)&&e.choices.length>=2&&e.choices.every(c=>c.text&&c.id));});
+    t('los 29 build() devuelven id, title, desc y choices', ids.length===29&&!malos.length, ids.length+' · '+malos.join(','));
+    t('los 29 tienen resolutor', ids.every(id=>typeof T.MID_RACE_RESOLVERS[id]==='function'));
+    let fallan=[];
+    for(const id of ids){
+      setG({gameMode:'medio',selectedRaces:races.map(r=>({...r})),currentRaceIdx:0,seg:1,screen:'segment',midRaceEventTriggered:{},followers:900});
+      ctx.initRace();T.getG().seg=1;T.getG().screen='segment';
+      try{
+        ctx.devEvtLaunch('mid',id);
+        const g=T.getG();
+        if(g.screen!=='midRaceEvent'||!g.midRaceEvent||g.midRaceEvent.id!==id||!g.midRaceEventTriggered[C[id].key]){fallan.push(id+':lanzar');continue;}
+        ctx.resolveMidRaceEvent(id,g.midRaceEvent.choices[0].id);
+        if(T.getG().screen!=='segment')fallan.push(id+':resolver→'+T.getG().screen);
+      }catch(e){fallan.push(id+':'+e.message);}
+    }
+    t('lanzar cualquiera en segment lleva a midRaceEvent y resolverlo vuelve a segment', !fallan.length, fallan.join(', '));
   }
 
   // Carga única: tres formatos y tope de tamaño

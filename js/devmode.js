@@ -715,8 +715,11 @@ function devEvtTitle(id){
 }
 function devEvtGroupOf(id){return DEV_EVENT_GROUPS.find(g=>{try{return g.items().some(e=>e.id===id);}catch(e){return false;}});}
 // Título de un evento clásico de carrera: lo pone el catálogo de race.js (paso 9).
-function devClassicMidTitle(id){return id;}
-function devClassicBuildReady(){return false;}
+function devClassicMidTitle(id){
+  const c=CLASSIC_MID_RACE_EVENTS[id];
+  try{return c?c.build({doneKm:0,mental:50}).title:id;}catch(e){return id;}
+}
+function devClassicBuildReady(){return typeof CLASSIC_MID_RACE_EVENTS==='object';}
 
 // Construye un evento de carrera por id. Lo usa checkMidRaceEvents() (race.js) al consumir
 // «midRaceEvent» y el botón Lanzar. Marca las mismas banderas que la check*() que lo saca.
@@ -727,6 +730,9 @@ window.devBuildMidRaceEvent=id=>{
   if(ev){t[id]=true;t._xpTimedCount=(t._xpTimedCount||0)+1;return {...ev};}
   ev=EXPRESS_NARRATIVE_EVENTS.find(e=>e.id===id);
   if(ev){t[id]=true;t._xpNarrCount=(t._xpNarrCount||0)+1;return {...ev};}
+  // Clásicos: el catálogo de race.js. Se marca su `key`, que no siempre es el id.
+  const c=CLASSIC_MID_RACE_EVENTS[id];
+  if(c){t[c.key]=true;return c.build();}
   devLog('warn','No se puede construir el evento de carrera «'+id+'»');
   return null;
 };
@@ -1929,7 +1935,10 @@ function devTriggeredIds(){
   const t=G.midRaceEventTriggered||{};
   return Object.keys(t).filter(k=>t[k]&&!k.startsWith('_')).map(k=>devMidIdForKey(k));
 }
-function devMidIdForKey(k){return k;}
+function devMidIdForKey(k){
+  const e=Object.entries(CLASSIC_MID_RACE_EVENTS).find(([,c])=>c.key===k);
+  return e?e[0]:k;
+}
 function devEligibleBody(){
   if(!devClassicRace())return '<div class="dev-note">Solo con una carrera de Clásico o Exprés en curso.</div>';
   let can=[];
