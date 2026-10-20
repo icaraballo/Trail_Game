@@ -1,7 +1,9 @@
 const LS_PREFIX='mpt_';
 const LS={
   get:(k)=>{try{return localStorage.getItem(LS_PREFIX+k);}catch(e){return null;}},
-  set:(k,v)=>{try{localStorage.setItem(LS_PREFIX+k,v);return true;}catch(e){return false;}},
+  // PUB-15 (v99): se guarda el nombre del error para que el aviso diga si es cuota
+  // llena o un navegador que no deja guardar (Safari privado, datos bloqueados).
+  set:(k,v)=>{try{localStorage.setItem(LS_PREFIX+k,v);LS.lastErr=null;return true;}catch(e){LS.lastErr=(e&&e.name)||'Error';return false;}},
   del:(k)=>{try{localStorage.removeItem(LS_PREFIX+k);}catch(e){}}
 };
 // Migración one-shot v40→v41: claves sin prefijo → mpt_*
@@ -20,7 +22,7 @@ const LS={
     localStorage.setItem(LS_PREFIX+'migrated_v41','1');
   }catch(e){}
 })();
-const GAME_BUILD=98; // incrementar con cada versión del juego
+const GAME_BUILD=99; // incrementar con cada versión del juego
 const SAVE_KEY='save_slot_';
 const SAVE_VERSION='TRAIL_SAVE_V2';
 const NUM_SLOTS=5;
@@ -218,7 +220,32 @@ function sanitizeState(raw){
     if(sl&&typeof sl==='object'&&sl.coachAthlete&&typeof sl.coachAthlete==='object')
       sl.coachAthlete.name=cut(sl.coachAthlete.name,30);
   });
-  return s;
+  return cleanSavedTexts(s);
+}
+
+// PUB-01 (v99): el save no lleva solo lo que escribe el jugador (eso ya pasa por
+// esc()), también copias de datos del juego —carreras, tramos, rivales, eventos,
+// patrocinios, objetivos— que se pintan con ${x.name} sin escapar en más de cien
+// plantillas. Una partida exportada con HTML dentro de esos textos ejecutaba código
+// al importarla, y en icaraballo.github.io eso alcanza el localStorage de todos los
+// juegos. En vez de perseguir las plantillas, se limpia todo texto y toda clave al
+// entrar: los cinco caracteres que abren HTML o cierran un atributo pasan a su
+// equivalente tipográfico, que se lee igual. Ningún texto del juego usa marcado.
+// PUB-03: de paso se descartan __proto__, constructor y prototype, que con el
+// Object.assign(G,…) de loadSlot cambiaban el prototipo de G.
+const SAVE_TEXT_SWAP={'<':'‹','>':'›','"':'”',"'":'’','`':'’'};
+const SAVE_BAD_KEYS=['__proto__','constructor','prototype'];
+function cleanSavedText(v){return v.replace(/[<>"'`]/g,c=>SAVE_TEXT_SWAP[c]);}
+function cleanSavedTexts(v){
+  if(typeof v==='string')return cleanSavedText(v);
+  if(Array.isArray(v))return v.map(cleanSavedTexts);
+  if(!v||typeof v!=='object')return v;
+  const out={};
+  for(const k of Object.keys(v)){
+    if(SAVE_BAD_KEYS.includes(k))continue;
+    out[cleanSavedText(k)]=cleanSavedTexts(v[k]);
+  }
+  return out;
 }
 
 function saveToSlot(slot){
@@ -246,6 +273,12 @@ function loadFromSlot(slot){
       console.warn('Ranura '+slot+': formato '+data.v+', se esperaba '+SAVE_VERSION+'. No se carga.');
       return null;
     }
+    // PUB-02 (v99): una partida guardada por una versión más nueva (la página de
+    // esta pestaña está en caché) no se abre: la migración solo sabe ir hacia delante.
+    if((Number(data.state._build)||0)>GAME_BUILD){
+      console.warn('Ranura '+slot+': guardada en v'+data.state._build+', esta es v'+GAME_BUILD+'. No se carga.');
+      return null;
+    }
     // T30 (v88): se validaba ANTES de migrar, así que sanitizeState() juzgaba un
     // estado incompleto y los campos que la migración rellena nunca pasaban por
     // el saneado. Ahora se hace la comprobación mínima de forma, se migra, y se
@@ -265,13 +298,53 @@ function deleteSlot(slot){
   if(G._saveSlot===slot)G._saveSlot=null;
 }
 
+// PUB-02 (v99): loadFromSlot() devuelve null tanto si la ranura está vacía como si
+// trae algo que no se puede abrir, y la pantalla de partidas pintaba las dos igual:
+// «Ranura N — vacía». Con jugadores de verdad eso es perder la partida sin aviso,
+// porque «Nueva partida» la pisa. inspectSlot() distingue los cuatro casos.
+//   empty  · no hay nada
+//   ok     · se carga (data)
+//   future · la guardó una versión más nueva que esta (build): la página está en caché
+//   broken · existe pero no se puede abrir (why)
+function inspectSlot(slot){
+  const raw=LS.get(SAVE_KEY+slot);
+  if(!raw)return {kind:'empty'};
+  let d=null;
+  try{d=JSON.parse(raw);}catch(e){return {kind:'broken',why:'los datos están dañados'};}
+  if(!d||typeof d!=='object'||!d.state)return {kind:'broken',why:'los datos están dañados'};
+  if(d.v&&d.v!==SAVE_VERSION)return {kind:'broken',why:'es de otro formato ('+String(d.v).slice(0,24)+')'};
+  const build=Number(d.state._build)||0;
+  if(build>GAME_BUILD)return {kind:'future',build};
+  const data=loadFromSlot(slot);
+  return data?{kind:'ok',data}:{kind:'broken',why:'los datos están incompletos'};
+}
+
 function getAllSlots(){
   const slots=[];
   for(let i=0;i<NUM_SLOTS;i++){
-    const data=loadFromSlot(i);
-    slots.push({slot:i, data});
+    const info=inspectSlot(i);
+    slots.push({slot:i, data:info.kind==='ok'?info.data:null, info});
   }
   return slots;
+}
+
+// Copia tal cual lo que hay en la ranura, aunque esta versión no lo entienda, para
+// que el jugador pueda guardarlo antes de borrar (PUB-02).
+function exportRawSlot(slot){
+  const raw=LS.get(SAVE_KEY+slot);
+  if(!raw){alert('Ranura vacía.');return;}
+  let txt=raw;
+  try{
+    const d=JSON.parse(raw);
+    if(d&&d.state){
+      const bytes=new TextEncoder().encode(JSON.stringify(d.state));
+      let bin='';for(let i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);
+      txt=String(d.v||SAVE_VERSION)+'::'+btoa(bin);
+    }
+  }catch(e){}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>alert('✓ Datos copiados al portapapeles. Guárdalos antes de borrar la ranura.')).catch(()=>fallbackCopy(txt));
+  } else fallbackCopy(txt);
 }
 
 function exportSlotToClipboard(slot){
@@ -307,20 +380,21 @@ function importFromText(txt, slot){
     if(typeof txt!=='string')throw new Error('Formato no reconocido');
     if(txt.length>MAX_IMPORT_CHARS)throw new Error('Texto demasiado grande');
     const clean=txt.trim();
-    if(!clean.startsWith(SAVE_VERSION+'::'))throw new Error('Formato no reconocido');
+    if(!clean.startsWith(SAVE_VERSION+'::'))throw new Error(/^TRAIL_SAVE_V\d+::/.test(clean)?'Otra versión':'Formato no reconocido');
     const b64=clean.slice(SAVE_VERSION.length+2);
     const bin=atob(b64);
     const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
     const json=new TextDecoder().decode(bytes);
     const raw=JSON.parse(json);
+    if(raw&&(Number(raw._build)||0)>GAME_BUILD)throw new Error('Otra versión');   // PUB-02 (v99)
     const safe=sanitizeState(raw);
     if(!safe)throw new Error('Estado inválido');
     const migrated=migrateState(safe);          // T30 (v88): sanear después de migrar
     const state=sanitizeState(migrated)||migrated;
     const data={v:SAVE_VERSION,ts:Date.now(),state};
-    LS.set(SAVE_KEY+slot, JSON.stringify(data));
-    return true;
-  }catch(e){return false;}
+    importFromText.lastError=null;
+    return LS.set(SAVE_KEY+slot, JSON.stringify(data));
+  }catch(e){importFromText.lastError=e.message;return false;}
 }
 
 // T06 (v82): el autoguardado fallaba en silencio en tres capas (LS.set devolvía
@@ -333,7 +407,7 @@ function markSaveFailed(){
   const first=!G._saveFailed;
   G._saveFailed=true;
   if(first&&typeof showToast==='function'){
-    showToast('⚠ No se pudo guardar: almacenamiento lleno','#c0392b');
+    showToast(LS.lastErr==='QuotaExceededError'?'⚠ No se pudo guardar: almacenamiento lleno':'⚠ No se pudo guardar: este navegador no deja guardar datos','#c0392b');
   }
   if(typeof updateFinBar==='function')updateFinBar();
 }

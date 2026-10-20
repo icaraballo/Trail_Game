@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Trail Game: dos montañas con el sendero en zigzag. Hecho a mano (v99). -->
+  <rect width="64" height="64" rx="14" fill="#2f6b1f"/>
+  <circle cx="47" cy="17" r="6" fill="#f2c94c"/>
+  <path d="M4 54 L24 22 L33 36 L41 26 L60 54 Z" fill="#f5f4f0"/>
+  <path d="M24 22 L29.5 30.8 L26 33 L21 27 Z" fill="#dcd8cc"/>
+  <path d="M30 54 C30 49 37 48 35 44 C33 40 26 41 27 37" fill="none" stroke="#c0392b" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 5.5"/>
+</svg>

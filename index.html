@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta charset="UTF-8">
+<!-- PUB-12 (v99): qué puede cargar la página. 'unsafe-inline' lo obligan los onclick=""
+     de las plantillas; 'unsafe-eval', solo la consola del modo dev (devEval). Lo que sí
+     corta: conexiones a otras webs (connect-src), plugins, <base> y formularios.
+     frame-ancestors no funciona en un <meta>. Probada sin violaciones con y sin ?dev=1. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 // v98 · Modo desarrollador: la captura de la consola va lo primero, para no perder los
 // errores de la carga. Sin ?dev=1 no hace nada. devmode.js vuelca __devBuf al arrancar.
@@ -11,22 +18,67 @@ if(new URLSearchParams(location.search).get('dev')==='1'){
   addEventListener('error',e=>push('error',[e.message+' · '+String(e.filename||'').split('/').pop()+':'+e.lineno]));
   addEventListener('unhandledrejection',e=>push('error',['Promesa rechazada: '+String(e.reason)]));
 }
+// PUB-10 (v99): sin el modo dev, un fallo de una pantalla dejaba el botón muerto y sin
+// ningún aviso. Ahora sale una tarjeta con la salida: copiar la partida y recargar.
+// Una sola vez por carga; en el modo dev manda su panel, que ya los recoge.
+if(!window.DEV_ON){
+  let shown=false;
+  const fatal=()=>{
+    if(shown||!document.body)return; shown=true;
+    const d=document.createElement('div'); d.id='fatal-err';
+    d.innerHTML='<div class="fatal-card"><div class="fatal-title">Algo ha fallado</div>'+
+      '<p>El juego se ha encontrado con un error. Tu partida se guarda sola al avanzar; por si acaso, cópiala antes de recargar.</p>'+
+      '<button class="main" id="fatal-copy">Copiar partida</button>'+
+      '<button class="main" style="margin-top:8px;background:#fff;color:#1a1a1a;border:1px solid #ccc" onclick="location.reload()">Recargar</button>'+
+      '<button class="fatal-close" onclick="this.closest(\'#fatal-err\').remove()">Seguir sin recargar</button></div>';
+    document.body.appendChild(d);
+    document.getElementById('fatal-copy').onclick=()=>{
+      try{
+        const bytes=new TextEncoder().encode(JSON.stringify(serializableState()));
+        let bin='';for(let i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);
+        fallbackCopy(SAVE_VERSION+'::'+btoa(bin));
+      }catch(e){alert('No se pudo copiar la partida.');}
+    };
+  };
+  addEventListener('error',e=>{ if(!e.filename||e.filename.indexOf(location.origin)===0) fatal(); });
+  addEventListener('unhandledrejection',fatal);
+}
+// Escape cierra la hoja que esté abierta (ayudas y privacidad)
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&typeof closeTip==='function')closeTip(); });
 </script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Juego Trail · v98</title>
+<!-- PUB-06 (v99): lo que se ve al compartir el enlace (LinkedIn, WhatsApp…) -->
+<meta name="description" content="Gestiona la carrera de un corredor de trail: entrenos, calendario, patrocinios, lesiones y rivales. Gratis y en el navegador.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Trail Game">
+<meta property="og:title" content="Trail Game — gestiona tu carrera de trail running">
+<meta property="og:description" content="Entrenos, calendario, patrocinios, lesiones y rivales. Gratis y en el navegador.">
+<meta property="og:url" content="https://icaraballo.github.io/Trail_Game/">
+<meta property="og:image" content="https://icaraballo.github.io/Trail_Game/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Trail Game: una carrera en curso, con el perfil del recorrido y las barras de energía, hidratación y piernas">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f5f4f0">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<title>Juego Trail · v99</title>
 <style>
 :root{--color-background-primary:#fff;--color-background-secondary:#f8f7f3;--color-background-tertiary:#f0ede8;--color-text-primary:#1a1a1a;--color-text-secondary:#888;--color-text-tertiary:#aaa;--color-border-tertiary:#e0dfd8;--border-radius-md:8px;--border-radius-lg:12px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;display:flex;justify-content:center;padding:1.5rem 1rem 5rem}
 #app{width:100%;max-width:560px}
 #tab-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;background:#fff;border-top:1px solid #e8e6e0;display:none;z-index:200}
-.tab-nav-inner{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr}
+/* PUB-09 (v99): minmax(0,1fr) para que una etiqueta larga no ensanche la barra más que la pantalla */
+.tab-nav-inner{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
 .tab-btn{padding:10px 4px 12px;text-align:center;cursor:pointer;border:none;background:none;transition:background .15s;border-top:2px solid transparent;width:100%}
 .tab-btn:hover{background:#f8f7f3}
 .tab-btn.active{border-top-color:#1a1a1a}
 .tab-icon{font-size:18px;display:block;margin-bottom:2px}
-.tab-label{font-size:12px;font-weight:600;color:#888;letter-spacing:.3px;text-transform:uppercase}
+/* PUB-09 (v99): en mayúsculas, «REPUTACIÓN» no cabía en ningún móvil (se leía «REP»); en minúscula cabe desde 320 px */
+.tab-label{display:block;font-size:12px;font-weight:600;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:359px){.tab-btn{padding-left:1px;padding-right:1px}.tab-label{font-size:10.5px}}
 .tab-btn.active .tab-label{color:#1a1a1a}
 .quarter-wrap{border:1.5px solid #1a1a1a;border-radius:10px;margin-bottom:10px;overflow:hidden}
 .quarter-toggle{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:#fff;transition:background .15s}
@@ -157,6 +209,16 @@ button.secondary:hover{background:#f0ede8}
 /* Save slots */
 .save-slot{background:#fff;border:0.5px solid #e0dfd8;border-radius:10px;padding:12px 14px;margin-bottom:8px}
 .save-slot.empty{border-style:dashed;background:#fafaf8}
+.save-slot.slot-locked{border-color:#e8c97a;background:#fffaf0}
+/* PUB-07 (v99): enlace de privacidad junto a la versión; ::after agranda la zona de toque */
+.enlace-priv{position:relative;border:none;background:none;padding:0;font:inherit;color:#4a6f99;text-decoration:underline;cursor:pointer}
+.enlace-priv::after{content:'';position:absolute;inset:-14px -10px}
+/* PUB-10 (v99): la tarjeta de error */
+#fatal-err{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px}
+.fatal-card{background:#fff;border-radius:14px;padding:20px;max-width:420px;width:100%;font-size:14px;line-height:1.5;color:#333}
+.fatal-title{font-size:17px;font-weight:700;margin-bottom:8px;color:#c0392b}
+.fatal-card p{margin-bottom:14px}
+.fatal-close{display:block;margin:12px auto 0;border:none;background:none;color:#666;text-decoration:underline;font-size:13px;cursor:pointer;padding:8px}
 .save-slot-info{flex:1}
 .save-slot-name{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:2px}
 .save-slot-meta{font-size:12px;color:#888}
@@ -238,7 +300,7 @@ button.secondary:hover{background:#f0ede8}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeIn 150ms ease-out both}
 /* ── TOAST FEEDBACK ── */
-#toast-notif{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap;transition:opacity .35s;opacity:0}
+#toast-notif{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;width:max-content;max-width:calc(100vw - 32px);text-align:center;transition:opacity .35s;opacity:0} /* PUB-21 (v99): a 320 px se salía por el borde */
 #toast-notif.show{opacity:1}
 /* ── TIP INLINE BUTTON ── */
 .tip-btn{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid #d0cec8;background:#fafaf8;color:#aaa;font-size:10px;cursor:pointer;vertical-align:middle;margin-left:5px;padding:0;line-height:1;flex-shrink:0;font-style:normal;transition:background .15s}
@@ -348,19 +410,19 @@ button.secondary:hover{background:#f0ede8}
 </nav>
 
 
-<script src="js/constants.js?v=98"></script>
-<script src="js/state.js?v=98"></script>
-<script src="js/save.js?v=98"></script>
-<script src="js/race.js?v=98"></script>
-<script src="js/coach.js?v=98"></script>
-<script src="js/club.js?v=98"></script>
-<script src="js/canicross.js?v=98"></script>
+<script src="js/constants.js?v=99"></script>
+<script src="js/state.js?v=99"></script>
+<script src="js/save.js?v=99"></script>
+<script src="js/race.js?v=99"></script>
+<script src="js/coach.js?v=99"></script>
+<script src="js/club.js?v=99"></script>
+<script src="js/canicross.js?v=99"></script>
 <!-- T53 (v92): render.js partido en tres. El orden importa solo para las
      sentencias de nivel raíz, y entre estos tres no hay ninguna que dependa
      de otra — pero se mantiene el orden temático por legibilidad. -->
-<script src="js/render-core.js?v=98"></script>
-<script src="js/render-clasico.js?v=98"></script>
-<script src="js/render-temporada.js?v=98"></script>
+<script src="js/render-core.js?v=99"></script>
+<script src="js/render-clasico.js?v=99"></script>
+<script src="js/render-temporada.js?v=99"></script>
 <script>
 // T70 (v90): devmode.js solo sirve con ?dev=1. Se carga a
 // demanda; render() espera a que esté dentro para que renderDevOverlay()
@@ -370,7 +432,7 @@ button.secondary:hover{background:#f0ede8}
 // v98: DEV_ON lo pone el script del <head>; el panel crea su propio botón y drawer.
 if(window.DEV_ON){
   const s=document.createElement('script');
-  s.src='js/devmode.js?v=98';
+  s.src='js/devmode.js?v=99';
   s.onload=()=>render();
   s.onerror=()=>{console.warn('devmode.js no se pudo cargar; se arranca sin panel');window.DEV_ON=false;render();};
   document.body.appendChild(s);

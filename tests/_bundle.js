@@ -27,7 +27,7 @@ function sources(){
 // Devuelve {T, ctx, src} — T tiene además setG/getG para manipular el estado.
 function build(names){
   const ctx={console,Math,JSON,Object,Array,Number,String,Boolean,Date,isNaN,parseInt,parseFloat,RegExp,Set,Map,
-    structuredClone,TextEncoder,TextDecoder,Uint8Array,atob:()=>'',btoa:()=>'',Infinity,NaN,
+    structuredClone,TextEncoder,TextDecoder,Uint8Array,atob,btoa,Infinity,NaN,
     setTimeout:()=>{},clearTimeout:()=>{},setInterval:()=>{},clearInterval:()=>{},requestAnimationFrame:()=>{},
     localStorage:{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},
     document:{getElementById:()=>null,querySelector:()=>null,body:{}},

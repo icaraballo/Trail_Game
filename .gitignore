@@ -12,3 +12,14 @@ _audit_*.html
 
 # Dependencias de desarrollo (T105: eslint)
 node_modules/
+
+# Windows (PUB-18, v99: ahora también se trabaja en el PC)
+Thumbs.db
+desktop.ini
+
+# Varios
+.env*
+*.log
+*.bak
+.vscode/
+.idea/

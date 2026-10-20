@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "description": "Juego de gestión de trail running — vanilla JS, sin framework. El navegador carga js/*.js como scripts clásicos: no hay bundler ni módulos.",
+  "license": "UNLICENSED",
+  "author": "Iñigo Caraballo",
+  "homepage": "https://icaraballo.github.io/Trail_Game/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icaraballo/Trail_Game.git"
+  },
   "scripts": {
     "lint": "eslint js/*.js",
     "test": "node tests/smoke.js",

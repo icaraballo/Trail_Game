@@ -2737,7 +2737,7 @@ function devInstallWrappers(){
   };
   // LS.set: «Almacenamiento lleno» solo para las ranuras de guardado (SAVE_KEY).
   const origSet=LS.set;
-  LS.set=(k,v)=>{if(DEV.storageFull&&String(k).startsWith(SAVE_KEY))return false;return origSet(k,v);};
+  LS.set=(k,v)=>{if(DEV.storageFull&&String(k).startsWith(SAVE_KEY)){LS.lastErr='QuotaExceededError';return false;}return origSet(k,v);};
   // Resolutores de eventos: diario.
   DEV_RESOLVERS.forEach(devWrapResolver);
 }

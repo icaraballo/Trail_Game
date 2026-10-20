@@ -449,15 +449,27 @@ function renderSaveScreen(){
   }catch(e){}
   el.innerHTML=`
     <h1>Juego Trail</h1>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px">v${GAME_BUILD}</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <p class="sub" style="margin-bottom:0;flex:1">Partidas guardadas</p>
       <button onclick="G._achPrev='saveScreen';G.screen='achievements';render()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">🏅 Logros</button>
       <button onclick="showTutorial()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">📖 Tutorial</button>
     </div>
 
-    ${slots.map(({slot,data})=>{
+    ${slots.map(({slot,data,info})=>{
       const lbl=slotLabel(data);
+      // PUB-02 (v99): lo que no se puede abrir ya no se pinta como «vacía».
+      if(info&&(info.kind==='future'||info.kind==='broken')) return `<div class="save-slot slot-locked">
+        <div class="save-slot-name">Ranura ${slot+1} — no se puede abrir</div>
+        <div class="save-slot-meta">${info.kind==='future'
+          ?`La guardó la v${info.build} y esta página es la v${GAME_BUILD}. Recarga la página para abrirla.`
+          :`Hay una partida, pero ${esc(info.why)}. Copia sus datos antes de borrarla.`}</div>
+        <div class="save-btns">
+          ${info.kind==='future'?`<button class="save-btn primary" onclick="location.reload()">Recargar</button>`:''}
+          <button class="save-btn" onclick="exportRawSlot(${slot})">Copiar datos</button>
+          <button class="save-btn danger" onclick="confirmDeleteSlot(${slot})">Borrar</button>
+        </div>
+      </div>`;
       if(!lbl) return `<div class="save-slot empty">
         <div class="flex-between-center">
           <div>
@@ -490,12 +502,10 @@ function renderSaveScreen(){
       <div style="font-size:11px;color:#b8a88a;background:#fdf8f2;
   border:1px solid #e8dfc8;border-radius:6px;padding:8px 10px;
   margin-bottom:10px">
-        💡 <strong>Consejo:</strong> Para que las partidas persistan
-    entre actualizaciones, guarda el archivo siempre como
-    <code style="background:#f0e8d8;padding:1px 4px;
-    border-radius:3px">juego_trail.html</code> (sin número de
-    versión). El navegador vincula los guardados al nombre
-    del archivo.
+        💡 <strong>Consejo:</strong> las partidas viven solo en este
+    navegador. Usa <strong>Exportar</strong> de vez en cuando y guarda el
+    texto: si borras los datos del navegador o cambias de móvil, lo
+    pegas aquí y sigues donde ibas.
       </div>
       <textarea class="import-area" id="import-txt" placeholder="Pega aquí el texto TRAIL_SAVE_V2::..."></textarea>
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
@@ -564,10 +574,14 @@ window.confirmDeleteSlot=slot=>{
 window.doImport=(slot)=>{
   const txt=document.getElementById('import-txt')?.value||'';
   if(!txt.trim()){alert('Pega primero el texto de la partida.');return;}
+  // PUB-02 (v99): importar encima de una ranura ocupada la pisaba sin preguntar.
+  if(LS.get(SAVE_KEY+slot)&&!confirm(`La ranura ${slot+1} ya tiene una partida. ¿Sustituirla por la importada?`))return;
   if(importFromText(txt,slot)){
     alert(`✓ Partida importada en ranura ${slot+1}.`);
     document.getElementById('import-txt').value='';
     render();
+  } else if(importFromText.lastError==='Otra versión'){
+    alert('Esta partida es de otra versión del juego. Recarga la página y vuelve a probar.');
   } else alert('Texto no válido. Asegúrate de copiar el texto completo.');
 };
 
@@ -590,7 +604,7 @@ function renderModeSelect(){
     {id:'infinite_prog', icon:'📈',  label:'Modo infinito',   desc:'Dificultad progresiva · sin techo · próximamente',   available:false, lockable:false},
     {id:'coach',         icon:'📋',  label:'Entrenador',      desc:'Lleva un atleta ajeno · honorarios + bonus',          available:true,  lockable:true},
     {id:'club',          icon:'🏕️', label:'Club',            desc:'Gestiona un club · plantilla · presupuesto',          available:true,  lockable:true},
-    {id:'canicross',     icon:'🐕',  label:'Canicross',       desc:'Corres con tu perro · vínculo · carreras reales españolas', available:true, lockable:false},
+    {id:'canicross',     icon:'🐕',  label:'Canicross',       desc:'Corres con tu perro · vínculo · ⚠ en obras: sus partidas no pasarán a la versión nueva', available:true, lockable:false},
   ];
   // Leer desbloqueos del localStorage
   let unlocked={coach:false,club:false};
@@ -869,6 +883,26 @@ window.showTip=(title,html)=>{
   document.getElementById('tip-overlay').style.display='flex';
 };
 window.closeTip=()=>{document.getElementById('tip-overlay').style.display='none';};
+
+// PUB-07 (v99): el aviso de privacidad, el mismo texto que el apartado «Privacidad»
+// del README. smoke.js comprueba que cada frase de PRIVACY_KEY_PHRASES está en los
+// dos sitios: si cambias una, cambia la otra.
+const PRIVACY_PARAGRAPHS=[
+  'Trail Game no tiene servidor, ni cuentas, ni analítica, ni cookies.',
+  'Tus partidas (5 ranuras) y tus logros se guardan solo en este navegador; si borras los datos del sitio, se borran.',
+  '«Exportar partida» crea un texto que solo sale de tu móvil si tú lo compartes.',
+  'GitHub, que aloja la página, ve tu dirección IP, como cualquier web.',
+];
+const PRIVACY_KEY_PHRASES=[
+  'no tiene servidor, ni cuentas, ni analítica, ni cookies',
+  'se guardan solo en este navegador',
+  'solo sale de tu móvil si tú lo compartes',
+  've tu dirección IP',
+];
+window.showPrivacy=()=>{
+  showTip('Privacidad',PRIVACY_PARAGRAPHS.map(p=>`<p style="margin-bottom:8px">${p}</p>`).join('')+
+    `<button class="main" style="margin-top:8px" onclick="closeTip()">Entendido</button>`);
+};
 
 const TUTORIAL_CARDS=[
   {

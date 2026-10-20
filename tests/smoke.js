@@ -31,7 +31,8 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'coachViewActive','initClubModeData','simClubRace','CLUB_RACES','CLUB_ROLES','TOAST_QUEUE',
   'LIFE_EXTRA_ATHLETES','CLUB_SOCIOS_SOFT_CAP',
   'DEV','DAY_CONDITIONS','MAX_IMPORT_CHARS','MONTHLY_EVENTS_POOL','BETWEEN_EVENTS','TRAINING_EVENTS_POOL',
-  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL']);
+  'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL',
+  'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -177,7 +178,7 @@ t('y no toca la ranura activa si borras otra', T.getG()._saveSlot===1);
 
 console.log('\n── T124 (v92) · SAVE_VERSION se comprueba al cargar ──');
 const almacen={};
-const LSfake={get:k=>almacen[k]??null,set:(k,v)=>{almacen[k]=v},del:k=>{delete almacen[k]}};
+const LSfake={get:k=>almacen[k]??null,set:(k,v)=>{almacen[k]=v;return true;},del:k=>{delete almacen[k]}};
 const LSreal=T.LS.get, LSrealSet=T.LS.set, LSrealDel=T.LS.del;
 T.LS.get=LSfake.get; T.LS.set=LSfake.set; T.LS.del=LSfake.del;
 const estadoMin=()=>{const g=T.freshState();g.runner.name='Txiki';return g;};
@@ -187,6 +188,57 @@ almacen[T.SAVE_KEY+'9']=JSON.stringify({v:'TRAIL_SAVE_V9',ts:1,state:estadoMin()
 t('un save de un formato futuro ya NO entra como si nada', T.loadFromSlot(9)===null);
 almacen[T.SAVE_KEY+'9']=JSON.stringify({ts:1,state:estadoMin()});
 t('un save antiguo sin campo v sigue cargando (lo migra migrateState)', T.loadFromSlot(9)!==null);
+
+console.log('\n── PUB-02 (v99) · lo que no se puede abrir no sale como «vacía» ──');
+delete almacen[T.SAVE_KEY+'8'];
+t('una ranura sin nada es «empty»', T.inspectSlot(8).kind==='empty');
+almacen[T.SAVE_KEY+'8']=JSON.stringify({v:T.SAVE_VERSION,ts:1,state:estadoMin()});
+t('un save del formato actual es «ok» y trae los datos', T.inspectSlot(8).kind==='ok'&&!!T.inspectSlot(8).data);
+almacen[T.SAVE_KEY+'8']=JSON.stringify({v:'TRAIL_SAVE_V9',ts:1,state:estadoMin()});
+t('otro formato es «broken», no «empty»', T.inspectSlot(8).kind==='broken');
+almacen[T.SAVE_KEY+'8']='{esto no es json';
+t('datos rotos son «broken»', T.inspectSlot(8).kind==='broken');
+const futuro=estadoMin();futuro._build=T.GAME_BUILD+1;
+almacen[T.SAVE_KEY+'8']=JSON.stringify({v:T.SAVE_VERSION,ts:1,state:futuro});
+t('un save de una build más nueva es «future» con su build', T.inspectSlot(8).kind==='future'&&T.inspectSlot(8).build===T.GAME_BUILD+1);
+t('y loadFromSlot no lo abre', T.loadFromSlot(8)===null);
+const b64=o=>T.SAVE_VERSION+'::'+Buffer.from(JSON.stringify(o),'utf8').toString('base64');
+t('importar un save de una build más nueva se rechaza', T.importFromText(b64(futuro),7)===false&&T.importFromText.lastError==='Otra versión');
+t('importar un TRAIL_SAVE_V9 dice «Otra versión»', T.importFromText('TRAIL_SAVE_V9::e30=',7)===false&&T.importFromText.lastError==='Otra versión');
+t('importar uno bueno sigue funcionando', T.importFromText(b64(estadoMin()),7)===true);
+delete almacen[T.SAVE_KEY+'8'];delete almacen[T.SAVE_KEY+'7'];
+
+console.log('\n── PUB-01/PUB-03 (v99) · un save importado no mete HTML ni __proto__ ──');
+const VENENO='"\'><img src=x onerror=alert(1)>`';
+const ev=estadoMin();
+ev.selectedRaces=[{id:'x',name:'Carrera'+VENENO,segs:[{name:'Tramo'+VENENO}]}];
+ev.rivals=[{name:'Rival'+VENENO,flag:VENENO,country:VENENO}];
+ev.nemesisLog={['Nombre'+VENENO]:{wins:1,gapSum:2,gapCount:1}};
+ev.monthlyEvents=[{title:VENENO,options:[{text:VENENO}]}];
+ev.clubModeData={name:'Club',plantilla:[{name:'A',flag:VENENO}]};
+const evJson=JSON.stringify(ev).replace(/^\{/,'{"__proto__":{"polluted":"SI"},');
+const limpio=T.sanitizeState(JSON.parse(evJson));
+const malosTxt=[];(function walk(v,p){if(typeof v==='string'){if(/[<>"'`]/.test(v))malosTxt.push(p);return;}if(v&&typeof v==='object')for(const k of Object.keys(v)){if(/[<>"'`]/.test(k))malosTxt.push(p+'['+k+']');walk(v[k],p+'.'+k);}})(limpio,'G');
+t('ningún texto ni clave del save conserva comillas ni < >', malosTxt.length===0, malosTxt.slice(0,3));
+t('el texto se sigue leyendo (‹img…› en vez de <img…>)', limpio.selectedRaces[0].name==='Carrera”’›‹img src=x onerror=alert(1)›’');
+t('las claves también se limpian', Object.keys(limpio.nemesisLog)[0]==='Nombre”’›‹img src=x onerror=alert(1)›’');
+t('__proto__ se descarta y no cambia el prototipo', !Object.keys(limpio).includes('__proto__')&&Object.getPrototypeOf(Object.getPrototypeOf(limpio))===null&&limpio.polluted===undefined);
+t('un nombre normal no cambia', T.sanitizeState(estadoMin()).runner.name==='Txiki');
+
+console.log('\n── PUB-04 (v99) · sin atletas reales ──');
+// Los 18 que había en RIVALS_POOL y los dos rivalName de Entrenador. Si vuelve uno, falla.
+const REALES=['Kilian Jornet','Haene','Jim Walmsley','Courtney Dauwalter','Pau Capell','Tom Evans','Rémi Bonnet',
+  'Ruth Croft','Ludovic Pommeret','Anna Comet','Silvia Rampazzo','Dakota Jones','Mathieu Blanchard','Andrea Huser',
+  'Ryoichi Sekiya','Thibaut Baronian','Antoine Guillon','Camille Herron','Núria Picas','Jornet'];
+const jsTodo=require('fs').readdirSync(__dirname+'/../js').map(f=>require('fs').readFileSync(__dirname+'/../js/'+f,'utf8')).join('\n');
+t('ningún fichero de js/ nombra a los atletas reales de antes', REALES.every(n=>!jsTodo.includes(n)), REALES.filter(n=>jsTodo.includes(n)));
+t('RIVALS_POOL sigue con 18 rivales', T.RIVALS_POOL.length===18);
+t('y sin nombres repetidos', new Set(T.RIVALS_POOL.map(r=>r.name)).size===18);
+
+console.log('\n── PUB-07 (v99) · la privacidad dice lo mismo en el juego y en el README ──');
+const readme=require('fs').readFileSync(__dirname+'/../README.md','utf8').replace(/\*\*/g,'');
+const enJuego=T.PRIVACY_PARAGRAPHS.join(' ');
+T.PRIVACY_KEY_PHRASES.forEach(f=>t('«'+f+'» está en el juego y en el README', enJuego.includes(f)&&readme.includes(f)));
 
 console.log('\n── T140 (v92) · el id del circuito pasa a ASCII ──');
 // v94: la migración de saves con el id viejo se retiró; queda fijado el dato.
