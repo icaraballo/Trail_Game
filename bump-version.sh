@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sube el build del juego en los 3 sitios donde vive el número:
 #   - js/save.js        → const GAME_BUILD=NN
-#   - index.html         → <title>Juego Trail · vNN</title>
+#   - index.html         → <title>Trail Game · vNN</title>
 #   - index.html         → las 11 query strings ?v=NN de cache-busting de los <script>
 #
 # Uso: ./bump-version.sh <nuevo-build>
@@ -57,7 +57,7 @@ fi
 sed -i.bak -E "s/const GAME_BUILD=[0-9]+/const GAME_BUILD=$NEW/" "$SAVE_JS"
 
 # 2) index.html — <title>
-sed -i.bak -E "s/(<title>Juego Trail · v)[0-9]+(<\/title>)/\1$NEW\2/" "$INDEX_HTML"
+sed -i.bak -E "s/(<title>Trail Game · v)[0-9]+(<\/title>)/\1$NEW\2/" "$INDEX_HTML"
 
 # 3) index.html — 11 query strings ?v=NN de los scripts js/*.js
 # T53 (v92): el patrón era [a-zA-Z]+ y render-core.js lleva guion — sin el

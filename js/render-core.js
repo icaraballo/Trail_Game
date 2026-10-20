@@ -448,7 +448,7 @@ function renderSaveScreen(){
     });
   }catch(e){}
   el.innerHTML=`
-    <h1>Juego Trail</h1>
+    <h1>Trail Game</h1>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <p class="sub" style="margin-bottom:0;flex:1">Partidas guardadas</p>
@@ -799,7 +799,7 @@ function renderIntro(){
   const el=$main();
   const r=G.runner;
   el.innerHTML=`
-    <h1>Juego Trail</h1>
+    <h1>Trail Game</h1>
     <p class="sub">Crea tu corredor y empieza tu carrera deportiva</p>
     <div style="display:inline-block;font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px;margin-bottom:8px">v${GAME_BUILD}</div>
     ${G.gameMode==='expres'?`<div class="warn" style="margin-bottom:14px">⚡ <strong>Carrera Exprés</strong> — 3 temporadas · sin gestión de jornada · ganancias de entrenamiento ×1.5</div>`:''}

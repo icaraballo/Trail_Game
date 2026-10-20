@@ -28,7 +28,7 @@ if [ -z "$BUILD" ]; then
 fi
 echo "Build de referencia (js/save.js): v$BUILD"
 
-TITLE_BUILD="$(grep -oE '<title>Juego Trail · v[0-9]+</title>' "$INDEX_HTML" | grep -oE '[0-9]+' || true)"
+TITLE_BUILD="$(grep -oE '<title>Trail Game · v[0-9]+</title>' "$INDEX_HTML" | grep -oE '[0-9]+' || true)"
 if [ "$TITLE_BUILD" != "$BUILD" ]; then
   echo "FALLO  <title> de index.html dice v${TITLE_BUILD:-"(no encontrado)"}, debería ser v$BUILD"
   FAIL=1
