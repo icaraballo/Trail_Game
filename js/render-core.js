@@ -449,7 +449,8 @@ function renderSaveScreen(){
   }catch(e){}
   el.innerHTML=`
     <h1>Trail Game</h1>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span>
+      <button class="opinar-btn" onclick="abrirOpinion()"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17.5H4A1.5 1.5 0 0 1 2.5 16V7A1.5 1.5 0 0 1 4 5.5z"/></svg>Opinar</button></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <p class="sub" style="margin-bottom:0;flex:1">Partidas guardadas</p>
       <button onclick="G._achPrev='saveScreen';G.screen='achievements';render()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">🏅 Logros</button>
@@ -891,17 +892,167 @@ const PRIVACY_PARAGRAPHS=[
   'Trail Game no tiene servidor, ni cuentas, ni analítica, ni cookies.',
   'Tus partidas (5 ranuras) y tus logros se guardan solo en este navegador; si borras los datos del sitio, se borran.',
   '«Exportar partida» crea un texto que solo sale de tu móvil si tú lo compartes.',
-  'GitHub, que aloja la página, ve tu dirección IP, como cualquier web.',
+  'Si mandas una opinión, va a un formulario de Google con la versión del juego, el modo y el momento de la partida. Tu nombre y tu contacto, solo si los escribes.',
+  'GitHub, que aloja la página, y Google, si opinas, ven tu dirección IP, como cualquier web.',
 ];
 const PRIVACY_KEY_PHRASES=[
   'no tiene servidor, ni cuentas, ni analítica, ni cookies',
   'se guardan solo en este navegador',
   'solo sale de tu móvil si tú lo compartes',
-  've tu dirección IP',
+  'va a un formulario de Google',
+  'ven tu dirección IP',
 ];
 window.showPrivacy=()=>{
   showTip('Privacidad',PRIVACY_PARAGRAPHS.map(p=>`<p style="margin-bottom:8px">${p}</p>`).join('')+
     `<button class="main" style="margin-top:8px" onclick="closeTip()">Entendido</button>`);
+};
+
+// v101 · Opinar, como en La Colmena (v11.16) y Chromalchemy: una hoja con las preguntas
+// del formulario de Google; al enviar, las respuestas van a su `formResponse` por detrás
+// (no-cors: Google no contesta nada legible, solo se sabe si no hubo red) y no se sale
+// del juego. Se abre desde la pantalla de partidas. Los `entry` salen del enlace
+// prerrellenado: si se cambia una pregunta en Google, hay que cambiarla aquí. Lo escrito
+// se conserva al cerrar sin enviar. La privacidad (tip-overlay, z 1200) va por encima.
+const OPINION_FORM='https://docs.google.com/forms/d/e/1FAIpQLSevoPqHZ2UsKlI0DBl_Jm5ZlEEOXGHcD267H05p1wPLGQZ-gw/formResponse';
+const OPINION_PREGUNTAS=[
+  {entry:'entry.932365581', texto:'¿Qué te ha gustado?', largo:true},
+  {entry:'entry.1764929900',texto:'¿Qué te ha confundido o te ha sobrado?', largo:true},
+  {entry:'entry.332127336', texto:'¿Has encontrado algo raro o «roto»?', largo:true},
+  {entry:'entry.1198938977',texto:'Cuéntame lo que quieras', ayuda:'Ideas, quejas, lo que se te ocurra', largo:true},
+  {entry:'entry.1083438825',texto:'Tu nombre', ayuda:'Opcional, si quieres que te responda'},
+  {entry:'entry.1276655054',texto:'Correo u otro contacto', ayuda:'Opcional'},
+];
+// Los tres que rellena el juego y no se ven (la sección final del formulario).
+const OPINION_CAMPOS={version:'entry.1031068515',modo:'entry.1550420656',momento:'entry.1150654629'};
+const OPINION_MAX={largo:2000,corto:100};
+const OPINION_CLASICO=['facil','medio','dificil','hardcore'];
+const OPINION_FASE={runner:'corredor',overlap:'solapamiento',coach:'entrenador',club:'club'};
+const OPINION_MES=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// El modo y el momento de un estado de partida (G o el de una ranura): «Clásico · Difícil»,
+// «Temporada 3 · May · pantalla training».
+function opinionModo(s){
+  const m=s.gameMode;
+  let txt=OPINION_CLASICO.includes(m)?'Clásico · '+modeLabelOf(m):modeLabelOf(m);
+  if(s.carreraVida)txt+=' · Carrera de Vida ('+(OPINION_FASE[s.lifecyclePhase]||s.lifecyclePhase)+')';
+  return txt;
+}
+function opinionMomento(s,pantalla){
+  const coach=s.gameMode==='coach'||(s.carreraVida&&s.lifecyclePhase==='coach');
+  const temp=s.gameMode==='canicross'?s.cnSeason:coach?s.coachSeason:s.year;
+  const partes=['Temporada '+(temp||1)];
+  const carrera=!coach&&s.gameMode!=='canicross'&&s.selectedRaces&&s.selectedRaces[s.currentRaceIdx||0];
+  if(carrera&&carrera.month)partes.push(OPINION_MES[carrera.month]);
+  if(s.careerEnded)partes.push('carrera terminada');
+  if(pantalla)partes.push('pantalla '+pantalla);
+  return partes.join(' · ');
+}
+// Lo que acompaña a la opinión. Si se ha entrado a partidas desde una partida (💾), esa;
+// si no, la última que se guardó de las cinco ranuras; sin ninguna, «Sin partida».
+function opinionDatos(){
+  const d={version:'v'+GAME_BUILD};
+  const enJuego=G._prevScreen&&G._prevScreen!=='modeSelect'&&G._prevScreen!=='saveScreen';
+  if(enJuego){
+    d.modo=opinionModo(G);
+    d.momento='En juego'+(G._saveSlot!=null?' (ranura '+(G._saveSlot+1)+')':'')+' · '+opinionMomento(G,G._prevScreen);
+    return d;
+  }
+  const ultima=getAllSlots().filter(x=>x.data).sort((a,b)=>(b.data.ts||0)-(a.data.ts||0))[0];
+  if(!ultima){d.modo='Sin partida';d.momento='Inicio';return d;}
+  const s=ultima.data.state;
+  const fecha=new Date(ultima.data.ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+  d.modo=opinionModo(s);
+  d.momento='Última guardada (ranura '+(ultima.slot+1)+', '+fecha+') · '+opinionMomento(s,s.screen);
+  return d;
+}
+// El cuerpo del envío: solo las preguntas con algo escrito, y los datos del juego. null si
+// no hay nada escrito. pageHistory: con dos secciones, sin él Google no da la respuesta por
+// terminada.
+function opinionCuerpo(respuestas,datos){
+  const escritas=Object.keys(respuestas).filter(k=>String(respuestas[k]||'').trim());
+  if(!escritas.length)return null;
+  const par=(k,v)=>encodeURIComponent(k)+'='+encodeURIComponent(v);
+  const pares=escritas.map(k=>par(k,String(respuestas[k]).trim()));
+  Object.keys(OPINION_CAMPOS).forEach(k=>{if(datos[k]!=null&&datos[k]!=='')pares.push(par(OPINION_CAMPOS[k],datos[k]));});
+  pares.push(par('pageHistory','0,1'));
+  return pares.join('&');
+}
+let opinionAbierta=false,opinionOrigen=null,opinionCierre=0;
+window.abrirOpinion=()=>{
+  clearTimeout(opinionCierre);
+  opinionAbierta=true;
+  opinionOrigen=document.activeElement;
+  const caja=document.getElementById('opinion-preguntas');
+  if(!caja.children.length){
+    caja.innerHTML=OPINION_PREGUNTAS.map((p,i)=>{
+      const ph=p.ayuda?` placeholder="${p.ayuda}"`:'';
+      const campo=p.largo?`<textarea name="${p.entry}" rows="2" maxlength="${OPINION_MAX.largo}"${ph}></textarea>`
+        :`<input name="${p.entry}" type="text" maxlength="${OPINION_MAX.corto}" autocomplete="${i===OPINION_PREGUNTAS.length-1?'email':'name'}"${ph}>`;
+      return `<label>${p.texto}${campo}</label>`;
+    }).join('');
+  }
+  document.getElementById('opinion-form').hidden=false;
+  document.getElementById('opinion-gracias').hidden=true;
+  document.getElementById('opinion-aviso').textContent='';
+  const enviar=document.getElementById('opinion-enviar');
+  enviar.disabled=false;enviar.textContent='Enviar';
+  const h=document.getElementById('opinion'),velo=document.getElementById('opinion-fondo');
+  h.hidden=false;velo.hidden=false;
+  h.getBoundingClientRect();   // para que haya transición
+  h.classList.add('abierta');velo.classList.add('abierta');
+  caja.scrollTop=0;
+  ajustarOpinion();
+};
+window.cerrarOpinion=()=>{
+  if(!opinionAbierta)return;
+  opinionAbierta=false;
+  const h=document.getElementById('opinion'),velo=document.getElementById('opinion-fondo');
+  if(document.activeElement&&h.contains(document.activeElement))document.activeElement.blur();
+  ajustarOpinion();
+  h.classList.remove('abierta');velo.classList.remove('abierta');
+  opinionCierre=setTimeout(()=>{h.hidden=true;velo.hidden=true;},250);
+  if(opinionOrigen&&document.contains(opinionOrigen)&&opinionOrigen.offsetParent)opinionOrigen.focus({preventScroll:true});
+  opinionOrigen=null;
+};
+// Con el teclado del móvil abierto, la hoja se ajusta a lo que se ve para poder bajar
+// hasta «Enviar» (CR-16 de La Colmena). Con la página ampliada no se toca.
+function ajustarOpinion(){
+  const h=document.getElementById('opinion'),vv=window.visualViewport;
+  if(!h)return;
+  const suelta=()=>{h.style.top='';h.style.bottom='';h.classList.remove('con-teclado');};
+  if(!opinionAbierta||!vv||vv.scale>1.01){suelta();return;}
+  const tapado=Math.round(window.innerHeight-vv.offsetTop-vv.height);
+  if(tapado<1){suelta();return;}
+  h.classList.add('con-teclado');
+  h.style.bottom=tapado+'px';
+  h.style.top=Math.round(vv.offsetTop+12)+'px';
+  const f=document.activeElement;
+  if(f&&h.contains(f)&&f.matches('textarea,input'))f.scrollIntoView({block:'nearest'});
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',ajustarOpinion);
+  window.visualViewport.addEventListener('scroll',ajustarOpinion);
+}
+window.enviarOpinion=async e=>{
+  e.preventDefault();
+  const form=document.getElementById('opinion-form'),boton=document.getElementById('opinion-enviar'),aviso=document.getElementById('opinion-aviso');
+  const respuestas={};
+  OPINION_PREGUNTAS.forEach(p=>{respuestas[p.entry]=form.elements[p.entry].value;});
+  const cuerpo=opinionCuerpo(respuestas,opinionDatos());
+  if(!cuerpo){aviso.textContent='Escribe algo en alguna pregunta antes de enviar.';return;}
+  aviso.textContent='';
+  boton.disabled=true;boton.textContent='Enviando…';
+  try{
+    await window.fetch(OPINION_FORM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:cuerpo});
+  }catch(err){
+    boton.disabled=false;boton.textContent='Enviar';
+    aviso.textContent='No se ha podido enviar: parece que no hay conexión. Lo escrito sigue aquí; inténtalo en un rato.';
+    return;
+  }
+  form.reset();
+  form.hidden=true;
+  document.getElementById('opinion-gracias').hidden=false;
+  document.getElementById('opinion-volver').focus({preventScroll:true});
 };
 
 const TUTORIAL_CARDS=[

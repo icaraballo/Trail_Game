@@ -32,7 +32,8 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'LIFE_EXTRA_ATHLETES','CLUB_SOCIOS_SOFT_CAP',
   'DEV','DAY_CONDITIONS','MAX_IMPORT_CHARS','MONTHLY_EVENTS_POOL','BETWEEN_EVENTS','TRAINING_EVENTS_POOL',
   'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL',
-  'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS']);
+  'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS',
+  'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -960,5 +961,18 @@ console.log('\n── v98 · CR-81 · las precarreras no cambian la partida al p
   t('la sortea doCoachStartRace, y una vez', !!dc&&(ctx.doCoachStartRace(),T.getG().coachDayCondition===dc));
   ctx.render=_render;ctx.showToast=_toast;
 }
+
+console.log('\n── v101 · Opinar: lo que se manda al formulario ──');
+t('sin nada escrito no se envía', T.opinionCuerpo({'entry.1':'  '},{version:'v101'})===null);
+{
+  const c=T.opinionCuerpo({'entry.1':' hola ','entry.2':''},{version:'v101',modo:'Clásico · Difícil',momento:''});
+  t('solo van las preguntas escritas, sin espacios', c.includes('entry.1=hola')&&!c.includes('entry.2='));
+  t('con los datos del juego que haya', c.includes(T.OPINION_CAMPOS.version+'=v101')&&c.includes(encodeURIComponent('Clásico · Difícil'))&&!c.includes(T.OPINION_CAMPOS.momento+'='));
+  t('y pageHistory, o Google no la da por terminada', c.endsWith('pageHistory='+encodeURIComponent('0,1')));
+}
+t('Clásico lleva la dificultad', T.opinionModo({gameMode:'dificil'})==='Clásico · Difícil');
+t('Carrera de Vida, con su fase', T.opinionModo({gameMode:'medio',carreraVida:true,lifecyclePhase:'overlap'})==='Clásico · Medio · Carrera de Vida (solapamiento)');
+t('Canicross cuenta su temporada', T.opinionMomento({gameMode:'canicross',cnSeason:4,year:1},'canicrossHub')==='Temporada 4 · pantalla canicrossHub');
+t('Clásico, con el mes de la carrera', T.opinionMomento({gameMode:'medio',year:3,selectedRaces:[{month:5}],currentRaceIdx:0,careerEnded:true},null)==='Temporada 3 · May · carrera terminada');
 
 t.done('TODO OK');

@@ -31,9 +31,12 @@ Trail Game **no tiene servidor, ni cuentas, ni analítica, ni cookies**.
 - Tus partidas (5 ranuras) y tus logros **se guardan solo en este navegador** (`localStorage`).
   Si borras los datos del sitio, se borran.
 - «Exportar partida» crea un texto que **solo sale de tu móvil si tú lo compartes**.
-- GitHub, que aloja la página, **ve tu dirección IP**, como cualquier web.
+- Si mandas una opinión con «Opinar», **va a un formulario de Google** con la versión del
+  juego, el modo y el momento de la partida. Tu nombre y tu contacto, solo si los escribes.
+- GitHub, que aloja la página, y Google, si opinas, **ven tu dirección IP**, como cualquier web.
 
-Lo mismo se lee dentro del juego: «Privacidad», junto a la versión, en la pantalla de partidas.
+Lo mismo se lee dentro del juego: «Privacidad», junto a la versión, en la pantalla de partidas,
+y en la hoja de «Opinar».
 
 ## Estado del proyecto
 

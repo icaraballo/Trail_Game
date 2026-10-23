@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <!-- PUB-12 (v99): qué puede cargar la página. 'unsafe-inline' lo obligan los onclick=""
      de las plantillas; 'unsafe-eval', solo la consola del modo dev (devEval). Lo que sí
-     corta: conexiones a otras webs (connect-src), plugins, <base> y formularios.
+     corta: conexiones a otras webs (connect-src: solo el formulario de Google de opinar,
+     desde la v101), plugins, <base> y formularios.
      frame-ancestors no funciona en un <meta>. Probada sin violaciones con y sin ?dev=1. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://docs.google.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 // v98 · Modo desarrollador: la captura de la consola va lo primero, para no perder los
@@ -43,8 +44,13 @@ if(!window.DEV_ON){
   addEventListener('error',e=>{ if(!e.filename||e.filename.indexOf(location.origin)===0) fatal(); });
   addEventListener('unhandledrejection',fatal);
 }
-// Escape cierra la hoja que esté abierta (ayudas y privacidad)
-addEventListener('keydown',e=>{ if(e.key==='Escape'&&typeof closeTip==='function')closeTip(); });
+// Escape cierra la hoja que esté abierta (ayudas y privacidad; opinar, si no hay otra encima)
+addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const tip=document.getElementById('tip-overlay');
+  if(tip&&tip.style.display==='flex'){closeTip();return;}
+  if(typeof cerrarOpinion==='function')cerrarOpinion();
+});
 </script>
 <!-- PUB-06 (v99): lo que se ve al compartir el enlace (LinkedIn, WhatsApp…) -->
 <meta name="description" content="Gestiona la carrera de un corredor de trail: entrenos, calendario, patrocinios, lesiones y rivales. Gratis y en el navegador.">
@@ -63,7 +69,7 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'&&typeof closeTip==='function
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<title>Trail Game · v100</title>
+<title>Trail Game · v101</title>
 <style>
 :root{--color-background-primary:#fff;--color-background-secondary:#f8f7f3;--color-background-tertiary:#f0ede8;--color-text-primary:#1a1a1a;--color-text-secondary:#888;--color-text-tertiary:#aaa;--color-border-tertiary:#e0dfd8;--border-radius-md:8px;--border-radius-lg:12px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -213,6 +219,38 @@ button.secondary:hover{background:#f0ede8}
 /* PUB-07 (v99): enlace de privacidad junto a la versión; ::after agranda la zona de toque */
 .enlace-priv{position:relative;border:none;background:none;padding:0;font:inherit;color:#4a6f99;text-decoration:underline;cursor:pointer}
 .enlace-priv::after{content:'';position:absolute;inset:-14px -10px}
+/* v101 · Opinar: el botón, a la derecha de la versión, y la hoja desde abajo, como en La
+   Colmena. Por debajo de la privacidad (tip-overlay, 1200), que se abre desde aquí. */
+.opinar-btn{margin-left:auto;display:flex;align-items:center;gap:6px;min-height:36px;padding:0 14px 0 12px;border:1px solid #b9d3a8;border-radius:18px;background:#f2f8ee;color:#2f6a1f;font-size:13px;font-weight:600;cursor:pointer}
+.opinar-btn:hover{background:#e6f1df}
+#opinion-fondo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;opacity:0;transition:opacity .25s ease-out}
+#opinion-fondo.abierta{opacity:1}
+#opinion{position:fixed;left:0;right:0;bottom:0;top:clamp(24px,8dvh,72px);z-index:1101;max-width:560px;margin:0 auto;
+  background:#fff;border-top:3px solid #4a8a2a;border-radius:16px 16px 0 0;
+  padding:14px 18px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.12);transform:translateY(100%);transition:transform .25s ease-out}
+#opinion.abierta{transform:none}
+#opinion-form{display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0}
+#opinion-form[hidden],.op-gracias[hidden]{display:none}
+.op-cab{display:flex;justify-content:space-between;align-items:center;flex:none}
+.op-cab h2{font-size:18px;font-weight:700;color:#1a1a1a;margin:0}
+.op-x{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:20px;background:#fff;border:1px solid #ddd;color:#888;font-size:15px;cursor:pointer}
+.op-preguntas{display:flex;flex-direction:column;gap:14px;flex:1 1 auto;min-height:0;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;margin:0 -6px;padding:2px 6px 6px}
+.op-preguntas label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:#1a1a1a}
+.op-preguntas textarea,.op-preguntas input{font:inherit;font-size:16px;font-weight:400;color:#1a1a1a;background:#fafaf8;border:1px solid #ddd;border-radius:8px;padding:9px 11px;width:100%;resize:none;box-sizing:border-box}
+.op-preguntas textarea{min-height:66px}
+.op-preguntas textarea:focus,.op-preguntas input:focus{outline:none;border-color:#4a8a2a;background:#fff}
+.op-preguntas ::placeholder{color:#aaa}
+.op-aviso{font-size:13px;color:#c0392b;flex:none;margin:0}
+.op-aviso:empty{display:none}
+.op-enviar{flex:none;min-height:48px;border:1px solid #1a1a1a;border-radius:8px;background:#1a1a1a;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.op-enviar:hover:not([disabled]){background:#333}
+.op-enviar:disabled{opacity:.55;cursor:default}
+.op-privacidad{flex:none;margin:-4px 0 0;font-size:12px;line-height:1.4;color:#888;text-align:center}
+#opinion.con-teclado .op-privacidad{display:none}
+.op-gracias{display:flex;flex-direction:column;flex:1 1 auto}
+.op-ok{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.op-ok h3{font-size:20px;color:#1a1a1a;margin:0}.op-ok p{font-size:14px;line-height:1.5;color:#666;max-width:260px;margin:0}
 /* PUB-10 (v99): la tarjeta de error */
 #fatal-err{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px}
 .fatal-card{background:#fff;border-radius:14px;padding:20px;max-width:420px;width:100%;font-size:14px;line-height:1.5;color:#333}
@@ -358,6 +396,26 @@ button.secondary:hover{background:#f0ede8}
     </div>
   </div>
 
+  <!-- v101 · Opinar: las preguntas del formulario de Google dentro del juego; las pinta
+       abrirOpinion() desde OPINION_PREGUNTAS (render-core.js). Versión, modo y momento no
+       salen: los manda el juego al enviar. Nunca se sale del juego. -->
+  <div id="opinion-fondo" hidden onclick="cerrarOpinion()"></div>
+  <div id="opinion" role="dialog" aria-modal="true" aria-labelledby="opinion-titulo" hidden>
+    <form id="opinion-form" novalidate onsubmit="enviarOpinion(event)">
+      <div class="op-cab"><h2 id="opinion-titulo">¿Qué te parece?</h2>
+        <button type="button" class="op-x" onclick="cerrarOpinion()" aria-label="Cerrar">✕</button></div>
+      <div class="op-preguntas" id="opinion-preguntas"></div>
+      <p class="op-aviso" id="opinion-aviso" role="status"></p>
+      <button type="submit" class="op-enviar" id="opinion-enviar">Enviar</button>
+      <p class="op-privacidad">Se envía a un formulario de Google con la versión y tu última partida. Nombre y contacto, solo si los pones. <button type="button" class="enlace-priv" onclick="showPrivacy()">Privacidad</button></p>
+    </form>
+    <div class="op-gracias" id="opinion-gracias" hidden>
+      <div class="op-ok"><svg width="56" height="56" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#4a8a2a"/><path d="M14 25l7 7 13-15" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3>¡Gracias!</h3><p>Lo leo todo. Tu opinión ayuda a que el juego mejore.</p></div>
+      <button type="button" class="op-enviar" id="opinion-volver" onclick="cerrarOpinion()">Volver al juego</button>
+    </div>
+  </div>
+
   <!-- Tutorial overlay (modal centrado) -->
   <div id="tut-overlay" onclick="if(event.target===this)closeTutorial()">
     <div class="tut-panel">
@@ -410,19 +468,19 @@ button.secondary:hover{background:#f0ede8}
 </nav>
 
 
-<script src="js/constants.js?v=100"></script>
-<script src="js/state.js?v=100"></script>
-<script src="js/save.js?v=100"></script>
-<script src="js/race.js?v=100"></script>
-<script src="js/coach.js?v=100"></script>
-<script src="js/club.js?v=100"></script>
-<script src="js/canicross.js?v=100"></script>
+<script src="js/constants.js?v=101"></script>
+<script src="js/state.js?v=101"></script>
+<script src="js/save.js?v=101"></script>
+<script src="js/race.js?v=101"></script>
+<script src="js/coach.js?v=101"></script>
+<script src="js/club.js?v=101"></script>
+<script src="js/canicross.js?v=101"></script>
 <!-- T53 (v92): render.js partido en tres. El orden importa solo para las
      sentencias de nivel raíz, y entre estos tres no hay ninguna que dependa
      de otra — pero se mantiene el orden temático por legibilidad. -->
-<script src="js/render-core.js?v=100"></script>
-<script src="js/render-clasico.js?v=100"></script>
-<script src="js/render-temporada.js?v=100"></script>
+<script src="js/render-core.js?v=101"></script>
+<script src="js/render-clasico.js?v=101"></script>
+<script src="js/render-temporada.js?v=101"></script>
 <script>
 // T70 (v90): devmode.js solo sirve con ?dev=1. Se carga a
 // demanda; render() espera a que esté dentro para que renderDevOverlay()
@@ -432,7 +490,7 @@ button.secondary:hover{background:#f0ede8}
 // v98: DEV_ON lo pone el script del <head>; el panel crea su propio botón y drawer.
 if(window.DEV_ON){
   const s=document.createElement('script');
-  s.src='js/devmode.js?v=100';
+  s.src='js/devmode.js?v=101';
   s.onload=()=>render();
   s.onerror=()=>{console.warn('devmode.js no se pudo cargar; se arranca sin panel');window.DEV_ON=false;render();};
   document.body.appendChild(s);
