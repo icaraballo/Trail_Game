@@ -469,6 +469,14 @@ button.secondary:hover{background:#f0ede8}
 .prof-ley-caja{display:inline-block;width:10px;height:10px;border-radius:2px;border:1.5px solid;margin-right:4px;vertical-align:-1px}
 .prof-ley-avi{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--card);border:1.8px solid var(--ter-avi);margin-right:4px;vertical-align:-1px}
 
+/* Canicross (rediseño, paso 7 · § 8.2): franja del compañero y cuaderno con papel rayado */
+.cn-franja{display:flex;align-items:center;gap:6px;background:var(--acc-t);border-radius:10px;padding:7px 12px;margin-bottom:12px;font-size:14px}
+.cn-franja .ico{width:22px;height:22px;color:var(--ink)}
+.cn-cuaderno{background:var(--card) repeating-linear-gradient(to bottom,transparent 0,transparent 27px,var(--line) 27px,var(--line) 28px);border:1px solid var(--line);border-left:3px solid var(--neg-t);border-radius:6px;padding:10px 14px 14px 18px;font-size:15px;line-height:28px;color:var(--ink)}
+.cn-cuaderno-entrada{padding:6px 0 10px;border-bottom:1px dashed var(--line2)}
+.cn-cuaderno-ctx{font-size:13px;color:var(--ink2);line-height:20px}
+.cn-cuaderno-nota{width:100%;min-height:44px;border:none;border-bottom:1px solid var(--line2);background:transparent;font:italic 15px/24px var(--f-text);color:var(--cuerpo-i);resize:vertical;margin-top:4px}
+
 /* ══ DIRECCIÓN VISUAL (v102) · PIEZAS ═══════════════════════════════════════════
    Vault: Diseño/TG-Direccion-Visual § 4. Prefijo pz- para no pisar las clases de
    antes (.card, .opt-btn…), que siguen hasta migrar cada pantalla. Una pantalla

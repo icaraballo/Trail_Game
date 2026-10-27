@@ -421,7 +421,8 @@ function cnGenerateRivals(race){
   const tier=race.tier||1,T=CN_TIER_LEVELS[tier]||CN_TIER_LEVELS[1];
   const def=CANICROSS_RACES.find(r=>r.id===race.id)||race;
   const segs=def.segs||[];
-  const named=CN_RIVAL_TEAMS.filter(t=>t.tiers.includes(tier)).map(t=>t.id);
+  const named=[...CN_RIVAL_TEAMS.filter(t=>t.tiers.includes(tier)).map(t=>t.id),
+    ...Object.keys(G.cnRivals||{}).filter(id=>G.cnRivals[id].exDog&&(G.cnRivals[id].tiers||[]).includes(tier))];   // paso 7
   const want=T.n[0]+Math.floor(Math.random()*(T.n[1]-T.n[0]+1));
   const fillers=shuffle(Array.from({length:Math.max(0,T.n[1]-named.length)},(_,k)=>'f'+tier+'_'+k)).slice(0,Math.max(0,want-named.length));
   const shift=cnSeasonShift(tier);
@@ -439,7 +440,7 @@ function cnGenerateRivals(race){
               :k<0.8?{seg,type:'perro',loss:40+Math.floor(Math.random()*80)}
               :{seg,type:'abandona',loss:0};
     }
-    return {id,name:st.name,level:Math.round(level),style:st.style,age:st.age,splits,incident};
+    return {id,name:st.name,level:Math.round(level),style:st.style,age:st.age,splits,incident,exDog:!!st.exDog};
   });
 }
 // Tiempo de un rival tras `upTo` tramos (todos si se omite); Infinity si ha abandonado antes.
@@ -556,8 +557,22 @@ function cnFinishRace(){
     raceId:race.id,raceName:race.name,season:G.cnSeason||1,
     pos:rs.retired?null:pos,time:totalTime,dnf:!!rs.retired,dnfReason:rs.retired?'abandono':null, // T45 (v89): esta era ya la forma buena; solo se le añade el motivo
     bondDelta:totalBond,prize,km:race.km||0,tier:race.tier||1,
-    catPos,
+    catPos,temp:rs.tempReal,minSync:rs.minSync==null?Math.round(rs.sync||0):rs.minSync,   // paso 7
   });
+  if(!rs.retired){
+    if(pos===1&&rs.couldForce&&!rs.forced)G.cnWinNoForce=(G.cnWinNoForce||0)+1;
+    // Un perro tuyo, con otro, en el podio contra ti
+    const orden=[{me:true,t:totalTime},...rivals.map(r=>({r,t:cnRivalTime(r)}))].filter(x=>Number.isFinite(x.t)).sort((a,b)=>a.t-b.t);
+    if(orden.slice(0,3).some(x=>x.r&&x.r.exDog))G.cnExDogPodium=(G.cnExDogPodium||0)+1;
+    // Circuito (§ 4.12): las carreras de tier 2+ puntúan 25·18·15·12·10·8·6·4·2·1
+    if((race.tier||1)>=2){
+      if(!G.cnCircuitTable||typeof G.cnCircuitTable!=='object')G.cnCircuitTable={};
+      orden.slice(0,CN_CIRCUIT_POINTS.length).forEach((x,i)=>{
+        if(x.me)G.cnCircuitPoints=(G.cnCircuitPoints||0)+CN_CIRCUIT_POINTS[i];
+        else G.cnCircuitTable[x.r.id]=(G.cnCircuitTable[x.r.id]||0)+CN_CIRCUIT_POINTS[i];
+      });
+    }
+  }
 
   rs.finalPos=pos;rs.finalCatPos=catPos;rs.finalCatTotal=catRivals.length+1;rs.finalCat=myCat.label;rs.finalTime=totalTime;rs.finalPrize=prize;rs.done=true;
   checkAndUnlockAchievements();
@@ -593,7 +608,16 @@ window.doCreateDog=()=>{
   if(!name){showToast('Ponle nombre al perro primero');return;}
   if(!G._cnDogBreed){showToast('Elige una raza');return;}
   if(!G._cnAdoptionOrigin){showToast('Elige cómo llegó el perro a ti');return;}
+  const prev=cnActiveDog();
   cnAddDog(cnInitDog(name,G._cnDogBreed));
+  // Paso 7 (§ 4.3): al cambiar de perro, lo aprendido de la raza se queda; lo del
+  // temperamento se olvida, pero tu nota se conserva, marcada con el nombre del anterior.
+  if(prev&&G.cnNotebook){
+    CN_BEHAVIOURS.filter(b=>(b.causes||[]).some(c=>c.temperament)).forEach(b=>{
+      const n=G.cnNotebook[b.id];if(!n)return;
+      n.seen=0;n.ctx=[];n.out=[];if(n.note&&!n.about)n.about=prev.name;
+    });
+  }
   // Apply adoption origin bond
   const origin=CN_ADOPTION_ORIGINS.find(o=>o.id===G._cnAdoptionOrigin);
   if(origin){
@@ -806,7 +830,7 @@ window.cnStartRace=idx=>{
   {
     const rs=G.cnRaceState,dd=cnActiveDog();
     rs.mood=Math.max(0,Math.min(100,cnMood(dd.mood)+Math.round((Math.random()*2-1)*10)));
-    rs.sync=Math.max(0,Math.min(100,Math.round(40+(dd.bond||0)*0.5-(cnHasTrait(dd,'miedoso')&&(race.tier||1)>=3?8:0)+(Number(dd.syncBase)||0)+cnEquipStartSync(rs,dd))));
+    rs.sync=Math.max(0,Math.min(100,Math.round(40+(dd.bond||0)*0.5-(cnHasTrait(dd,'miedoso')&&(race.tier||1)>=3?8:0)+(Number(dd.syncBase)||0)+cnEquipStartSync(rs,dd)+(cnHomeDogs().length?4:0))));   // paso 7: el de casa le calma
     rs.pack={};   // paso 6: consumibles que llevas (se eligen en la precarrera)
     rs.preBehaviour=cnPickBehaviour(rs,'pre');cnNoteSeen(rs.preBehaviour);
     rs.behaviour=cnPickBehaviour(rs,'seg');cnNoteSeen(rs.behaviour);
@@ -924,6 +948,7 @@ window.cnDecide=(intentId,cmd)=>{
   if(caso==='difiere'&&cnHasTrait(d,'cabezota'))dSync=Math.round(dSync/2);
   const syncBefore=rs.sync||0;
   rs.sync=Math.max(0,Math.min(100,syncBefore+dSync));
+  rs.minSync=Math.min(rs.minSync==null?100:rs.minSync,rs.sync);   // paso 7: logro «Un solo animal»
   // Tiempo: el del trazado al nivel del equipo, por intención y cruce, entre la sincronía
   const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
   const factorSync=0.85+0.003*syncBefore;
@@ -1045,17 +1070,29 @@ window.cnEndSeason=()=>{
     d.age=(d.age||1)+1;
     G._cnAgingWarned=d.age>=6;
     // Neglect health decay age 7+
-    if(d.age>=7){
-      d.health=Math.max(0,(d.health||100)-5);
-      if(d.health<=0){G.screen='canicrossDogDeath';render();return;}
-    }
+    // Paso 7 (§ 4.13): ya no hay muerte. Con la edad baja la salud y el juego sugiere el retiro.
+    if(d.age>=7)d.health=Math.max(1,(d.health||100)-5);
   }
   // Paso 6: el mini-patrocinio de la temporada, ligado a los seguidores
   G.cnMoney=(G.cnMoney||0)+cnSponsorIncome();
   cnDoSeasonTransition();
 };
 
+// Clasificación del circuito de la temporada: [{id|me, name, pts}] ordenada.
+function cnCircuitStanding(){
+  const t=Object.entries(G.cnCircuitTable||{}).map(([id,pts])=>({id,name:(G.cnRivals&&G.cnRivals[id]&&G.cnRivals[id].name)||id,pts}));
+  t.push({id:'me',name:G.runner.name||'Tú',pts:G.cnCircuitPoints||0,me:true});
+  return t.sort((a,b)=>b.pts-a.pts||(a.me?-1:1));
+}
 window.cnDoSeasonTransition=function cnDoSeasonTransition(){
+  // Paso 7: campeón del circuito y reinicio
+  const st=cnCircuitStanding();
+  if((G.cnCircuitPoints||0)>0&&st[0]&&st[0].me)G.cnCircuitWins=(G.cnCircuitWins||0)+1;
+  G.cnCircuitPoints=0;G.cnCircuitTable={};
+  // Paso 7 (§ 4.14): el corredor envejece; desde los 45 pierde algo cada temporada
+  G.runner.age=(G.runner.age||25)+1;
+  if(G.runner.age>=45&&G.runner.stats){const k=G.runner.age>=55?2:1;Object.keys(G.runner.stats).forEach(s=>{G.runner.stats[s]=Math.max(10,G.runner.stats[s]-k);});}
+  cnDogs().forEach(x=>{if(!x.retired)x.seasonsWithYou=(x.seasonsWithYou||0)+1;});
   // ── Achievement tracking: end of cn season ──────────────────
   const thisSeason=G.cnSeason||1;
   const seasonResults=(G.cnRaceResults||[]).filter(r=>r.season===thisSeason);
@@ -1100,7 +1137,7 @@ window.cnResolveDislasia=opt=>{
     showToast('Tratamiento intensivo iniciado 💊');
     cnDoSeasonTransition();
   } else if(opt==='retire'){
-    d.retired=true;G.screen='canicrossDogRetirement';render();
+    cnRetireDogAs(d,false);G.screen='canicrossDogRetirement';render();
   } else if(opt==='ignore'){
     d.health=Math.max(0,(d.health||100)-5);
     d.bond=Math.max(0,(d.bond||0)-5);
@@ -1109,10 +1146,38 @@ window.cnResolveDislasia=opt=>{
   }
 };
 
+// ── RETIRO Y DESTINOS (paso 7 · § 4.13) ────────────────────────────────────
+// El destino sale de cómo lo has tratado. «Deportivo» solo si lo dejas tú estando él capaz:
+// sigue corriendo con otra persona y aparece entre los rivales.
+function cnDestiny(d,voluntary){
+  const h=d.health==null?100:d.health;
+  if(h<40||(d.forcedRaces||0)>=2)return 'frio';
+  if(voluntary&&(d.age||1)<=6&&h>=60)return 'deportivo';
+  if((d.peakBond||0)>=70&&h>=50)return 'casa';
+  if((d.peakBond||0)>=40)return 'familia';
+  return 'frio';
+}
+function cnRetireDogAs(d,voluntary){
+  if(!d)return;
+  d.retired=true;d.retiredSeason=G.cnSeason||1;
+  d.seasonsWithYou=(G.cnSeason||1)-(d.birthSeason||1)+1;
+  d.destiny=cnDestiny(d,voluntary);
+  d.status=d.destiny==='casa'?'casa':d.destiny==='deportivo'?'deportivo':'adoptado';
+  if(d.destiny==='deportivo'){
+    const level=Math.round(Math.max(20,Math.min(97,cnDogPerf(d)*0.55+55*0.45)));
+    const human=CN_FILL_HUMANS[(d.id*7+3)%CN_FILL_HUMANS.length]+' '+['Ruiz','Ibarra','Sanz','Prats','Lago','Vera'][(d.id||0)%6];
+    if(!G.cnRivals||typeof G.cnRivals!=='object')G.cnRivals={};
+    G.cnRivals['dog_'+d.id]={name:human+' · '+d.name,human,dog:d.name,level,style:'regular',age:25+((d.id*13)%25),dogAge:d.age||3,
+      tier:level<45?1:level<60?2:level<72?3:4,exDog:true,tiers:level<45?[1,2]:level<60?[2,3]:level<72?[3,4]:[4]};
+  }
+}
 window.cnRetireDog=()=>{
-  if(!cnActiveDog())return;
-  cnActiveDog().retired=true;G.screen='canicrossDogRetirement';render();
+  const d=cnActiveDog();if(!d)return;
+  cnRetireDogAs(d,true);G.screen='canicrossDogRetirement';autoSave();render();
 };
+// Tu retiro: lo abre el perro, no lo impone (§ 4.14). Lleva al epílogo.
+function cnRunnerCanRetire(){return (G.runner.age||25)>=45&&cnDogs().filter(x=>x.retired).length>=2;}
+window.cnRunnerRetire=()=>{G.cnPhase='fin';G.screen='canicrossEpilogo';autoSave();render();};
 
 window.cnNewDogAfterRetirement=()=>{
   if(cnActiveDog()&&!cnActiveDog().retired)cnActiveDog().retired=true;
@@ -1440,6 +1505,7 @@ function renderCnPerroTab(){
     ${d.injury?`<div class="danger">🤕 Lesión: <strong>${{almohadillas:'Almohadillas rozadas',luxacion:'Luxación',golpe_calor:'Golpe de calor'}[d.injury]||d.injury}</strong> · ${d.injuryRaces} carrera(s) de baja<br><span style="font-size:12px;color:#c0392b">Usa el veterinario para reducir la baja</span></div>`:''}
     ${!d.injury&&d.bond<cnRaceThreshold()?`<div class="note">⚡ Vínculo insuficiente para competir. Necesita ≥${cnRaceThreshold()} (actual: <strong>${d.bond}</strong>). Entrena juntos.</div>`:''}
 
+    <button class="pz-btn sec" style="margin-bottom:12px" onclick="G.screen='canicrossNotebook';render()">Abrir el cuaderno · ${Object.keys(G.cnNotebook||{}).length} conductas</button>
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Stats</div>
       ${[['Velocidad',d.speed,'#4a90d9'],['Resistencia',d.stamina,'#4a8a2a'],['Vínculo',d.bond,'#c07a10'],['Salud',d.health,'#e74c3c']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
@@ -1471,6 +1537,7 @@ function renderCnPerroTab(){
       <button class="main" style="margin-top:0;font-size:13px;padding:10px 8px" onclick="cnCallVet('basic')" ${(d.injuryRaces||0)<=0?'disabled':''}>Revisión básica<br><span style="font-size:11px;color:#888">€50 · reduce baja</span></button>
       <button class="main" style="margin-top:0;font-size:13px;padding:10px 8px" onclick="cnCallVet('complete')" ${!d.injury?'disabled':''}>Tratamiento completo<br><span style="font-size:11px;color:#888">€120 · cura en 1 carrera</span></button>
     </div>
+    ${((d.age||1)>=8||(d.health==null?100:d.health)<35)?`<div class="pz-diag ojo" style="margin:8px 0">${esc(d.name)} tiene ${d.age} años y salud ${d.health}: quizá sea el momento de retirarle.</div>`:''}
     ${(G.cnSeason||1)>1?`<button class="main" style="background:#fef9ec;border-color:#e8c97a;color:#c07a10" data-dn="${esc(d.name)}" onclick="if(confirm('¿Retirar a '+this.dataset.dn+'?'))cnRetireDog()">Retirar a ${esc(d.name)} voluntariamente</button>`:''}
     `:`<div class="note" style="margin-top:8px">${esc(d.name)} está retirado. <button class="secondary" onclick="cnNewDogAfterRetirement()">Adoptar nuevo perro →</button></div>`}
   `;
@@ -1904,6 +1971,7 @@ function renderCanicrossSegment(){
       const sync=Math.round(rs.sync||0),legs=Math.round(Math.max(0,rs.runnerEnergy||0));
       const cls=v=>v<30?'menos':v<50?'ojo':'';
       return`<div class="pz-tarjeta pz" style="margin-bottom:10px">
+        ${cnSyncGraph(sync)}
         <div class="pz-cab-fila" style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="pz-label">Sincronía</span><span class="pz-num" style="font-size:22px">${sync}</span></div>
         <div class="pz-barra"><div class="pz-relleno ${cls(sync)}" style="width:${sync}%"></div><div class="pz-umbral" style="left:50%"></div></div>
         <div style="display:flex;justify-content:space-between;margin-top:10px" class="pz-efectos"><span>Tus piernas <span class="pz-num ${legs<40?'pz-ojo':''}">${legs}</span></span><span>Vínculo <span class="pz-num">${curBond}</span></span></div>
@@ -2049,6 +2117,15 @@ function renderCnSeasonBalance(){
       <div class="fin-row"><span>Presupuesto final</span><span class="${(G.cnMoney||0)>=0?'plus':'minus'}">€${G.cnMoney||0}</span></div>
     </div>
 
+    ${(()=>{
+      // Paso 7: el circuito de la temporada
+      const st=cnCircuitStanding();if(!(G.cnCircuitPoints||0)&&st.length<2)return'';
+      const yo=st.findIndex(x=>x.me);
+      return`<div class="pz-tarjeta pz"><div class="pz-label">Circuito</div>
+        ${st.slice(0,3).map((x,i)=>`<div class="pz-fila"><span class="pz-num">${i+1}.º</span><span class="pz-fila-txt">${x.me?'<b>Tú</b>':esc(x.name)}</span><span class="pz-fila-dato">${x.pts} pts</span></div>`).join('')}
+        ${yo>2?`<div class="pz-fila"><span class="pz-num">${yo+1}.º</span><span class="pz-fila-txt"><b>Tú</b></span><span class="pz-fila-dato">${st[yo].pts} pts</span></div>`:''}
+      </div>`;
+    })()}
     ${d?`<div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">🐕 ${esc(d.name)} · Temporada ${G.cnSeason}</div>
       ${[['Vínculo',d.bond,'#c07a10'],['Velocidad',d.speed,'#4a90d9'],['Resistencia',d.stamina,'#4a8a2a'],['Salud',d.health,'#e74c3c']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
@@ -2060,38 +2137,23 @@ function renderCnSeasonBalance(){
 }
 
 function renderCnDogRetirement(){
-  const el=$main();
-  const d=cnActiveDog();if(!d)return;
-  const seasons=(G.cnSeason||1)-(d.birthSeason||1);
-
-  el.innerHTML=`
-    <div style="text-align:center;padding:30px 0 20px">
-      <div style="font-size:52px;margin-bottom:12px">🐕</div>
-      <h2>Adiós, ${esc(d.name)}</h2>
-    </div>
-    <div class="card" style="margin-bottom:16px;background:#f8f7f3">
-      <p style="font-size:15px;line-height:1.8;color:#444">${esc(d.name)} corrió contigo <strong>${seasons}</strong> temporada${seasons!==1?'s':''}, <strong>${d.races||0}</strong> carrera${(d.races||0)!==1?'s':''} y <strong>${d.kmTogether||0} km</strong> juntos.</p>
-      <p style="font-size:14px;color:#666;margin-top:8px">Vínculo máximo alcanzado: <strong>${d.peakBond||0}</strong>.</p>
-      <p style="font-size:13px;color:#aaa;margin-top:10px;font-style:italic">"Algunos compañeros se convierten en parte de ti. ${esc(d.name)} siempre lo será."</p>
-    </div>
-    <button class="main" onclick="cnNewDogAfterRetirement()">Adoptar un nuevo compañero →</button>
-    <button class="main" style="margin-top:6px;opacity:0.5" onclick="cnDoSeasonTransition()">Continuar sin perro (categoría individual)</button>`;
+  // Paso 7 (§ 4.13-4.14): el retiro dice el destino, y puede abrir el tuyo
+  hideChrome();
+  const d=cnDogs().slice().reverse().find(x=>x.retired&&x.id===G.activeDogId)||cnActiveDog();if(!d)return;
+  const seasons=d.seasonsWithYou||Math.max(1,(G.cnSeason||1)-(d.birthSeason||1)+1);
+  const tuyo=cnRunnerCanRetire();
+  const proteVieja=cnDogs().find(x=>x.adoptionOrigin==='rescate');
+  $main().innerHTML=`<div class="pz">
+    <div class="pz-franja cierre"><div class="pz-franja-num" style="font-size:44px">${esc(d.name)}</div>
+      <div class="pz-franja-sub">${seasons} temporada${seasons!==1?'s':''} · ${d.races||0} carreras · ${d.kmTogether||0} km juntos</div></div>
+    <p class="pz-sub" style="font-size:16px;color:var(--ink)">${cnDestinyText(d)}</p>
+    <div class="pz-tarjeta pz-estado"><div class="pz-linea"><span class="pz-efectos">Vínculo más alto: <span class="pz-num">${d.peakBond||0}</span></span></div></div>
+    ${tuyo?`<div class="pz-consejo">${icono('corredor')}<div><b>Has acompañado a ${cnDogs().filter(x=>x.retired).length} perros de principio a fin.</b> Sabes leerlos mejor que la mayoría.${proteVieja?' En la protectora de la que sacaste a '+esc(proteVieja.name)+' hay quince que nadie sabe leer.':''}</div></div>`:''}
+    <button class="pz-btn" onclick="cnNewDogAfterRetirement()">Buscar un nuevo compañero</button>
+    ${tuyo?`<button class="pz-btn sec" onclick="cnRunnerRetire()">Retirarte tú también</button>`:''}
+  </div>`;
 }
 
-function renderCnDogDeath(){
-  const el=$main();
-  const d=cnActiveDog();
-  el.innerHTML=`
-    <div style="text-align:center;padding:28px 0 18px">
-      <div style="font-size:48px;margin-bottom:12px">🕯️</div>
-      <h2 style="color:#555">${d?esc(d.name):''}</h2>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <p style="font-size:14px;line-height:1.7;color:#555">La salud de ${d?esc(d.name):''} llegó a cero. ${d?esc(d.name):''} ya no está.</p>
-      <p style="font-size:13px;color:#888;margin-top:8px">Puedes continuar adoptando un nuevo perro. El vínculo empezará desde cero.</p>
-    </div>
-    <button class="main" onclick="cnNewDogAfterRetirement()">Adoptar nuevo perro →</button>`;
-}
 
 function renderCnDisplasia(){
   const el=$main();
@@ -2191,9 +2253,10 @@ window.cnMorningChoice=opt=>{
     }else showToast('Hoy no ha bastado');
   }
   if(opt==='forzar'){
-    G.cnMoney=(G.cnMoney||0)-35;rs.forced=true;
+    G.cnMoney=(G.cnMoney||0)-35;rs.forced=true;d.forcedRaces=(d.forcedRaces||0)+1;
     d.bond=Math.max(0,(d.bond||0)-8);   // incondicional: el perro lo nota
   }
+  if(opt!=='forzar')rs.couldForce=true;   // paso 7: tuvo algo, pudiste forzar y no lo hiciste
   rs.morning=null;G.screen='canicrossPreRace';render();
 };
 
@@ -2207,5 +2270,88 @@ function renderCnQuiebra(){
     <button class="pz-opcion" onclick="cnBrokeChoice('vender')"><b>Vender la equipación</b><div class="pz-efectos">A mitad de precio. Te quedas con lo básico.</div></button>
     <button class="pz-opcion" onclick="cnBrokeChoice('minima')"><b>Manutención mínima</b><div class="pz-efectos">€20 al mes hasta fin de temporada. Al perro le cuesta <span class="pz-menos">−5</span> de salud cada mes.</div></button>
     <button class="pz-btn sec" style="margin-top:8px" onclick="G.screen='canicrossHub';G.activeTab='game';render()">Seguir así</button>
+  </div>`;
+}
+
+// ── LAS SEÑAS DEL MODO (paso 7 · § 8.2) ─────────────────────────────────────
+// 1. Franja del compañero, arriba en las pantallas de Canicross (la pone triggerFade).
+function cnCompanionStrip(){
+  if(!G.canicrossMode||typeof G.screen!=='string'||!G.screen.startsWith('canicross'))return '';
+  if(['canicrossCreateDog','canicrossAntigua','canicrossEpilogo','canicrossDogRetirement'].includes(G.screen))return '';
+  const d=cnActiveDog();if(!d||d.retired)return '';
+  const m=cnMood(d.mood);
+  // cara de ánimo: icono, nunca número
+  const boca=m>=60?'M8 14.5c1.2 1.6 2.6 2.3 4 2.3s2.8-.7 4-2.3':m>=35?'M8.5 15.5h7':'M8 16.5c1.2-1.4 2.6-2 4-2s2.8.6 4 2';
+  const estado=d.injury?'De baja':d.condition?'Algo le pasa':'En forma';
+  const casa=cnHomeDogs()[0];
+  return `<div class="cn-franja pz"><svg class="ico" viewBox="0 0 24 24" aria-label="Ánimo"><circle cx="12" cy="12" r="8.5"/><circle cx="9.3" cy="10" r=".6"/><circle cx="14.7" cy="10" r=".6"/><path d="${boca}"/></svg>
+    <b>${esc(d.name)}</b><span class="pz-efectos">· ${estado}</span>${casa?`<span class="pz-efectos" style="margin-left:auto">en casa: ${esc(casa.name)}</span>`:''}</div>`;
+}
+// 2. El gráfico de dos líneas: la cadencia del perro y la tuya; desfasadas y con la línea
+// tensa cuando la sincronía baja. No hace falta mirar el número.
+function cnSyncGraph(sync){
+  const W=300,H=64,ph=(100-sync)*0.018,amp=6;
+  const wave=(y,off)=>{let p='';for(let x=0;x<=W;x+=6){const yy=y+Math.sin(x/16+off)*amp;p+=(x?'L':'M')+x+' '+yy.toFixed(1);}return p;};
+  const sag=-18*(sync/100);   // de floja (−18) a recta (0)
+  const col=sync>=60?'var(--pos)':sync>=35?'var(--avi-bar)':'var(--neg)';
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block;margin-bottom:6px" aria-hidden="true">
+    <path d="${wave(14,0)}" style="fill:none;stroke:var(--acc);stroke-width:2"/>
+    <path d="${wave(50,ph)}" style="fill:none;stroke:var(--ink2);stroke-width:2"/>
+    <path d="M136 20 Q ${(150+sag*2).toFixed(1)} ${(32-sag).toFixed(1)} 164 44" style="fill:none;stroke:${col};stroke-width:${sync>=60?1.75:2.75};stroke-linecap:round"/>
+  </svg>`;
+}
+// 3. El cuaderno (§ 4.3): revelación progresiva y la nota del jugador.
+window.cnSaveNote=(id,txt)=>{
+  if(!G.cnNotebook||!G.cnNotebook[id])return;
+  G.cnNotebook[id].note=String(txt||'').slice(0,280);G.cnNotebook[id].about=null;autoSave();
+};
+function cnNotebookCorrelation(n){
+  const ctx=n.ctx||[],out=n.out||[];
+  const temps=ctx.map(c=>c.temp).filter(t=>t!=null);
+  const ter={climb:0,descent:0,flat:0};ctx.forEach(c=>{if(ter[c.terrain]!=null)ter[c.terrain]++;});
+  const parts=[];
+  if(temps.length)parts.push(`Las ${ctx.length} veces, entre ${Math.min(...temps)} y ${Math.max(...temps)} °C.`);
+  const t=Object.entries(ter).filter(([,v])=>v).map(([k,v])=>v+' en '+({climb:'subida',descent:'bajada',flat:'llano'}[k]));
+  if(t.length)parts.push(t.join(', ')+'.');
+  ['conservar','mantener','apretar'].forEach(k=>{
+    const o=out.filter(x=>String(x.chose).startsWith(k));if(!o.length)return;
+    const b=o.filter(x=>x.result==='good').length;
+    parts.push(`Las ${o.length} veces que elegiste ${k}: ${b} salió bien, ${o.length-b} no.`);
+  });
+  return parts.join(' ');
+}
+function renderCnNotebook(){
+  const d=cnActiveDog();
+  const ents=Object.entries(G.cnNotebook||{}).filter(([,n])=>n.seen>0||n.note).sort((a,b)=>b[1].seen-a[1].seen);
+  $main().innerHTML=`<div class="pz">
+    <div class="pz-titulo">El cuaderno${d?' de '+esc(d.name):''}</div>
+    <p class="pz-sub">Lo que has visto hacer al perro y cómo salió. El cuaderno no saca conclusiones: las sacas tú.</p>
+    <div class="cn-cuaderno">
+      ${ents.length?ents.map(([id,n])=>{
+        const ctx=n.ctx||[];
+        const det=n.seen>=4?`<div class="cn-cuaderno-ctx">${cnNotebookCorrelation(n)}</div>`
+          :n.seen>=2?`<div class="cn-cuaderno-ctx">${ctx.map(c=>`T${c.season} · ${c.temp} °C${c.terrain?' · '+({climb:'subida',descent:'bajada',flat:'llano'}[c.terrain]):''}`).join(' — ')}</div>`
+          :n.seen===1?`<div class="cn-cuaderno-ctx">Temporada ${(ctx[0]||{}).season||G.cnSeason}</div>`:'';
+        return`<div class="cn-cuaderno-entrada"><div>${cnBehaviourText(id)} <span class="cn-cuaderno-ctx">(${n.seen} ${n.seen===1?'vez':'veces'})</span></div>${det}
+          ${n.about?`<div class="cn-cuaderno-ctx">Escrito sobre ${esc(n.about)}:</div>`:''}
+          <textarea class="cn-cuaderno-nota" maxlength="280" placeholder="Tu nota…" onchange="cnSaveNote('${id}',this.value)">${esc(n.note||'')}</textarea></div>`;
+      }).join(''):'<div class="cn-cuaderno-ctx">Aún no has apuntado nada. Corred juntos.</div>'}
+    </div>
+    <button class="pz-btn sec" style="margin-top:12px" onclick="G.screen='canicrossHub';G.activeTab='runner';render()">Volver</button>
+  </div>`;
+}
+function cnDestinyText(x){return (CN_DESTINY_TEXT[x.destiny]||'').replace(/\[DOG\]/g,esc(x.name));}
+// ── EPÍLOGO (paso 7 · § 4.14) ─────────────────────────────────────────────
+// Final provisional: todos tus perros y qué fue de cada uno. Bisagra de la Protectora.
+function renderCnEpilogo(){
+  hideChrome();
+  const perros=cnDogs();
+  $main().innerHTML=`<div class="pz">
+    <div class="pz-franja cierre"><div class="pz-franja-num" style="font-size:40px">${esc(G.runner.name||'Tú')}</div>
+      <div class="pz-franja-sub">${G.cnSeason||1} temporadas · ${perros.length} perro${perros.length!==1?'s':''} · ${perros.reduce((a,x)=>a+(x.kmTogether||0),0)} km</div></div>
+    ${perros.map(x=>`<div class="pz-tarjeta"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:17px">${esc(x.name)}</b><span class="pz-efectos">${(CN_BREED_MODS[x.breed]||{}).label||''}</span></div>
+      <div class="pz-efectos" style="margin:4px 0">${x.seasonsWithYou||1} temporada${(x.seasonsWithYou||1)!==1?'s':''} contigo · ${x.races||0} carreras · ${x.kmTogether||0} km · vínculo más alto ${x.peakBond||0}</div>
+      <div>${x.destiny?cnDestinyText(x):esc(x.name)+' sigue contigo.'}</div></div>`).join('')}
+    <button class="pz-btn" onclick="backToMainMenu()">Volver al menú</button>
   </div>`;
 }

@@ -14,7 +14,8 @@ function assignClubCompanion(club){
 // 5 = temperatura y clima por carrera, salud cotidiana (d.condition, d.sex) y carreras suspendidas.
 // 6 = reparto de horas, equipación y consumibles nuevos, economía con quiebra; adiós a
 //     bloques de entreno, vacaciones (B6) y cnMonthWeek.
-const CN_REV=6;
+// 7 = circuito con puntos, destinos de retiro (status/destiny), fase del modo y epílogo.
+const CN_REV=7;
 function freshState(){
   return{
     screen:'saveScreen',year:1,ranking:999,specRanking:999,money:300,
@@ -272,7 +273,10 @@ function freshState(){
     cnOwned:{harness:['h_basic'],line:['l_medium'],belt:['b_basic']},
     cnEquipped:{harness:'h_basic',line:'l_medium',belt:'b_basic'},
     cnConsumables:{booties:0,coat:0,coolvest:0,recovery:0,electrolytes:0},
-    cnMinCare:false, cnBrokeSeason:0,   // manutención mínima (estrechez) y temporada en que se vio la pantalla
+    cnMinCare:false, cnBrokeSeason:0,
+    // Paso 7: circuito, fase del modo y contadores de los logros nuevos
+    cnCircuitPoints:0, cnCircuitTable:{}, cnCircuitWins:0, cnPhase:'runner',
+    cnWinNoForce:0, cnExDogPodium:0,   // manutención mínima (estrechez) y temporada en que se vio la pantalla
     cnVetHistory:[], cnBirthdayToastShown:{}, cnRaceState:null,
     // Rediseño de Canicross, paso 1 (TG-Diseno-Canicross § 3.1): G.dog pasa a una lista.
     // El perro que compite es el de activeDogId; se lee con cnActiveDog().

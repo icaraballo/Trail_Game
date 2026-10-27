@@ -388,11 +388,12 @@ function screenRoutes(){
     canicrossPostRace:renderCanicrossPostRace,
     canicrossSeasonBalance:renderCnSeasonBalance,
     canicrossDogRetirement:renderCnDogRetirement,
-    canicrossDogDeath:renderCnDogDeath,
     canicrossDisplasia:renderCnDisplasia,
     canicrossAntigua:renderCnAntigua,
     canicrossRaceMorning:renderCnRaceMorning,
     canicrossQuiebra:renderCnQuiebra,
+    canicrossNotebook:renderCnNotebook,
+    canicrossEpilogo:renderCnEpilogo,
     achievements:renderAchievements,
     debtCrisis:renderDebtCrisis,careerEnd:renderCareerEnd,   // T29 (v86)
 };
@@ -478,6 +479,8 @@ function render(){
   triggerFade(el);
 }
 function triggerFade(el){
+  // Canicross (rediseño, paso 7 · § 8.2): la franja del compañero, arriba en sus pantallas
+  if(G.canicrossMode&&typeof cnCompanionStrip==='function'){const h=cnCompanionStrip();if(h&&el.insertAdjacentHTML)el.insertAdjacentHTML('afterbegin',h);}
   el.classList.remove('fade-in');
   void el.offsetWidth;
   el.classList.add('fade-in');

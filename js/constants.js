@@ -168,6 +168,15 @@ const ACHIEVEMENTS=[
   {id:'cn_first_race', rarity:'easy',   mode:'cn',label:'Primera carrera juntos', desc:'Completar la primera carrera de canicross',          check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf).length>=1},
   {id:'cn_bond_50',    rarity:'easy',   mode:'cn',label:'Buen equipo',            desc:'Alcanzar vínculo 50 con tu perro',                   check:()=>(cnActiveDog()?.peakBond||0)>=50},
   {id:'cn_first_season',rarity:'easy',  mode:'cn',label:'Primer invierno juntos', desc:'Completar la primera temporada de canicross',        check:()=>(G.cnSeason||1)>=2},
+  // Paso 7 del rediseño de Canicross (§ 7): logros de los sistemas nuevos
+  {id:'cn_cuaderno_20', rarity:'medium', mode:'cn',label:'Sabes leerle',            desc:'Apuntar 20 conductas distintas en el cuaderno',            check:()=>Object.keys(G.cnNotebook||{}).length>=20},
+  {id:'cn_circuito',    rarity:'hard',   mode:'cn',label:'Campeones del circuito',  desc:'Ganar el circuito de una temporada',                       check:()=>(G.cnCircuitWins||0)>=1},
+  {id:'cn_no_forzar',   rarity:'medium', mode:'cn',label:'Sin trampas',             desc:'Ganar una carrera en la que pudiste forzar al perro y no lo hiciste', check:()=>(G.cnWinNoForce||0)>=1},
+  {id:'cn_tres_casa',   rarity:'legendary',mode:'cn',label:'La casa llena',         desc:'Retirar tres perros que se quedan contigo',                check:()=>(G.dogs||[]).filter(d=>d.destiny==='casa').length>=3},
+  {id:'cn_frio_8',      rarity:'medium', mode:'cn',label:'Bajo cero',               desc:'Correr una carrera a −8 °C o menos',                        check:()=>(G.cnRaceResults||[]).some(r=>r.temp!=null&&r.temp<=-8)},
+  {id:'cn_suspendida',  rarity:'easy',   mode:'cn',label:'Hoy no',                  desc:'Que suspendan una carrera por calor',                       check:()=>(G.cnCancelledRaces||[]).some(c=>c.why==='calor')},
+  {id:'cn_sync_100',    rarity:'hard',   mode:'cn',label:'Un solo animal',          desc:'Terminar una carrera sin bajar de 95 de sincronía',          check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.minSync!=null&&r.minSync>=95)},
+  {id:'cn_exdog_podio', rarity:'legendary',mode:'cn',label:'Lo que le enseñaste',   desc:'Que un perro tuyo, corriendo con otro, suba al podio contra ti', check:()=>(G.cnExDogPodium||0)>=1},
   {id:'cn_all_cmds',   rarity:'easy',   mode:'cn',label:'Bien adiestrado',        desc:'Enseñar los 6 comandos al perro, al menos el primer nivel',check:()=>{const c=cnActiveDog()?.commands||{};return CN_COMMANDS.every(k=>(Number(c[k.id])||0)>=1);}},
   // ══ CANICROSS — MEDIO ════════════════════════════════
   {id:'cn_win_1',      rarity:'medium', mode:'cn',label:'Primer triunfo juntos',  desc:'Ganar una carrera de canicross',                     check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1)},
@@ -2379,6 +2388,15 @@ const CN_CONSUMABLES=[
 const CN_SPONSOR_BASE=120;
 const CN_SPONSOR_PER_FOLLOWER=0.15;
 const CN_SPONSOR_CAP=700;
+// Circuito (§ 4.12): puntúan las carreras de tier 2 o más
+const CN_CIRCUIT_POINTS=[25,18,15,12,10,8,6,4,2,1];
+// Destinos al retirarse (§ 4.13)
+const CN_DESTINY_TEXT={
+  casa:'[DOG] se queda contigo. Ya no corre, pero viene a la salida y el nuevo le mira a él.',
+  familia:'[DOG] vive ahora con una pareja mayor que pasea despacio. Le mandan fotos en el sofá.',
+  deportivo:'[DOG] sigue corriendo, con otra persona. Puede que os crucéis en una clasificación.',
+  frio:'[DOG] se retira gastado. Lo recoge una familia de acogida.',
+};
 // Por debajo de este saldo aparece la pantalla de estrechez (no hay game over)
 const CN_BROKE_LINE=-200;
 

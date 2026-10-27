@@ -37,6 +37,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
   'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
   'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnApplyMonthHours','cnHoursUsed','cnSponsorIncome','CN_EQUIP','CN_CMD_LEVEL_HOURS','cnEquipSeg',
+  'cnDestiny','cnRetireDogAs','cnCircuitStanding','cnHomeDogs','cnCompanionStrip','cnSyncGraph','renderCnNotebook','renderCnEpilogo',
   'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
@@ -1225,6 +1226,44 @@ console.log('\n── Canicross, rediseño paso 6 · horas, equipación y econom
   ctx.cnAdvanceWeek();
   t('la estrechez sale una vez por temporada', g.screen!=='canicrossQuiebra');
   t('B6: ni cnVacationPlanned ni cnVacationThisSeason existen', !('cnVacationPlanned' in T.freshState())&&!('cnVacationThisSeason' in T.freshState()));
+  ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
+}
+
+console.log('\n── Canicross, rediseño paso 7 · cuaderno, circuito, retiro y epílogo ──');
+{
+  const _r=ctx.render,_t=ctx.showToast,_a=ctx.autoSave,_st=ctx.setTimeout;
+  ctx.render=()=>{};ctx.autoSave=()=>{};ctx.setTimeout=f=>f();ctx.showToast=()=>{};
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:3});
+  const mk=(o)=>Object.assign(T.cnAddDog(T.cnInitDog('X','malinois')),o);
+  t('destino: muy querido y sano, se queda en casa', T.cnDestiny(mk({peakBond:80,health:70,age:9}),false)==='casa');
+  t('querido, se va con una familia', T.cnDestiny(mk({peakBond:50,health:70,age:9}),false)==='familia');
+  t('gastado o forzado dos veces, retiro frío', T.cnDestiny(mk({peakBond:90,health:30}),false)==='frio'&&T.cnDestiny(mk({peakBond:90,health:90,forcedRaces:2}),false)==='frio');
+  t('deportivo solo si lo dejas tú estando él capaz', T.cnDestiny(mk({peakBond:90,health:90,age:4}),true)==='deportivo'&&T.cnDestiny(mk({peakBond:90,health:90,age:4}),false)==='casa');
+  const dep=mk({name:'Kira',peakBond:60,health:90,age:4,speed:70,stamina:70});
+  T.cnRetireDogAs(dep,true);
+  t('el deportivo aparece entre los rivales', g.cnRivals['dog_'+dep.id]&&g.cnRivals['dog_'+dep.id].exDog);
+  const tier=g.cnRivals['dog_'+dep.id].tiers[0];
+  t('…y corre en su tier', T.cnGenerateRivals({id:'x',tier}).some(r=>r.id==='dog_'+dep.id));
+  const casa=mk({peakBond:80,health:80,age:9});T.cnRetireDogAs(casa,false);
+  t('el de casa queda con status casa', casa.status==='casa'&&T.cnHomeDogs().includes(casa));
+  // §10.9: G.dogs mantiene el retirado en casa tras adoptar otro
+  T.cnAddDog(T.cnInitDog('Nuevo','husky'));
+  t('§10.9 el retirado sigue en G.dogs con status casa tras adoptar otro', g.dogs.includes(casa)&&casa.status==='casa'&&T.cnActiveDog().name==='Nuevo');
+  // Circuito
+  g.cnCircuitPoints=25;g.cnCircuitTable={r_aguirre:18,r_lasa:15};
+  t('clasificación del circuito ordenada, contigo dentro', T.cnCircuitStanding()[0].me&&T.cnCircuitStanding()[1].id==='r_aguirre');
+  const age=g.runner.age;
+  ctx.cnDoSeasonTransition();
+  t('ganar el circuito cuenta al cerrar la temporada y la tabla se reinicia', g.cnCircuitWins===1&&g.cnCircuitPoints===0&&Object.keys(g.cnCircuitTable).length===0);
+  t('el corredor envejece un año por temporada', g.runner.age===age+1);
+  // Señas y pantallas
+  g.screen='canicrossHub';
+  t('la franja del compañero sale en el hub sin números del perro', /En forma|Algo le pasa|De baja/.test(T.cnCompanionStrip())&&!/\d{2}/.test(T.cnCompanionStrip().replace(/<[^>]+>/g,'').replace(/[\d.]+ [\d.]+/g,'')));
+  t('el gráfico de dos líneas se pinta con tokens', /var\(--acc\)/.test(T.cnSyncGraph(80))&&!/#[0-9a-f]{3,6}/i.test(T.cnSyncGraph(20)));
+  g.cnNotebook={clavado:{seen:5,ctx:[{temp:3,terrain:'flat',season:1}],out:[{chose:'mantener',result:'good'}],note:''}};
+  const pinta=domStub(ctx);
+  t('el cuaderno con ≥4 vistas enseña la correlación, sin conclusión', pinta(()=>T.renderCnNotebook()).includes('Las 1 veces que elegiste mantener'));
+  t('el epílogo cuenta a todos los perros', pinta(()=>T.renderCnEpilogo()).includes('Nuevo'));
   ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
 }
 
