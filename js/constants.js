@@ -2313,6 +2313,31 @@ const CN_INTENTS=[
   {id:'apretar',   label:'Apretar',   desc:'Por encima, gastando.',        time:0.92, legs:17, fatigue:14},
 ];
 
+// Rediseño de Canicross, paso 5 (TG-Diseno-Canicross § 4.6 y § 4.8). Confort térmico por raza
+// (°C) y sensibilidad por grado fuera de él; `friolero` lo desplaza +4.
+const CN_COMFORT={
+  husky:   {min:-12,max:6, heat:1.8,cold:1.0},
+  malinois:{min:-6, max:14,heat:1.0,cold:1.0},
+  vizsla:  {min:-2, max:16,heat:1.0,cold:1.6},
+  mestizo: {min:-8, max:14,heat:1.0,cold:1.0},
+};
+const CN_WINTER_SHIFT={frio:-4,normal:0,suave:5};
+const CN_WINTER_LABEL={frio:'Invierno frío',normal:'Invierno normal',suave:'Invierno suave'};
+// Por encima de esta temperatura la organización suspende la prueba (regla de la federación).
+const CN_HEAT_CANCEL=16;
+// Salud cotidiana, separada de las lesiones. `text`: cómo lo ves (sin decir qué es).
+// `days`: duración; `obed`: obediencia; `stamina`: resistencia efectiva; `mood`: ánimo al empezar.
+const CN_CONDITIONS=[
+  {id:'gastro',      name:'Gastroenteritis',       days:[3,6],  obed:-0.15, text:'[DOG] no ha tocado la comida.'},
+  {id:'tos',         name:'Tos de las perreras',   days:[7,12], stamina:-25,text:'[DOG] tose seco al levantarse.'},
+  {id:'almohadilla', name:'Almohadilla agrietada', days:[4,8],  injuryRisk:true, text:'[DOG] se lame la pata trasera cuando cree que no le miras.'},
+  {id:'garrapata',   name:'Garrapata',             days:[1,2],  mood:-10,   text:'[DOG] se rasca el cuello contra el sofá.'},
+  {id:'celo',        name:'Celo',                  days:[14,21],obed:-0.20, onlyFemale:true, text:'[DOG] está inquieta y marca en cada parada.'},
+  {id:'decaimiento', name:'Decaimiento',           days:[2,5],  mood:-25,   text:'[DOG] no se ha levantado a recibirte.'},
+];
+// El tiempo por tramo: lo que cambia cuando llueve o nieva (temperatura y suelo).
+const CN_WEATHER_LABEL={seco:'Seco',lluvia:'Lluvia',nieve:'Nieve'};
+
 const CANICROSS_EQUIPMENT={
   dogHarness:[
     {id:'basic_harness', name:'Arnés Corto Básico',    price:35,  desc:'Equilibrado. Viene de inicio.',                     speedMod:0,  staminaMod:0,  default:true},

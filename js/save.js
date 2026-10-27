@@ -108,7 +108,7 @@ function migrateState(saved){
    'coachEventLog','coachRoster','coachSponsors','unlockedAchievements',
    'cnVetHistory','cnRaceResults','cnSelectedRaces','rivalIncidents',
    // T48 (v93): los cuatro arrays que se guardaban sin estar declarados
-   'dropbagUsed','cnPreseasonDone','cnOpenMonths','cnOpenSeasonMonths','dogs']
+   'dropbagUsed','cnPreseasonDone','cnOpenMonths','cnOpenSeasonMonths','dogs','cnCancelledRaces']
     .forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=Array.isArray(base[k])?[...base[k]]:[];});
   // T48/T51 (v93): race.js ya lee G.terrainCondition sin guarda, así que un save
   // con la clave a null (nada la escribe hoy, pero `{...base,...saved}` deja

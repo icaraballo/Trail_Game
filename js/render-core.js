@@ -169,7 +169,7 @@ function aplicarModoChasis(){
 function updateFinBar(){
   const bar=document.getElementById('fin-bar');
   if(!bar)return;
-  const screens=['intro','workSetup','canicrossAntigua'];
+  const screens=['intro','workSetup','canicrossAntigua'];   // la mañana de carrera sí lleva la barra (el dinero importa)
   bar.style.display=screens.includes(G.screen)?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
@@ -391,6 +391,7 @@ function screenRoutes(){
     canicrossDogDeath:renderCnDogDeath,
     canicrossDisplasia:renderCnDisplasia,
     canicrossAntigua:renderCnAntigua,
+    canicrossRaceMorning:renderCnRaceMorning,
     achievements:renderAchievements,
     debtCrisis:renderDebtCrisis,careerEnd:renderCareerEnd,   // T29 (v86)
 };

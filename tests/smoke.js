@@ -36,7 +36,8 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS',
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
   'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
-  'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnNextCommand']);
+  'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnNextCommand',
+  'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -1111,7 +1112,7 @@ console.log('\n── Canicross, rediseño paso 4 · conducta, sincronía y diá
   const race=T.CANICROSS_RACES.find(r=>r.id==='cn_guadarrama');
   g.cnSelectedRaces=[{...race}];
   ctx.cnStartRace(0);
-  const rs=g.cnRaceState;
+  const rs=g.cnRaceState;rs.morning=null;d.condition=null;   // la mañana de carrera (paso 5) es azar: fuera
   t('la carrera empieza con sincronía 40 + vínculo/2 y una conducta', rs.sync===65&&rs.behaviour&&rs.preBehaviour, rs.sync);
   // Coincidir sube la sincronía; no coincidir la baja
   rs.behaviour={id:'clavado',wants:'mantener'};
@@ -1135,9 +1136,59 @@ console.log('\n── Canicross, rediseño paso 4 · conducta, sincronía y diá
   T.getG().cnSelectedRaces=[{...race}];
   ctx.cnStartRace(0);
   let k=0;while(T.getG().cnRaceState&&!T.getG().cnRaceState.done&&k<30){k++;const r2=T.getG().cnRaceState;
+    if(r2.morning){ctx.cnMorningChoice(r2.morning.type==='condicion'?'salir':'volver');continue;}
     if(r2.pendingEvent){ctx.cnMakeDecision(0);continue;} ctx.cnDecide('apretar','');}
   t('B1: una carrera apretando deja fatiga en el perro y le quita salud', d2.fatigue>0&&d2.health<100, d2.fatigue+' / '+d2.health);
   t('y el cuaderno apunta lo que ha visto', Object.keys(T.getG().cnNotebook||{}).length>0);
+  ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
+}
+
+console.log('\n── Canicross, rediseño paso 5 · temperatura, clima y salud cotidiana ──');
+{
+  const _r=ctx.render,_t=ctx.showToast,_a=ctx.autoSave,_st=ctx.setTimeout,_M=ctx.Math;
+  ctx.render=()=>{};ctx.autoSave=()=>{};ctx.setTimeout=f=>f();ctx.showToast=()=>{};
+  const husky={breed:'husky',temperament:[]},mal={breed:'malinois',temperament:[]},viz={breed:'vizsla',temperament:[]};
+  t('a 12 °C el husky sufre y el malinois no', T.cnTempPen(husky,12)>0&&T.cnTempPen(mal,12)===0);
+  t('a −6 °C el vizsla sufre más que el mestizo', T.cnTempPen(viz,-6)>T.cnTempPen({breed:'mestizo',temperament:[]},-6));
+  t('friolero desplaza el confort +4 °C', T.cnComfort({breed:'malinois',temperament:['friolero']}).max===18);
+  // §10.7: por encima de 16 °C la carrera se suspende y no se puede correr
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:1,cnSeasonWinter:'suave'});
+  const d=T.cnAddDog(T.cnInitDog('Txuri','husky'));d.bond=50;
+  const otono=T.CANICROSS_RACES.find(r=>r.id==='cn_otono');
+  g.cnSelectedRaces=[{...otono}];
+  ctx.Math=Object.assign(Object.create(Math),{random:()=>0.99});
+  ctx.cnStartRace(0);
+  ctx.Math=_M;
+  t('§10.7 con más de 16 °C la prueba se suspende', g.cnRaceState.tempReal>T.CN_HEAT_CANCEL&&g.cnRaceState.morning.type==='calor', g.cnRaceState.tempReal);
+  t('…cuenta como resuelta, se pierde la inscripción y no se puede iniciar', T.cnDoneIds().includes('cn_otono')&&g.cnMoney===500-otono.cost);
+  ctx.cnDecide('mantener','');
+  t('…y no deja correr ningún tramo', !g.cnRaceState.paceChosen&&!g.cnRaceState.time);
+  ctx.cnMorningChoice('volver');
+  t('volver deja la carrera cerrada', g.cnRaceState===null&&g.screen==='canicrossHub');
+  // El perro se niega: vínculo bajo, ánimo bajo y algo serio
+  setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:1,cnSeasonWinter:'normal'});
+  const d2=T.cnAddDog(T.cnInitDog('Beltza','malinois'));d2.bond=22;d2.mood=0;d2.condition={id:'gastro',daysLeft:5,severity:2};
+  T.getG().cnSelectedRaces=[{...T.CANICROSS_RACES.find(r=>r.id==='cn_guadarrama')}];
+  ctx.Math=Object.assign(Object.create(Math),{random:()=>0.5});
+  ctx.cnStartRace(0);ctx.Math=_M;
+  t('con descuido acumulado el perro no se levanta', T.getG().cnRaceState&&T.getG().cnRaceState.morning&&T.getG().cnRaceState.morning.type==='negativa', JSON.stringify(T.getG().cnRaceState&&{m:T.getG().cnRaceState.morning,mood:T.getG().cnRaceState.mood,s:T.getG().screen}));
+  // Forzar: −8 de vínculo siempre
+  setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:1,cnSeasonWinter:'normal'});
+  const d3=T.cnAddDog(T.cnInitDog('Kala','mestizo'));d3.bond=60;d3.condition={id:'tos',daysLeft:8,severity:1};
+  T.getG().cnSelectedRaces=[{...T.CANICROSS_RACES.find(r=>r.id==='cn_guadarrama')}];
+  ctx.cnStartRace(0);
+  const m=T.getG().cnRaceState.morning;
+  t('con una condición toca decidir en la mañana de la carrera', m&&m.type==='condicion');
+  ctx.cnMorningChoice('forzar');
+  t('forzar cuesta €35 y 8 de vínculo, siempre', d3.bond===52&&T.getG().cnMoney===465&&T.getG().cnRaceState.forced===true);
+  // La condición se pasa con los días
+  const d4={condition:null,sex:'hembra',mood:60};T.cnGiveCondition(d4,1);
+  T.cnTickCondition(d4,30);
+  t('una condición se cura sola con el tiempo', d4.condition===null);
+  t('el celo solo le sale a una hembra', !T.CN_CONDITIONS.find(c=>c.id==='celo').onlyFemale===false);
+  // La lluvia convierte la tierra en barro un tramo después
+  const rs={segs:[{surface:'tierra'},{surface:'tierra'},{surface:'pista'}],weatherTimeline:['lluvia','lluvia','lluvia'],tempReal:5};
+  t('tras la lluvia, la tierra es barro; la pista sigue', T.cnSegSurface(rs,0)==='tierra'&&T.cnSegSurface(rs,1)==='barro'&&T.cnSegSurface(rs,2)==='pista');
   ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
 }
 

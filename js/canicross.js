@@ -73,6 +73,7 @@ function cnInitDog(name,breed){
     // Paso 4 (§ 3.2, § 4.1-4.5): estado oculto (nunca se enseña como número), temperamento
     // y seis comandos con dominio 0-3.
     mood:60,fatigue:0,temperament:cnPickTemperament(),
+    sex:Math.random()<0.5?'macho':'hembra',condition:null,   // paso 5: la hembra puede tener celo
     commands:{forward:0,hold:0,easy:0,left:0,leaveit:0,water:0},
   };
 }
@@ -80,6 +81,8 @@ function cnPickTemperament(){
   const pool=shuffle([...CN_TEMPERAMENTS]);
   return pool.slice(0,Math.random()<0.5?1:2);
 }
+// Ánimo con 60 por defecto solo si falta: un 0 es un 0 (con || se volvía 60).
+function cnMood(v){const n=Number(v);return Number.isFinite(n)?n:60;}
 function cnHasTrait(d,t){return !!(d&&Array.isArray(d.temperament)&&d.temperament.includes(t));}
 
 function cnComputeDogStats(){
@@ -146,6 +149,7 @@ function cnMonth(){return CN_MONTHS[Math.max(0,Math.min(5,Number(G.cnMonthIdx)||
 function cnSeasonOver(){return (Number(G.cnMonthIdx)||0)>=6;}
 // Cierra el mes: cobra la manutención del perro y pasa al siguiente (tras marzo, a 6).
 function cnEndMonth(){
+  cnMonthlyCondition();   // paso 5
   const cost=cnMonthlyDogCost();
   G.cnMoney=Math.max(0,(G.cnMoney||0)-cost);
   G.cnMonthIdx=Math.min(6,(Number(G.cnMonthIdx)||0)+1);G.cnMonthWeek=0;
@@ -225,6 +229,58 @@ function cnGetCategory(age){
   return CN_CATEGORIES.find(c=>a>=c.min&&a<=c.max)||CN_CATEGORIES[1];
 }
 
+// ── TEMPERATURA, CLIMA Y SALUD COTIDIANA (rediseño, paso 5 · § 4.6 y § 4.8) ─────
+function cnWinterRoll(){const x=Math.random();G.cnSeasonWinter=x<0.3?'frio':x<0.75?'normal':'suave';}
+function cnComfort(d){
+  const c=CN_COMFORT[d&&d.breed]||CN_COMFORT.mestizo,sh=cnHasTrait(d,'friolero')?4:0;
+  return {min:c.min+sh,max:c.max+sh,heat:c.heat,cold:c.cold};
+}
+function cnTempDev(d,temp){const c=cnComfort(d);return Math.max(0,temp-c.max,c.min-temp);}
+// Multiplicador de tiempo por calor o frío fuera del confort de la raza
+function cnTempPen(d,temp){const c=cnComfort(d);return (Math.max(0,temp-c.max)*c.heat+Math.max(0,c.min-temp)*c.cold)*0.015;}
+// El tiempo cambia durante la carrera: la lluvia baja 2 °C y, un tramo después, convierte la
+// tierra y la hierba en barro; la nieve cubre todo.
+function cnRainFrom(rs){return (rs.weatherTimeline||[]).findIndex(w=>w==='lluvia');}
+function cnSegTemp(rs,i){const rf=cnRainFrom(rs);return Math.round((rs.tempReal!=null?rs.tempReal:8)-(rf>=0&&i>=rf?2:0));}
+function cnSegSurface(rs,i){
+  const seg=(rs.segs||[])[i]||{};const w=(rs.weatherTimeline||[])[i];
+  if(w==='nieve')return 'nieve';
+  const rf=cnRainFrom(rs);
+  if(rf>=0&&i>rf&&(seg.surface==='tierra'||seg.surface==='hierba'))return 'barro';
+  return seg.surface;
+}
+function cnWeatherTimeline(n,temp){
+  const tl=Array(n).fill('seco');const x=Math.random();
+  if(temp<=1&&x<0.35){const k=Math.floor(Math.random()*n);for(let i=k;i<n;i++)tl[i]='nieve';}
+  else if(x<0.30){const k=Math.floor(Math.random()*n);for(let i=k;i<n;i++)tl[i]='lluvia';}
+  return tl;
+}
+// Carreras de la temporada ya resueltas: corridas, suspendidas o no corridas.
+function cnDoneIds(){
+  return [...(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId),
+          ...(G.cnCancelledRaces||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId)];
+}
+function cnCancelled(raceId){return (G.cnCancelledRaces||[]).find(r=>r.raceId===raceId&&r.season===G.cnSeason)||null;}
+function cnConditionDef(d){return d&&d.condition?CN_CONDITIONS.find(c=>c.id===d.condition.id)||null:null;}
+function cnGiveCondition(d,severity){
+  const pool=CN_CONDITIONS.filter(c=>!c.onlyFemale||d.sex==='hembra');
+  const c=pool[Math.floor(Math.random()*pool.length)];
+  d.condition={id:c.id,daysLeft:c.days[0]+Math.floor(Math.random()*(c.days[1]-c.days[0]+1)),severity:severity||1+Math.floor(Math.random()*2)};
+  if(c.mood)d.mood=Math.max(0,cnMood(d.mood)+c.mood);
+  return c;
+}
+function cnTickCondition(d,days){
+  if(!d||!d.condition)return;
+  d.condition.daysLeft-=days;
+  if(d.condition.daysLeft<=0)d.condition=null;
+}
+// Cada mes puede aparecer algo: más con fatiga, poca salud o invierno frío.
+function cnMonthlyCondition(){
+  const d=cnActiveDog();if(!d||d.condition||d.retired)return;
+  const p=0.08+(Number(d.fatigue)||0)*0.002+((d.health||100)<70?0.05:0)+(G.cnSeasonWinter==='frio'?0.03:0);
+  if(Math.random()<p)cnGiveCondition(d);
+}
+
 // ── CONDUCTA (rediseño, paso 4 · § 4.1-4.4) ──────────────────────────────
 // El estado del perro (ánimo, fatiga, temperamento) no se enseña nunca como número: sale una
 // frase de CN_BEHAVIOURS cuyas causas casan con el estado y el contexto, y esa frase dice
@@ -247,10 +303,11 @@ function cnBehaviourCtx(rs,when){
   const myT=(rs.time||0)+(rs.timePenalty||0);
   const rivalNear=when==='seg'&&rs.currentSeg>0&&(rs.rivals||[]).some(r=>Math.abs(cnRivalTime(r,rs.currentSeg)-myT)<15);
   const temperament=Array.isArray(d.temperament)?d.temperament:[];
-  return {mood:Number(rs.mood!=null?rs.mood:d.mood)||60,fatigue:(Number(d.fatigue)||0)+(rs.fatigueGained||0),
-    temp:def.tempBase!=null?def.tempBase:8,tier:rs.tier||1,temperament,terrain:seg.type,surface:seg.surface,
+  return {mood:cnMood(rs.mood!=null?rs.mood:d.mood),fatigue:(Number(d.fatigue)||0)+(rs.fatigueGained||0),
+    temp:rs.tempReal!=null?cnSegTemp(rs,rs.currentSeg||0):(def.tempBase!=null?def.tempBase:8),tier:rs.tier||1,temperament,terrain:seg.type,
+    surface:when==='seg'?cnSegSurface(rs,rs.currentSeg):seg.surface,
     // estoico: oculta el dolor, sus conductas de lesión salen la mitad de las veces
-    injury:!!(d.injury||rs.injuryPending)&&!(temperament.includes('estoico')&&Math.random()<0.5),
+    injury:!!(d.injury||rs.injuryPending||(d.condition&&d.condition.id==='almohadilla'))&&!(temperament.includes('estoico')&&Math.random()<0.5),
     rivalNear,mismatch:!!rs.lastMismatch,aid:!!seg.aid};
 }
 function cnPickBehaviour(rs,when){
@@ -310,7 +367,10 @@ function cnDogPerf(d){
   const m=cnGetEquipMods();
   const speed=(d.speed||0)+(m.speedMod||0),stamina=(d.stamina||0)+(m.staminaMod||0);
   const healM=0.70+0.003*Math.max(0,Math.min(100,d.health==null?100:d.health));
-  const condM=d.condition&&d.condition.severity?(1-0.06*d.condition.severity):1;
+  const forced=G.cnRaceState&&G.cnRaceState.forced&&!G.cnRaceState.done;
+  const condM=d.condition&&d.condition.severity&&!forced?(1-0.06*d.condition.severity):1;
+  const cdef=forced?null:cnConditionDef(d);
+  if(cdef&&cdef.stamina)return ((speed*0.60+(stamina+cdef.stamina)*0.40))*cnAgeCurve(d.age)*healM*condM;
   return (speed*0.60+stamina*0.40)*cnAgeCurve(d.age)*healM*condM;
 }
 // Frescura del corredor: en carrera baja con la energía (0,75 … 1); fuera de carrera, 1.
@@ -473,6 +533,11 @@ function cnFinishRace(){
   const rPrize=race.prize||0;
   const prize=rs.retired?0:(pos===1?rPrize:pos===2?Math.round(rPrize*0.6):pos===3?Math.round(rPrize*0.4):0);
 
+  // Paso 5: correr con una almohadilla agrietada tiene riesgo alto; si la forzaste, la lesión
+  // es un nivel peor. Salir con algo encima puede empeorarlo.
+  if(!rs.injuryPending&&d.condition&&d.condition.id==='almohadilla'&&Math.random()<0.4)rs.injuryPending='almohadillas';
+  if(rs.injuryPending&&rs.forced&&rs.injuryPending==='almohadillas')rs.injuryPending='luxacion';
+  if(d.condition&&!rs.forced&&Math.random()<0.4){d.condition.severity=Math.min(3,d.condition.severity+1);d.condition.daysLeft+=3;}
   if(rs.injuryPending){
     d.injury=rs.injuryPending;
     d.injuryRaces=rs.injuryPending==='luxacion'?2:1;
@@ -536,7 +601,7 @@ window.doStartCanicross=()=>{
   G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
   G.cnDogFoodPremium=false;G.cnDogSupplements=false;
   G.cnVetHistory=[];G.cnBirthdayToastShown={};G.cnRaceState=null;
-  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G.cnRivals={};G.cnNemesis={};G.cnSeasonShift={};G.cnNotebook={};G._cnDogBreed=null;G._cnDogName=null;
+  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G.cnRivals={};G.cnNemesis={};G.cnSeasonShift={};G.cnNotebook={};G.cnCancelledRaces=[];cnWinterRoll();G._cnDogBreed=null;G._cnDogName=null;
   G.screen='canicrossCreateDog';
   render();
 };
@@ -604,6 +669,7 @@ window.cnAdvanceRestWeek=()=>{
   const mentalBonus=Math.round(days*0.8);
   if(d){
     d.fatigue=Math.max(0,(Number(d.fatigue)||0)-20);   // paso 4: descansar baja la fatiga
+    cnTickCondition(d,7);   // paso 5
     d.health=Math.min(100,(d.health||100)+healthBonus);
     d.bond=Math.min(100,(d.bond||0)+bondBonus);
     d.peakBond=Math.max(d.peakBond||0,d.bond);
@@ -640,8 +706,9 @@ function cnApplyOneWeekTraining(){
     // Paso 4: la fatiga baja con la semana (más si es descanso) y el ánimo se regenera hacia
     // un punto que sube con el vínculo, con algo de azar: el perro tiene días.
     d.fatigue=Math.max(0,(Number(d.fatigue)||0)-(block.id==='descanso'?20:8));
+    cnTickCondition(d,7);   // paso 5
     const moodTarget=45+(d.bond||0)*0.3;
-    d.mood=Math.round(Math.max(0,Math.min(100,(Number(d.mood)||60)*0.5+moodTarget*0.5+(Math.random()*2-1)*10)));
+    d.mood=Math.round(Math.max(0,Math.min(100,cnMood(d.mood)*0.5+moodTarget*0.5+(Math.random()*2-1)*10)));
     let bMod=block.bondMod||0;
     if(cnHasTrait(d,'pegajoso'))bMod=bMod>0?Math.round(bMod*1.3):Math.round(bMod*1.3);
     if(d.breed==='malinois'&&block.id==='solo')bMod-=CN_BREED_MODS.malinois.bondDecayPerWeek;
@@ -711,11 +778,35 @@ window.cnStartRace=idx=>{
     sync:0,mood:0,fatigueGained:0,behaviour:null,preBehaviour:null,lastMismatch:false,
   };
   {
+    // Paso 5: temperatura real del día y el tiempo tramo a tramo
+    const rs=G.cnRaceState;
+    rs.tempReal=Math.round((def.tempBase!=null?def.tempBase:8)+(CN_WINTER_SHIFT[G.cnSeasonWinter]||0)+(Math.random()*6-3));
+    rs.weatherTimeline=cnWeatherTimeline(segs.length,rs.tempReal);
+  }
+  {
     const rs=G.cnRaceState,dd=cnActiveDog();
-    rs.mood=Math.max(0,Math.min(100,(Number(dd.mood)||60)+Math.round((Math.random()*2-1)*10)));
+    rs.mood=Math.max(0,Math.min(100,cnMood(dd.mood)+Math.round((Math.random()*2-1)*10)));
     rs.sync=Math.max(0,Math.min(100,Math.round(40+(dd.bond||0)*0.5-(cnHasTrait(dd,'miedoso')&&(race.tier||1)>=3?8:0))));
     rs.preBehaviour=cnPickBehaviour(rs,'pre');cnNoteSeen(rs.preBehaviour);
     rs.behaviour=cnPickBehaviour(rs,'seg');cnNoteSeen(rs.behaviour);
+    // La mañana de la carrera (§ 4.8): por encima de 16 °C se suspende; con algo de salud
+    // (o si aparece hoy, más fácil con fatiga y poca salud) toca decidir antes de salir.
+    if(rs.tempReal>CN_HEAT_CANCEL){rs.morning={type:'calor'};}
+    else{
+      if(!dd.condition&&Math.random()<0.04+(Number(dd.fatigue)||0)*0.002+(100-(dd.health==null?100:dd.health))*0.002)cnGiveCondition(dd);
+      if(dd.condition){
+        // § 4.8 decía vínculo < 15, pero con menos de cnRaceThreshold() (20-30) ni se sale: el
+        // perro se niega con un vínculo justo por encima del umbral, ánimo bajo y algo serio.
+        rs.morning=((dd.bond||0)<cnRaceThreshold()+5&&(rs.mood||0)<25&&dd.condition.severity>=2)?{type:'negativa'}:{type:'condicion'};
+      }
+    }
+    if(rs.morning&&rs.morning.type!=='condicion'){
+      // Suspendida o el perro no se levanta: la inscripción ya está pagada y no se corre.
+      G.cnMoney=Math.max(0,(G.cnMoney||0)-(race.cost||0));
+      if(!Array.isArray(G.cnCancelledRaces))G.cnCancelledRaces=[];
+      G.cnCancelledRaces.push({raceId:race.id,season:G.cnSeason,why:rs.morning.type});
+    }
+    if(rs.morning){G.screen='canicrossRaceMorning';render();return;}
   }
   G.screen='canicrossPreRace';render();
 };
@@ -759,7 +850,9 @@ window.cnMakeDecision=optIdx=>{
 function cnObedience(d,rs,cmd){
   const mastery=Number((d.commands||{})[cmd])||0;
   const fatigue=(Number(d.fatigue)||0)+(rs.fatigueGained||0);
-  const moodPen=(d.condition||d.injury?0.20:0)+((rs.mood||60)<35?0.10:0);
+  const cond=rs.forced?null:cnConditionDef(d);
+  const moodPen=((cond||d.injury)?0.20:0)+(cnMood(rs.mood)<35?0.10:0)-((cond&&cond.obed)||0)
+    +0.02*cnTempDev(d,cnSegTemp(rs,rs.currentSeg||0));   // paso 5: −0,02 por grado fuera de confort
   return Math.max(0.15,Math.min(0.95,0.25+(d.bond||0)*0.005+(rs.sync||0)*0.003+mastery*0.15-fatigue*0.004-moodPen-(cnHasTrait(d,'cabezota')?0.15:0)));
 }
 // ¿Tiene sentido la orden ahora? Las de intención validan la tuya; las de situación, su caso.
@@ -777,7 +870,7 @@ const CN_CROSS={
   difiere:[-12,1.06,-2,1.15], ordenAcertada:[5,0.99,1,1.08], ordenFallida:[-10,1.08,-3,1.20],
 };
 window.cnDecide=(intentId,cmd)=>{
-  const rs=G.cnRaceState;if(!rs||rs.paceChosen||rs.pendingEvent)return;
+  const rs=G.cnRaceState;if(!rs||rs.paceChosen||rs.pendingEvent||rs.morning)return;
   const intent=CN_INTENTS.find(x=>x.id===intentId);if(!intent)return;
   if(cmd===undefined&&typeof document!=='undefined'&&document.querySelector){
     const el=document.querySelector('input[name="cncmd"]:checked');cmd=el?el.value:'';
@@ -810,7 +903,14 @@ window.cnDecide=(intentId,cmd)=>{
   // Tiempo: el del trazado al nivel del equipo, por intención y cruce, entre la sincronía
   const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
   const factorSync=0.85+0.003*syncBefore;
-  const tm=Math.round(cnSegTime(raceDef,seg,cnTeamLevel(),intent.time*tMult*extraT)/factorSync);
+  // Paso 5: el suelo de este tramo con su tiempo (barro tras la lluvia, nieve) y el calor o frío
+  const segNow={...seg,surface:cnSegSurface(rs,rs.currentSeg)};
+  const tempNow=cnSegTemp(rs,rs.currentSeg);
+  const snowM=segNow.surface==='nieve'?(d.breed==='husky'?0.95:d.breed==='vizsla'?1.05:1):1;
+  const tm=Math.round(cnSegTime(raceDef,segNow,cnTeamLevel(),intent.time*tMult*extraT*snowM*(1+cnTempPen(d,tempNow)))/factorSync);
+  // Golpe de calor (B3): muy por encima del confort y apretando dos tramos seguidos
+  rs.apretarStreak=intent.id==='apretar'?(rs.apretarStreak||0)+1:0;
+  if(rs.apretarStreak>=2&&tempNow>cnComfort(d).max+6&&!rs.injuryPending&&Math.random()<0.25)rs.injuryPending='golpe_calor';
   rs.time=(rs.time||0)+tm;
   // Piernas del corredor y fatiga del perro
   const terr=seg.type==='climb'?1.3:seg.type==='descent'?0.8:1;
@@ -972,6 +1072,7 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
   // §0.4 del diseño: el cumpleaños (+3 vínculo) lo daban el hub y la ficha del perro al
   // pintarse. Ahora, aquí, al empezar la temporada: una pantalla no cambia la partida.
   cnCheckBirthday();
+  cnWinterRoll();   // paso 5: cada temporada, su invierno
   cnDogs().forEach(x=>{x.fatigue=Math.max(0,(Number(x.fatigue)||0)-40);});   // paso 4: el verano descansa
   cnAgeRivals();   // paso 3: los rivales cumplen años y su nivel sigue a su perro
   G.activeTab='game';G.screen='canicrossHub';
@@ -1187,7 +1288,7 @@ function renderCnCorredorTab(){
   const d=cnActiveDog();
   const canRace=cnCanRace();
   const races=G.cnSelectedRaces||[];
-  const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
+  const doneIds=cnDoneIds();   // paso 5: también las suspendidas o no corridas
   const curMonth=cnMonth();
   const MONTHS=CN_MONTHS;
   const MONTH_NAMES=CN_MONTH_NAMES;
@@ -1279,7 +1380,8 @@ function renderCnCorredorTab(){
                   :`<span style="font-size:12px;color:#ccc;margin-left:6px">· Sin carrera</span>`}
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px">
-            ${done?`<span style="font-size:13px;font-weight:600;color:${result?.dnf?'#c0392b':'#4a8a2a'}">${result?.dnf?'DNF':'#'+(result?.pos||'?')}</span>`
+            ${done&&!result?`<span class="pz-efectos">${(cnCancelled(race.id)||{}).why==='calor'?'Suspendida':'No corrió'}</span>`
+                  :done?`<span style="font-size:13px;font-weight:600;color:${result?.dnf?'#c0392b':'#4a8a2a'}">${result?.dnf?'DNF':'#'+(result?.pos||'?')}</span>`
                   :overdue?`<span style="font-size:12px;color:#bbb">⏱</span>`
                   :isCurrent&&race?`<span style="font-size:12px;color:#4a8a2a;font-weight:600">← Ahora</span>`:''}
             ${race?`<span style="font-size:11px;color:#bbb;display:inline-block;transition:transform .2s;transform:${isOpen?'rotate(90deg)':'rotate(0)'}">▶</span>`:''}
@@ -1287,7 +1389,8 @@ function renderCnCorredorTab(){
         </div>
         ${race&&isOpen?`<div style="padding:0 14px 14px;border-top:1px solid #f0ede8">
           <div style="font-size:12px;color:#888;margin:8px 0 6px">${esc(race.location)} · €${race.cost} inscr. · €${race.prize} premio 1º</div>
-          ${done?`<div style="font-size:13px;font-weight:600;color:${result?.dnf?'#c0392b':'#4a8a2a'}">${result?.dnf?'DNF — Retirado':'Posición #'+(result?.pos||'?')}${(result?.prize||0)>0?' · +€'+result.prize:''}</div>`
+          ${done&&!result?`<div class="pz-efectos">${(cnCancelled(race.id)||{}).why==='calor'?'Suspendida por calor: se perdió la inscripción.':'No corristeis: se perdió la inscripción.'}</div>`
+                :done?`<div style="font-size:13px;font-weight:600;color:${result?.dnf?'#c0392b':'#4a8a2a'}">${result?.dnf?'DNF — Retirado':'Posición #'+(result?.pos||'?')}${(result?.prize||0)>0?' · +€'+result.prize:''}</div>`
                 :overdue?`<div style="font-size:13px;color:#bbb">⏱ Plazo superado — no se puede correr</div>`
                 :canRace?`<button class="main" style="margin-top:6px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="cnStartRace(${idx})">Correr ahora →</button>`
                 :d&&d.bond<cnRaceThreshold()?`<div class="note" style="margin-top:6px">Vínculo insuficiente (${d.bond}/${cnRaceThreshold()})</div>`
@@ -1343,6 +1446,7 @@ function renderCnPerroTab(){
     <h2>🐕 ${esc(d.name)}</h2>
     <p class="sub">${breedInfo.label} · ${cnDogAgeLabel()} · ${d.retired?'<span style="color:#888">Retirado</span>':'<span style="color:#4a8a2a">Activo</span>'}</p>
 
+    ${d.condition?`<div class="pz-tarjeta pz"><div class="pz-label">Estos días</div><div style="font-size:15px">${cnReplaceVars((cnConditionDef(d)||{}).text||'')}</div></div>`:''}
     ${isOld?`<div class="warn">🦴 ${esc(d.name)} ya nota el paso del tiempo (${d.age} años). Su rendimiento puede empezar a decrecer.</div>`:''}
     ${d.injury?`<div class="danger">🤕 Lesión: <strong>${{almohadillas:'Almohadillas rozadas',luxacion:'Luxación',golpe_calor:'Golpe de calor'}[d.injury]||d.injury}</strong> · ${d.injuryRaces} carrera(s) de baja<br><span style="font-size:12px;color:#c0392b">Usa el veterinario para reducir la baja</span></div>`:''}
     ${!d.injury&&d.bond<cnRaceThreshold()?`<div class="note">⚡ Vínculo insuficiente para competir. Necesita ≥${cnRaceThreshold()} (actual: <strong>${d.bond}</strong>). Entrena juntos.</div>`:''}
@@ -1498,7 +1602,7 @@ function renderCanicrossCalendarSetup(){
   const selIds=sel.map(r=>r.id);
   const MONTHS=[10,11,12,1,2,3];
   const MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
-  const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
+  const doneIds=cnDoneIds();   // paso 5: también las suspendidas o no corridas
   const spent=selIds.reduce((a,id)=>{const r=CANICROSS_RACES.find(x=>x.id===id);return a+(r?.cost||0);},0);
   const budget=G.cnMoney||0;
   const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
@@ -1574,7 +1678,7 @@ function renderCnCalendarioTab(){
   const MONTHS=[10,11,12,1,2,3];
   const MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
   const MONTH_SHORT={10:'Oct',11:'Nov',12:'Dic',1:'Ene',2:'Feb',3:'Mar'};
-  const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
+  const doneIds=cnDoneIds();   // paso 5: también las suspendidas o no corridas
   const spent=selIds.reduce((a,id)=>{const r=CANICROSS_RACES.find(x=>x.id===id);return a+(r?.cost||0);},0);
   const budget=G.cnMoney||0;
   const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
@@ -1763,6 +1867,17 @@ function renderCanicrossPreRace(){
   el.innerHTML=`
     <h2>🐕 Pre-carrera</h2>
     <p class="sub">${esc(race.name)} · ${race.km}km · ${esc(race.location)}</p>
+    ${G.cnRaceState&&G.cnRaceState.tempReal!=null?(()=>{
+      // Paso 5: el día, en una tarjeta de estado
+      const rs=G.cnRaceState,tl=rs.weatherTimeline||[],cambio=tl.findIndex(w=>w!=='seco');
+      const dev=d?cnTempDev(d,rs.tempReal):0;
+      return`<div class="pz-tarjeta pz pz-estado">
+        <div class="pz-linea"><span class="pz-num" style="font-size:20px">${rs.tempReal} °C</span><span class="pz-efectos">${CN_WINTER_LABEL[G.cnSeasonWinter]||''}</span></div>
+        <div class="pz-linea"><span class="pz-efectos">${cambio<0?'Seco toda la carrera':CN_WEATHER_LABEL[tl[cambio]]+' desde el tramo '+(cambio+1)}</span></div>
+        ${d&&dev>0?`<div class="pz-linea"><span class="pz-diag ojo">Fuera de lo que mejor lleva un ${(CN_BREED_MODS[d.breed]||{}).label||'perro'} (${cnComfort(d).min} a ${cnComfort(d).max} °C)</span></div>`:''}
+        ${G.cnRaceState.forced?`<div class="pz-linea"><span class="pz-diag menos">Hoy corre con un antiinflamatorio</span></div>`:''}
+      </div>`;
+    })():''}
     ${pre?`<div class="pz-tarjeta pz" style="border-color:var(--acc)"><div class="pz-etiqueta acento">${icono('perro')}En la salida</div><div style="font-size:16px;line-height:1.45">${cnBehaviourText(pre.id)}</div></div>`:''}
 
     <div class="card" style="margin-bottom:12px">
@@ -1850,7 +1965,7 @@ function renderCanicrossSegment(){
 
   el.innerHTML=`
     <div class="flex-between-center" style="margin-bottom:10px">
-      <span style="font-size:12px;color:#999">${esc(race.name)} · Tramo ${rs.currentSeg+1}/${rs.numSegs}${isLastSeg?' · <strong style="color:#c07a10">último</strong>':''}</span>
+      <span style="font-size:12px;color:#999">${esc(race.name)} · Tramo ${rs.currentSeg+1}/${rs.numSegs}${isLastSeg?' · <strong style="color:#c07a10">último</strong>':''}${rs.tempReal!=null?` · ${cnSegTemp(rs,rs.currentSeg)} °C · ${CN_WEATHER_LABEL[(rs.weatherTimeline||[])[rs.currentSeg]]||''}`:''}</span>
       <span style="font-size:13px;font-weight:600">${fmt((rs.time||0)+(rs.timePenalty||0))}</span>
     </div>
 
@@ -1935,7 +2050,7 @@ function renderCanicrossPostRace(){
   if(!rs||!rs.done){G.screen='canicrossHub';G.activeTab='game';render();return;}
   const d=cnActiveDog();
   const races=G.cnSelectedRaces||[];
-  const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
+  const doneIds=cnDoneIds();   // paso 5: también las suspendidas o no corridas
   const remaining=races.filter(r=>!doneIds.includes(r.id));
   const seasonDone=remaining.length===0;
 
@@ -2096,3 +2211,63 @@ function renderCnAntigua(){
 // Las dos salidas empiezan de cero y sin ranura (así no se pisa la vieja sin preguntar).
 window.cnAntiguaNueva=()=>{G=freshState();G.gameMode='canicross';G.screen='intro';render();};
 window.cnAntiguaVolver=()=>{G=freshState();G.screen='saveScreen';render();};
+
+// ── LA MAÑANA DE LA CARRERA (paso 5 · § 4.8) ─────────────────────────────────
+// Pantalla nueva con las piezas del sistema visual. Tres casos: suspendida por calor, el
+// perro no se levanta (sin decisión) y una condición de salud con cuatro salidas.
+function renderCnRaceMorning(){
+  hideChrome();
+  const rs=G.cnRaceState,d=cnActiveDog();
+  if(!rs||!rs.morning||!d){G.screen='canicrossHub';G.activeTab='game';render();return;}
+  const race=(G.cnSelectedRaces||[])[G.cnCurrentRaceIdx]||{};
+  const m=rs.morning.type;
+  const cab=`<div class="pz-etiqueta acento">${icono('perro')}${esc(race.name||'')} · ${rs.tempReal} °C</div>`;
+  let body='';
+  if(m==='calor'){
+    body=`<div class="pz-titulo">Prueba suspendida por calor</div>
+      <p class="pz-sub">Hoy hace ${rs.tempReal} °C. Por encima de ${CN_HEAT_CANCEL} °C la organización suspende la carrera: con ese calor un perro corriendo puede sufrir un golpe de calor. Es una protección para ellos, no un castigo.</p>
+      <div class="pz-tarjeta pz-estado"><div class="pz-linea"><span class="pz-diag">La inscripción (€${race.cost||0}) no se devuelve.</span></div></div>
+      <button class="pz-btn" onclick="cnMorningChoice('volver')">Volver</button>`;
+  }else if(m==='negativa'){
+    body=`<div class="pz-titulo">${cnReplaceVars('Le pones el arnés. [DOG] no se levanta.')}</div>
+      <p class="pz-sub">Hoy no corréis.</p>
+      <button class="pz-btn sec" onclick="cnMorningChoice('volver')">Volver a casa</button>`;
+  }else{
+    const c=cnConditionDef(d)||{text:''};
+    const puedeForzar=(G.cnMoney||0)>=35,puedeCuidar=(G.cnMoney||0)>=15;
+    body=`<div class="pz-titulo">La mañana de la carrera</div>
+      <p class="pz-sub" style="font-size:16px;color:var(--ink)">${cnReplaceVars(c.text)}</p>
+      <button class="pz-opcion" onclick="cnMorningChoice('nocorrer')"><b>No correr</b><div class="pz-efectos">Pierdes la inscripción (€${race.cost||0}). ${esc(d.name)} se recupera normal.</div></button>
+      <button class="pz-opcion${puedeCuidar?'':' pz-bloqueado'}" ${puedeCuidar?`onclick="cnMorningChoice('cuidado')"`:''}><b>Cuidarle</b><div class="pz-efectos">Comida blanda, electrolitos, vendaje: €15. Suele aliviar; a veces no basta.</div>${puedeCuidar?'':'<div class="pz-motivo">Te faltan €'+(15-(G.cnMoney||0))+'</div>'}</button>
+      <button class="pz-opcion" onclick="cnMorningChoice('salir')"><b>Salir igual</b><div class="pz-efectos">Corréis con lo que tenga. Puede empeorar.</div></button>
+      <button class="pz-opcion${puedeForzar?'':' pz-bloqueado'}" ${puedeForzar?`onclick="cnMorningChoice('forzar')"`:''}><b>Forzar</b><div class="pz-efectos">Un antiinflamatorio: €35. Hoy no se le nota, pero <span class="pz-menos">−8</span> de vínculo siempre, y si algo sale mal la lesión es peor.</div>${puedeForzar?'':'<div class="pz-motivo">Te faltan €'+(35-(G.cnMoney||0))+'</div>'}</button>`;
+  }
+  $main().innerHTML=`<div class="pz">${cab}${body}</div>`;
+}
+window.cnMorningChoice=opt=>{
+  const rs=G.cnRaceState,d=cnActiveDog();if(!rs||!d)return;
+  const race=(G.cnSelectedRaces||[])[G.cnCurrentRaceIdx]||{};
+  const aCasa=()=>{G.cnRaceState=null;G.screen='canicrossHub';G.activeTab='game';autoSave();render();};
+  if(opt==='volver'){aCasa();return;}
+  if(opt==='nocorrer'){
+    G.cnMoney=Math.max(0,(G.cnMoney||0)-(race.cost||0));
+    if(!Array.isArray(G.cnCancelledRaces))G.cnCancelledRaces=[];
+    G.cnCancelledRaces.push({raceId:race.id,season:G.cnSeason,why:'baja'});
+    aCasa();return;
+  }
+  if(opt==='cuidado'){
+    if((G.cnMoney||0)<15){showToast('Sin fondos');return;}
+    G.cnMoney-=15;
+    if(d.condition&&Math.random()<0.6){
+      d.condition.severity-=1;
+      if(d.condition.severity<=0){d.condition=null;showToast('Funciona: '+esc(d.name)+' está mejor');}
+      else showToast('Algo mejor, no del todo');
+    }else showToast('Hoy no ha bastado');
+  }
+  if(opt==='forzar'){
+    if((G.cnMoney||0)<35){showToast('Sin fondos');return;}
+    G.cnMoney-=35;rs.forced=true;
+    d.bond=Math.max(0,(d.bond||0)-8);   // incondicional: el perro lo nota
+  }
+  rs.morning=null;G.screen='canicrossPreRace';render();
+};
