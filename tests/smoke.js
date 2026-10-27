@@ -20,7 +20,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'resetRaceFlags','resetRaceDayState','drain','bumpStat','raceHistoryFor',
   'runnerCritState','screenRoutes','profBounds','serializableState',
   'deleteSlot','loadFromSlot','saveToSlot','SAVE_VERSION','SAVE_KEY','LS',
-  'cnGetCategory','cnCurrentMonth','CN_CATEGORIES','shuffle','CIRCUITS_DB',
+  'cnGetCategory','cnMonth','cnSeasonOver','CN_MONTHS','CANICROSS_RACES','CN_CATEGORIES','shuffle','CIRCUITS_DB',
   'raceGainTotal','raceDesnivel','fmtGain','clubRaceKm','RACES_DB','CLUB_RACES','SPEC_RACES',
   'screenRoutes','CLUB_STAFF_TYPES','renderExpresCalendar','renderCoachIntro','TRAINING_BLOCKS',
   'seasonYearNet','STAFF_COSTS','generateCoachSeasonObjective','coachObjectiveMet','raceLoadGain','canAccessRace',
@@ -34,7 +34,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL',
   'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS',
   'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS',
-  'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog']);
+  'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -249,10 +249,11 @@ t('y el circuito de montaña existe con el id nuevo', T.CIRCUITS_DB.some(c=>c.id
 T.LS.get=LSreal; T.LS.set=LSrealSet; T.LS.del=LSrealDel;
 
 console.log('\n── T119/T120 (v92) · bordes de canicross ──');
-setG({cnWeek:-5});
-t('cnCurrentMonth con semana negativa da octubre, no marzo', T.cnCurrentMonth()===10, T.cnCurrentMonth());
-setG({cnWeek:0});   t('semana 0 → octubre', T.cnCurrentMonth()===10);
-setG({cnWeek:999}); t('una semana enorme sigue dando el último mes', T.cnCurrentMonth()===3);
+// Reloj de Canicross desde el paso 2 del rediseño: cnMonthIdx en lugar de cnWeek.
+setG({cnMonthIdx:-5});
+t('cnMonth con un índice negativo da octubre, no marzo', T.cnMonth()===10, T.cnMonth());
+setG({cnMonthIdx:0});   t('mes 0 → octubre', T.cnMonth()===10);
+setG({cnMonthIdx:999}); t('un índice enorme sigue dando el último mes y la temporada terminada', T.cnMonth()===3&&T.cnSeasonOver());
 t('cnGetCategory con edad negativa da la primera categoría', T.cnGetCategory(-4)===T.CN_CATEGORIES[0], JSON.stringify(T.cnGetCategory(-4)));
 t('y con edad no numérica también', T.cnGetCategory(undefined)===T.CN_CATEGORIES[0]);
 
@@ -398,7 +399,7 @@ t('Carrera de Vida en fase Entrenador: también', T.seasonMonthLabel()==='A2 · 
 t('y enruta las pestañas como Entrenador', T.isCoachPhase()===true);
 setG({gameMode:'medio',year:3,selectedRaces:[{month:4}],currentRaceIdx:0});
 t('Clásico sigue igual', T.seasonMonthLabel()==='A3 · Abr'&&T.isCoachPhase()===false, T.seasonMonthLabel());
-setG({gameMode:'canicross',canicrossMode:true,cnSeason:5,cnWeek:0});
+setG({gameMode:'canicross',canicrossMode:true,cnSeason:5,cnMonthIdx:0});
 t('Canicross: su temporada y su mes', T.seasonMonthLabel()==='A5 · Oct', T.seasonMonthLabel());
 
 console.log('\n── H10 (v95) · abandonar no esconde una lesión ya sufrida ──');
@@ -568,8 +569,7 @@ console.log('\n── v96 · el objetivo de temporada del Club se aplica una vez
 }
 
 console.log('\n── v96 · Canicross se puede cerrar en marzo ──');
-t('avanzar desde marzo lo termina y abre el cierre',
-  /const marchDone=\(G\.cnWeek\|\|0\)>=24;/.test(src['canicross.js'])&&/const allRaceDone=marchDone\|\|\(races\.length>0&&pendingRaces\.length===0\);/.test(src['canicross.js']));
+t('el cierre sale con marzo terminado aunque queden carreras', /const marchDone=cnSeasonOver\(\);/.test(src['canicross.js'])&&/const allRaceDone=marchDone\|\|\(races\.length>0&&pendingRaces\.length===0\);/.test(src['canicross.js']));
 
 console.log('\n── Tanda del playtest v96 ──');
 {
@@ -577,15 +577,14 @@ console.log('\n── Tanda del playtest v96 ──');
   const pinta=domStub(ctx);
 
   // BUG-05: la pantalla, no el texto del fuente
-  setG({gameMode:'canicross',canicrossMode:true,screen:'canicrossSeasonBalance',activeTab:'game',cnSeason:1,cnWeek:28,cnRaceResults:[],dogs:[]});
+  setG({gameMode:'canicross',canicrossMode:true,screen:'canicrossSeasonBalance',activeTab:'game',cnSeason:1,cnMonthIdx:6,cnRaceResults:[],dogs:[]});
   let html=pinta(()=>_render());
   t('Canicross: «Cerrar temporada» llega al balance y se pinta', html.includes('cnEndSeason()'), html.slice(0,80));
 
   // BUG-17
-  setG({cnWeek:4});  t('Canicross: el primer «Avanzar» (semana 4) ya es noviembre', T.cnCurrentMonth()===11, T.cnCurrentMonth());
-  setG({cnWeek:19}); t('semana 19 → febrero', T.cnCurrentMonth()===2, T.cnCurrentMonth());
-  setG({cnWeek:20}); t('semana 20 → marzo', T.cnCurrentMonth()===3, T.cnCurrentMonth());
-  t('el aviso de «Avanzar» nombra el mes que termina', /const doneMonth=cnCurrentMonth\(\);[\s\S]*for\(let i=0;i<4;i\+\+\)[\s\S]*MONTH_NAMES\[doneMonth\]/.test(src['canicross.js']));
+  setG({cnMonthIdx:1}); t('Canicross: mes 1 es noviembre', T.cnMonth()===11, T.cnMonth());
+  setG({cnMonthIdx:5}); t('mes 5 es marzo y la temporada no ha terminado', T.cnMonth()===3&&!T.cnSeasonOver());
+  t('el aviso de «Avanzar» nombra el mes que termina', /const doneMonth=cnMonth\(\);[\s\S]*cnEndMonth\(\);[\s\S]*CN_MONTH_NAMES\[doneMonth\]/.test(src['canicross.js']));
 
   // BUG-08
   setG({carreraVida:true,lifecyclePhase:'overlap',screen:'coachHome'});
@@ -1012,6 +1011,47 @@ console.log('\n── Canicross, rediseño paso 1 · G.dog → G.dogs[] ──')
   const html=pintaCn(()=>{setG({...vieja,screen:'canicrossAntigua',cnRev:0,runner:{...T.freshState().runner,name:'Iñigo'}});ctx.render();});
   t('«canicrossAntigua» se pinta y ofrece las dos salidas', html.includes('antes del rediseño')&&html.includes('cnAntiguaNueva()')&&html.includes('cnAntiguaVolver()'), html.slice(0,80));
   t('…sin colores sueltos', !/#[0-9a-fA-F]{3,6}\b/.test(html));
+}
+
+console.log('\n── Canicross, rediseño paso 2 · reloj por mes y carreras fijas ──');
+{
+  const _r=ctx.render,_t=ctx.showToast,_a=ctx.autoSave,_st=ctx.setTimeout;const avisos=[];
+  ctx.render=()=>{};ctx.autoSave=()=>{};ctx.setTimeout=f=>f();ctx.showToast=m=>avisos.push(m);
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:1000,cnTrainingBlock:'conjunto',cnMonthIdx:0,cnMonthWeek:0});
+  T.cnAddDog(T.cnInitDog('Txuri','husky'));
+  ctx.cnAdvanceWeek();
+  t('B5: el primer «Avanzar» lleva a noviembre', T.cnMonth()===11&&g.cnMonthWeek===0, T.cnMonth());
+  t('…y el aviso dice el mes que acaba y el que empieza', avisos.some(a=>a.startsWith('Octubre completado')&&a.includes('ahora noviembre')), avisos.join(' | '));
+  t('se cobra la manutención una vez por mes', g.cnMoney<1000&&g.cnMoney>=1000-200, g.cnMoney);
+  g.cnVacationDays=15;g.cnVacationUsed=0;
+  ctx.cnAdvanceRestWeek();
+  t('una semana de vacaciones gasta una semana del mes', T.cnMonth()===11&&g.cnMonthWeek===1);
+  ctx.cnAdvanceWeek();
+  t('y «Avanzar» completa el mes con las tres que quedan', T.cnMonth()===12&&g.cnMonthWeek===0);
+  for(let i=0;i<4;i++)ctx.cnAdvanceWeek();
+  t('tras marzo la temporada termina', T.cnSeasonOver()&&g.cnMonthIdx===6);
+  const antes=g.cnMoney;ctx.cnAdvanceWeek();
+  t('y ya no se puede avanzar más ni se cobra otro mes', g.cnMonthIdx===6&&g.cnMoney===antes);
+  // B4
+  g.cnSelectedRaces=[];avisos.length=0;
+  ctx.cnToggleRace('cn_copa');ctx.cnToggleRace('cn_moncayo');
+  t('B4: no se eligen dos carreras del mismo mes', g.cnSelectedRaces.length===1&&avisos.some(a=>a.includes('una carrera por mes')), avisos.join(' | '));
+  ['cn_otono','cn_forestal','cn_tramuntana','cn_guadarrama','cn_benasque'].forEach(id=>ctx.cnToggleRace(id));
+  t('una por mes deja llegar a seis', g.cnSelectedRaces.length===6);
+  ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
+}
+{
+  const R=T.CANICROSS_RACES;
+  t('12 carreras, dos por mes de octubre a marzo', R.length===12&&T.CN_MONTHS.every(m=>R.filter(r=>r.month===m).length===2));
+  t('cada una con su perfil fijo y los km cuadran', R.every(r=>Array.isArray(r.segs)&&r.segs.length>=4&&Math.abs(r.segs.reduce((a,s)=>a+s.km,0)-r.km)<0.01));
+  t('cada tramo con tipo coherente con su desnivel y superficie',
+    R.every(r=>r.segs.every(s=>['flat','climb','descent'].includes(s.type)&&['pista','tierra','piedra','hierba','barro','nieve'].includes(s.surface)
+      &&(s.type!=='climb'||s.gain>0)&&(s.type!=='descent'||s.gain<0)&&s.name)));
+  t('refPace y tempBase en todas', R.every(r=>r.refPace>150&&r.refPace<400&&typeof r.tempBase==='number'));
+  t('el generador aleatorio de tramos ya no existe', !/cnGenerateSegs|CN_SEG_NAMES/.test(src['canicross.js'].replace(/\/\/.*$/gm,'')));
+  t('§0.4: ninguna pantalla da el cumpleaños ni rellena los meses al pintarse',
+    !/function render[\s\S]*?cnCheckBirthday\(\)/.test(src['canicross.js'].split('function cnDoSeasonTransition')[0].replace(/function cnCheckBirthday[\s\S]*?\n}\n/,''))
+    &&!/G\.cnOpenSeasonMonths=\[10,11,12,1,2,3\]/.test(src['canicross.js']));
 }
 
 t.done('TODO OK');

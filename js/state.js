@@ -8,7 +8,8 @@ function assignClubCompanion(club){
 // intentar jugarla. Canicross avisaba en su ficha de que sus partidas no pasarían al
 // rediseño; es lo que evita escribir una migración en cada paso.
 // 1 = G.dogs[] en lugar de G.dog (2026-10-27).
-const CN_REV=1;
+// 2 = reloj por mes (cnMonthIdx/cnMonthWeek, adiós a cnWeek) y carreras con perfil fijo.
+const CN_REV=2;
 function freshState(){
   return{
     screen:'saveScreen',year:1,ranking:999,specRanking:999,money:300,
@@ -259,7 +260,8 @@ function freshState(){
     // ── Modo Canicross ───────────────────────────
     canicrossMode:false,
     cnSeason:1, cnSelectedRaces:[], cnCurrentRaceIdx:0, cnRaceResults:[],
-    cnMoney:500, cnTrainingBlock:null, cnWeek:0,
+    cnMoney:500, cnTrainingBlock:null,
+    cnMonthIdx:0, cnMonthWeek:0,   // reloj de Canicross (paso 2): mes 0-5 (6 = terminada) y semana del mes
     cnTrainAdrainSessions:{left:0,hold:0,forward:0},
     cnOwnedEquipment:{dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']},
     equipment:{dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'},

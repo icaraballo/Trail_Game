@@ -122,7 +122,7 @@ function seasonMonthLabel(){
     const cr=(G.coachSelectedRaces||[])[G.coachRaceIdx||0];
     return 'A'+(G.coachSeason||1)+' · '+(cr?M[cr.month||1]:'—');
   }
-  if(G.canicrossMode)return 'A'+(G.cnSeason||1)+' · '+M[cnCurrentMonth()];
+  if(G.canicrossMode)return 'A'+(G.cnSeason||1)+' · '+M[cnMonth()];
   const curRace=G.selectedRaces&&G.selectedRaces[G.currentRaceIdx||0];
   return 'A'+G.year+' · '+(curRace?M[curRace.month||1]:(['','T1','T2','T3','T4'][G.currentQuarter||1]));
 }

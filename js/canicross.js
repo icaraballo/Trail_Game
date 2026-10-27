@@ -42,11 +42,6 @@ const CN_PACES=[
   {id:'apretar', label:'Apretar',       desc:'Rápido, el perro va al límite',  timeMult:0.90, energyCost:17, dogCost:14, bondMod:-2},
   {id:'atope',   label:'A tope',        desc:'Máximo esfuerzo — riesgo real',  timeMult:0.82, energyCost:25, dogCost:21, bondMod:-5},
 ];
-const CN_SEG_NAMES={
-  flat:    ['Pista forestal','Camino llano','Senda suave','Llano abierto','Recta de velocidad'],
-  climb:   ['Repecho sostenido','Subida técnica','Cuesta exigente','Rampa pronunciada','Ascenso en zigzag'],
-  descent: ['Bajada técnica','Descenso rápido','Pendiente suelta','Tramo de bajada','Descenso en pista'],
-};
 const CN_RIVAL_NAMES=[
   'Elena & Nala','Carlos & Thor','Ana & Kira','Javi & Bolt','Laura & Max',
   'Pedro & Zara','Marta & Rex','Iñaki & Txuri','Sara & Nina','Pol & Ares',
@@ -141,18 +136,19 @@ function cnMonthlyDogCost(){
   return c;
 }
 
-function cnCurrentMonth(){
-  // T119 (v92): sin suelo, una semana negativa caía en el `return 3` final y
-  // daba marzo antes de empezar la temporada.
-  const w=Math.max(0,G.cnWeek||0);
-  // BUG-17 (v96): octubre duraba cinco semanas (w<5) y «Avanzar» suma cuatro, así que el
-  // primer avance se quedaba en octubre. Cuatro semanas por mes; marzo termina en la 24.
-  if(w<4)return 10;
-  if(w<8)return 11;
-  if(w<12)return 12;
-  if(w<16)return 1;
-  if(w<20)return 2;
-  return 3;
+// ── RELOJ (rediseño, paso 2 · TG-Diseno-Canicross § 4.12) ───────────────────
+// Antes, G.cnWeek y una tabla de semanas → mes (cnCurrentMonth). Dos fallos salieron de ahí:
+// el primer «Avanzar» que no cambiaba de mes (B5, BUG-17) y marzo, que no terminaba nunca
+// (CR-75). Ahora el mes es G.cnMonthIdx (0 = octubre … 5 = marzo; 6 = temporada terminada)
+// y G.cnMonthWeek las semanas ya gastadas dentro del mes (vacaciones: de una en una).
+function cnMonth(){return CN_MONTHS[Math.max(0,Math.min(5,Number(G.cnMonthIdx)||0))];}
+function cnSeasonOver(){return (Number(G.cnMonthIdx)||0)>=6;}
+// Cierra el mes: cobra la manutención del perro y pasa al siguiente (tras marzo, a 6).
+function cnEndMonth(){
+  const cost=cnMonthlyDogCost();
+  G.cnMoney=Math.max(0,(G.cnMoney||0)-cost);
+  G.cnMonthIdx=Math.min(6,(Number(G.cnMonthIdx)||0)+1);G.cnMonthWeek=0;
+  return cost;
 }
 
 function cnPickEvent(raceMonth){
@@ -211,17 +207,6 @@ function cnCheckBirthday(){
   }
 }
 
-function cnGenerateSegs(race){
-  const n=Math.min(6,Math.max(3,Math.ceil((race.km||8)/2)));
-  const kmPerSeg=Math.round((race.km||8)/n*10)/10;
-  const typeSeq=['flat','climb','flat','descent','climb','flat'];
-  return Array.from({length:n},(_,i)=>{
-    const type=typeSeq[i%typeSeq.length];
-    const gain=type==='climb'?Math.round(40+Math.random()*70):type==='descent'?-Math.round(30+Math.random()*50):0;
-    const names=CN_SEG_NAMES[type];
-    return{km:kmPerSeg,type,gain,name:names[Math.floor(Math.random()*names.length)]};
-  });
-}
 
 const CN_CATEGORIES=[
   {id:'junior',  label:'Junior',      min:0,  max:19},
@@ -346,8 +331,8 @@ window.doStartCanicross=()=>{
   // ranura 1 sin avisar. Sin ranura no se autoguarda, como en los demás modos.
   G.cnMoney=500;G.cnSeason=1;
   G.cnSelectedRaces=[];G.cnCurrentRaceIdx=0;G.cnRaceResults=[];
-  G.cnTrainingBlock=null;G.cnWeek=0;
-  G.cnVacationDays=15;G.cnVacationUsed=0;G.cnVacationThisSeason=0;G.cnOpenMonths=[];G.cnOpenSeasonMonths=[];
+  G.cnTrainingBlock=null;G.cnMonthIdx=0;G.cnMonthWeek=0;
+  G.cnVacationDays=15;G.cnVacationUsed=0;G.cnVacationThisSeason=0;G.cnOpenMonths=[];G.cnOpenSeasonMonths=[...CN_MONTHS];
   G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
   G.equipment={dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'};
   G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
@@ -426,10 +411,10 @@ window.cnAdvanceRestWeek=()=>{
   }
   if(G.runner?.stats?.mental!==undefined)bumpStat(G.runner,'mental',mentalBonus);
   G.cnVacationUsed=(G.cnVacationUsed||0)+days;
-  G.cnWeek=(G.cnWeek||0)+1;
-  if((G.cnWeek||0)%4===0){
-    const cost=cnMonthlyDogCost();
-    G.cnMoney=Math.max(0,(G.cnMoney||0)-cost);
+  // Una semana de las cuatro del mes; con la cuarta, el mes se cierra.
+  G.cnMonthWeek=(Number(G.cnMonthWeek)||0)+1;
+  if(G.cnMonthWeek>=4){
+    const cost=cnEndMonth();
     showToast('Gastos del perro: -€'+cost+'/mes');
   }
   autoSave();render();
@@ -472,20 +457,16 @@ function cnApplyOneWeekTraining(){
 }
 
 window.cnAdvanceWeek=()=>{
+  if(cnSeasonOver()){showToast('Marzo ya ha terminado: cierra la temporada');return;}
   if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento');return;}
-  const doneMonth=cnCurrentMonth();   // BUG-17 (v96): el aviso nombra el mes que termina, no el siguiente
-  // Avanzar 4 semanas (1 mes) de una vez
-  for(let i=0;i<4;i++){
-    cnApplyOneWeekTraining();
-    G.cnWeek=(G.cnWeek||0)+1;
-    if((G.cnWeek||0)%4===0){
-      const cost=cnMonthlyDogCost();
-      G.cnMoney=Math.max(0,(G.cnMoney||0)-cost);
-    }
-  }
-  const MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
+  const doneMonth=cnMonth();   // BUG-17 (v96): el aviso nombra el mes que termina
+  // Las semanas que quedan del mes (cuatro, o menos si hubo vacaciones) y se cierra: cada
+  // «Avanzar» cambia de mes de verdad (B5).
+  for(let w=Number(G.cnMonthWeek)||0;w<4;w++)cnApplyOneWeekTraining();
+  cnEndMonth();
   autoSave();render();
-  setTimeout(()=>showToast((MONTH_NAMES[doneMonth]||'Mes')+' completado ✓'),150);
+  const sig=cnSeasonOver()?'cierra la temporada':'ahora '+CN_MONTH_NAMES[cnMonth()].toLowerCase();
+  setTimeout(()=>showToast((CN_MONTH_NAMES[doneMonth]||'Mes')+' completado ✓ · '+sig),150);
 };
 
 window.cnStartRace=idx=>{
@@ -506,7 +487,10 @@ window.cnStartRace=idx=>{
     if(!cmds.left&&!cmds.hold&&!cmds.forward)G._cnRacedWithoutCommands=true;
     if(!(G.cnPreseasonDone||[]).length)G._cnPreseasonNothing=true;
   }
-  const segs=cnGenerateSegs(race);
+  // Paso 2: el perfil es el de la carrera (constants.js), siempre el mismo. Se busca por id
+  // porque G.cnSelectedRaces guarda la copia que se hizo al elegirla.
+  const def=CANICROSS_RACES.find(r=>r.id===race.id)||race;
+  const segs=(def.segs||[]).map(sg=>({...sg}));
   const numSegs=segs.length;
   const basePace={1:360,2:390,3:415,4:440}[race.tier]||390;
   G.cnRaceState={
@@ -625,7 +609,11 @@ window.cnToggleRace=id=>{
   const idx=sel.findIndex(r=>r.id===id);
   if(idx>=0){G.cnSelectedRaces.splice(idx,1);}
   else{
-    if(sel.length>=5){showToast('Máximo 5 carreras por temporada');return;}
+    // B4: se podían elegir dos del mismo mes y el hub solo enseñaba una; la otra caducaba
+    // sin verse. Ahora el selector lo impide y lo dice.
+    const mismoMes=sel.find(r=>r.month===race.month);
+    if(mismoMes){showToast('Ya tienes «'+mismoMes.name+'» en '+CN_MONTH_NAMES[race.month].toLowerCase()+': una carrera por mes');return;}
+    if(sel.length>=6){showToast('Máximo 6 carreras: una por mes');return;}
     G.cnSelectedRaces=[...sel,race];
   }
   render();
@@ -722,10 +710,13 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
   G._cnVetThisSeason=false;
   // ────────────────────────────────────────────────────────────
   G.cnSeason=(G.cnSeason||1)+1;
-  G.cnWeek=0;G.cnSelectedRaces=[];G.cnCurrentRaceIdx=0;
+  G.cnMonthIdx=0;G.cnMonthWeek=0;G.cnSelectedRaces=[];G.cnCurrentRaceIdx=0;
   G.cnTrainingBlock=null;G.cnVacationUsed=0;G.cnVacationPlanned=0;G.cnVacationDays=15;G.cnOpenMonths=[];
   G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
   G.cnRaceState=null;
+  // §0.4 del diseño: el cumpleaños (+3 vínculo) lo daban el hub y la ficha del perro al
+  // pintarse. Ahora, aquí, al empezar la temporada: una pantalla no cambia la partida.
+  cnCheckBirthday();
   G.activeTab='game';G.screen='canicrossHub';
   autoSave();render();
 };
@@ -940,19 +931,17 @@ function renderCnCorredorTab(){
   const canRace=cnCanRace();
   const races=G.cnSelectedRaces||[];
   const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
-  const curMonth=cnCurrentMonth();
-  const MONTHS=[10,11,12,1,2,3];
-  const MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
+  const curMonth=cnMonth();
+  const MONTHS=CN_MONTHS;
+  const MONTH_NAMES=CN_MONTH_NAMES;
   const mIdx=m=>MONTHS.indexOf(m);
   const isPastMonth=m=>mIdx(m)<mIdx(curMonth);
-  // v96: el reloj se para en marzo (cnCurrentMonth devuelve 3 desde la semana 20), así que
-  // una carrera de marzo sin correr —por vínculo bajo, perro lesionado o «Saltar este
-  // mes»— nunca pasaba a «pasada», y sin carreras apuntadas allRaceDone no se cumplía: la
-  // temporada no se podía cerrar. Avanzar desde marzo lleva la semana a 24+ y lo termina.
-  const marchDone=(G.cnWeek||0)>=24;
+  // v96 (CR-75): una carrera de marzo sin correr —vínculo bajo, perro lesionado o «Saltar
+  // este mes»— o una temporada sin carreras dejaban la temporada sin cierre. El reloj nuevo
+  // nace con ello: avanzar desde marzo lleva cnMonthIdx a 6 y la temporada se puede cerrar.
+  const marchDone=cnSeasonOver();
   const pendingRaces=races.filter(r=>!doneIds.includes(r.id)&&!isPastMonth(r.month)&&!marchDone);
   const allRaceDone=marchDone||(races.length>0&&pendingRaces.length===0);
-  cnCheckBirthday();
 
   el.innerHTML=`
     <div class="flex-between-center" style="margin-bottom:4px">
@@ -961,7 +950,7 @@ function renderCnCorredorTab(){
     </div>
     <div class="stat-grid" style="margin-bottom:14px">
       <div class="stat"><div class="stat-label">Presupuesto</div><div class="stat-val" style="color:#2d7a2d">€${G.cnMoney||0}</div></div>
-      <div class="stat"><div class="stat-label">Semana</div><div class="stat-val">${G.cnWeek||0}</div></div>
+      <div class="stat"><div class="stat-label">Mes</div><div class="stat-val">${marchDone?'Terminada':MONTH_NAMES[curMonth]}</div></div>
       <div class="stat"><div class="stat-label">Carreras sel.</div><div class="stat-val">${races.length}</div></div>
     </div>
 
@@ -1009,10 +998,7 @@ function renderCnCorredorTab(){
         return`<button class="main" style="margin-top:4px;margin-bottom:8px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="cnStartRace(${idx})">🏁 Correr ${esc(raceThisMonth.name)} →</button>
         <button class="main" style="margin-top:0;margin-bottom:14px;opacity:0.5;font-size:13px" onclick="cnAdvanceWeek()">Saltar este mes sin correr →</button>`;
       }
-      const MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
-      const nextMonthNames=[10,11,12,1,2,3];
-      const curIdx=nextMonthNames.indexOf(curMonth);
-      const nextM=nextMonthNames[curIdx+1];
+      const nextM=CN_MONTHS[(Number(G.cnMonthIdx)||0)+1];
       if(marchDone)return'';   // v96: marzo terminado, abajo sale «Cerrar temporada»
       return`<button class="main" style="margin-top:4px;margin-bottom:14px" onclick="cnAdvanceWeek()">${nextM?'Avanzar a '+MONTH_NAMES[nextM]:'Terminar marzo'} →</button>`;
     })()}
@@ -1090,7 +1076,6 @@ function renderCnCorredorTab(){
 function renderCnPerroTab(){
   const el=$main();
   const d=cnActiveDog();
-  cnCheckBirthday();
   if(!d){el.innerHTML=`<div class="hint">Sin perro. Algo fue mal.</div>`;return;}
 
   const isOld=d.age>=6;
@@ -1260,15 +1245,17 @@ function renderCanicrossCalendarSetup(){
   const spent=selIds.reduce((a,id)=>{const r=CANICROSS_RACES.find(x=>x.id===id);return a+(r?.cost||0);},0);
   const budget=G.cnMoney||0;
   const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
-  if(!G.cnOpenSeasonMonths||G.cnOpenSeasonMonths.length===0)G.cnOpenSeasonMonths=[10,11,12,1,2,3];
+  const openMonths=G.cnOpenSeasonMonths||[];   // §0.4 del diseño: ya no se rellena al pintar (lo pone el arranque)
   const tierColor={1:'#4a8a2a',2:'#4a90d9',3:'#c07a10',4:'#c0392b'};
   const tierLabel={1:'Tier 1',2:'Tier 2',3:'Tier 3',4:'Tier 4'};
   const byMonth={};
   CANICROSS_RACES.forEach(r=>{if(!byMonth[r.month])byMonth[r.month]=[];byMonth[r.month].push(r);});
   const raceCard=r=>{
     const isSel=selIds.includes(r.id);const isDone=doneIds.includes(r.id);
-    const noMoney=!isSel&&(spent+(r.cost||0)>budget);const maxed=!isSel&&selIds.length>=5;
-    const clickable=!isDone&&!maxed&&!(noMoney&&!isSel);
+    const noMoney=!isSel&&(spent+(r.cost||0)>budget);
+    const otro=!isSel&&sel.find(x=>x.month===r.month);   // B4: una por mes
+    const maxed=!isSel&&!otro&&selIds.length>=6;
+    const clickable=!isDone&&!maxed&&!otro&&!(noMoney&&!isSel);
     return`<div class="race-card ${isSel?'sel':''}" style="${isDone?'opacity:0.55;cursor:default':''}" ${clickable?`onclick="cnToggleRace('${r.id}')"`:''}">
       <div class="flex-between">
         <div style="flex:1">
@@ -1277,7 +1264,7 @@ function renderCanicrossCalendarSetup(){
             <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'#888'}">${tierLabel[r.tier]||''}</span>
           </div>
           <div style="font-size:12px;color:#888">${r.monthName} · ${r.km}km · ${esc(r.location)}</div>
-          ${noMoney&&!isSel&&!maxed?`<div style="font-size:12px;color:#c0392b;margin-top:2px">Sin presupuesto</div>`:maxed&&!isSel?`<div style="font-size:12px;color:#c07a10;margin-top:2px">Máx. 5 carreras</div>`:''}
+          ${otro?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">Ya tienes «${esc(otro.name)}» este mes</div>`:noMoney&&!isSel&&!maxed?`<div style="font-size:12px;color:#c0392b;margin-top:2px">Sin presupuesto</div>`:maxed&&!isSel?`<div style="font-size:12px;color:#c07a10;margin-top:2px">Máx. 6 carreras</div>`:''}
         </div>
         <div class="right-col">
           <div style="font-size:13px;font-weight:600;color:#4a8a2a">€${r.prize}</div>
@@ -1290,7 +1277,7 @@ function renderCanicrossCalendarSetup(){
 
   el.innerHTML=`
     <h2>📅 Calendario de temporada</h2>
-    <p class="sub">Oct–Mar · Máx. 5 carreras · ${sel.length} seleccionadas</p>
+    <p class="sub">Oct–Mar · una carrera por mes, máx. 6 · ${sel.length} seleccionadas</p>
     <div style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
         <span>Presupuesto de inscripciones</span>
@@ -1304,7 +1291,7 @@ function renderCanicrossCalendarSetup(){
       const races=byMonth[m]||[];if(!races.length)return'';
       const mName=MONTH_NAMES[m];
       const mSel=races.filter(r=>selIds.includes(r.id)).length;
-      const isOpen=G.cnOpenSeasonMonths.includes(m);
+      const isOpen=openMonths.includes(m);
       return`<div class="quarter-wrap">
         <div class="quarter-toggle ${mSel>0?'has-sel':''}" onclick="cnToggleSeasonMonth(${m})">
           <span style="font-size:14px;font-weight:600;flex:1">${mName} <span style="font-size:12px;font-weight:400;color:#aaa">· ${races.length} carrera${races.length>1?'s':''}</span></span>
@@ -1334,7 +1321,7 @@ function renderCnCalendarioTab(){
   const spent=selIds.reduce((a,id)=>{const r=CANICROSS_RACES.find(x=>x.id===id);return a+(r?.cost||0);},0);
   const budget=G.cnMoney||0;
   const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
-  if(!G.cnOpenSeasonMonths||G.cnOpenSeasonMonths.length===0)G.cnOpenSeasonMonths=[10,11,12,1,2,3];
+  const openMonths=G.cnOpenSeasonMonths||[];   // §0.4 del diseño: ya no se rellena al pintar (lo pone el arranque)
   const tierColor={1:'#4a8a2a',2:'#4a90d9',3:'#c07a10',4:'#c0392b'};
   const tierLabel={1:'Tier 1',2:'Tier 2',3:'Tier 3',4:'Tier 4'};
 
@@ -1345,8 +1332,9 @@ function renderCnCalendarioTab(){
     const isSel=selIds.includes(r.id);
     const isDone=doneIds.includes(r.id);
     const noMoney=!isSel&&(spent+(r.cost||0)>budget);
-    const maxed=!isSel&&selIds.length>=5;
-    const clickable=!isDone&&!maxed&&!(noMoney&&!isSel);
+    const otro=!isSel&&sel.find(x=>x.month===r.month);   // B4: una por mes
+    const maxed=!isSel&&!otro&&selIds.length>=6;
+    const clickable=!isDone&&!maxed&&!otro&&!(noMoney&&!isSel);
     return`<div class="race-card ${isSel?'sel':''}" style="${isDone?'opacity:0.55;cursor:default':''}" ${clickable?`onclick="cnToggleRace('${r.id}')"`:''}">
       <div class="flex-between">
         <div style="flex:1">
@@ -1356,7 +1344,8 @@ function renderCnCalendarioTab(){
           </div>
           <div style="font-size:12px;color:#888">${r.monthName} · ${r.km}km · ${esc(r.location)}</div>
           ${isDone?`<div style="font-size:12px;color:#4a8a2a;margin-top:2px">✓ Ya corrida esta temporada</div>`:''}
-          ${maxed&&!isSel?`<div style="font-size:12px;color:#c07a10;margin-top:2px">Máx. 5 carreras alcanzado</div>`:''}
+          ${otro?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">Ya tienes «${esc(otro.name)}» este mes</div>`:''}
+          ${maxed&&!isSel?`<div style="font-size:12px;color:#c07a10;margin-top:2px">Máx. 6 carreras alcanzado</div>`:''}
           ${noMoney&&!isSel&&!maxed?`<div style="font-size:12px;color:#c0392b;margin-top:2px">Sin presupuesto</div>`:''}
         </div>
         <div class="right-col">
@@ -1370,7 +1359,7 @@ function renderCnCalendarioTab(){
 
   el.innerHTML=`
     <h2>📅 Calendario de temporada</h2>
-    <p class="sub">Oct–Mar · Máx. 5 carreras · ${sel.length} seleccionadas</p>
+    <p class="sub">Oct–Mar · una carrera por mes, máx. 6 · ${sel.length} seleccionadas</p>
     <div style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
         <span>Presupuesto de inscripciones</span>
@@ -1386,7 +1375,7 @@ function renderCnCalendarioTab(){
       const mName=MONTH_NAMES[m];
       const mShort=MONTH_SHORT[m];
       const mSel=races.filter(r=>selIds.includes(r.id)).length;
-      const isOpen=G.cnOpenSeasonMonths.includes(m);
+      const isOpen=openMonths.includes(m);
       return`<div class="quarter-wrap">
         <div class="quarter-toggle ${mSel>0?'has-sel':''}" onclick="cnToggleSeasonMonth(${m})">
           <span style="font-size:14px;font-weight:600;flex:1">${mName} <span style="font-size:12px;font-weight:400;color:#aaa">· ${mShort}</span></span>

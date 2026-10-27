@@ -279,6 +279,7 @@ window.devJumpToClub=()=>{
 };
 window.devJumpToCanicross=()=>{
   G.gameMode='canicross';
+  if(!(G.cnOpenSeasonMonths||[]).length)G.cnOpenSeasonMonths=[...CN_MONTHS];
   if(!cnActiveDog()){cnAddDog(cnInitDog('DevDog','mestizo'));G.cnRev=CN_REV;}
   G.screen='canicrossHub';G.activeTab='game';
   showToast('DEV: saltado a Canicross');
@@ -437,7 +438,8 @@ window.devSimulateCanicrossSeasons=(n)=>{
   try{
     for(let i=0;i<n;i++){
       if(!G.cnSelectedRaces||!G.cnSelectedRaces.length){
-        G.cnSelectedRaces=[...CANICROSS_RACES].sort((a,b)=>a.month-b.month).slice(0,5);
+        // Una por mes, en el orden de la temporada (B4: el selector ya no deja dos del mismo mes)
+        G.cnSelectedRaces=CN_MONTHS.map(m=>CANICROSS_RACES.find(r=>r.month===m)).filter(Boolean).slice(0,5);
       }
       G.cnSelectedRaces.forEach((race,idx)=>{
         if(!cnCanRace())return; // vínculo insuficiente / perro lesionado — se salta el resto
@@ -2654,7 +2656,7 @@ const DEV_RECIPES=[
       if(!march)throw new Error('No hay carrera de Canicross en marzo');
       G.cnSelectedRaces=[march];
       G.cnRaceResults=(G.cnRaceResults||[]).filter(r=>!(r.season===G.cnSeason&&r.raceId===march.id));
-      G.cnWeek=20;G.cnRaceState=null;G.screen='canicrossHub';
+      G.cnMonthIdx=5;G.cnMonthWeek=0;G.cnRaceState=null;G.screen='canicrossHub';
     },luego:'Estás en marzo con la carrera sin correr. Avanza desde marzo o sáltala: la temporada debe poder cerrarse.'},
   {id:'coach_two',label:'Entrenador con dos atletas',sesion:'5',casilla:'Historiales separados por atleta',
     pasos:()=>{

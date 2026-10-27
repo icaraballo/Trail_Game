@@ -2157,14 +2157,60 @@ const SCREENS_WITH_TABS=['seasonStart','calendar','sponsors','training','between
 const RACE_SCREENS=['preRace','segment','aid','raceResult','midRaceEvent'];
 
 // ── CANICROSS ──────────────────────────────────────────
+// Rediseño de Canicross, paso 2 (TG-Diseno-Canicross § 4.12): perfiles FIJOS escritos a mano,
+// una identidad por carrera que se puede aprender (antes cnGenerateSegs() los generaba en cada
+// salida, todos con la misma secuencia). `month` es el mes del calendario (10…3), como antes;
+// el diseño usaba el índice 0-5, que es CN_MONTHS.indexOf(month). Nuevos y aún sin usar:
+// `refPace` (s/km del trazado, paso 3), `tempBase` (°C, paso 5) y `surface` por tramo
+// (pista · tierra · piedra · hierba · barro · nieve; pasos 5 y 8 del diseño).
+const CN_MONTHS=[10,11,12,1,2,3];
+const CN_MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
 const CANICROSS_RACES=[
-  {id:'cn_guadarrama', name:'Canicross Guadarrama',           location:'Madrid',    km:8,  month:1,  monthName:'Enero',     tier:1, prize:150, cost:25},
-  {id:'cn_volcanic',   name:'Canicross Volcànic',             location:'Cataluña',  km:7,  month:1,  monthName:'Enero',     tier:1, prize:120, cost:20},
-  {id:'cn_moncayo',    name:'Canicross Moncayo',              location:'Zaragoza',  km:9,  month:2,  monthName:'Febrero',   tier:2, prize:200, cost:30},
-  {id:'cn_tramuntana', name:'Canicross Serra de Tramuntana',  location:'Mallorca',  km:10, month:12, monthName:'Diciembre', tier:2, prize:220, cost:35},
-  {id:'cn_benasque',   name:'Canicross Valle de Benasque',    location:'Huesca',    km:12, month:3,  monthName:'Marzo',     tier:3, prize:300, cost:40},
-  {id:'cn_copa',       name:'Copa de España Canicross',       location:'Itinerante',km:10, month:2,  monthName:'Nov–Mar',   tier:3, prize:400, cost:50},
-  {id:'cn_campeonato', name:'Campeonato de España Canicross', location:'Itinerante',km:12, month:2,  monthName:'Febrero',   tier:4, prize:600, cost:60},
+  {id:'cn_otono',      name:'Popular de Otoño',               location:'Navarra',   km:6,  month:10, monthName:'Octubre',   tier:1, prize:100, cost:15, refPace:228, tempBase:13,
+    segs:[{km:1.5,type:'flat',gain:5,surface:'pista',name:'Salida entre hayas'},{km:1.6,type:'climb',gain:70,surface:'tierra',name:'Cuesta del hayedo'},
+          {km:1.4,type:'descent',gain:-60,surface:'hierba',name:'Prado de bajada'},{km:1.5,type:'flat',gain:-15,surface:'pista',name:'Recta del molino'}]},
+  {id:'cn_bienvenida', name:'Canicross de Bienvenida',        location:'Asturias',  km:7,  month:10, monthName:'Octubre',   tier:1, prize:120, cost:20, refPace:232, tempBase:12,
+    segs:[{km:1.8,type:'flat',gain:10,surface:'tierra',name:'Senda del río'},{km:1.5,type:'climb',gain:85,surface:'barro',name:'Repecho embarrado'},
+          {km:1.2,type:'flat',gain:5,surface:'hierba',name:'Campa de las vacas'},{km:1.2,type:'descent',gain:-80,surface:'tierra',name:'Bajada del castañar'},
+          {km:1.3,type:'flat',gain:-20,surface:'pista',name:'Meta en el pueblo'}]},
+  {id:'cn_forestal',   name:'Trofeo Forestal',                location:'Soria',     km:8,  month:11, monthName:'Noviembre', tier:1, prize:140, cost:20, refPace:226, tempBase:7,
+    segs:[{km:2.0,type:'flat',gain:5,surface:'pista',name:'Pista del pinar'},{km:1.6,type:'climb',gain:70,surface:'tierra',name:'Subida de las setas'},
+          {km:1.8,type:'flat',gain:10,surface:'tierra',name:'Cortafuegos'},{km:1.4,type:'descent',gain:-65,surface:'piedra',name:'Pedregal'},
+          {km:1.2,type:'flat',gain:-20,surface:'pista',name:'Recta del aserradero'}]},
+  {id:'cn_nocturna',   name:'Nocturna de Linternas',          location:'Cantabria', km:9,  month:11, monthName:'Noviembre', tier:2, prize:200, cost:30, refPace:240, tempBase:6,
+    segs:[{km:1.6,type:'flat',gain:0,surface:'pista',name:'Salida con frontales'},{km:2.0,type:'climb',gain:120,surface:'tierra',name:'Subida a oscuras'},
+          {km:1.5,type:'flat',gain:10,surface:'hierba',name:'Collado de las linternas'},{km:2.1,type:'descent',gain:-110,surface:'barro',name:'Bajada resbaladiza'},
+          {km:1.8,type:'flat',gain:-20,surface:'pista',name:'Recta iluminada'}]},
+  {id:'cn_montseny',   name:'Canicross del Montseny',         location:'Cataluña',  km:7,  month:12, monthName:'Diciembre', tier:1, prize:130, cost:20, refPace:234, tempBase:4,
+    segs:[{km:1.4,type:'flat',gain:5,surface:'tierra',name:'Salida del encinar'},{km:1.8,type:'climb',gain:95,surface:'piedra',name:'Subida de la riera'},
+          {km:1.6,type:'descent',gain:-70,surface:'tierra',name:'Bajada del castañar'},{km:2.2,type:'flat',gain:-30,surface:'pista',name:'Pista de vuelta'}]},
+  {id:'cn_tramuntana', name:'Canicross Serra de Tramuntana',  location:'Mallorca',  km:10, month:12, monthName:'Diciembre', tier:2, prize:220, cost:35, refPace:244, tempBase:10,
+    segs:[{km:1.8,type:'flat',gain:10,surface:'pista',name:'Salida del olivar'},{km:2.2,type:'climb',gain:150,surface:'piedra',name:'Camí de pedra en sec'},
+          {km:1.6,type:'flat',gain:10,surface:'piedra',name:'Bancales'},{km:2.0,type:'descent',gain:-130,surface:'piedra',name:'Bajada de la costera'},
+          {km:2.4,type:'flat',gain:-40,surface:'tierra',name:'Recta del torrente'}]},
+  {id:'cn_guadarrama', name:'Canicross Guadarrama',           location:'Madrid',    km:8,  month:1,  monthName:'Enero',     tier:1, prize:150, cost:25, refPace:236, tempBase:2,
+    segs:[{km:1.6,type:'flat',gain:0,surface:'pista',name:'Salida por la pista'},{km:1.8,type:'climb',gain:95,surface:'tierra',name:'Repecho de la Pedriza'},
+          {km:1.4,type:'flat',gain:10,surface:'tierra',name:'Llano del pinar'},{km:1.7,type:'descent',gain:-80,surface:'piedra',name:'Bajada suelta'},
+          {km:1.5,type:'flat',gain:-25,surface:'pista',name:'Recta de meta'}]},
+  {id:'cn_volcanic',   name:'Canicross Volcànic',             location:'Cataluña',  km:7,  month:1,  monthName:'Enero',     tier:1, prize:120, cost:20, refPace:230, tempBase:4,
+    segs:[{km:1.5,type:'flat',gain:5,surface:'tierra',name:'Fageda d’en Jordà'},{km:1.4,type:'climb',gain:80,surface:'tierra',name:'Cráter del Croscat'},
+          {km:1.3,type:'descent',gain:-70,surface:'tierra',name:'Bajada de greda'},{km:2.8,type:'flat',gain:-15,surface:'pista',name:'Vuelta por los campos'}]},
+  {id:'cn_moncayo',    name:'Canicross Moncayo',              location:'Zaragoza',  km:9,  month:2,  monthName:'Febrero',   tier:2, prize:200, cost:30, refPace:246, tempBase:1,
+    segs:[{km:1.5,type:'flat',gain:10,surface:'pista',name:'Salida del santuario'},{km:2.2,type:'climb',gain:160,surface:'nieve',name:'Subida con nieve'},
+          {km:1.4,type:'flat',gain:10,surface:'nieve',name:'Hayedo blanco'},{km:2.0,type:'descent',gain:-140,surface:'piedra',name:'Bajada de las canales'},
+          {km:1.9,type:'flat',gain:-40,surface:'tierra',name:'Recta del agua'}]},
+  {id:'cn_copa',       name:'Copa de España Canicross',       location:'Itinerante',km:10, month:2,  monthName:'Febrero',   tier:3, prize:400, cost:50, refPace:238, tempBase:5,
+    segs:[{km:2.0,type:'flat',gain:5,surface:'pista',name:'Salida rápida'},{km:1.8,type:'climb',gain:110,surface:'tierra',name:'Muro de la Copa'},
+          {km:2.2,type:'flat',gain:10,surface:'hierba',name:'Circuito de praderas'},{km:1.8,type:'descent',gain:-100,surface:'tierra',name:'Bajada técnica'},
+          {km:2.2,type:'flat',gain:-25,surface:'pista',name:'Sprint final'}]},
+  {id:'cn_benasque',   name:'Canicross Valle de Benasque',    location:'Huesca',    km:12, month:3,  monthName:'Marzo',     tier:3, prize:300, cost:40, refPace:252, tempBase:3,
+    segs:[{km:2.0,type:'flat',gain:10,surface:'pista',name:'Salida del valle'},{km:2.4,type:'climb',gain:180,surface:'nieve',name:'Subida a la cabaña'},
+          {km:2.0,type:'flat',gain:15,surface:'nieve',name:'Llano helado'},{km:2.2,type:'descent',gain:-170,surface:'piedra',name:'Bajada de la morrena'},
+          {km:1.6,type:'climb',gain:60,surface:'tierra',name:'Último repecho'},{km:1.8,type:'flat',gain:-50,surface:'pista',name:'Recta del Ésera'}]},
+  {id:'cn_campeonato', name:'Campeonato de España Canicross', location:'Itinerante',km:12, month:3,  monthName:'Marzo',     tier:4, prize:600, cost:60, refPace:242, tempBase:8,
+    segs:[{km:2.2,type:'flat',gain:5,surface:'pista',name:'Salida del campeonato'},{km:2.0,type:'climb',gain:120,surface:'tierra',name:'Primera subida'},
+          {km:1.8,type:'descent',gain:-90,surface:'piedra',name:'Bajada rota'},{km:2.2,type:'flat',gain:10,surface:'hierba',name:'Pradera central'},
+          {km:1.8,type:'climb',gain:95,surface:'barro',name:'Repecho del barro'},{km:2.0,type:'descent',gain:-140,surface:'pista',name:'Bajada a meta'}]},
 ];
 
 const CANICROSS_EQUIPMENT={
