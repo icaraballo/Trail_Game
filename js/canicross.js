@@ -75,6 +75,8 @@ function cnInitDog(name,breed){
     mood:60,fatigue:0,temperament:cnPickTemperament(),
     sex:Math.random()<0.5?'macho':'hembra',condition:null,   // paso 5: la hembra puede tener celo
     commands:{forward:0,hold:0,easy:0,left:0,leaveit:0,water:0},
+    cmdHours:{forward:0,hold:0,easy:0,left:0,leaveit:0,water:0},   // paso 6: horas acumuladas por comando
+    syncBase:0,   // paso 6: sincronía de base que dejan las horas juntos (se va perdiendo)
   };
 }
 function cnPickTemperament(){
@@ -94,13 +96,6 @@ function cnComputeDogStats(){
     bestTime:finished.length>0?Math.min(...finished.map(r=>r.time)):null,
   };
 }
-function cnGetEquipMods(){
-  const eq=G.equipment||{};
-  const harness=(CANICROSS_EQUIPMENT.dogHarness||[]).find(e=>e.id===eq.dogHarness)||{};
-  const belt=(CANICROSS_EQUIPMENT.humanBelt||[]).find(e=>e.id===eq.humanBelt)||{};
-  const line=(CANICROSS_EQUIPMENT.line||[]).find(e=>e.id===eq.line)||{};
-  return{speedMod:harness.speedMod||0,staminaMod:harness.staminaMod||0,injuryRisk:belt.injuryRiskMod||0,jerkMod:line.jerkMod||0};
-}
 
 function cnCanRace(){
   const d=cnActiveDog();
@@ -112,15 +107,6 @@ function cnCanRace(){
 
 function cnRaceThreshold(){return(G.cnSeason||1)===1?20:30;}
 
-// Paso 4: el siguiente comando a enseñar es el de menos dominio, en el orden de CN_COMMANDS
-// (todos al nivel 1 antes de llevar ninguno al 2). null con los seis al 3.
-function cnNextCommand(){
-  const d=cnActiveDog();if(!d)return null;
-  const c=d.commands||{};
-  let best=null;
-  CN_COMMANDS.forEach(k=>{const v=Number(c[k.id])||0;if(v<3&&(best==null||v<(Number(c[best])||0)))best=k.id;});
-  return best;
-}
 function cnCommandLabel(id){return(CN_COMMANDS.find(k=>k.id===id)||{}).label||id;}
 function cnCommandsList(){
   const d=cnActiveDog();if(!d)return[];
@@ -133,26 +119,23 @@ function cnDogAgeLabel(){
   return y===1?'1 año':y+' años';
 }
 
-function cnMonthlyDogCost(){
-  let c=40;
-  if(G.cnDogFoodPremium)c+=30;
-  if(G.cnDogSupplements)c+=25;
-  return c;
-}
+// Paso 6: €40 al mes; en estrechez, manutención mínima a €20 (le cuesta salud al perro).
+function cnMonthlyDogCost(){return G.cnMinCare?20:40;}
 
 // ── RELOJ (rediseño, paso 2 · TG-Diseno-Canicross § 4.12) ───────────────────
 // Antes, G.cnWeek y una tabla de semanas → mes (cnCurrentMonth). Dos fallos salieron de ahí:
 // el primer «Avanzar» que no cambiaba de mes (B5, BUG-17) y marzo, que no terminaba nunca
 // (CR-75). Ahora el mes es G.cnMonthIdx (0 = octubre … 5 = marzo; 6 = temporada terminada)
-// y G.cnMonthWeek las semanas ya gastadas dentro del mes (vacaciones: de una en una).
+// Desde el paso 6 el mes es un reparto de horas: ya no hay semanas sueltas (adiós vacaciones).
 function cnMonth(){return CN_MONTHS[Math.max(0,Math.min(5,Number(G.cnMonthIdx)||0))];}
 function cnSeasonOver(){return (Number(G.cnMonthIdx)||0)>=6;}
 // Cierra el mes: cobra la manutención del perro y pasa al siguiente (tras marzo, a 6).
 function cnEndMonth(){
   cnMonthlyCondition();   // paso 5
   const cost=cnMonthlyDogCost();
-  G.cnMoney=Math.max(0,(G.cnMoney||0)-cost);
-  G.cnMonthIdx=Math.min(6,(Number(G.cnMonthIdx)||0)+1);G.cnMonthWeek=0;
+  G.cnMoney=(G.cnMoney||0)-cost;   // paso 6: sin suelo, la quiebra existe
+  if(G.cnMinCare){const d=cnActiveDog();if(d)d.health=Math.max(0,(d.health==null?100:d.health)-5);}
+  G.cnMonthIdx=Math.min(6,(Number(G.cnMonthIdx)||0)+1);
   return cost;
 }
 
@@ -364,8 +347,7 @@ function cnDogGain(v,g){
   return f+(Math.random()<x-f?1:0);
 }
 function cnDogPerf(d){
-  const m=cnGetEquipMods();
-  const speed=(d.speed||0)+(m.speedMod||0),stamina=(d.stamina||0)+(m.staminaMod||0);
+  const speed=d.speed||0,stamina=d.stamina||0;   // paso 6: la equipación cuenta por tramo, no aquí
   const healM=0.70+0.003*Math.max(0,Math.min(100,d.health==null?100:d.health));
   const forced=G.cnRaceState&&G.cnRaceState.forced&&!G.cnRaceState.done;
   const condM=d.condition&&d.condition.severity&&!forced?(1-0.06*d.condition.severity):1;
@@ -503,7 +485,7 @@ function cnFinishRace(){
 
   // Paso 4 (§ 4.4) · B1: la fatiga de la carrera vuelve al perro y le cuesta salud. Antes
   // rs.dogHealth se calculaba tramo a tramo y se tiraba al acabar.
-  d.fatigue=Math.max(0,Math.min(100,(Number(d.fatigue)||0)+(rs.fatigueGained||0)));
+  d.fatigue=Math.max(0,Math.min(100,(Number(d.fatigue)||0)+(rs.fatigueGained||0)-(rs.pack&&rs.pack.recovery?25:0)));
   d.health=Math.max(0,Math.min(100,(d.health==null?100:d.health)-Math.round((rs.fatigueGained||0)*0.12)));
   const totalBond=rs.bondDelta||0;
   const prevBond=d.bond||0;
@@ -536,6 +518,8 @@ function cnFinishRace(){
   // Paso 5: correr con una almohadilla agrietada tiene riesgo alto; si la forzaste, la lesión
   // es un nivel peor. Salir con algo encima puede empeorarlo.
   if(!rs.injuryPending&&d.condition&&d.condition.id==='almohadilla'&&Math.random()<0.4)rs.injuryPending='almohadillas';
+  // Paso 6: nieve o piedra sin escarpines, riesgo real de almohadillas
+  if(!rs.injuryPending&&!(rs.pack&&rs.pack.booties)&&(rs.segs||[]).some((sg,i)=>['nieve','piedra'].includes(cnSegSurface(rs,i)))&&Math.random()<0.15)rs.injuryPending='almohadillas';
   if(rs.injuryPending&&rs.forced&&rs.injuryPending==='almohadillas')rs.injuryPending='luxacion';
   if(d.condition&&!rs.forced&&Math.random()<0.4){d.condition.severity=Math.min(3,d.condition.severity+1);d.condition.daysLeft+=3;}
   if(rs.injuryPending){
@@ -552,7 +536,7 @@ function cnFinishRace(){
   // pedía la ficha (cobrar al inscribirse en el calendario) hace falta también
   // para las carreras a las que te apuntas y no corres, pero eso necesita una
   // vía de devolución al desapuntarse y es otra tarea.
-  G.cnMoney=Math.max(0,(G.cnMoney||0)-(race.cost||0));
+  G.cnMoney=(G.cnMoney||0)-(race.cost||0);   // paso 6: sin suelo
   if(!rs.retired){
     d.races=(d.races||0)+1;
     d.kmTogether=(d.kmTogether||0)+(race.km||0);
@@ -594,12 +578,9 @@ window.doStartCanicross=()=>{
   // ranura 1 sin avisar. Sin ranura no se autoguarda, como en los demás modos.
   G.cnMoney=500;G.cnSeason=1;
   G.cnSelectedRaces=[];G.cnCurrentRaceIdx=0;G.cnRaceResults=[];
-  G.cnTrainingBlock=null;G.cnMonthIdx=0;G.cnMonthWeek=0;
-  G.cnVacationDays=15;G.cnVacationUsed=0;G.cnVacationThisSeason=0;G.cnOpenMonths=[];G.cnOpenSeasonMonths=[...CN_MONTHS];
-  G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
-  G.equipment={dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'};
-  G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
-  G.cnDogFoodPremium=false;G.cnDogSupplements=false;
+  G.cnMonthIdx=0;G.cnOpenMonths=[];G.cnOpenSeasonMonths=[...CN_MONTHS];
+  const f=freshState();   // paso 6: horas, equipación y consumibles de inicio
+  ['cnHoursTotal','cnHoursPlan','cnHoursCmd','cnOwned','cnEquipped','cnConsumables','cnMinCare','cnBrokeSeason'].forEach(k=>{G[k]=f[k];});
   G.cnVetHistory=[];G.cnBirthdayToastShown={};G.cnRaceState=null;
   G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G.cnRivals={};G.cnNemesis={};G.cnSeasonShift={};G.cnNotebook={};G.cnCancelledRaces=[];cnWinterRoll();G._cnDogBreed=null;G._cnDogName=null;
   G.screen='canicrossCreateDog';
@@ -619,7 +600,7 @@ window.doCreateDog=()=>{
     cnActiveDog().bond=origin.bondStart;
     cnActiveDog().peakBond=origin.bondStart;
     cnActiveDog().adoptionOrigin=G._cnAdoptionOrigin;
-    if(G._cnAdoptionOrigin==='retirado')cnActiveDog().commands.forward=1;
+    if(G._cnAdoptionOrigin==='retirado'){cnActiveDog().commands.forward=1;cnActiveDog().cmdHours.forward=CN_CMD_LEVEL_HOURS[0];}
   }
   G.cnPreseasonDone=[];
   G._cnDogBreed=null;G._cnDogName=null;G._cnAdoptionOrigin=null;
@@ -630,20 +611,8 @@ window.doCreateDog=()=>{
 };
 
 window.cnSelectBreed=breed=>{G._cnDogBreed=breed;const nm=document.getElementById('dogname');if(nm)G._cnDogName=nm.value;render();};
-window.cnSelectTraining=id=>{G.cnTrainingBlock=id;render();};
 
-window.cnConfirmTraining=()=>{
-  if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento');return;}
-  G.screen='canicrossCalendarSetup';render();
-};
 
-window.cnChangeVacDays=delta=>{
-  const used=G.cnVacationUsed||0;
-  const total=G.cnVacationDays||15;
-  const planned=G.cnVacationPlanned||0;
-  const next=Math.max(0,Math.min(total-used,planned+delta));
-  G.cnVacationPlanned=next;render();
-};
 
 window.cnToggleSeasonMonth=m=>{
   if(!G.cnOpenSeasonMonths)G.cnOpenSeasonMonths=[];
@@ -659,89 +628,140 @@ window.cnToggleMonth=m=>{
   render();
 };
 
-window.cnAdvanceRestWeek=()=>{
-  const daysLeft=(G.cnVacationDays||0)-(G.cnVacationUsed||0);
-  if(daysLeft<=0){showToast('Sin días de vacaciones disponibles');return;}
-  const d=cnActiveDog();
-  const days=Math.min(7,daysLeft);
-  const healthBonus=Math.round(days*1.2);
-  const bondBonus=Math.round(days*0.6);
-  const mentalBonus=Math.round(days*0.8);
-  if(d){
-    d.fatigue=Math.max(0,(Number(d.fatigue)||0)-20);   // paso 4: descansar baja la fatiga
-    cnTickCondition(d,7);   // paso 5
-    d.health=Math.min(100,(d.health||100)+healthBonus);
-    d.bond=Math.min(100,(d.bond||0)+bondBonus);
-    d.peakBond=Math.max(d.peakBond||0,d.bond);
-  }
-  if(G.runner?.stats?.mental!==undefined)bumpStat(G.runner,'mental',mentalBonus);
-  G.cnVacationUsed=(G.cnVacationUsed||0)+days;
-  // Una semana de las cuatro del mes; con la cuarta, el mes se cierra.
-  G.cnMonthWeek=(Number(G.cnMonthWeek)||0)+1;
-  if(G.cnMonthWeek>=4){
-    const cost=cnEndMonth();
-    showToast('Gastos del perro: -€'+cost+'/mes');
-  }
-  autoSave();render();
-  setTimeout(()=>showToast(days+'d de vacaciones — '+esc(d?.name||'el perro')+' descansa ✓'),150);
+
+
+
+// ── EL MES: REPARTO DE HORAS (rediseño, paso 6 · § 4.9) ─────────────────────
+// Sustituye a los bloques de entreno, a las vacaciones y a «Avanzar» por semanas. Cada mes
+// repartes G.cnHoursTotal horas entre tú solo, el perro solo, los dos juntos y descansar; las
+// horas del perro y de juntos van a un comando que eliges (niveles a 10, 25 y 50 h).
+function cnHoursUsed(){const p=G.cnHoursPlan||{};return ['solo','perro','juntos','descanso'].reduce((a,k)=>a+(Number(p[k])||0),0);}
+window.cnSetHours=(k,delta)=>{
+  if(!['solo','perro','juntos','descanso'].includes(k))return;
+  if(!G.cnHoursPlan||typeof G.cnHoursPlan!=='object')G.cnHoursPlan={solo:0,perro:0,juntos:0,descanso:0};
+  const total=Number(G.cnHoursTotal)||CN_HOURS_TOTAL;
+  const cur=Number(G.cnHoursPlan[k])||0;
+  // §10.6: la suma nunca pasa del total
+  G.cnHoursPlan[k]=Math.max(0,Math.min(cur+delta,cur+(total-cnHoursUsed())));
+  render();
 };
-
-function cnApplyOneWeekTraining(){
-  const block=(CANICROSS_TRAINING_BLOCKS||[]).find(b=>b.id===G.cnTrainingBlock);
-  if(!block)return;
-  const d=cnActiveDog();
-  // statCapMult: mismo techo blando por dificultad que Clásico/Entrenador — el
-  // corredor también entrena de verdad en Canicross (CR-34, v74).
-  Object.entries(block.runnerMod||{}).forEach(([k,v])=>{
-    if(G.runner.stats[k]!==undefined){
-      const capM=statCapMult(G.runner.stats[k]);
-      G.runner.stats[k]=Math.max(10,Math.min(100,Math.round(G.runner.stats[k]+(v||0)*capM)));
-    }
-  });
-  if(d){
-    // Paso 3 (§ 5.3): techo blando del perro, como statCapMult del corredor.
-    if(block.dogMod?.speed)d.speed=Math.max(0,Math.min(100,(d.speed||50)+cnDogGain(d.speed||50,block.dogMod.speed)));
-    if(block.dogMod?.stamina)d.stamina=Math.max(0,Math.min(100,(d.stamina||50)+cnDogGain(d.stamina||50,block.dogMod.stamina)));
-    if(block.dogMod?.health)d.health=Math.min(100,(d.health||100)+(block.dogMod.health||0));
-    // Paso 4: la fatiga baja con la semana (más si es descanso) y el ánimo se regenera hacia
-    // un punto que sube con el vínculo, con algo de azar: el perro tiene días.
-    d.fatigue=Math.max(0,(Number(d.fatigue)||0)-(block.id==='descanso'?20:8));
-    cnTickCondition(d,7);   // paso 5
-    const moodTarget=45+(d.bond||0)*0.3;
-    d.mood=Math.round(Math.max(0,Math.min(100,cnMood(d.mood)*0.5+moodTarget*0.5+(Math.random()*2-1)*10)));
-    let bMod=block.bondMod||0;
-    if(cnHasTrait(d,'pegajoso'))bMod=bMod>0?Math.round(bMod*1.3):Math.round(bMod*1.3);
-    if(d.breed==='malinois'&&block.id==='solo')bMod-=CN_BREED_MODS.malinois.bondDecayPerWeek;
-    d.bond=Math.max(0,Math.min(100,(d.bond||0)+bMod));
-    d.peakBond=Math.max(d.peakBond||0,d.bond);
-    if(block.teachCommand){
-      const next=cnNextCommand();
-      if(next){
-        if(!G.cnTrainAdrainSessions)G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
-        G.cnTrainAdrainSessions[next]=(G.cnTrainAdrainSessions[next]||0)+1;
-        if(G.cnTrainAdrainSessions[next]>=2){
-          d.commands[next]=Math.min(3,(Number(d.commands[next])||0)+1);G.cnTrainAdrainSessions[next]=0;
-          const lv=d.commands[next];
-          setTimeout(()=>showToast(lv===1?'¡'+esc(d.name)+' aprende "'+cnCommandLabel(next)+'"! ✅':esc(d.name)+' domina mejor "'+cnCommandLabel(next)+'" (nivel '+lv+') ✅'),50);
-        }
-      }
-    }
-    if(G.cnDogSupplements)d.stamina=Math.min(100,(d.stamina||50)+cnDogGain(d.stamina||50,1));
-  }
+window.cnSetHoursCmd=id=>{if(CN_COMMANDS.some(c=>c.id===id)){G.cnHoursCmd=id;render();}};
+function cnCmdLevel(h){return CN_CMD_LEVEL_HOURS.filter(x=>h>=x).length;}
+function cnApplyMonthHours(){
+  const d=cnActiveDog();const p=G.cnHoursPlan||{};const R=CN_HOURS_RATES;
+  const h={solo:Number(p.solo)||0,perro:Number(p.perro)||0,juntos:Number(p.juntos)||0,descanso:Number(p.descanso)||0};
+  const st=G.runner&&G.runner.stats;
+  const bump=(k,v)=>{if(st&&st[k]!==undefined&&v)st[k]=Math.max(10,Math.min(100,Math.round(st[k]+v*statCapMult(st[k]))));};
+  bump('resistencia',h.solo*R.solo.resistencia+h.juntos*R.juntos.resistencia);
+  bump('velocidad',h.solo*R.solo.velocidad);
+  bump('subida',h.solo*R.solo.subida);bump('bajada',h.solo*R.solo.bajada);
+  if(!d)return;
+  d.speed=Math.max(0,Math.min(100,(d.speed||50)+cnDogGain(d.speed||50,h.perro*R.perro.speed+h.juntos*R.juntos.speed)));
+  d.stamina=Math.max(0,Math.min(100,(d.stamina||50)+cnDogGain(d.stamina||50,h.perro*R.perro.stamina)));
+  // Comando elegido: horas del perro ×1, juntos ×1,5; un veterano en casa enseña (+25 %)
+  const cmd=CN_COMMANDS.some(c=>c.id===G.cnHoursCmd)?G.cnHoursCmd:'forward';
+  if(!d.cmdHours)d.cmdHours={};
+  const antes=Number((d.commands||{})[cmd])||0;
+  d.cmdHours[cmd]=(Number(d.cmdHours[cmd])||0)+(h.perro*R.perro.cmd+h.juntos*R.juntos.cmd)*(cnHomeDogs().length?1.25:1);
+  const lv=Math.min(3,cnCmdLevel(d.cmdHours[cmd]));
+  if(!d.commands)d.commands={};
+  d.commands[cmd]=Math.max(antes,lv);
+  if(d.commands[cmd]>antes)setTimeout(()=>showToast(antes===0?'¡'+esc(d.name)+' aprende «'+cnCommandLabel(cmd)+'»! ✅':esc(d.name)+' domina mejor «'+cnCommandLabel(cmd)+'» (nivel '+d.commands[cmd]+')'),60);
+  // Vínculo: lo quita entrenar solo y lo dan las horas juntos y el descanso
+  let bond=h.solo*R.solo.bond+h.juntos*R.juntos.bond+h.descanso*R.descanso.bond;
+  if(cnHasTrait(d,'pegajoso')&&bond>0)bond*=1.3;
+  // Dejar al perro solo tiene precio: menos de 8 h juntos o descansando en el mes
+  if(h.juntos+h.descanso<8)bond-=cnHasTrait(d,'pegajoso')?4:2;
+  d.bond=Math.max(0,Math.min(100,Math.round((d.bond||0)+bond)));
+  d.peakBond=Math.max(d.peakBond||0,d.bond);
+  // Fatiga, ánimo, salud y la sincronía de base
+  d.fatigue=Math.max(0,Math.min(100,Math.round((Number(d.fatigue)||0)+h.perro*R.perro.fatigue+h.juntos*R.juntos.fatigue+h.descanso*R.descanso.fatigue-10)));
+  const moodTarget=45+(d.bond||0)*0.3;
+  d.mood=Math.round(Math.max(0,Math.min(100,cnMood(d.mood)*0.5+moodTarget*0.5+h.descanso*R.descanso.mood+(Math.random()*2-1)*10)));
+  d.health=Math.max(0,Math.min(100,Math.round((d.health==null?100:d.health)+h.descanso*R.descanso.health)));
+  d.syncBase=Math.max(0,Math.min(15,Math.round(((Number(d.syncBase)||0)*0.6+h.juntos*R.juntos.sync)*10)/10));
+  cnTickCondition(d,28);
 }
-
 window.cnAdvanceWeek=()=>{
   if(cnSeasonOver()){showToast('Marzo ya ha terminado: cierra la temporada');return;}
-  if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento');return;}
+  if(cnHoursUsed()<=0){showToast('Reparte las horas del mes');G.screen='canicrossTrainingSetup';render();return;}
   const doneMonth=cnMonth();   // BUG-17 (v96): el aviso nombra el mes que termina
-  // Las semanas que quedan del mes (cuatro, o menos si hubo vacaciones) y se cierra: cada
-  // «Avanzar» cambia de mes de verdad (B5).
-  for(let w=Number(G.cnMonthWeek)||0;w<4;w++)cnApplyOneWeekTraining();
+  cnApplyMonthHours();
   cnEndMonth();
+  if(cnCheckBroke())return;
   autoSave();render();
   const sig=cnSeasonOver()?'cierra la temporada':'ahora '+CN_MONTH_NAMES[cnMonth()].toLowerCase();
   setTimeout(()=>showToast((CN_MONTH_NAMES[doneMonth]||'Mes')+' completado ✓ · '+sig),150);
 };
+// ── ECONOMÍA (paso 6 · § 4.11) ─────────────────────────────────────────────
+function cnSponsorIncome(){return Math.min(CN_SPONSOR_CAP,CN_SPONSOR_BASE+Math.round((G.followers||0)*CN_SPONSOR_PER_FOLLOWER));}
+// Por debajo de −€200 sale una vez por temporada la pantalla de estrechez. No hay game over.
+function cnCheckBroke(){
+  if((G.cnMoney||0)>=CN_BROKE_LINE||G.cnBrokeSeason===G.cnSeason)return false;
+  G.cnBrokeSeason=G.cnSeason;G.screen='canicrossQuiebra';autoSave();render();return true;
+}
+window.cnBrokeChoice=opt=>{
+  const done=cnDoneIds();
+  if(opt==='inscripciones'){
+    const quitadas=(G.cnSelectedRaces||[]).filter(r=>!done.includes(r.id)&&CN_MONTHS.indexOf(r.month)>=(Number(G.cnMonthIdx)||0));
+    G.cnSelectedRaces=(G.cnSelectedRaces||[]).filter(r=>!quitadas.includes(r));
+    showToast(quitadas.length?'Renuncias a '+quitadas.length+' inscripción(es)':'No quedaban inscripciones');
+  }else if(opt==='vender'){
+    let total=0;
+    ['harness','line','belt'].forEach(cat=>{
+      (G.cnOwned[cat]||[]).forEach(id=>{const it=CN_EQUIP[cat].find(x=>x.id===id);if(it&&!it.start)total+=Math.round(it.price/2);});
+      G.cnOwned[cat]=CN_EQUIP[cat].filter(x=>x.start).map(x=>x.id);G.cnEquipped[cat]=G.cnOwned[cat][0];
+    });
+    G.cnMoney=(G.cnMoney||0)+total;
+    showToast(total?'Vendes la equipación por €'+total:'No tenías equipación que vender');
+  }else if(opt==='minima'){
+    G.cnMinCare=true;showToast('Manutención mínima hasta fin de temporada');
+  }
+  G.screen='canicrossHub';G.activeTab='game';autoSave();render();
+};
+// ── EQUIPACIÓN Y CONSUMIBLES (paso 6 · § 4.10) ─────────────────────────────
+window.cnBuyEquip=(cat,id)=>{
+  const it=(CN_EQUIP[cat]||[]).find(x=>x.id===id);if(!it)return;
+  if((G.cnOwned[cat]||[]).includes(id)){showToast('Ya lo tienes');return;}
+  G.cnMoney=(G.cnMoney||0)-it.price;
+  G.cnOwned[cat]=[...(G.cnOwned[cat]||[]),id];
+  showToast(it.name+' comprado');autoSave();render();
+};
+window.cnSelectEquip=(cat,id)=>{
+  if(!(G.cnOwned[cat]||[]).includes(id))return;
+  G.cnEquipped[cat]=id;render();
+};
+window.cnBuyConsumable=id=>{
+  const c=CN_CONSUMABLES.find(x=>x.id===id);if(!c)return;
+  G.cnMoney=(G.cnMoney||0)-c.price;
+  G.cnConsumables[id]=(Number(G.cnConsumables[id])||0)+1;
+  autoSave();render();
+};
+// En la precarrera eliges qué consumibles llevas; se gastan al salir.
+window.cnTogglePack=id=>{
+  const rs=G.cnRaceState;if(!rs)return;
+  if(!rs.pack)rs.pack={};
+  if(!rs.pack[id]&&!(Number(G.cnConsumables[id])>0)){showToast('No te quedan: cómpralos en Equipo');return;}
+  rs.pack[id]=!rs.pack[id];render();
+};
+// Lo que la equipación hace en un tramo: [tiempo, sincronía]
+function cnEquipSeg(rs,seg,si,d){
+  const eq=G.cnEquipped||{};const tir=cnHasTrait(d,'tirador');
+  let t=1,sy=0;
+  if(eq.harness==='h_xback'){if(seg.type==='flat'&&(rs.km||0)>=10)t*=0.96;if(seg.type==='descent')sy-=5;}
+  if(eq.harness==='h_freemotion'){if(seg.type==='descent')sy+=6;if(seg.type==='flat')t*=1.03;}
+  if(eq.line==='l_short'){if(seg.type==='flat')t*=1.03;if(si===0&&!tir)t*=1.02;}
+  if(eq.line==='l_long'){if(seg.type==='flat'&&tir)t*=0.97;if(seg.type==='descent')sy-=4;}
+  return [t,sy];
+}
+// Sincronía de salida que pone la equipación
+function cnEquipStartSync(rs,d){
+  const eq=G.cnEquipped||{};let sy=0;
+  if(eq.belt==='b_hip')sy+=3;
+  if(eq.line==='l_short'&&(rs.tier||1)>=3)sy+=5;
+  if(eq.line==='l_long'&&cnHasTrait(d,'tirador'))sy-=6;
+  return sy;
+}
 
 window.cnStartRace=idx=>{
   if(!cnCanRace()){
@@ -772,7 +792,7 @@ window.cnStartRace=idx=>{
     numSegs,segs,rivals:cnGenerateRivals(race),basePace,
     currentSeg:0,pendingEvent:null,paceChosen:false,
     time:0,bondDelta:0,energyBonus:0,speedBonus:0,timePenalty:0,
-    dogHealth:cnActiveDog().health,dogBond:cnActiveDog().bond,runnerEnergy:100+(G.cnDogFoodPremium?5:0),
+    dogHealth:cnActiveDog().health,dogBond:cnActiveDog().bond,runnerEnergy:100,
     eventLog:[],retired:false,injuryPending:null,done:false,
     // Paso 4: sincronía (la barra central), ánimo del día, fatiga ganada y la conducta.
     sync:0,mood:0,fatigueGained:0,behaviour:null,preBehaviour:null,lastMismatch:false,
@@ -786,7 +806,8 @@ window.cnStartRace=idx=>{
   {
     const rs=G.cnRaceState,dd=cnActiveDog();
     rs.mood=Math.max(0,Math.min(100,cnMood(dd.mood)+Math.round((Math.random()*2-1)*10)));
-    rs.sync=Math.max(0,Math.min(100,Math.round(40+(dd.bond||0)*0.5-(cnHasTrait(dd,'miedoso')&&(race.tier||1)>=3?8:0))));
+    rs.sync=Math.max(0,Math.min(100,Math.round(40+(dd.bond||0)*0.5-(cnHasTrait(dd,'miedoso')&&(race.tier||1)>=3?8:0)+(Number(dd.syncBase)||0)+cnEquipStartSync(rs,dd))));
+    rs.pack={};   // paso 6: consumibles que llevas (se eligen en la precarrera)
     rs.preBehaviour=cnPickBehaviour(rs,'pre');cnNoteSeen(rs.preBehaviour);
     rs.behaviour=cnPickBehaviour(rs,'seg');cnNoteSeen(rs.behaviour);
     // La mañana de la carrera (§ 4.8): por encima de 16 °C se suspende; con algo de salud
@@ -802,7 +823,7 @@ window.cnStartRace=idx=>{
     }
     if(rs.morning&&rs.morning.type!=='condicion'){
       // Suspendida o el perro no se levanta: la inscripción ya está pagada y no se corre.
-      G.cnMoney=Math.max(0,(G.cnMoney||0)-(race.cost||0));
+      G.cnMoney=(G.cnMoney||0)-(race.cost||0);
       if(!Array.isArray(G.cnCancelledRaces))G.cnCancelledRaces=[];
       G.cnCancelledRaces.push({raceId:race.id,season:G.cnSeason,why:rs.morning.type});
     }
@@ -811,7 +832,12 @@ window.cnStartRace=idx=>{
   G.screen='canicrossPreRace';render();
 };
 
-window.cnGoToRace=()=>{G.screen='canicrossSegment';render();};
+window.cnGoToRace=()=>{
+  // Paso 6: los consumibles elegidos se gastan al tomar la salida
+  const rs=G.cnRaceState;
+  if(rs&&rs.pack&&!rs.packUsed){Object.keys(rs.pack).forEach(k=>{if(rs.pack[k])G.cnConsumables[k]=Math.max(0,(Number(G.cnConsumables[k])||0)-1);});rs.packUsed=true;}
+  G.screen='canicrossSegment';render();
+};
 
 window.cnNextSegment=()=>{
   const rs=G.cnRaceState;if(!rs)return;
@@ -829,10 +855,8 @@ window.cnMakeDecision=optIdx=>{
   if(opt.bondMod)rs.bondDelta=(rs.bondDelta||0)+opt.bondMod;
   if(opt.timeLoss)rs.timePenalty=(rs.timePenalty||0)+opt.timeLoss;
   if(opt.injuryRisk){
-    const mods=cnGetEquipMods();
-    let riskChance=Math.max(0,0.4+(mods.injuryRisk/100));
-    // jerkMod: hard_line (-5) reduce el riesgo de lesión en eventos un 5%
-    if(mods.jerkMod<0)riskChance=Math.max(0,riskChance-0.05);
+    let riskChance=0.4;
+    if(rs.pack&&rs.pack.booties)riskChance=0.25;   // paso 6: los escarpines protegen las almohadillas
     if(Math.random()<riskChance)rs.injuryPending=opt.injurySevere?'luxacion':'almohadillas';
   }
   if(opt.retire)rs.retired=true;
@@ -907,7 +931,13 @@ window.cnDecide=(intentId,cmd)=>{
   const segNow={...seg,surface:cnSegSurface(rs,rs.currentSeg)};
   const tempNow=cnSegTemp(rs,rs.currentSeg);
   const snowM=segNow.surface==='nieve'?(d.breed==='husky'?0.95:d.breed==='vizsla'?1.05:1):1;
-  const tm=Math.round(cnSegTime(raceDef,segNow,cnTeamLevel(),intent.time*tMult*extraT*snowM*(1+cnTempPen(d,tempNow)))/factorSync);
+  // Paso 6: la equipación de hoy y los consumibles (chaleco con calor, abrigo con frío)
+  const [eqT,eqSync]=cnEquipSeg(rs,seg,rs.currentSeg,d);
+  rs.sync=Math.max(0,Math.min(100,rs.sync+eqSync));
+  let tp=cnTempPen(d,tempNow);
+  if(rs.pack&&rs.pack.coolvest&&tempNow>cnComfort(d).max)tp*=0.5;
+  if(rs.pack&&rs.pack.coat&&tempNow<-4)tp=Math.max(0,tempNow-cnComfort(d).max)*0.015;
+  const tm=Math.round(cnSegTime(raceDef,segNow,cnTeamLevel(),intent.time*tMult*extraT*snowM*eqT*(1+tp))/factorSync);
   // Golpe de calor (B3): muy por encima del confort y apretando dos tramos seguidos
   rs.apretarStreak=intent.id==='apretar'?(rs.apretarStreak||0)+1:0;
   if(rs.apretarStreak>=2&&tempNow>cnComfort(d).max+6&&!rs.injuryPending&&Math.random()<0.25)rs.injuryPending='golpe_calor';
@@ -915,11 +945,9 @@ window.cnDecide=(intentId,cmd)=>{
   // Piernas del corredor y fatiga del perro
   const terr=seg.type==='climb'?1.3:seg.type==='descent'?0.8:1;
   rs.runnerEnergy=Math.max(0,(rs.runnerEnergy||100)-Math.round(intent.legs*terr));
-  const mods=cnGetEquipMods();
-  const staminaFactor=Math.max(0.6,((d.stamina||50)+(mods.staminaMod||0))/100);
+  const staminaFactor=Math.max(0.6,(d.stamina||50)/100);
   let f=intent.fatigue/staminaFactor*(seg.type==='climb'?1.2:seg.type==='descent'?0.85:1)*fMult*extraF;
   if(cnHasTrait(d,'tirador'))f*=1.1;
-  if(mods.jerkMod<0&&intent.id==='apretar')f*=0.9;
   rs.fatigueGained=Math.round(((rs.fatigueGained||0)+f)*10)/10;
   rs.bondDelta=(rs.bondDelta||0)+dBond;
   rs.lastMismatch=!coincide&&!ok;
@@ -1004,25 +1032,7 @@ window.cnCallVet=type=>{
   autoSave();render();
 };
 
-window.cnBuyEquip=(category,id)=>{
-  const items=CANICROSS_EQUIPMENT[category]||[];
-  const item=items.find(i=>i.id===id);if(!item)return;
-  if(!G.cnOwnedEquipment)G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
-  if((G.cnOwnedEquipment[category]||[]).includes(id)){showToast('Ya tienes este equipo');return;}
-  if((G.cnMoney||0)<item.price){showToast('Sin fondos suficientes');return;}
-  G.cnMoney-=item.price;
-  G.cnOwnedEquipment[category]=[...(G.cnOwnedEquipment[category]||[]),id];
-  G.equipment[category]=id;
-  showToast('¡'+item.name+' comprado! 🎒');
-  autoSave();render();
-};
 
-window.cnSelectEquip=(category,id)=>{
-  if(!(G.cnOwnedEquipment[category]||[]).includes(id))return;
-  if(!G.equipment)G.equipment={dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'};
-  G.equipment[category]=id;
-  render();
-};
 
 window.cnEndSeason=()=>{
   const d=cnActiveDog();
@@ -1040,6 +1050,8 @@ window.cnEndSeason=()=>{
       if(d.health<=0){G.screen='canicrossDogDeath';render();return;}
     }
   }
+  // Paso 6: el mini-patrocinio de la temporada, ligado a los seguidores
+  G.cnMoney=(G.cnMoney||0)+cnSponsorIncome();
   cnDoSeasonTransition();
 };
 
@@ -1065,17 +1077,16 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
   G._cnVetThisSeason=false;
   // ────────────────────────────────────────────────────────────
   G.cnSeason=(G.cnSeason||1)+1;
-  G.cnMonthIdx=0;G.cnMonthWeek=0;G.cnSelectedRaces=[];G.cnCurrentRaceIdx=0;
-  G.cnTrainingBlock=null;G.cnVacationUsed=0;G.cnVacationPlanned=0;G.cnVacationDays=15;G.cnOpenMonths=[];
-  G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
-  G.cnRaceState=null;
+  G.cnMonthIdx=0;G.cnSelectedRaces=[];G.cnCurrentRaceIdx=0;G.cnOpenMonths=[];
+  G.cnRaceState=null;G.cnMinCare=false;
+  G.cnPreseasonDone=[];   // paso 6 (§ 2.3): la pretemporada vuelve cada año
   // §0.4 del diseño: el cumpleaños (+3 vínculo) lo daban el hub y la ficha del perro al
   // pintarse. Ahora, aquí, al empezar la temporada: una pantalla no cambia la partida.
   cnCheckBirthday();
   cnWinterRoll();   // paso 5: cada temporada, su invierno
   cnDogs().forEach(x=>{x.fatigue=Math.max(0,(Number(x.fatigue)||0)-40);});   // paso 4: el verano descansa
   cnAgeRivals();   // paso 3: los rivales cumplen años y su nivel sigue a su perro
-  G.activeTab='game';G.screen='canicrossHub';
+  G.activeTab='game';G.screen='canicrossPreseason';
   autoSave();render();
 };
 
@@ -1108,8 +1119,6 @@ window.cnNewDogAfterRetirement=()=>{
   G._cnDogBreed=null;G._cnDogName=null;
   delete G._cnDislasiaEvent;
   delete G._cnAgingWarned;
-  // Reset dog training sessions
-  G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
   G.screen='canicrossCreateDog';render();
 };
 
@@ -1154,7 +1163,7 @@ window.cnDoPreseasonAct=id=>{
   if(act.bondBonus&&d){d.bond=Math.min(100,(d.bond||0)+act.bondBonus);d.peakBond=Math.max(d.peakBond||0,d.bond);}
   if(act.healthBonus&&d)d.health=Math.min(100,(d.health||100)+act.healthBonus);
   if(act.mentalBonus&&G.runner?.stats)bumpStat(G.runner,'mental',act.mentalBonus);
-  if(act.teachFirst&&d){d.commands=d.commands||{};if(!(Number(d.commands.forward)||0)){d.commands.forward=1;showToast(esc(d.name)+' aprende "Adelante" en el entreno ✅');}}
+  if(act.teachFirst&&d){d.commands=d.commands||{};if(!(Number(d.commands.forward)||0)){d.commands.forward=1;d.cmdHours=d.cmdHours||{};d.cmdHours.forward=Math.max(d.cmdHours.forward||0,CN_CMD_LEVEL_HOURS[0]);showToast(esc(d.name)+' aprende "Adelante" en el entreno ✅');}}
   G.cnPreseasonDone.push(id);
   autoSave();render();
   setTimeout(()=>showToast(act.label+' completado ✓'),100);
@@ -1318,36 +1327,16 @@ function renderCnCorredorTab(){
     </div>
 
     ${(()=>{
-      const b=(CANICROSS_TRAINING_BLOCKS||[]).find(x=>x.id===G.cnTrainingBlock);
-      if(!b)return`<div class="warn" style="margin-bottom:12px">⚠ Sin bloque de entrenamiento. <button class="secondary" onclick="G.screen='canicrossTrainingSetup';render()">Configurar →</button></div>`;
-      const warnMalinois=d&&d.breed==='malinois'&&b.id==='solo';
-      return`<div class="card" style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-size:14px;font-weight:700">🏋️ ${b.label}</div>
-          <button class="secondary" style="font-size:12px;padding:3px 10px" onclick="G.screen='canicrossTrainingSetup';render()">Cambiar</button>
-        </div>
-        <div style="font-size:12px;color:#666;margin-bottom:6px">${b.desc} · ${b.hours}h/sem</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          ${Object.entries(b.runnerMod||{}).filter(([,v])=>v).map(([k,v])=>`<span style="font-size:11px;color:${v>0?'#4a8a2a':'#c0392b'}">corredor ${k} ${v>0?'+'+v:v}</span>`).join('')}
-          ${b.dogMod?Object.entries(b.dogMod).filter(([,v])=>v).map(([k,v])=>`<span style="font-size:11px;color:${v>0?'#4a90d9':'#c0392b'}">perro ${k} ${v>0?'+'+v:v}</span>`).join(''):''}
-          ${b.bondMod!=null?`<span style="font-size:11px;color:${b.bondMod>=0?'#c07a10':'#c0392b'}">vínculo ${b.bondMod>=0?'+'+b.bondMod:b.bondMod}</span>`:''}
-        </div>
-        ${warnMalinois?`<div class="warn" style="margin-top:6px;font-size:12px">⚠ Malinois + entreno solo → -${CN_BREED_MODS.malinois.bondDecayPerWeek} vínculo extra</div>`:''}
+      // Paso 6: el mes es un reparto de horas
+      const p=G.cnHoursPlan||{},used=cnHoursUsed(),total=Number(G.cnHoursTotal)||CN_HOURS_TOTAL;
+      if(marchDone)return'';
+      return`<div class="pz-tarjeta pz" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="pz-label">Horas de ${MONTH_NAMES[curMonth].toLowerCase()}</span><span class="pz-num">${used} / ${total} h</span></div>
+        <div class="pz-efectos" style="margin:6px 0 8px">${used?['solo','perro','juntos','descanso'].filter(k=>p[k]).map(k=>CN_HOURS_LABEL[k]+' '+p[k]+' h').join(' · ')+' · comando: '+cnCommandLabel(G.cnHoursCmd):'Sin repartir'}</div>
+        <button class="pz-btn sec" onclick="G.screen='canicrossTrainingSetup';render()">${used?'Cambiar el reparto':'Repartir las horas'}</button>
       </div>`;
     })()}
-
-    ${(()=>{
-      const vacLeft=(G.cnVacationDays||15)-(G.cnVacationUsed||0);
-      if(vacLeft<=0)return'';
-      return`<div class="card" style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-size:14px;font-weight:700">🏖 Vacaciones</div>
-          <div style="font-size:12px;color:#888">${vacLeft} / ${G.cnVacationDays||15} días disponibles</div>
-        </div>
-        <div style="font-size:12px;color:#555;margin-bottom:8px">Usa 7 días: +salud ${d?esc(d.name):'perro'} · +vínculo · +mental</div>
-        <button class="secondary" onclick="cnAdvanceRestWeek()">Usar vacaciones (7 días) →</button>
-      </div>`;
-    })()}
+    ${(G.cnMoney||0)<CN_BROKE_LINE?`<div class="pz-tarjeta pz"><span class="pz-diag menos">Vas en números rojos: <span class="pz-num">${fmtEur(G.cnMoney||0)}</span></span><button class="pz-btn sec" style="margin-top:8px" onclick="G.screen='canicrossQuiebra';render()">Ver qué hacer</button></div>`:''}
 
     ${(()=>{
       const raceThisMonth=pendingRaces.find(r=>r.month===curMonth);
@@ -1489,109 +1478,50 @@ function renderCnPerroTab(){
 
 // ── TAB: EQUIPO ───────────────────────────────────────
 function renderCnEquipoTab(){
+  // Paso 6 (§ 4.10): lo duradero no es mejor, es distinto; los consumibles se gastan.
   const el=$main();
-  const owned=G.cnOwnedEquipment||{dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
-  const eq=G.equipment||{dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'};
-
-  const renderSection=(title,category)=>{
-    const items=CANICROSS_EQUIPMENT[category]||[];
-    return `<div class="fin-section">
-      <div class="fin-title">${title}</div>
-      ${items.map(item=>{
-        const isOwned=(owned[category]||[]).includes(item.id);
-        const isSelected=eq[category]===item.id;
-        const canAfford=(G.cnMoney||0)>=item.price;
-        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid #f5f4f0">
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:${isSelected?'600':'400'}">${esc(item.name)}${item.default?' <span style="font-size:11px;color:#888">(inicio)</span>':''}</div>
-            <div style="font-size:12px;color:#888">${esc(item.desc)}</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:10px">
-            ${isOwned?
-              `<label style="font-size:13px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="eq-${category}" ${isSelected?'checked':''} onchange="cnSelectEquip('${category}','${item.id}')"> ${isSelected?'En uso':'Usar'}</label>`:
-              item.default?'':
-              `<button class="secondary" style="${!canAfford?'opacity:0.4;cursor:default':''}" onclick="${canAfford?`cnBuyEquip('${category}','${item.id}')`:'void 0'}">Comprar €${item.price}</button>`}
-          </div>
-        </div>`;}).join('')}
-    </div>`;
-  };
-
-  el.innerHTML=`
-    <h2>🎒 Equipo</h2>
-    <p class="sub">El equipo activo aplica modificadores en carrera</p>
-    <div style="background:#f5f4f0;border-radius:8px;padding:9px 14px;margin-bottom:14px">💰 Presupuesto disponible: <strong>€${G.cnMoney||0}</strong></div>
-    ${renderSection('Arnés del perro','dogHarness')}
-    ${renderSection('Cinturón del corredor','humanBelt')}
-    ${renderSection('Línea de tiro','line')}
-  `;
+  const sec=(t,cat)=>`<div class="pz-label" style="margin:12px 0 6px">${t}</div><div class="pz-tarjeta">${CN_EQUIP[cat].map(it=>{
+    const own=(G.cnOwned[cat]||[]).includes(it.id);
+    return`<div class="pz-fila"><span class="pz-fila-txt"><b>${esc(it.name)}</b><div class="pz-efectos">${esc(it.desc)}</div></span>
+      ${own?`<span class="pz-efectos">${G.cnEquipped[cat]===it.id?'Puesto':'Tuyo'}</span>`:`<button class="pz-btn sec" style="width:auto;padding:8px 12px" onclick="cnBuyEquip('${cat}','${it.id}')">€${it.price}</button>`}</div>`;}).join('')}</div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-dinero">${icono('equipo')}Dinero · equipación</div>
+    <div class="pz-titulo">Equipo</div>
+    <p class="pz-sub">Tienes <span class="pz-num">${fmtEur(G.cnMoney||0)}</span>. Lo que llevas se elige antes de cada carrera.</p>
+    ${sec('Arneses','harness')}${sec('Líneas','line')}${sec('Cinturones','belt')}
+    <div class="pz-label" style="margin:12px 0 6px">Consumibles</div>
+    <div class="pz-tarjeta">${CN_CONSUMABLES.map(c=>`<div class="pz-fila"><span class="pz-fila-txt"><b>${c.name}</b> <span class="pz-efectos">· tienes ${Number(G.cnConsumables[c.id])||0}</span><div class="pz-efectos">${esc(c.desc)}</div></span>
+      <button class="pz-btn sec" style="width:auto;padding:8px 12px" onclick="cnBuyConsumable('${c.id}')">€${c.price}</button></div>`).join('')}</div>
+  </div>`;
 }
 
-// ── SETUP: ENTRENAMIENTO + SEMANAS DESCANSO ───────────
+// ── EL MES: REPARTO DE HORAS (paso 6 · § 4.9) ─────────────────────────────
+// Pantalla nueva con las piezas del sistema visual (stepper, opción, fila).
 function renderCanicrossTrainingSetup(){
   const el=$main();
   const d=cnActiveDog();
-  const sel=G.cnTrainingBlock;
-
-  el.innerHTML=`
-    <h2>🏋️ Plan de entrenamiento</h2>
-    <p class="sub">Temporada ${G.cnSeason||1} · elige un bloque para toda la temporada</p>
-
-    ${d?`<div class="card" style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:14px;font-weight:600">🐕 ${esc(d.name)}</span>
-        <span style="font-size:12px;color:#888">Vínculo ${d.bond}/100 · Salud ${d.health}</span>
-      </div>
-    </div>`:''}
-
-    ${(CANICROSS_TRAINING_BLOCKS||[]).map(b=>{
-      const isSel=sel===b.id;
-      return`<div class="card ${isSel?'sel':''}" style="margin-bottom:10px;cursor:pointer;${isSel?'border-color:#1a1a1a;box-shadow:0 0 0 2px #1a1a1a18':''}" onclick="cnSelectTraining('${b.id}')">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="flex:1">
-            <div style="font-size:15px;font-weight:700;margin-bottom:2px">${b.label} <span style="font-size:12px;font-weight:400;color:#888">· ${b.hours}h/sem</span>${isSel?`<span style="float:right;color:#4a8a2a;font-size:14px">✓</span>`:''}</div>
-            <div style="font-size:13px;color:#666;margin-bottom:8px">${b.desc}</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              ${Object.entries(b.runnerMod||{}).filter(([,v])=>v).map(([k,v])=>`<span style="font-size:12px;color:${v>0?'#4a8a2a':'#c0392b'}">Corredor ${k.charAt(0).toUpperCase()+k.slice(1)} ${v>0?'+'+v:v}</span>`).join('')}
-              ${b.dogMod?Object.entries(b.dogMod).filter(([,v])=>v).map(([k,v])=>`<span style="font-size:12px;color:${v>0?'#4a90d9':'#c0392b'}">Perro ${k} ${v>0?'+'+v:v}</span>`).join(''):''}
-              ${b.bondMod!=null?`<span style="font-size:12px;color:${b.bondMod>=0?'#c07a10':'#c0392b'}">Vínculo ${b.bondMod>=0?'+'+b.bondMod:b.bondMod}</span>`:''}
-              ${b.teachCommand?`<span style="font-size:12px;color:#888">🎓 Enseña comandos</span>`:''}
-            </div>
-          </div>
-        </div>
-      </div>`;
-    }).join('')}
-
-    ${(()=>{
-      const total=G.cnVacationDays||15;
-      const used=G.cnVacationUsed||0;
-      const planned=G.cnVacationPlanned||0;
-      const available=total-used;
-      const pct=Math.round(used/total*100);
-      return`<div class="card" style="margin-top:16px;margin-bottom:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-size:15px;font-weight:700">🏖 Vacaciones este temporada</div>
-          <div style="font-size:12px;color:#888">${used} / ${total} días usados este año</div>
-        </div>
-        <div style="height:4px;background:#e8e6e0;border-radius:2px;overflow:hidden;margin-bottom:12px">
-          <div style="height:100%;width:${pct}%;background:#c07a10;border-radius:2px"></div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <button class="secondary" style="width:44px;height:44px;font-size:20px;padding:0;text-align:center" onclick="cnChangeVacDays(-1)" ${planned<=0?'disabled':''}>−</button>
-          <div style="text-align:center">
-            <div style="font-size:32px;font-weight:700;color:${planned>0?'#c07a10':'#aaa'}">${planned}</div>
-            <div style="font-size:12px;color:#888">días esta temporada</div>
-          </div>
-          <button class="secondary" style="width:44px;height:44px;font-size:20px;padding:0;text-align:center" onclick="cnChangeVacDays(1)" ${planned>=available?'disabled':''}>+</button>
-        </div>
-        <div style="font-size:12px;color:#888">Cada día de vacaciones añade +1.2 salud ${d?esc(d.name):'perro'} · +0.6 vínculo · +0.8 mental corredor. Te quedan ${available} días este año.</div>
-      </div>`;
-    })()}
-
-    <div class="grid-2" style="margin-top:4px">
-      <button class="main" style="margin-top:0;opacity:0.6" onclick="G.screen='canicrossHub';G.activeTab='game';render()">← Volver</button>
-      <button class="main" style="margin-top:0;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="cnConfirmTraining()">Ver calendario →</button>
+  const p=G.cnHoursPlan||{},total=Number(G.cnHoursTotal)||CN_HOURS_TOTAL,used=cnHoursUsed();
+  const R=CN_HOURS_RATES;
+  const da={solo:'Tu resistencia y velocidad. El vínculo baja un poco.',perro:'Velocidad y resistencia del perro, y su comando. Le cansa.',
+    juntos:'Vínculo, sincronía de salida y comando (rinde ×1,5). Os cansa a los dos.',descanso:'Le baja la fatiga, sube el ánimo y algo de salud.'};
+  const cmdRow=c=>{const h=Math.round((d&&d.cmdHours&&d.cmdHours[c.id])||0);const lv=Number((d&&d.commands||{})[c.id])||0;const next=CN_CMD_LEVEL_HOURS[lv];
+    return`<button class="pz-opcion${G.cnHoursCmd===c.id?' sel':''}" onclick="cnSetHoursCmd('${c.id}')"><b>${c.label}</b> <span class="pz-efectos">· nivel ${lv}${next?' · '+h+' / '+next+' h':' · dominado'}</span><div class="pz-efectos">${esc(c.desc)}</div></button>`;};
+  const pocoJuntos=(Number(p.juntos)||0)+(Number(p.descanso)||0)<8;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-cuerpo">${icono('calendario')}Cuerpo · ${CN_MONTH_NAMES[cnMonth()]||''}</div>
+    <div class="pz-titulo">El mes, en horas</div>
+    <p class="pz-sub">Tienes ${total} h este mes. Quedan <span class="pz-num">${total-used}</span>.</p>
+    <div class="pz-tarjeta">
+      ${['solo','perro','juntos','descanso'].map(k=>`<div class="pz-fila"><span class="pz-fila-txt"><b>${CN_HOURS_LABEL[k]}</b><div class="pz-efectos">${da[k]}</div></span>
+        <span class="pz-stepper"><button onclick="cnSetHours('${k}',-2)" ${(p[k]||0)<=0?'disabled':''}>−</button><span class="pz-stepper-n">${p[k]||0}</span><button onclick="cnSetHours('${k}',2)" ${used>=total?'disabled':''}>+</button></span></div>`).join('')}
     </div>
-  `;
+    ${pocoJuntos?`<div class="pz-diag ojo" style="margin-bottom:12px">Con menos de 8 h juntos o descansando, ${d?esc(d.name):'el perro'} lo nota: el vínculo baja.</div>`:''}
+    <div class="pz-label" style="margin:6px 0">Comando que entrenáis</div>
+    ${CN_COMMANDS.map(cmdRow).join('')}
+    ${cnHomeDogs().length?`<div class="pz-diag mas">El veterano de casa ayuda: +25 % en el comando.</div>`:''}
+    <button class="pz-btn" style="margin-top:12px" onclick="${(G.cnSelectedRaces||[]).length?"G.screen='canicrossHub';G.activeTab='game';render()":"G.screen='canicrossCalendarSetup';render()"}">${(G.cnSelectedRaces||[]).length?'Hecho':'Ver calendario'}</button>
+  </div>`;
+  void R;
 }
 
 // ── SETUP: CALENDARIO DE TEMPORADA ────────────────────
@@ -1767,22 +1697,15 @@ function renderCnFinanzasTab(){
 
     <div class="fin-section">
       <div class="fin-title">Balance</div>
-      <div class="fin-row"><span>Presupuesto actual</span><span class="plus">€${G.cnMoney||0}</span></div>
+      <div class="fin-row"><span>Presupuesto actual</span><span class="${(G.cnMoney||0)<0?'minus':'plus'}">${fmtEur(G.cnMoney||0)}</span></div>
       <div class="fin-row"><span>Premios cobrados</span><span class="${prizeTotal>0?'plus':'neutral'}">€${prizeTotal}</span></div>
       <div class="fin-row"><span>Inscripciones</span><span class="minus">-€${inscCost}</span></div>
+      <div class="fin-row"><span>Patrocinio al cerrar la temporada</span><span class="plus">+€${cnSponsorIncome()}</span></div>
     </div>
 
     <div class="fin-section">
       <div class="fin-title">Gastos del perro (mensual)</div>
-      <div class="fin-row"><span>Manutención básica</span><span class="minus">-€40/mes</span></div>
-      <div class="fin-row">
-        <div style="flex:1"><span>Manutención premium</span><div style="font-size:11px;color:#888">+5 energía en carrera</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span class="minus">-€30/mes</span><button class="secondary" style="font-size:12px;flex-shrink:0" onclick="G.cnDogFoodPremium=!G.cnDogFoodPremium;autoSave();render()">${G.cnDogFoodPremium?'✅ Activo':'Activar'}</button></div>
-      </div>
-      <div class="fin-row">
-        <div style="flex:1"><span>Suplementos</span><div style="font-size:11px;color:#888">+1 resistencia/sem perro</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span class="minus">-€25/mes</span><button class="secondary" style="font-size:12px;flex-shrink:0" onclick="G.cnDogSupplements=!G.cnDogSupplements;autoSave();render()">${G.cnDogSupplements?'✅ Activo':'Activar'}</button></div>
-      </div>
+      <div class="fin-row"><span>Manutención${G.cnMinCare?' mínima':''}</span><span class="minus">-€${cnMonthlyDogCost()}/mes</span></div>
       <div class="fin-row tot"><span>Total/mes perro</span><span class="minus">-€${dogMonthly}/mes</span></div>
     </div>
 
@@ -1857,11 +1780,6 @@ function renderCanicrossPreRace(){
   const race=(G.cnSelectedRaces||[])[G.cnCurrentRaceIdx];
   if(!race){G.screen='canicrossHub';G.activeTab='game';render();return;}
   const d=cnActiveDog();
-  const eq=G.equipment||{};
-  const harness=(CANICROSS_EQUIPMENT.dogHarness||[]).find(e=>e.id===eq.dogHarness)||{name:'—'};
-  const belt=(CANICROSS_EQUIPMENT.humanBelt||[]).find(e=>e.id===eq.humanBelt)||{name:'—'};
-  const line=(CANICROSS_EQUIPMENT.line||[]).find(e=>e.id===eq.line)||{name:'—'};
-  const mods=cnGetEquipMods();
 
   const pre=G.cnRaceState&&G.cnRaceState.preBehaviour;   // paso 4: lo que hace el perro en la salida
   el.innerHTML=`
@@ -1892,13 +1810,20 @@ function renderCanicrossPreRace(){
       </div>`:''}
     </div>
 
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title-sm">Equipo activo</div>
-      <div style="font-size:13px;color:#555;margin-bottom:3px">Arnés: ${esc(harness.name)}</div>
-      <div style="font-size:13px;color:#555;margin-bottom:3px">Cinturón: ${esc(belt.name)}</div>
-      <div style="font-size:13px;color:#555">Línea: ${esc(line.name)}</div>
-      ${mods.speedMod||mods.staminaMod?`<div class="text-ok" style="margin-top:4px">Bonificadores: ${[mods.speedMod?'+'+mods.speedMod+' vel':null,mods.staminaMod?(mods.staminaMod>0?'+':'')+mods.staminaMod+' res':null].filter(Boolean).join(' · ')}</div>`:''}
-    </div>
+    ${(()=>{
+      // Paso 6: la equipación se elige para esta carrera y los consumibles se gastan al salir
+      const eq=G.cnEquipped||{},rs=G.cnRaceState||{},pack=rs.pack||{};
+      const sel=cat=>(G.cnOwned[cat]||[]).map(id=>{const it=CN_EQUIP[cat].find(x=>x.id===id)||{};
+        return`<button class="pz-opcion${eq[cat]===id?' sel':''}" onclick="cnSelectEquip('${cat}','${id}')"><b>${esc(it.name||id)}</b><div class="pz-efectos">${esc(it.desc||'')}</div></button>`;}).join('');
+      return`<div class="pz">
+        <div class="pz-label" style="margin:6px 0">Arnés</div>${sel('harness')}
+        <div class="pz-label" style="margin:6px 0">Línea</div>${sel('line')}
+        <div class="pz-label" style="margin:6px 0">Cinturón</div>${sel('belt')}
+        <div class="pz-label" style="margin:10px 0 6px">Llevas</div>
+        <div class="pz-tarjeta">${CN_CONSUMABLES.filter(c=>c.id!=='electrolytes').map(c=>{const n=Number(G.cnConsumables[c.id])||0;
+          return`<label class="pz-fila" style="cursor:pointer"><input type="checkbox" class="pz-casilla" ${pack[c.id]?'checked':''} ${n||pack[c.id]?'':'disabled'} onchange="cnTogglePack('${c.id}')"><span class="pz-fila-txt"><b>${c.name}</b><div class="pz-efectos">${esc(c.desc)}</div></span><span class="pz-fila-dato">${n}</span></label>`;}).join('')}</div>
+      </div>`;
+    })()}
 
     <div class="card" style="margin-bottom:16px">
       <div class="sec-title-sm">Información de la carrera</div>
@@ -1921,7 +1846,6 @@ function renderCanicrossPreRace(){
       </div>`;
     })()}
 
-    ${G.cnDogFoodPremium?`<div class="note" style="margin-bottom:12px">🥩 Manutención premium: +5 energía en carrera</div>`:''}
 
     <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="cnGoToRace()">¡A correr! 🐕 →</button>
     <button class="main" style="margin-top:6px;opacity:0.5" onclick="G.screen='canicrossHub';G.activeTab='game';render()">← Volver</button>`;
@@ -2121,6 +2045,7 @@ function renderCnSeasonBalance(){
     <div class="fin-section">
       <div class="fin-title">Economía</div>
       <div class="fin-row"><span>Premios cobrados</span><span class="plus">+€${totalPrize}</span></div>
+      <div class="fin-row"><span>Patrocinio (al empezar la siguiente)</span><span class="plus">+€${cnSponsorIncome()}</span></div>
       <div class="fin-row"><span>Presupuesto final</span><span class="${(G.cnMoney||0)>=0?'plus':'minus'}">€${G.cnMoney||0}</span></div>
     </div>
 
@@ -2250,14 +2175,15 @@ window.cnMorningChoice=opt=>{
   const aCasa=()=>{G.cnRaceState=null;G.screen='canicrossHub';G.activeTab='game';autoSave();render();};
   if(opt==='volver'){aCasa();return;}
   if(opt==='nocorrer'){
-    G.cnMoney=Math.max(0,(G.cnMoney||0)-(race.cost||0));
+    G.cnMoney=(G.cnMoney||0)-(race.cost||0);
     if(!Array.isArray(G.cnCancelledRaces))G.cnCancelledRaces=[];
     G.cnCancelledRaces.push({raceId:race.id,season:G.cnSeason,why:'baja'});
     aCasa();return;
   }
   if(opt==='cuidado'){
-    if((G.cnMoney||0)<15){showToast('Sin fondos');return;}
-    G.cnMoney-=15;
+    // Paso 6: un sobre de electrolitos; si no te quedan, lo compras ahí mismo
+    if(Number(G.cnConsumables.electrolytes)>0)G.cnConsumables.electrolytes--;
+    else G.cnMoney=(G.cnMoney||0)-8;
     if(d.condition&&Math.random()<0.6){
       d.condition.severity-=1;
       if(d.condition.severity<=0){d.condition=null;showToast('Funciona: '+esc(d.name)+' está mejor');}
@@ -2265,9 +2191,21 @@ window.cnMorningChoice=opt=>{
     }else showToast('Hoy no ha bastado');
   }
   if(opt==='forzar'){
-    if((G.cnMoney||0)<35){showToast('Sin fondos');return;}
-    G.cnMoney-=35;rs.forced=true;
+    G.cnMoney=(G.cnMoney||0)-35;rs.forced=true;
     d.bond=Math.max(0,(d.bond||0)-8);   // incondicional: el perro lo nota
   }
   rs.morning=null;G.screen='canicrossPreRace';render();
 };
+
+// ── ESTRECHEZ (paso 6 · § 4.11) ─────────────────────────────────────────────
+function renderCnQuiebra(){
+  hideChrome();
+  $main().innerHTML=`<div class="pz">
+    <div class="pz-franja negativo"><div class="pz-franja-num">${fmtEur(G.cnMoney||0)}</div><div class="pz-franja-sub">Por debajo de ${fmtEur(CN_BROKE_LINE)}: así no llegáis a marzo</div></div>
+    <p class="pz-sub">No se acaba nada: toca apretarse. Elige una.</p>
+    <button class="pz-opcion" onclick="cnBrokeChoice('inscripciones')"><b>Renunciar a las inscripciones que quedan</b><div class="pz-efectos">No pagas las carreras que faltan; tampoco las corres.</div></button>
+    <button class="pz-opcion" onclick="cnBrokeChoice('vender')"><b>Vender la equipación</b><div class="pz-efectos">A mitad de precio. Te quedas con lo básico.</div></button>
+    <button class="pz-opcion" onclick="cnBrokeChoice('minima')"><b>Manutención mínima</b><div class="pz-efectos">€20 al mes hasta fin de temporada. Al perro le cuesta <span class="pz-menos">−5</span> de salud cada mes.</div></button>
+    <button class="pz-btn sec" style="margin-top:8px" onclick="G.screen='canicrossHub';G.activeTab='game';render()">Seguir así</button>
+  </div>`;
+}

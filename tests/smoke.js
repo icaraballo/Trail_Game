@@ -36,7 +36,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS',
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
   'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
-  'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnNextCommand',
+  'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnApplyMonthHours','cnHoursUsed','cnSponsorIncome','CN_EQUIP','CN_CMD_LEVEL_HOURS','cnEquipSeg',
   'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
@@ -1020,17 +1020,14 @@ console.log('\n── Canicross, rediseño paso 2 · reloj por mes y carreras fi
 {
   const _r=ctx.render,_t=ctx.showToast,_a=ctx.autoSave,_st=ctx.setTimeout;const avisos=[];
   ctx.render=()=>{};ctx.autoSave=()=>{};ctx.setTimeout=f=>f();ctx.showToast=m=>avisos.push(m);
-  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:1000,cnTrainingBlock:'conjunto',cnMonthIdx:0,cnMonthWeek:0});
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:1000,cnMonthIdx:0,cnHoursPlan:{solo:10,perro:0,juntos:20,descanso:10}});
   T.cnAddDog(T.cnInitDog('Txuri','husky'));
   ctx.cnAdvanceWeek();
-  t('B5: el primer «Avanzar» lleva a noviembre', T.cnMonth()===11&&g.cnMonthWeek===0, T.cnMonth());
+  t('B5: el primer «Avanzar» lleva a noviembre', T.cnMonth()===11, T.cnMonth());
   t('…y el aviso dice el mes que acaba y el que empieza', avisos.some(a=>a.startsWith('Octubre completado')&&a.includes('ahora noviembre')), avisos.join(' | '));
   t('se cobra la manutención una vez por mes', g.cnMoney<1000&&g.cnMoney>=1000-200, g.cnMoney);
-  g.cnVacationDays=15;g.cnVacationUsed=0;
-  ctx.cnAdvanceRestWeek();
-  t('una semana de vacaciones gasta una semana del mes', T.cnMonth()===11&&g.cnMonthWeek===1);
   ctx.cnAdvanceWeek();
-  t('y «Avanzar» completa el mes con las tres que quedan', T.cnMonth()===12&&g.cnMonthWeek===0);
+  t('cada «Avanzar» es un mes entero', T.cnMonth()===12);
   for(let i=0;i<4;i++)ctx.cnAdvanceWeek();
   t('tras marzo la temporada termina', T.cnSeasonOver()&&g.cnMonthIdx===6);
   const antes=g.cnMoney;ctx.cnAdvanceWeek();
@@ -1107,7 +1104,7 @@ console.log('\n── Canicross, rediseño paso 4 · conducta, sincronía y diá
   const d=T.cnAddDog(T.cnInitDog('Txuri','husky'));
   t('el perro nace con estado oculto, 1-2 rasgos y seis comandos a 0', d.mood===60&&d.fatigue===0&&d.temperament.length>=1&&d.temperament.length<=2
     &&d.temperament.every(x=>T.CN_TEMPERAMENTS.includes(x))&&T.CN_COMMANDS.every(c=>d.commands[c.id]===0));
-  t('se enseña primero el de menos dominio', T.cnNextCommand()==='forward');
+  t('y sin horas en ningún comando', Object.values(d.cmdHours).every(h=>h===0));
   d.bond=50;d.temperament=['estoico'];
   const race=T.CANICROSS_RACES.find(r=>r.id==='cn_guadarrama');
   g.cnSelectedRaces=[{...race}];
@@ -1189,6 +1186,45 @@ console.log('\n── Canicross, rediseño paso 5 · temperatura, clima y salud 
   // La lluvia convierte la tierra en barro un tramo después
   const rs={segs:[{surface:'tierra'},{surface:'tierra'},{surface:'pista'}],weatherTimeline:['lluvia','lluvia','lluvia'],tempReal:5};
   t('tras la lluvia, la tierra es barro; la pista sigue', T.cnSegSurface(rs,0)==='tierra'&&T.cnSegSurface(rs,1)==='barro'&&T.cnSegSurface(rs,2)==='pista');
+  ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
+}
+
+console.log('\n── Canicross, rediseño paso 6 · horas, equipación y economía ──');
+{
+  const _r=ctx.render,_t=ctx.showToast,_a=ctx.autoSave,_st=ctx.setTimeout;
+  ctx.render=()=>{};ctx.autoSave=()=>{};ctx.setTimeout=f=>f();ctx.showToast=()=>{};
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:1,cnMonthIdx:0});
+  const d=T.cnAddDog(T.cnInitDog('Txuri','husky'));d.bond=40;d.temperament=['estoico'];
+  for(let k=0;k<30;k++)ctx.cnSetHours('juntos',2);
+  ctx.cnSetHours('descanso',10);
+  t('§10.6 el reparto nunca pasa de las horas del mes', T.cnHoursUsed()===g.cnHoursTotal&&g.cnHoursPlan.juntos===40&&g.cnHoursPlan.descanso===0, JSON.stringify(g.cnHoursPlan));
+  g.cnHoursPlan={solo:0,perro:10,juntos:20,descanso:10};g.cnHoursCmd='hold';
+  const b0=d.bond;
+  T.cnApplyMonthHours();
+  t('las horas van al comando elegido (perro ×1, juntos ×1,5)', d.cmdHours.hold===40&&d.commands.hold===2, d.cmdHours.hold+' h · nivel '+d.commands.hold);
+  t('y juntos sube el vínculo', d.bond>b0, b0+' → '+d.bond);
+  const b1=d.bond;g.cnHoursPlan={solo:40,perro:0,juntos:0,descanso:0};
+  T.cnApplyMonthHours();
+  t('un mes solo, sin el perro, le cuesta vínculo', d.bond<b1, b1+' → '+d.bond);
+  t('niveles de comando a 10, 25 y 50 h', T.CN_CMD_LEVEL_HOURS.join()==='10,25,50');
+  // Equipación contextual: el X-Back gana en llano largo y pierde control en bajada
+  g.cnEquipped={harness:'h_xback',line:'l_medium',belt:'b_basic'};
+  const [tf,sf]=T.cnEquipSeg({km:12},{type:'flat'},1,d),[td,sd]=T.cnEquipSeg({km:12},{type:'descent'},2,d);
+  t('X-Back: −4 % en llano largo, −5 de sincronía en bajada', tf===0.96&&sf===0&&td===1&&sd===-5);
+  // Economía: sin suelo, patrocinio y estrechez
+  g.followers=2000;
+  t('patrocinio de 120 + 0,15 por seguidor', T.cnSponsorIncome()===420);
+  g.followers=100000;
+  t('…con tope de €700', T.cnSponsorIncome()===700);
+  g.cnMoney=-170;g.cnHoursPlan={solo:0,perro:0,juntos:20,descanso:20};g.cnMonthIdx=1;
+  ctx.cnAdvanceWeek();
+  t('el dinero puede bajar de cero y por debajo de −€200 sale la estrechez', g.cnMoney<-200&&g.screen==='canicrossQuiebra', g.cnMoney+' · '+g.screen);
+  g.cnOwned.harness.push('h_xback');const antes=g.cnMoney;
+  ctx.cnBrokeChoice('vender');
+  t('vender la equipación devuelve la mitad y deja lo básico', g.cnMoney===antes+60&&g.cnOwned.harness.join()==='h_basic');
+  ctx.cnAdvanceWeek();
+  t('la estrechez sale una vez por temporada', g.screen!=='canicrossQuiebra');
+  t('B6: ni cnVacationPlanned ni cnVacationThisSeason existen', !('cnVacationPlanned' in T.freshState())&&!('cnVacationThisSeason' in T.freshState()));
   ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
 }
 

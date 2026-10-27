@@ -392,6 +392,7 @@ function screenRoutes(){
     canicrossDisplasia:renderCnDisplasia,
     canicrossAntigua:renderCnAntigua,
     canicrossRaceMorning:renderCnRaceMorning,
+    canicrossQuiebra:renderCnQuiebra,
     achievements:renderAchievements,
     debtCrisis:renderDebtCrisis,careerEnd:renderCareerEnd,   // T29 (v86)
 };

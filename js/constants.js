@@ -2338,26 +2338,48 @@ const CN_CONDITIONS=[
 // El tiempo por tramo: lo que cambia cuando llueve o nieva (temperatura y suelo).
 const CN_WEATHER_LABEL={seco:'Seco',lluvia:'Lluvia',nieve:'Nieve'};
 
-const CANICROSS_EQUIPMENT={
-  dogHarness:[
-    {id:'basic_harness', name:'Arnés Corto Básico',    price:35,  desc:'Equilibrado. Viene de inicio.',                     speedMod:0,  staminaMod:0,  default:true},
-    {id:'freemotion_pro',name:'Freemotion Pro',         price:95,  desc:'+agilidad técnico, -potencia tracción',             speedMod:2,  staminaMod:-1},
-    {id:'xback',         name:'X-Back Competición',    price:120, desc:'+velocidad llano, ideal larga distancia',           speedMod:5,  staminaMod:2},
-  ],
-  humanBelt:[
-    {id:'basic_belt',    name:'Cinturón Simple',        price:25,  desc:'Viene de inicio.',                                  injuryRiskMod:0,   default:true},
-    {id:'hip_harness',   name:'Arnés Cadera Completo',  price:140, desc:'-riesgo lesión lumbar, mejor control',              injuryRiskMod:-10},
+// Rediseño de Canicross, paso 6 (TG-Diseno-Canicross § 4.9-4.11).
+// Reparto de horas del mes: lo que da cada hora (valores de partida, calibrables).
+const CN_HOURS_TOTAL=40;
+const CN_HOURS_RATES={
+  solo:    {resistencia:0.09,velocidad:0.06,subida:0.03,bajada:0.03,bond:-0.125},
+  perro:   {speed:0.10,stamina:0.08,fatigue:0.5,cmd:1.0},
+  juntos:  {sync:0.20,bond:0.22,cmd:1.5,speed:0.04,resistencia:0.04,fatigue:0.35},
+  descanso:{fatigue:-1.4,mood:0.9,health:0.25,bond:0.08},
+};
+const CN_HOURS_LABEL={solo:'Tú solo',perro:'El perro solo',juntos:'Los dos juntos',descanso:'Descanso juntos'};
+// Horas acumuladas en un comando para cada nivel de dominio
+const CN_CMD_LEVEL_HOURS=[10,25,50];
+// Equipación que no es mejor sino distinta: se elige antes de cada carrera (§ 4.10).
+const CN_EQUIP={
+  harness:[
+    {id:'h_basic',      name:'Arnés corto básico', price:35,  start:true, desc:'Nada destaca, nada penaliza.'},
+    {id:'h_xback',      name:'X-Back competición', price:120, desc:'En llano y carreras de 10 km o más, un 4 % más rápido. En bajada pierdes control (−5 de sincronía).'},
+    {id:'h_freemotion', name:'Freemotion Pro',     price:95,  desc:'En bajadas y curvas, +6 de sincronía. En llano aprovecha peor la tracción (+3 % de tiempo).'},
   ],
   line:[
-    {id:'soft_line',     name:'Línea Amortiguador Blando',price:30,desc:'Viene de inicio.',                                  jerkMod:0,  default:true},
-    {id:'hard_line',     name:'Línea Amortiguador Duro',  price:55,desc:'Perros con mucha tracción, -tirones bruscos',       jerkMod:-5},
+    {id:'l_medium', name:'Línea media',             price:30, start:true, desc:'Equilibrada.'},
+    {id:'l_short',  name:'Línea corta',             price:30, desc:'En salidas masivas (tier 3-4), +5 de sincronía. En llano, +3 % de tiempo. Con un perro que no tira, arranca peor.'},
+    {id:'l_long',   name:'Línea larga amortiguada', price:55, desc:'En llano con un perro que tira, un 3 % más rápido. En bajada técnica, −4 de sincronía; con un perro que tira mucho te desestabiliza.'},
+  ],
+  belt:[
+    {id:'b_basic', name:'Cinturón simple',          price:25,  start:true, desc:'Lo justo.'},
+    {id:'b_hip',   name:'Arnés de cadera completo', price:140, desc:'Protege tu espalda: +3 de sincronía en cada carrera.'},
   ],
 };
-
-const CANICROSS_TRAINING_BLOCKS=[
-  {id:'conjunto',     label:'Entrenamiento conjunto',  hours:5, runnerMod:{resistencia:2,velocidad:1},       dogMod:{speed:2,stamina:2},    bondMod:5,  desc:'Entrenas juntos. Sube vínculo.'},
-  {id:'adiestramiento',label:'Adiestramiento',         hours:3, runnerMod:{},                                dogMod:{},                     bondMod:3,  desc:'Enseña comandos al perro (2 sesiones/comando). +3 vínculo.', teachCommand:true},
-  {id:'tecnica',      label:'Técnica conjunta',        hours:4, runnerMod:{bajada:2,velocidad:1},            dogMod:{speed:1,stamina:1},    bondMod:4,  desc:'Sincronía en tramos técnicos.'},
-  {id:'solo',         label:'Entreno corredor solo',   hours:4, runnerMod:{resistencia:3,velocidad:2,subida:2}, dogMod:{},                  bondMod:-2, desc:'Entrenas sin el perro. -2 vínculo (Malinois: -5 en total).'},
-  {id:'descanso',     label:'Descanso activo juntos',  hours:2, runnerMod:{mental:2},                        dogMod:{health:3},             bondMod:3,  desc:'Paseo tranquilo. Descarga física y vínculo.'},
+// Consumibles: de aquí sale la presión económica leve. Se eligen en la precarrera.
+const CN_CONSUMABLES=[
+  {id:'booties',      name:'Escarpines',              price:18, desc:'Nieve o piedra: sin ellos, riesgo real de almohadillas.'},
+  {id:'coat',         name:'Abrigo del perro',        price:12, desc:'Por debajo de −4 °C, quita la penalización por frío.'},
+  {id:'coolvest',     name:'Chaleco refrigerante',    price:22, desc:'Con calor, la penalización por temperatura se queda en la mitad.'},
+  {id:'recovery',     name:'Comida de recuperación',  price:10, desc:'Después de la carrera, −25 de fatiga.'},
+  {id:'electrolytes', name:'Electrolitos',            price:8,  desc:'Para cuidarle la mañana de la carrera.'},
 ];
+// Mini-patrocinio por temporada, ligado a los seguidores (§ 4.11)
+const CN_SPONSOR_BASE=120;
+const CN_SPONSOR_PER_FOLLOWER=0.15;
+const CN_SPONSOR_CAP=700;
+// Por debajo de este saldo aparece la pantalla de estrechez (no hay game over)
+const CN_BROKE_LINE=-200;
+
+// CANICROSS_TRAINING_BLOCKS: sustituido por el reparto de horas (paso 6, CN_HOURS_RATES).

@@ -2656,7 +2656,7 @@ const DEV_RECIPES=[
       if(!march)throw new Error('No hay carrera de Canicross en marzo');
       G.cnSelectedRaces=[march];
       G.cnRaceResults=(G.cnRaceResults||[]).filter(r=>!(r.season===G.cnSeason&&r.raceId===march.id));
-      G.cnMonthIdx=5;G.cnMonthWeek=0;G.cnRaceState=null;G.screen='canicrossHub';
+      G.cnMonthIdx=5;G.cnRaceState=null;G.screen='canicrossHub';
     },luego:'Estás en marzo con la carrera sin correr. Avanza desde marzo o sáltala: la temporada debe poder cerrarse.'},
   {id:'coach_two',label:'Entrenador con dos atletas',sesion:'5',casilla:'Historiales separados por atleta',
     pasos:()=>{

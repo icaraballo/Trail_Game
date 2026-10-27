@@ -12,7 +12,9 @@ function assignClubCompanion(club){
 // 3 = rivales persistentes (cnRivals) con parciales en cnRaceState y nivel de equipo.
 // 4 = perro con ánimo, fatiga, temperamento y seis comandos con dominio; sincronía en carrera.
 // 5 = temperatura y clima por carrera, salud cotidiana (d.condition, d.sex) y carreras suspendidas.
-const CN_REV=5;
+// 6 = reparto de horas, equipación y consumibles nuevos, economía con quiebra; adiós a
+//     bloques de entreno, vacaciones (B6) y cnMonthWeek.
+const CN_REV=6;
 function freshState(){
   return{
     screen:'saveScreen',year:1,ranking:999,specRanking:999,money:300,
@@ -112,10 +114,6 @@ function freshState(){
     cnPreseasonDone:[],          // ids de actividades de pretemporada hechas (es array, pese al nombre)
     cnOpenMonths:[],             // meses desplegados en el calendario mensual
     cnOpenSeasonMonths:[],       // meses desplegados en el calendario de temporada
-    cnVacationDays:15,           // total de días de vacaciones de la temporada
-    cnVacationUsed:0,
-    cnVacationPlanned:0,
-    cnVacationThisSeason:0,      // ⚠ también write-only (ver la misma ficha)
     // ── Tanda B/C — campos antes lazy-init ──
     unlockedAchievements:[],     // logros desbloqueados (acumulado partida)
     nemesisLog:{},               // {rivalName: {wins, gapSum, gapCount}}
@@ -263,16 +261,18 @@ function freshState(){
     // ── Modo Canicross ───────────────────────────
     canicrossMode:false,
     cnSeason:1, cnSelectedRaces:[], cnCurrentRaceIdx:0, cnRaceResults:[],
-    cnMoney:500, cnTrainingBlock:null,
-    cnMonthIdx:0, cnMonthWeek:0,
+    cnMoney:500,
+    cnMonthIdx:0,
     cnRivals:{}, cnNemesis:{}, cnSeasonShift:{},
     cnNotebook:{},
     cnSeasonWinter:'normal',   // paso 5: frio · normal · suave, sorteado al empezar cada temporada
     cnCancelledRaces:[],       // paso 5: carreras suspendidas por calor o no corridas por el perro ({raceId,season,why})   // paso 4: el cuaderno — por conducta, veces vista, contexto, qué hiciste y tu nota   // paso 3: rivales persistentes, némesis y nivel de la temporada por tier   // reloj de Canicross (paso 2): mes 0-5 (6 = terminada) y semana del mes
-    cnTrainAdrainSessions:{left:0,hold:0,forward:0},
-    cnOwnedEquipment:{dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']},
-    equipment:{dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'},
-    cnDogFoodPremium:false, cnDogSupplements:false,
+    // Paso 6: reparto de horas del mes, equipación contextual, consumibles y economía
+    cnHoursTotal:40, cnHoursPlan:{solo:0,perro:0,juntos:0,descanso:0}, cnHoursCmd:'forward',
+    cnOwned:{harness:['h_basic'],line:['l_medium'],belt:['b_basic']},
+    cnEquipped:{harness:'h_basic',line:'l_medium',belt:'b_basic'},
+    cnConsumables:{booties:0,coat:0,coolvest:0,recovery:0,electrolytes:0},
+    cnMinCare:false, cnBrokeSeason:0,   // manutención mínima (estrechez) y temporada en que se vio la pantalla
     cnVetHistory:[], cnBirthdayToastShown:{}, cnRaceState:null,
     // Rediseño de Canicross, paso 1 (TG-Diseno-Canicross § 3.1): G.dog pasa a una lista.
     // El perro que compite es el de activeDogId; se lee con cnActiveDog().
