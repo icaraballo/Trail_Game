@@ -108,20 +108,32 @@ function migrateState(saved){
    'coachEventLog','coachRoster','coachSponsors','unlockedAchievements',
    'cnVetHistory','cnRaceResults','cnSelectedRaces','rivalIncidents',
    // T48 (v93): los cuatro arrays que se guardaban sin estar declarados
-   'dropbagUsed','cnPreseasonDone','cnOpenMonths','cnOpenSeasonMonths']
+   'dropbagUsed','cnPreseasonDone','cnOpenMonths','cnOpenSeasonMonths','dogs']
     .forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=Array.isArray(base[k])?[...base[k]]:[];});
   // T48/T51 (v93): race.js ya lee G.terrainCondition sin guarda, así que un save
   // con la clave a null (nada la escribe hoy, pero `{...base,...saved}` deja
   // ganar al save) reventaría el render de la carrera. Se restituye el neutro.
   if(!merged.terrainCondition||typeof merged.terrainCondition!=='object')merged.terrainCondition={...TERRAIN_BUENO};
   if(!merged.achievementMeta||typeof merged.achievementMeta!=='object')merged.achievementMeta={};
+  // Canicross se está reescribiendo por pasos (TG-Diseno-Canicross § 12) y su ficha avisa de
+  // que sus partidas no pasan al rediseño. Una de Canicross con una revisión menor que
+  // CN_REV no se intenta jugar: se abre «canicrossAntigua», que lo explica. Se conserva su
+  // cnRev viejo para que, si se autoguarda desde ahí, siga sin pasar la próxima vez.
+  // Los demás modos no se tocan.
+  if((saved.gameMode==='canicross'||saved.canicrossMode)&&(Number(saved.cnRev)||0)<CN_REV){
+    merged.cnRev=Number(saved.cnRev)||0;
+    merged.screen='canicrossAntigua';
+  }
   // Deep-merge de objetos anidados adicionales
   // T125 (v92): estos cinco hacían {...null, ...saved.x} porque los cinco valen
   // null en freshState(): aparentaban dar valores por defecto a saves antiguos y
   // no daban ninguno. Se deja el clon, que sí sirve, y se quita el merge que
   // mentía. Cuando T48/T49 les den forma por defecto, volverá a tener sentido.
   // `club` se queda con su merge: ese sí tiene un objeto real detrás.
-  if(saved.dog)          merged.dog={...saved.dog};
+  // Canicross, paso 1 del rediseño: G.dog pasó a G.dogs[]. Un G.dog que llegue de una
+  // partida de antes no se convierte (ver la revisión de Canicross justo debajo): se quita.
+  delete merged.dog;
+  if(Array.isArray(saved.dogs))merged.dogs=saved.dogs.filter(d=>d&&typeof d==='object').map(d=>({...d}));
   if(saved.club)         merged.club={...base.club,...saved.club};
   if(saved.clubModeData) merged.clubModeData={...saved.clubModeData};
   if(saved.ownBrand)     merged.ownBrand={...saved.ownBrand};
@@ -213,7 +225,7 @@ function sanitizeState(raw){
   }
   s.clubCompanion=cut(s.clubCompanion,40);
   if(s.coachAthlete&&typeof s.coachAthlete==='object')s.coachAthlete.name=cut(s.coachAthlete.name,30);
-  if(s.dog&&typeof s.dog==='object')s.dog.name=cut(s.dog.name,30);
+  if(Array.isArray(s.dogs))s.dogs.forEach(d=>{if(d&&typeof d==='object')d.name=cut(d.name,30);});
   if(s.lifeAthlete&&typeof s.lifeAthlete==='object')s.lifeAthlete.name=cut(s.lifeAthlete.name,30);
   if(Array.isArray(s.rivals))s.rivals.forEach(r=>{if(r&&typeof r==='object')r.name=cut(r.name,40);});
   if(Array.isArray(s.coachRoster))s.coachRoster.forEach(sl=>{

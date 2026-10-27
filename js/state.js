@@ -2,6 +2,13 @@ function assignClubCompanion(club){
   if(!club||club.id==='none'||!club.companions?.length) return null; // T41 (v88): club migrado sin companions → TypeError
   return club.companions[Math.floor(Math.random()*club.companions.length)];
 }
+// Revisión del modelo de Canicross. Sube en cada paso del rediseño que cambia la forma de
+// su estado (TG-Diseno-Canicross § 12). Una partida de Canicross guardada con una revisión
+// menor no pasa: migrateState() la lleva a la pantalla «canicrossAntigua» en lugar de
+// intentar jugarla. Canicross avisaba en su ficha de que sus partidas no pasarían al
+// rediseño; es lo que evita escribir una migración en cada paso.
+// 1 = G.dogs[] en lugar de G.dog (2026-10-27).
+const CN_REV=1;
 function freshState(){
   return{
     screen:'saveScreen',year:1,ranking:999,specRanking:999,money:300,
@@ -258,7 +265,10 @@ function freshState(){
     equipment:{dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'},
     cnDogFoodPremium:false, cnDogSupplements:false,
     cnVetHistory:[], cnBirthdayToastShown:{}, cnRaceState:null,
-    dog:null,
+    // Rediseño de Canicross, paso 1 (TG-Diseno-Canicross § 3.1): G.dog pasa a una lista.
+    // El perro que compite es el de activeDogId; se lee con cnActiveDog().
+    dogs:[], activeDogId:null, cnNextDogId:1,
+    cnRev:CN_REV,   // revisión del modo: una partida con una menor no se carga (ver migrateState)
     // ── T49 (v93) · los 46 campos `_` transitorios ───────────────────────────
     // No se guardan (serializableState() los descarta por no estar en
     // PERSISTENT_UNDERSCORE_KEYS) y por eso nadie los había declarado. El

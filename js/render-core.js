@@ -169,7 +169,7 @@ function aplicarModoChasis(){
 function updateFinBar(){
   const bar=document.getElementById('fin-bar');
   if(!bar)return;
-  const screens=['intro','workSetup'];
+  const screens=['intro','workSetup','canicrossAntigua'];
   bar.style.display=screens.includes(G.screen)?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
@@ -390,6 +390,7 @@ function screenRoutes(){
     canicrossDogRetirement:renderCnDogRetirement,
     canicrossDogDeath:renderCnDogDeath,
     canicrossDisplasia:renderCnDisplasia,
+    canicrossAntigua:renderCnAntigua,
     achievements:renderAchievements,
     debtCrisis:renderDebtCrisis,careerEnd:renderCareerEnd,   // T29 (v86)
 };
@@ -405,7 +406,7 @@ function $main(){return document.getElementById('main');}
 // modal propio, junto con los otros seis.
 window.backToMainMenu=()=>{
   const enCurso=!['intro','modeSelect','saveScreen'].includes(G.screen)&&
-    !!(G.runner?.name||G.coachAthlete||G.dog||(G.club&&G.club.id!=='none'));
+    !!(G.runner?.name||G.coachAthlete||(G.dogs&&G.dogs.length)||(G.club&&G.club.id!=='none'));
   if(enCurso&&G._saveSlot==null&&
      !confirm('Esta partida no está guardada en ninguna ranura: si vuelves al menú se pierde. ¿Volver igualmente?'))return;
   G=freshState();render();
@@ -588,6 +589,7 @@ window.loadSlot=slot=>{
       G.screen='overlapHub';
     }
     render();
+    if(G.screen==='canicrossAntigua')return;   // no se ha actualizado nada: lo explica la pantalla
     if(savedBuild>0&&savedBuild<GAME_BUILD){
       setTimeout(()=>showToast(`Partida de v${savedBuild} actualizada a v${GAME_BUILD} ✓`),300);
     } else if(savedBuild===0){

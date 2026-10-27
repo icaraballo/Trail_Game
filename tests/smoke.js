@@ -33,7 +33,8 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'DEV','DAY_CONDITIONS','MAX_IMPORT_CHARS','MONTHLY_EVENTS_POOL','BETWEEN_EVENTS','TRAINING_EVENTS_POOL',
   'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL',
   'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS',
-  'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS']);
+  'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS',
+  'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -576,7 +577,7 @@ console.log('\n── Tanda del playtest v96 ──');
   const pinta=domStub(ctx);
 
   // BUG-05: la pantalla, no el texto del fuente
-  setG({gameMode:'canicross',canicrossMode:true,screen:'canicrossSeasonBalance',activeTab:'game',cnSeason:1,cnWeek:28,cnRaceResults:[],dog:null});
+  setG({gameMode:'canicross',canicrossMode:true,screen:'canicrossSeasonBalance',activeTab:'game',cnSeason:1,cnWeek:28,cnRaceResults:[],dogs:[]});
   let html=pinta(()=>_render());
   t('Canicross: «Cerrar temporada» llega al balance y se pinta', html.includes('cnEndSeason()'), html.slice(0,80));
 
@@ -974,5 +975,43 @@ t('Clásico lleva la dificultad', T.opinionModo({gameMode:'dificil'})==='Clásic
 t('Carrera de Vida, con su fase', T.opinionModo({gameMode:'medio',carreraVida:true,lifecyclePhase:'overlap'})==='Clásico · Medio · Carrera de Vida (solapamiento)');
 t('Canicross cuenta su temporada', T.opinionMomento({gameMode:'canicross',cnSeason:4,year:1},'canicrossHub')==='Temporada 4 · pantalla canicrossHub');
 t('Clásico, con el mes de la carrera', T.opinionMomento({gameMode:'medio',year:3,selectedRaces:[{month:5}],currentRaceIdx:0,careerEnded:true},null)==='Temporada 3 · May · carrera terminada');
+
+console.log('\n── Canicross, rediseño paso 1 · G.dog → G.dogs[] ──');
+{
+  const g=setG({gameMode:'canicross',canicrossMode:true});
+  t('una partida nueva no tiene perros', Array.isArray(g.dogs)&&g.dogs.length===0&&g.activeDogId===null&&T.cnActiveDog()===null);
+  t('y nace con la revisión actual de Canicross', g.cnRev===T.CN_REV);
+  const a=T.cnAddDog(T.cnInitDog('Txuri','husky'));
+  const b=T.cnAddDog(T.cnInitDog('Beltza','mestizo'));
+  t('cada perro lleva su id, sin repetir', a.id===1&&b.id===2&&g.cnNextDogId===3);
+  t('el último dado de alta es el que compite', T.cnActiveDog()===b&&T.cnDogById(1)===a&&T.cnDogs().length===2);
+  b.retired=true;
+  t('retirado sigue siendo el activo, como antes seguía en G.dog', T.cnActiveDog()===b);
+  g.activeDogId=1;a.peakBond=55;
+  const logro=T.ACHIEVEMENTS.find(x=>x.id==='cn_bond_50');
+  t('los logros leen el perro activo', logro.check()===true);
+  g.activeDogId=2;b.peakBond=10;
+  t('…y no otro de la lista', logro.check()===false);
+  t('el código ya no usa G.dog', !/\bG\.dog\b/.test(Object.values(src).join('\n').replace(/\/\/.*$/gm,'')));
+}
+{
+  const vieja={gameMode:'canicross',canicrossMode:true,screen:'canicrossHub',cnSeason:2,
+    dog:{name:'Txuri',bond:40,commands:{left:true,hold:false,forward:true}}};
+  const m=T.migrateState(vieja);
+  t('una partida de Canicross de antes va a «canicrossAntigua»', m.screen==='canicrossAntigua');
+  t('sin G.dog y sin perros inventados', !('dog' in m)&&Array.isArray(m.dogs)&&m.dogs.length===0);
+  t('y guarda su revisión vieja: autoguardar no la cuela', m.cnRev===0);
+  const clasica=T.migrateState({gameMode:'medio',screen:'training',dog:null});
+  t('una de Clásico de antes no se toca', clasica.screen==='training'&&clasica.cnRev===T.CN_REV&&!('dog' in clasica));
+  const nueva=T.migrateState({gameMode:'canicross',canicrossMode:true,screen:'canicrossHub',cnRev:T.CN_REV,
+    dogs:[{id:1,name:'Txuri'},null],activeDogId:1});
+  t('una de Canicross de ahora carga con sus perros', nueva.screen==='canicrossHub'&&nueva.dogs.length===1&&nueva.dogs[0].name==='Txuri');
+  const perro={id:1,name:'Txuri'};
+  t('la lista se copia, no se comparte', T.migrateState({gameMode:'canicross',cnRev:T.CN_REV,dogs:[perro]}).dogs[0]!==perro);
+  const pintaCn=domStub(ctx);   // el último domStub manda: el de arriba ya no es el #main
+  const html=pintaCn(()=>{setG({...vieja,screen:'canicrossAntigua',cnRev:0,runner:{...T.freshState().runner,name:'Iñigo'}});ctx.render();});
+  t('«canicrossAntigua» se pinta y ofrece las dos salidas', html.includes('antes del rediseño')&&html.includes('cnAntiguaNueva()')&&html.includes('cnAntiguaVolver()'), html.slice(0,80));
+  t('…sin colores sueltos', !/#[0-9a-fA-F]{3,6}\b/.test(html));
+}
 
 t.done('TODO OK');

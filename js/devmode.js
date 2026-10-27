@@ -279,7 +279,7 @@ window.devJumpToClub=()=>{
 };
 window.devJumpToCanicross=()=>{
   G.gameMode='canicross';
-  if(!G.dog)G.dog=cnInitDog('DevDog','mestizo');
+  if(!cnActiveDog()){cnAddDog(cnInitDog('DevDog','mestizo'));G.cnRev=CN_REV;}
   G.screen='canicrossHub';G.activeTab='game';
   showToast('DEV: saltado a Canicross');
   render();
@@ -433,7 +433,7 @@ window.devLoseCnRace=()=>{
 // directo, sin pasar por tramos ni por la pantalla de carrera.
 window.devSimulateCanicrossSeasons=(n)=>{
   n=Math.max(1,Number(n)||1);
-  if(!G.dog){showToast('DEV: no hay perro — usa "Ir a Canicross ahora" primero');return;}
+  if(!cnActiveDog()){showToast('DEV: no hay perro — usa "Ir a Canicross ahora" primero');return;}
   try{
     for(let i=0;i<n;i++){
       if(!G.cnSelectedRaces||!G.cnSelectedRaces.length){
@@ -640,7 +640,7 @@ const DEV_MODES={
     win:()=>devWinCnRace(), lose:()=>devLoseCnRace(), god:'cn', godLabel:'Canicross',
     seasonEnd:()=>devForceSeasonEnd('canicross'), simulate:n=>devSimulateCanicrossSeasons(n),
     needsRace:'Necesita una carrera de Canicross en curso',
-    has:()=>!!G.dog, missing:'Aún no hay perro', jump:()=>devJumpToCanicross()},
+    has:()=>!!cnActiveDog(), missing:'Aún no hay perro', jump:()=>devJumpToCanicross()},
 };
 function devActiveMode(){
   for(const [id,m] of Object.entries(DEV_MODES)){try{if(m.active())return id;}catch(e){}}
@@ -712,7 +712,7 @@ const DEV_EVENT_GROUPS=[
     launch:id=>{G.clubModeData.pendingEvent=CLUB_EVENTS.find(e=>e.id===id);G.screen='clubEvent';}},
   {id:'cn',label:'Canicross',mode:'canicross',when:'tramo',armKey:'cnEvent',provisional:true,
     items:()=>devCnPool().map(e=>({id:e.id,title:(e.text||e.id).replace('[DOG]','el perro').replace('[KM]','X')})),
-    canArm:()=>G.dog?null:'Necesita un perro (usa «Ir a Canicross»)'},
+    canArm:()=>cnActiveDog()?null:'Necesita un perro (usa «Ir a Canicross»)'},
 ];
 function devEvtGroup(id){return DEV_EVENT_GROUPS.find(g=>g.id===id);}
 function devEvtTitle(id){
@@ -837,7 +837,7 @@ const DEV_FIELDS=[
   {sec:'cn',k:'dog.stamina',label:'Perro · resistencia',type:'num',min:0,max:100},
   {sec:'cn',k:'dog.bond',label:'Perro · vínculo',type:'num',min:0,max:100},
   {sec:'cn',k:'dog.health',label:'Perro · salud',type:'num',min:0,max:100},
-  {sec:'cn',k:'dog.age',label:'Perro · edad',type:'num',min:0,cond:()=>G.dog&&G.dog.age!=null},
+  {sec:'cn',k:'dog.age',label:'Perro · edad',type:'num',min:0,cond:()=>cnActiveDog()&&cnActiveDog().age!=null},
   {sec:'vida',k:'carreraVida',label:'Carrera de Vida',type:'bool'},
   {sec:'vida',k:'lifecyclePhase',label:'Fase',type:'sel',opts:['runner','overlap','coach','club'],warn:'No lanza las pantallas de transición'},
   // Salud (se pintan en su pestaña, con el mismo mecanismo)
@@ -846,13 +846,20 @@ const DEV_FIELDS=[
   {sec:'salud-cn',k:'dog.health',label:'Salud del perro',type:'num',min:0,max:100,id:'dog.health#salud'},
 ];
 function devFieldId(f){return f.id||f.k;}
+// Canicross (rediseño, paso 1): las rutas «dog.x» del panel siguen valiendo y apuntan al
+// perro que compite, que ahora vive en G.dogs[] (cnActiveDog()).
+function devPathRoot(obj,ps){
+  if(obj===G&&ps[0]==='dog')return [typeof cnActiveDog==='function'?cnActiveDog():null,ps.slice(1)];
+  return [obj,ps];
+}
 function devGetPath(obj,path){
-  let o=obj;
-  for(const p of String(path).split('.')){if(o==null)return undefined;o=o[p];}
+  let [o,ps]=devPathRoot(obj,String(path).split('.'));
+  for(const p of ps){if(o==null)return undefined;o=o[p];}
   return o;
 }
 function devSetPath(obj,path,v){
-  const ps=String(path).split('.');let o=obj;
+  let [o,ps]=devPathRoot(obj,String(path).split('.'));
+  if(o==null)throw new Error('No existe '+String(path).split('.')[0]);
   for(let i=0;i<ps.length-1;i++){if(o[ps[i]]==null)throw new Error('No existe '+ps.slice(0,i+1).join('.'));o=o[ps[i]];}
   o[ps[ps.length-1]]=v;
 }
@@ -1515,7 +1522,7 @@ const DEV_SCREEN_NEEDS=[
   {label:'Carrera de Canicross en curso',test:s=>s==='canicrossSegment',ok:()=>DEV_MODES.canicross.inRace()},
   {label:'Club fundado',test:s=>s.startsWith('club')&&!['clubCreate','clubOffer'].includes(s),ok:()=>!!G.clubModeData},
   {label:'Atleta',test:s=>s.startsWith('coach')&&!['coachSelect','coachIntro','coachStyleSelect'].includes(s),ok:()=>!!G.coachAthlete},
-  {label:'Perro',test:s=>s.startsWith('canicross')&&s!=='canicrossCreateDog',ok:()=>!!G.dog},
+  {label:'Perro',test:s=>s.startsWith('canicross')&&s!=='canicrossCreateDog',ok:()=>!!cnActiveDog()},
 ];
 function devScreenNeedText(s){
   const n=DEV_SCREEN_NEEDS.find(x=>x.test(s));
@@ -1643,8 +1650,8 @@ function devHealthCoach(){
   return h;
 }
 function devHealthDog(){
-  if(!G.dog)return `<div class="dev-empty">Aún no hay perro. ${devBtn('Ir a Canicross',()=>devJumpToCanicross(),{when:'ya'})}</div>`;
-  const d=G.dog;
+  if(!cnActiveDog())return `<div class="dev-empty">Aún no hay perro. ${devBtn('Ir a Canicross',()=>devJumpToCanicross(),{when:'ya'})}</div>`;
+  const d=cnActiveDog();
   return `<div class="dev-warn">Provisional: Canicross se reescribe.</div>
     <div class="dev-note">Ahora: <b>${d.injury?esc(d.injury)+' · '+(d.injuryRaces||0)+' carrera(s)':'sin lesión'}</b></div>
     <div class="dev-row">${devBtn('Almohadillas (1 carrera)',()=>{d.injury='almohadillas';d.injuryRaces=1;},{when:'ya',cls:'dev-sm'})}${devBtn('Luxación (2 carreras)',()=>{d.injury='luxacion';d.injuryRaces=2;},{when:'ya',cls:'dev-sm'})}${devBtn('Quitar lesión',()=>{d.injury=null;d.injuryRaces=0;},{when:'ya',cls:'dev-sm'})}</div>
@@ -1672,7 +1679,7 @@ function devTabEstado(){
   h+=devSec('f-fama','⭐ Rankings y fama',()=>devFieldsBlock('fama'),{});
   h+=devSec('f-coach','📋 Entrenador',()=>G.coachAthlete||G.coachReputation?devFieldsBlock('coach'):noData('atleta de Entrenador',devBtn('Ir a Entrenador',()=>devJumpToCoach(),{when:'ya'})),{open:am==='coach'});
   h+=devSec('f-club','🏕 Club',()=>G.clubModeData?devFieldsBlock('club'):noData('club',devBtn('Ir a Club',()=>devJumpToClub(),{when:'ya'})),{open:am==='club'});
-  h+=devSec('f-cn','🐕 Canicross',()=>G.dog?devFieldsBlock('cn'):noData('perro',devBtn('Ir a Canicross',()=>devJumpToCanicross(),{when:'ya'})),{open:am==='canicross'});
+  h+=devSec('f-cn','🐕 Canicross',()=>cnActiveDog()?devFieldsBlock('cn'):noData('perro',devBtn('Ir a Canicross',()=>devJumpToCanicross(),{when:'ya'})),{open:am==='canicross'});
   h+=devSec('f-vida','🌱 Carrera de Vida',()=>devFieldsBlock('vida'),{open:!!G.carreraVida});
   h+=devSec('f-balance','⚖️ Balance de la dificultad (solo lectura)',()=>devBalanceBody(),{
     help:'Multiplicadores efectivos de modeCfg() por modo, para comparar dificultades sin jugar carreras. Independiente del modo real de la partida.'});

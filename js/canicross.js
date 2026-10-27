@@ -56,6 +56,23 @@ const CN_RIVAL_NAMES=[
 ];
 
 // ── STATE HELPERS ─────────────────────────────────────
+
+// ── PERROS (rediseño, paso 1 · TG-Diseno-Canicross § 3.1) ─────────────────
+// Antes había un solo G.dog. Ahora G.dogs[] con un id cada uno, y el que compite es el
+// de G.activeDogId (sigue siéndolo al retirarse, como antes seguía en G.dog). Nadie lee
+// G.dogs a pelo: estas cuatro funciones son la única entrada.
+function cnDogs(){return G.dogs||[];}
+function cnActiveDog(){const id=G.activeDogId;return id==null?null:(G.dogs||[]).find(d=>d.id===id)||null;}
+function cnHomeDogs(){return (G.dogs||[]).filter(d=>d.status==='casa');}   // retirados que siguen contigo (paso 7)
+function cnDogById(id){return (G.dogs||[]).find(d=>d.id===id)||null;}
+// Da de alta un perro con su id y lo deja como el que compite.
+function cnAddDog(dog){
+  if(!Array.isArray(G.dogs))G.dogs=[];
+  dog.id=G.cnNextDogId||1;G.cnNextDogId=dog.id+1;
+  G.dogs.push(dog);G.activeDogId=dog.id;
+  return dog;
+}
+
 function cnInitDog(name,breed){
   const m=CN_BREED_MODS[breed]||CN_BREED_MODS.mestizo;
   return{name,breed,age:1,
@@ -86,7 +103,7 @@ function cnGetEquipMods(){
 }
 
 function cnCanRace(){
-  const d=G.dog;
+  const d=cnActiveDog();
   if(!d||d.retired)return false;
   if(d.injury&&d.injuryRaces>0)return false;
   if(d.bond<cnRaceThreshold())return false; // T142 (v91): el umbral vivía aquí y en cnRaceThreshold()
@@ -96,8 +113,8 @@ function cnCanRace(){
 function cnRaceThreshold(){return(G.cnSeason||1)===1?20:30;}
 
 function cnNextCommand(){
-  if(!G.dog)return null;
-  const c=G.dog.commands;
+  if(!cnActiveDog())return null;
+  const c=cnActiveDog().commands;
   if(!c.left)return 'left';
   if(!c.hold)return 'hold';
   if(!c.forward)return 'forward';
@@ -107,13 +124,13 @@ function cnNextCommand(){
 function cnCommandLabel(id){return{left:'Izquierda',hold:'Aguanta',forward:'Adelante'}[id]||id;}
 
 function cnCommandsList(){
-  if(!G.dog)return[];
-  const c=G.dog.commands||{};
+  if(!cnActiveDog())return[];
+  const c=cnActiveDog().commands||{};
   return[{id:'left',label:'Izquierda',learned:c.left},{id:'hold',label:'Aguanta',learned:c.hold},{id:'forward',label:'Adelante',learned:c.forward}];
 }
 
 function cnDogAgeLabel(){
-  const y=G.dog?G.dog.age:0;
+  const y=cnActiveDog()?cnActiveDog().age:0;
   return y===1?'1 año':y+' años';
 }
 
@@ -139,7 +156,7 @@ function cnCurrentMonth(){
 }
 
 function cnPickEvent(raceMonth){
-  const d=G.dog;if(!d)return null;
+  const d=cnActiveDog();if(!d)return null;
   // DEV: fuerza un evento concreto por id, consumido una sola vez, sin tocar
   // las probabilidades reales del resto de jugadores.
   const forcedId=window.devTake?.('cnEvent');
@@ -166,9 +183,9 @@ function cnPickEvent(raceMonth){
 }
 
 function cnReplaceVars(text){
-  if(!G.dog)return text;
+  if(!cnActiveDog())return text;
   const km=Math.floor(Math.random()*7)+1;
-  return text.replace(/\[DOG\]/g,esc(G.dog.name)).replace(/\[KM\]/g,km);
+  return text.replace(/\[DOG\]/g,esc(cnActiveDog().name)).replace(/\[KM\]/g,km);
 }
 
 function cnApplyEventAuto(ev,rs){
@@ -181,7 +198,7 @@ function cnApplyEventAuto(ev,rs){
 }
 
 function cnCheckBirthday(){
-  const d=G.dog;if(!d)return;
+  const d=cnActiveDog();if(!d)return;
   const key='s'+G.cnSeason;
   if(!G.cnBirthdayToastShown)G.cnBirthdayToastShown={};
   if(G.cnBirthdayToastShown[key])return;
@@ -241,7 +258,7 @@ function cnGenerateRivals(race){
 // ── RACE FINISH ───────────────────────────────────────
 function cnFinishRace(){
   const rs=G.cnRaceState;if(!rs)return;
-  const d=G.dog;if(!d)return;
+  const d=cnActiveDog();if(!d)return;
   const race=(G.cnSelectedRaces||[])[G.cnCurrentRaceIdx]||{};
   // Modo desarrollador — "modo dios": fuerza victoria en cualquier carrera de
   // Canicross. Ver js/devmode.js. No afecta a partidas normales.
@@ -336,7 +353,7 @@ window.doStartCanicross=()=>{
   G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
   G.cnDogFoodPremium=false;G.cnDogSupplements=false;
   G.cnVetHistory=[];G.cnBirthdayToastShown={};G.cnRaceState=null;
-  G.dog=null;G._cnDogBreed=null;G._cnDogName=null;
+  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G._cnDogBreed=null;G._cnDogName=null;
   G.screen='canicrossCreateDog';
   render();
 };
@@ -347,20 +364,20 @@ window.doCreateDog=()=>{
   if(!name){showToast('Ponle nombre al perro primero');return;}
   if(!G._cnDogBreed){showToast('Elige una raza');return;}
   if(!G._cnAdoptionOrigin){showToast('Elige cómo llegó el perro a ti');return;}
-  G.dog=cnInitDog(name,G._cnDogBreed);
+  cnAddDog(cnInitDog(name,G._cnDogBreed));
   // Apply adoption origin bond
   const origin=CN_ADOPTION_ORIGINS.find(o=>o.id===G._cnAdoptionOrigin);
   if(origin){
-    G.dog.bond=origin.bondStart;
-    G.dog.peakBond=origin.bondStart;
-    G.dog.adoptionOrigin=G._cnAdoptionOrigin;
-    if(G._cnAdoptionOrigin==='retirado')G.dog.commands.forward=true;
+    cnActiveDog().bond=origin.bondStart;
+    cnActiveDog().peakBond=origin.bondStart;
+    cnActiveDog().adoptionOrigin=G._cnAdoptionOrigin;
+    if(G._cnAdoptionOrigin==='retirado')cnActiveDog().commands.forward=true;
   }
   G.cnPreseasonDone=[];
   G._cnDogBreed=null;G._cnDogName=null;G._cnAdoptionOrigin=null;
   G.activeTab='game';G.screen='canicrossPreseason';
   autoSave();
-  showToast('¡'+esc(G.dog.name)+' se une a tu equipo! 🐕');
+  showToast('¡'+esc(cnActiveDog().name)+' se une a tu equipo! 🐕');
   render();
 };
 
@@ -397,7 +414,7 @@ window.cnToggleMonth=m=>{
 window.cnAdvanceRestWeek=()=>{
   const daysLeft=(G.cnVacationDays||0)-(G.cnVacationUsed||0);
   if(daysLeft<=0){showToast('Sin días de vacaciones disponibles');return;}
-  const d=G.dog;
+  const d=cnActiveDog();
   const days=Math.min(7,daysLeft);
   const healthBonus=Math.round(days*1.2);
   const bondBonus=Math.round(days*0.6);
@@ -422,7 +439,7 @@ window.cnAdvanceRestWeek=()=>{
 function cnApplyOneWeekTraining(){
   const block=(CANICROSS_TRAINING_BLOCKS||[]).find(b=>b.id===G.cnTrainingBlock);
   if(!block)return;
-  const d=G.dog;
+  const d=cnActiveDog();
   // statCapMult: mismo techo blando por dificultad que Clásico/Entrenador — el
   // corredor también entrena de verdad en Canicross (CR-34, v74).
   Object.entries(block.runnerMod||{}).forEach(([k,v])=>{
@@ -473,7 +490,7 @@ window.cnAdvanceWeek=()=>{
 
 window.cnStartRace=idx=>{
   if(!cnCanRace()){
-    const d=G.dog;
+    const d=cnActiveDog();
     if(!d){showToast('Sin perro asignado');return;}
     if(d.bond<cnRaceThreshold()){showToast('Vínculo insuficiente — necesitas ≥'+cnRaceThreshold()+' para competir (actual: '+d.bond+')');return;}
     if(d.injury&&d.injuryRaces>0){showToast(esc(d.name)+' está de baja ('+d.injuryRaces+' carreras)');return;}
@@ -483,9 +500,9 @@ window.cnStartRace=idx=>{
   if(!race){showToast('Carrera no disponible');return;}
   G.cnCurrentRaceIdx=idx;
   // Achievement tracking
-  if(G.dog&&G.dog.bond<20)G._cnLowBondRaced=(G._cnLowBondRaced||0)+1;
+  if(cnActiveDog()&&cnActiveDog().bond<20)G._cnLowBondRaced=(G._cnLowBondRaced||0)+1;
   if(idx===0){
-    const cmds=G.dog?.commands||{};
+    const cmds=cnActiveDog()?.commands||{};
     if(!cmds.left&&!cmds.hold&&!cmds.forward)G._cnRacedWithoutCommands=true;
     if(!(G.cnPreseasonDone||[]).length)G._cnPreseasonNothing=true;
   }
@@ -497,7 +514,7 @@ window.cnStartRace=idx=>{
     numSegs,segs,rivals:cnGenerateRivals(race),basePace,
     currentSeg:0,pendingEvent:null,paceChosen:false,
     time:0,bondDelta:0,energyBonus:0,speedBonus:0,timePenalty:0,
-    dogHealth:G.dog.health,dogBond:G.dog.bond,runnerEnergy:100+(G.cnDogFoodPremium?5:0),
+    dogHealth:cnActiveDog().health,dogBond:cnActiveDog().bond,runnerEnergy:100+(G.cnDogFoodPremium?5:0),
     eventLog:[],retired:false,injuryPending:null,done:false,
   };
   G.screen='canicrossPreRace';render();
@@ -537,7 +554,7 @@ window.cnMakeDecision=optIdx=>{
 window.cnChoosePace=paceId=>{
   const rs=G.cnRaceState;if(!rs)return;
   const pace=CN_PACES.find(p=>p.id===paceId);if(!pace)return;
-  const d=G.dog;
+  const d=cnActiveDog();
   const seg=rs.segs?.[rs.currentSeg];
   const basePace=rs.basePace||390;
   const kmPerSeg=(rs.km||8)/rs.numSegs;
@@ -624,7 +641,7 @@ window.cnConfirmCalendar=()=>{
 };
 
 window.cnCallVet=type=>{
-  const d=G.dog;if(!d)return;
+  const d=cnActiveDog();if(!d)return;
   const cost=type==='complete'?120:50;
   if((G.cnMoney||0)<cost){showToast('Sin fondos suficientes');return;}
   G.cnMoney-=cost;
@@ -665,7 +682,7 @@ window.cnSelectEquip=(category,id)=>{
 };
 
 window.cnEndSeason=()=>{
-  const d=G.dog;
+  const d=cnActiveDog();
   if(d&&!d.retired){
     if((d.injuryRaces||0)>0){d.injuryRaces=Math.max(0,d.injuryRaces-1);if(d.injuryRaces===0)d.injury=null;}
     // Displasia: 8% chance, ages 4-7, once — evaluate BEFORE incrementing age
@@ -692,7 +709,7 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
     G._cnPerfectSeasons=(G._cnPerfectSeasons||0)+1;
   }
   // Dog healthy streak
-  const dogInjuredThisSeason=!!(G.dog&&G.dog.injury);
+  const dogInjuredThisSeason=!!(cnActiveDog()&&cnActiveDog().injury);
   if(!dogInjuredThisSeason){
     G._cnDogHealthyStreak=(G._cnDogHealthyStreak||0)+1;
   } else {
@@ -714,7 +731,7 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
 };
 
 window.cnResolveDislasia=opt=>{
-  const d=G.dog;if(!d)return;
+  const d=cnActiveDog();if(!d)return;
   if(opt==='treat'){
     if((G.cnMoney||0)<300){showToast('Sin fondos para el tratamiento (€300)');return;}
     G.cnMoney-=300;
@@ -733,12 +750,12 @@ window.cnResolveDislasia=opt=>{
 };
 
 window.cnRetireDog=()=>{
-  if(!G.dog)return;
-  G.dog.retired=true;G.screen='canicrossDogRetirement';render();
+  if(!cnActiveDog())return;
+  cnActiveDog().retired=true;G.screen='canicrossDogRetirement';render();
 };
 
 window.cnNewDogAfterRetirement=()=>{
-  if(G.dog&&!G.dog.retired)G.dog.retired=true;
+  if(cnActiveDog()&&!cnActiveDog().retired)cnActiveDog().retired=true;
   G._cnDogBreed=null;G._cnDogName=null;
   delete G._cnDislasiaEvent;
   delete G._cnAgingWarned;
@@ -784,7 +801,7 @@ window.cnDoPreseasonAct=id=>{
   const act=CN_PRESEASON_ACTS.find(a=>a.id===id);if(!act)return;
   if(!G.cnPreseasonDone)G.cnPreseasonDone=[];
   if(G.cnPreseasonDone.includes(id))return;
-  const d=G.dog;
+  const d=cnActiveDog();
   if(act.bondBonus&&d){d.bond=Math.min(100,(d.bond||0)+act.bondBonus);d.peakBond=Math.max(d.peakBond||0,d.bond);}
   if(act.healthBonus&&d)d.health=Math.min(100,(d.health||100)+act.healthBonus);
   if(act.mentalBonus&&G.runner?.stats)bumpStat(G.runner,'mental',act.mentalBonus);
@@ -858,7 +875,7 @@ function renderCnCreateDog(){
 // ── PRETEMPORADA ──────────────────────────────────────
 function renderCanicrossPreseason(){
   const el=$main();
-  const d=G.dog;
+  const d=cnActiveDog();
   if(!d){G.screen='canicrossHub';render();return;}
   const done=G.cnPreseasonDone||[];
   const allDone=CN_PRESEASON_ACTS.every(a=>done.includes(a.id));
@@ -919,7 +936,7 @@ function renderCanicrossPreseason(){
 // ── TAB: CORREDOR ─────────────────────────────────────
 function renderCnCorredorTab(){
   const el=$main();
-  const d=G.dog;
+  const d=cnActiveDog();
   const canRace=cnCanRace();
   const races=G.cnSelectedRaces||[];
   const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
@@ -1072,7 +1089,7 @@ function renderCnCorredorTab(){
 // ── TAB: PERRO ────────────────────────────────────────
 function renderCnPerroTab(){
   const el=$main();
-  const d=G.dog;
+  const d=cnActiveDog();
   cnCheckBirthday();
   if(!d){el.innerHTML=`<div class="hint">Sin perro. Algo fue mal.</div>`;return;}
 
@@ -1166,7 +1183,7 @@ function renderCnEquipoTab(){
 // ── SETUP: ENTRENAMIENTO + SEMANAS DESCANSO ───────────
 function renderCanicrossTrainingSetup(){
   const el=$main();
-  const d=G.dog;
+  const d=cnActiveDog();
   const sel=G.cnTrainingBlock;
 
   el.innerHTML=`
@@ -1486,7 +1503,7 @@ function renderCanicrossPreRace(){
   const el=$main();
   const race=(G.cnSelectedRaces||[])[G.cnCurrentRaceIdx];
   if(!race){G.screen='canicrossHub';G.activeTab='game';render();return;}
-  const d=G.dog;
+  const d=cnActiveDog();
   const eq=G.equipment||{};
   const harness=(CANICROSS_EQUIPMENT.dogHarness||[]).find(e=>e.id===eq.dogHarness)||{name:'—'};
   const belt=(CANICROSS_EQUIPMENT.humanBelt||[]).find(e=>e.id===eq.humanBelt)||{name:'—'};
@@ -1555,7 +1572,7 @@ function renderCanicrossSegment(){
   if(!rs||rs.done){G.screen='canicrossHub';G.activeTab='game';render();return;}
   const race=(G.cnSelectedRaces||[])[G.cnCurrentRaceIdx];
   if(!race){G.screen='canicrossHub';G.activeTab='game';render();return;}
-  const d=G.dog;
+  const d=cnActiveDog();
   const seg=rs.segs?.[rs.currentSeg];
   const kmDone=Math.round((race.km||8)*rs.currentSeg/rs.numSegs*10)/10;
   const kmLeft=Math.round(((race.km||8)-kmDone)*10)/10;
@@ -1652,7 +1669,7 @@ function renderCanicrossPostRace(){
   const el=$main();
   const rs=G.cnRaceState;
   if(!rs||!rs.done){G.screen='canicrossHub';G.activeTab='game';render();return;}
-  const d=G.dog;
+  const d=cnActiveDog();
   const races=G.cnSelectedRaces||[];
   const doneIds=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason).map(r=>r.raceId);
   const remaining=races.filter(r=>!doneIds.includes(r.id));
@@ -1695,7 +1712,7 @@ function renderCanicrossPostRace(){
 function renderCnSeasonBalance(){
   const el=$main();
   const results=(G.cnRaceResults||[]).filter(r=>r.season===G.cnSeason);
-  const d=G.dog;
+  const d=cnActiveDog();
   const totalPrize=results.reduce((a,r)=>a+(r.prize||0),0);
   const wins=results.filter(r=>r.pos===1).length;
   const podiums=results.filter(r=>r.pos&&r.pos<=3).length;
@@ -1731,7 +1748,7 @@ function renderCnSeasonBalance(){
 
 function renderCnDogRetirement(){
   const el=$main();
-  const d=G.dog;if(!d)return;
+  const d=cnActiveDog();if(!d)return;
   const seasons=(G.cnSeason||1)-(d.birthSeason||1);
 
   el.innerHTML=`
@@ -1750,7 +1767,7 @@ function renderCnDogRetirement(){
 
 function renderCnDogDeath(){
   const el=$main();
-  const d=G.dog;
+  const d=cnActiveDog();
   el.innerHTML=`
     <div style="text-align:center;padding:28px 0 18px">
       <div style="font-size:48px;margin-bottom:12px">🕯️</div>
@@ -1765,7 +1782,7 @@ function renderCnDogDeath(){
 
 function renderCnDisplasia(){
   const el=$main();
-  const d=G.dog;if(!d)return;
+  const d=cnActiveDog();if(!d)return;
   el.innerHTML=`
     <h2>🩺 Diagnóstico veterinario</h2>
     <p class="sub">${esc(d.name)}</p>
@@ -1783,3 +1800,26 @@ function renderCnDisplasia(){
       <div class="card-sub">1 temporada más. Health -5/mes. El perro nota que no le cuidas (-vínculo).</div>
     </div>`;
 }
+
+// ── PARTIDA DE ANTES DEL REDISEÑO ─────────────────────────────────────────
+// migrateState() trae aquí una partida de Canicross guardada con una revisión menor que
+// CN_REV. No se intenta jugar: el modo se está reescribiendo y su ficha ya avisaba.
+// Pantalla nueva: nace con la dirección visual (piezas pz-*, tokens, sin hex).
+function renderCnAntigua(){
+  hideChrome();
+  const nombre=(G.runner&&G.runner.name)?esc(G.runner.name):'';
+  $main().innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">${icono('perro')}Canicross · en obras</div>
+    <div class="pz-titulo">Esta partida es de antes del rediseño</div>
+    <p class="pz-sub">Canicross se está reescribiendo entero y sus partidas guardadas no pasan a la versión nueva${nombre?` (la de ${nombre} tampoco)`:''}. La ficha del modo lo avisaba.</p>
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea"><span class="pz-diag">Tus otras partidas y tus logros siguen igual.</span></div>
+      <div class="pz-linea"><span class="pz-diag">Esta ranura no se borra sola: si ya no la quieres, bórrala en Partidas.</span></div>
+    </div>
+    <button class="pz-btn" onclick="cnAntiguaNueva()">Empezar una de Canicross nueva</button>
+    <button class="pz-btn sec" onclick="cnAntiguaVolver()">Volver a partidas</button>
+  </div>`;
+}
+// Las dos salidas empiezan de cero y sin ranura (así no se pisa la vieja sin preguntar).
+window.cnAntiguaNueva=()=>{G=freshState();G.gameMode='canicross';G.screen='intro';render();};
+window.cnAntiguaVolver=()=>{G=freshState();G.screen='saveScreen';render();};

@@ -93,7 +93,7 @@ addEventListener('keydown',e=>{
   /* Acento de modo (lo cambia data-modo en <html>): selección, pestaña activa */
   --acc-clasico:#A84B24;--acc-clasico-t:#F6E5D9;
   --acc-expres:#8A6600;--acc-expres-t:#F7EDCF;
-  --acc-canicross:#4A7A2E;--acc-canicross-t:#E5EFDC; /* abierto: verde o azul frío, se decide en su rediseño */
+  --acc-canicross:#4A7A2E;--acc-canicross-t:#E5EFDC; /* verde: decidido el 2026-10-27 (el azul frío chocaba con Cuerpo) */
   --acc-entrenador:#3B5B82;--acc-entrenador-t:#E2E9F2;
   --acc-club:#A63D63;--acc-club-t:#F6E1E9;
   --acc:var(--acc-clasico);--acc-t:var(--acc-clasico-t);
@@ -476,7 +476,7 @@ button.secondary:hover{background:#f0ede8}
 .pz{font-family:var(--f-text);color:var(--ink)}
 .pz-num{font-family:var(--f-num);font-weight:600;font-variant-numeric:tabular-nums}
 .pz-titulo{font-family:var(--f-num);font-size:24px;font-weight:600;line-height:1.15;margin-bottom:4px}
-.pz-sub{font-size:14px;color:var(--ink2);line-height:1.45}
+.pz-sub{font-size:14px;color:var(--ink2);line-height:1.45;margin-bottom:14px}
 .pz-label{font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:.3px}
 /* Tarjeta y tarjeta de estado (lo que condiciona la decisión, en líneas) */
 .pz-tarjeta{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
@@ -489,6 +489,8 @@ button.secondary:hover{background:#f0ede8}
 .fam-cuerpo{--fam:var(--cuerpo);--fam-t:var(--cuerpo-t);--fam-i:var(--cuerpo-i)}
 .fam-dinero{--fam:var(--dinero);--fam-t:var(--dinero-t);--fam-i:var(--dinero-i)}
 .fam-gente{--fam:var(--gente);--fam-t:var(--gente-t);--fam-i:var(--gente-i)}
+/* Etiqueta sin familia (avisos del modo): tinte del acento del modo */
+.pz-etiqueta.acento{--fam-t:var(--acc-t);--fam-i:var(--ink)}
 /* Consejo: caja neutra con bombilla. Sale abierto; «Entendido» lo pliega a «Ver consejo» */
 .pz-consejo{display:flex;gap:10px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:14px;color:var(--ink2);line-height:1.5}
 .pz-consejo>.ico{width:18px;height:18px;flex-shrink:0;color:var(--ink3);margin-top:1px}
@@ -552,6 +554,7 @@ button.secondary:hover{background:#f0ede8}
 .pz-btn.sec{background:var(--card);color:var(--ink);border-color:var(--line2)}
 .pz-btn.sec:hover:not([disabled]){filter:none;background:var(--soft)}
 .pz-btn[disabled]{opacity:.35;cursor:default}
+.pz-btn+.pz-btn{margin-top:8px}
 /* Franja de momento (§ 5): podio, fuera del podio, no terminó, negativo, cierre, transición */
 .pz-franja{position:relative;overflow:hidden;border-radius:14px;padding:22px 18px 18px;margin-bottom:14px;color:var(--card);background:var(--ink)}
 .pz-franja .pz-franja-num{font-family:var(--f-num);font-size:64px;font-weight:600;line-height:.95}

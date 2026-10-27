@@ -166,21 +166,21 @@ const ACHIEVEMENTS=[
   {id:'perfect_full',  rarity:'legendary',label:'Invicto total',       desc:'Ganar todas las carreras de una temporada (mín 5)',  check:()=>{const a=careerAgg();return Object.keys(a.racesByYear).some(yr=>a.racesByYear[yr]>=5&&(a.winsByYear[yr]||0)===a.racesByYear[yr]&&!a.dnfByYear[yr]);}}, // v96: con un DNF esa temporada ya no es «invicto»
   // ══ CANICROSS — FÁCIL ════════════════════════════════
   {id:'cn_first_race', rarity:'easy',   mode:'cn',label:'Primera carrera juntos', desc:'Completar la primera carrera de canicross',          check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf).length>=1},
-  {id:'cn_bond_50',    rarity:'easy',   mode:'cn',label:'Buen equipo',            desc:'Alcanzar vínculo 50 con tu perro',                   check:()=>(G.dog?.peakBond||0)>=50},
+  {id:'cn_bond_50',    rarity:'easy',   mode:'cn',label:'Buen equipo',            desc:'Alcanzar vínculo 50 con tu perro',                   check:()=>(cnActiveDog()?.peakBond||0)>=50},
   {id:'cn_first_season',rarity:'easy',  mode:'cn',label:'Primer invierno juntos', desc:'Completar la primera temporada de canicross',        check:()=>(G.cnSeason||1)>=2},
-  {id:'cn_all_cmds',   rarity:'easy',   mode:'cn',label:'Bien adiestrado',        desc:'Enseñar los 3 comandos al perro (adelante, aguanta, izquierda)',check:()=>{const c=G.dog?.commands||{};return !!(c.left&&c.hold&&c.forward);}},
+  {id:'cn_all_cmds',   rarity:'easy',   mode:'cn',label:'Bien adiestrado',        desc:'Enseñar los 3 comandos al perro (adelante, aguanta, izquierda)',check:()=>{const c=cnActiveDog()?.commands||{};return !!(c.left&&c.hold&&c.forward);}},
   // ══ CANICROSS — MEDIO ════════════════════════════════
   {id:'cn_win_1',      rarity:'medium', mode:'cn',label:'Primer triunfo juntos',  desc:'Ganar una carrera de canicross',                     check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1)},
-  {id:'cn_bond_80',    rarity:'medium', mode:'cn',label:'Compenetrados',          desc:'Alcanzar vínculo 80 con tu perro',                   check:()=>(G.dog?.peakBond||0)>=80},
+  {id:'cn_bond_80',    rarity:'medium', mode:'cn',label:'Compenetrados',          desc:'Alcanzar vínculo 80 con tu perro',                   check:()=>(cnActiveDog()?.peakBond||0)>=80},
   {id:'cn_podium_5',   rarity:'medium', mode:'cn',label:'Dúo de podio',           desc:'Conseguir 5 podios en carreras de canicross',        check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf&&r.pos<=3).length>=5},
   {id:'cn_season_3',   rarity:'medium', mode:'cn',label:'Tres inviernos',         desc:'Completar 3 temporadas de canicross',                check:()=>(G.cnSeason||1)>=4},
-  {id:'cn_dog_5',      rarity:'medium', mode:'cn',label:'Veterano de cuatro patas',desc:'El perro llega a su 5.ª temporada de vida',         check:()=>{const d=G.dog;return d?(G.cnSeason||1)-(d.birthSeason||1)>=5:false;}},
+  {id:'cn_dog_5',      rarity:'medium', mode:'cn',label:'Veterano de cuatro patas',desc:'El perro llega a su 5.ª temporada de vida',         check:()=>{const d=cnActiveDog();return d?(G.cnSeason||1)-(d.birthSeason||1)>=5:false;}},
   {id:'cn_no_dnf',     rarity:'medium', mode:'cn',label:'Temporada limpia',       desc:'Completar una temporada entera sin abandonar ninguna carrera',check:()=>{const ss=[...new Set((G.cnRaceResults||[]).map(r=>r.season))];return ss.some(s=>{const sr=(G.cnRaceResults||[]).filter(r=>r.season===s);return sr.length>=3&&sr.every(r=>!r.dnf);});}},
   // ══ CANICROSS — DIFÍCIL ══════════════════════════════
-  {id:'cn_bond_100',   rarity:'hard',   mode:'cn',label:'Alma gemela',            desc:'Alcanzar el vínculo máximo (100) con tu perro',      check:()=>(G.dog?.peakBond||0)>=100},
+  {id:'cn_bond_100',   rarity:'hard',   mode:'cn',label:'Alma gemela',            desc:'Alcanzar el vínculo máximo (100) con tu perro',      check:()=>(cnActiveDog()?.peakBond||0)>=100},
   {id:'cn_win_5',      rarity:'hard',   mode:'cn',label:'Cinco victorias juntos', desc:'Ganar 5 carreras de canicross',                      check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf&&r.pos===1).length>=5},
   {id:'cn_season_5',   rarity:'hard',   mode:'cn',label:'Cinco inviernos',        desc:'Completar 5 temporadas de canicross',                check:()=>(G.cnSeason||1)>=6},
-  {id:'cn_dog_8',      rarity:'hard',   mode:'cn',label:'Leyenda peluda',         desc:'El perro llega a su 8.ª temporada de vida',          check:()=>{const d=G.dog;return d?(G.cnSeason||1)-(d.birthSeason||1)>=8:false;}},
+  {id:'cn_dog_8',      rarity:'hard',   mode:'cn',label:'Leyenda peluda',         desc:'El perro llega a su 8.ª temporada de vida',          check:()=>{const d=cnActiveDog();return d?(G.cnSeason||1)-(d.birthSeason||1)>=8:false;}},
   // ══ CANICROSS — LEGENDARIO ═══════════════════════════
   {id:'cn_perfect',    rarity:'legendary',mode:'cn',label:'Perfectos',            desc:'Ganar todas las carreras seleccionadas en una temporada (mín 3)',check:()=>{const ss=[...new Set((G.cnRaceResults||[]).map(r=>r.season))];return ss.some(s=>{const sr=(G.cnRaceResults||[]).filter(r=>r.season===s);return sr.length>=3&&sr.every(r=>!r.dnf&&r.pos===1);});}},
   {id:'cn_wins_15',    rarity:'legendary',mode:'cn',label:'Liga perfecta',        desc:'Ganar 15 carreras de canicross en total',             check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf&&r.pos===1).length>=15},
@@ -277,7 +277,7 @@ const ACHIEVEMENTS=[
   {id:'cn_first_podium', rarity:'easy',  mode:'cn',label:'Primer podio juntos',       desc:'Conseguir el primer podio en canicross',                   check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos<=3)},
   {id:'cn_vet_visit',    rarity:'easy',  mode:'cn',label:'Buen dueño',                desc:'Llevar al perro al veterinario antes de la temporada',      check:()=>(G.cnVetHistory||[]).length>=1},
   {id:'cn_first_dnf',    rarity:'easy',  mode:'cn',label:'El trail también duele',    desc:'Abandonar una carrera de canicross por primera vez',        check:()=>(G.cnRaceResults||[]).some(r=>r.dnf)},
-  {id:'cn_dog_named',    rarity:'easy',  mode:'cn',label:'Tiene nombre',              desc:'Ponerle nombre al perro al inicio de la partida',           check:()=>!!(G.dog?.name&&G.dog.name.trim())},
+  {id:'cn_dog_named',    rarity:'easy',  mode:'cn',label:'Tiene nombre',              desc:'Ponerle nombre al perro al inicio de la partida',           check:()=>!!(cnActiveDog()?.name&&cnActiveDog().name.trim())},
   {id:'cn_preseason_full',rarity:'easy', mode:'cn',label:'Pretemporada completa',     desc:'Completar todas las actividades de pretemporada disponibles',check:()=>(G.cnPreseasonDone||[]).length>=4},
   // ══ CANICROSS — MEDIO (nuevos) ════════════════════════════
   {id:'cn_win_3',        rarity:'medium',mode:'cn',label:'Trío victorioso',           desc:'Ganar 3 carreras de canicross',                             check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf&&r.pos===1).length>=3},
@@ -292,14 +292,14 @@ const ACHIEVEMENTS=[
   // ══ CANICROSS — DIFÍCIL (nuevos) ═════════════════════════
   {id:'cn_win_10',       rarity:'hard',  mode:'cn',label:'Diez victorias juntos',     desc:'Ganar 10 carreras de canicross',                            check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf&&r.pos===1).length>=10},
   {id:'cn_dog_healthy',  rarity:'hard',  mode:'cn',label:'Perro de hierro',           desc:'Completar 3 temporadas seguidas sin que el perro se lesione',check:()=>(G._cnDogHealthyStreak||0)>=3},
-  {id:'cn_perfect_bond', rarity:'hard',  mode:'cn',label:'Perfecta sincronía',        desc:'Ganar una carrera con el vínculo del perro al máximo (100)', check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1)&&(G.dog?.peakBond||0)>=100},
+  {id:'cn_perfect_bond', rarity:'hard',  mode:'cn',label:'Perfecta sincronía',        desc:'Ganar una carrera con el vínculo del perro al máximo (100)', check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1)&&(cnActiveDog()?.peakBond||0)>=100},
   {id:'cn_tier4_win',    rarity:'hard',  mode:'cn',label:'Élite canina',              desc:'Ganar una carrera de tier 4',                               check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1&&r.tier===4)},
   {id:'cn_vet_category', rarity:'hard',  mode:'cn',label:'Veterano en forma',         desc:'Ganar una carrera con el corredor con más de 45 años',      check:()=>(G.runner?.age||0)>=45&&(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1)},
   {id:'cn_season_6',     rarity:'hard',  mode:'cn',label:'Seis inviernos',            desc:'Completar 6 temporadas de canicross',                       check:()=>(G.cnSeason||1)>=7},
   {id:'cn_win_all_tiers',rarity:'hard',  mode:'cn',label:'Sin techo',                 desc:'Ganar al menos una carrera en cada tier (1, 2, 3 y 4)',     check:()=>[1,2,3,4].every(t=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1&&r.tier===t))},
   // ══ CANICROSS — LEGENDARIO (nuevos) ══════════════════════
   {id:'cn_wins_20',      rarity:'legendary',mode:'cn',label:'Veinte victorias',       desc:'Ganar 20 carreras de canicross en total',                   check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf&&r.pos===1).length>=20},
-  {id:'cn_dog_10',       rarity:'legendary',mode:'cn',label:'Una vida entera',        desc:'El perro llega a su 10.ª temporada de vida',               check:()=>{const d=G.dog;return d?(G.cnSeason||1)-(d.birthSeason||1)>=10:false;}},
+  {id:'cn_dog_10',       rarity:'legendary',mode:'cn',label:'Una vida entera',        desc:'El perro llega a su 10.ª temporada de vida',               check:()=>{const d=cnActiveDog();return d?(G.cnSeason||1)-(d.birthSeason||1)>=10:false;}},
   {id:'cn_season_8',     rarity:'legendary',mode:'cn',label:'Ocho inviernos',         desc:'Completar 8 temporadas de canicross',                       check:()=>(G.cnSeason||1)>=9},
   {id:'cn_perfect_3seasons',rarity:'legendary',mode:'cn',label:'Dinastía',            desc:'Ganar todas las carreras en 3 temporadas distintas (mínimo 3 cada una)',check:()=>(G._cnPerfectSeasons||0)>=3},
   {id:'cn_same_dog_win', rarity:'legendary',mode:'cn',label:'Toda una vida juntos',   desc:'Ganar una carrera con el mismo perro en la temporada 7 o posterior',check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1&&(r.season||0)>=7)},
