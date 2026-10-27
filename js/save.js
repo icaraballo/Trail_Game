@@ -22,7 +22,7 @@ const LS={
     localStorage.setItem(LS_PREFIX+'migrated_v41','1');
   }catch(e){}
 })();
-const GAME_BUILD=101; // incrementar con cada versión del juego
+const GAME_BUILD=102; // incrementar con cada versión del juego
 const SAVE_KEY='save_slot_';
 const SAVE_VERSION='TRAIL_SAVE_V2';
 const NUM_SLOTS=5;
@@ -407,7 +407,7 @@ function markSaveFailed(){
   const first=!G._saveFailed;
   G._saveFailed=true;
   if(first&&typeof showToast==='function'){
-    showToast(LS.lastErr==='QuotaExceededError'?'⚠ No se pudo guardar: almacenamiento lleno':'⚠ No se pudo guardar: este navegador no deja guardar datos','#c0392b');
+    showToast(LS.lastErr==='QuotaExceededError'?'⚠ No se pudo guardar: almacenamiento lleno':'⚠ No se pudo guardar: este navegador no deja guardar datos');
   }
   if(typeof updateFinBar==='function')updateFinBar();
 }

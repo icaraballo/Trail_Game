@@ -35,9 +35,9 @@ function checkAndUnlockAchievements(){
     newUnlocks.forEach(ach=>{
       if(!globalAchs[ach.id])globalAchs[ach.id]={difficulty:diff,year:G.year||G.cnSeason||1};
       if(ach.rarity==='joke'){
-        showToast(`😄 Logro: ${ach.label}`,'#7ab800');
+        showToast(`😄 Logro: ${ach.label}`);
       } else {
-        showToast(`🏆 Logro: ${ach.label}`,'#c07a10');
+        showToast(`🏆 Logro: ${ach.label}`);
       }
     });
     LS.set('globalAchs',JSON.stringify(globalAchs));
@@ -126,22 +126,76 @@ function seasonMonthLabel(){
   const curRace=G.selectedRaces&&G.selectedRaces[G.currentRaceIdx||0];
   return 'A'+G.year+' · '+(curRace?M[curRace.month||1]:(['','T1','T2','T3','T4'][G.currentQuarter||1]));
 }
+// ══════════════════════════════════════
+//  CHASIS (v102 · dirección visual)
+// ══════════════════════════════════════
+// Vault: Diseño/TG-Direccion-Visual § 3-4. Iconos de línea del chasis (trazo 1,9,
+// color heredado por currentColor, clase .ico de index.html). Solo trazados: ningún
+// color aquí, para que la regla de hex de content.js no tenga nada que contar.
+const ICONOS={
+  temporada:'<path d="M3 19.5l5.5-9 3.5 5 2.5-3.5 6.5 7.5z"/><path d="M8.5 10.5l1.5-2.5 1.5 2.5"/>',
+  calendario:'<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/>',
+  finanzas:'<rect x="3.5" y="6.5" width="17" height="12.5" rx="2"/><path d="M3.5 10h17M15.5 14.5h2"/>',
+  corredor:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 3.8-6 7-6s6 2 7 6"/>',
+  reputacion:'<path d="M12 3.8l2.5 5.1 5.6.8-4.1 4 1 5.6-5-2.7-5 2.7 1-5.6-4.1-4 5.6-.8z"/>',
+  perro:'<circle cx="8" cy="8.5" r="1.7"/><circle cx="16" cy="8.5" r="1.7"/><circle cx="4.8" cy="12.8" r="1.5"/><circle cx="19.2" cy="12.8" r="1.5"/><path d="M12 12c-2.8 0-4.8 3-4.8 5.3 0 1.5 1.4 2 2.4 1.6.9-.4 1.5-.6 2.4-.6s1.5.2 2.4.6c1 .4 2.4-.1 2.4-1.6 0-2.3-2-5.3-4.8-5.3z"/>',
+  equipo:'<path d="M7 9a5 5 0 0110 0v10a1 1 0 01-1 1H8a1 1 0 01-1-1z"/><path d="M10 4.5V3.5h4v1M7 13.5h10M10.5 13.5v3h3v-3"/>',
+  entrenador:'<rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 3.5h6v2.5H9zM8.5 11h7M8.5 14.5h7M8.5 18h4"/>',
+  guardar:'<path d="M5.5 4h10.5l3 3v12a1 1 0 01-1 1H6.5a1 1 0 01-1-1z"/><path d="M8.5 4v4.5h6.5V4M8.5 20v-6h7v6"/>',
+  aviso:'<path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.3v.2"/>',
+};
+function icono(k){return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONOS[k]||''}</svg>`;}
+// Cifras del chasis: «€1.800», «−€50». Separador de miles a mano: toLocaleString('es-ES')
+// no agrupa los números de cuatro cifras («1800»).
+function fmtMiles(n){return String(Math.abs(Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function fmtEur(n,signo){return (n<0?'−':signo&&n>0?'+':'')+'€'+fmtMiles(n);}
+// Qué acento lleva el chasis (data-modo en <html>, lo lee el CSS de los tokens).
+// Solo lee G: pintar no cambia la partida.
+function chasisModo(){
+  if(G.canicrossMode||G.gameMode==='canicross')return 'canicross';
+  if(G.carreraVida&&G.lifecyclePhase==='club')return 'club';
+  if(typeof G.screen==='string'&&G.screen.startsWith('club')&&G.screen!=='clubSetup')return 'club';
+  if(coachViewActive())return 'entrenador';
+  if(G.gameMode==='expres')return 'expres';
+  return 'clasico';
+}
+const DIFICULTADES={facil:['Fácil',1],medio:['Medio',2],dificil:['Difícil',3],hardcore:['Hardcore',4]};
+function aplicarModoChasis(){
+  const root=document.documentElement;
+  if(!root)return;   // banco de pruebas: su document no tiene <html>
+  const m=chasisModo();
+  if(root.dataset.modo!==m)root.dataset.modo=m;
+}
 function updateFinBar(){
   const bar=document.getElementById('fin-bar');
   if(!bar)return;
   const screens=['intro','workSetup'];
   bar.style.display=screens.includes(G.screen)?'none':'block';
+  aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
   // monthlyNet(), que calcula sobre la economía de Clásico. En Canicross el único
   // gasto recurrente es la manutención del perro, cobrada cada 4 semanas.
   const net=G.canicrossMode?-(typeof cnMonthlyDogCost==='function'?cnMonthlyDogCost():0):monthlyNet();
   // T145 (v91): fb-debt sí se comprobaba y estos dos no, en la misma función.
   const mb=document.getElementById('fb-money');
-  if(mb)mb.textContent='€'+(G.canicrossMode?(G.cnMoney||0):G.money);
+  if(mb)mb.textContent=fmtEur(G.canicrossMode?(G.cnMoney||0):G.money);
   const nb=document.getElementById('fb-net');
   if(nb){
-    nb.textContent=(net>=0?'+':'')+'€'+net+'/mes';
-    nb.className='fin-val '+(net>0?'green':net<0?'red':'neutral');
+    nb.textContent=fmtEur(net,true)+'/mes';
+    nb.className='fin-sub '+(net>0?'green':net<0?'red':'neutral');
+  }
+  // v102: etiqueta de dificultad, fija en la barra. Solo en las cuatro dificultades:
+  // Exprés, Canicross y los modos sueltos de Entrenador y Club no tienen.
+  const df=document.getElementById('fb-diff');
+  if(df){
+    const d=DIFICULTADES[G.gameMode];
+    df.hidden=!d||G.canicrossMode;
+    if(d&&df.dataset.d!==G.gameMode){
+      df.dataset.d=G.gameMode;
+      df.className='dif-tag dif-'+G.gameMode;
+      df.title='Dificultad: '+d[0];
+      df.innerHTML=`<span class="dif-bars" aria-hidden="true">${[1,2,3,4].map(i=>`<i${i<=d[1]?' class="on"':''}></i>`).join('')}</span><span class="dif-name">${d[0]}</span>`;
+    }
   }
   // T29 (v86): la deuda a la vista en todo momento — señal pasiva, sin interrumpir.
   const dc=document.getElementById('fb-debt-cell');
@@ -150,7 +204,7 @@ function updateFinBar(){
     const debt=G.debt||0;
     dc.style.display=debt>0?'':'none';
     if(debt>0){
-      dv.textContent='−€'+debt;
+      dv.textContent=fmtEur(-debt);
       const cfg=modeCfg().bankruptcy||{soft:500,hard:null};
       dc.title=G.forcedFullTime
         ?(cfg.hard!=null?`Jornada completa forzosa hasta saldar. Si la deuda llega a €${cfg.hard} se acaba la carrera deportiva.`
@@ -168,12 +222,13 @@ function updateFinBar(){
   const svc=document.getElementById('fb-save-cell');
   if(sv&&svc){
     const failed=!!G._saveFailed;
-    sv.textContent=failed?'⚠':'💾';
-    sv.className='fin-val '+(failed?'red':'neutral');
+    // v102: icono de línea; el ⚠ de guardado fallido sigue aquí, en rojo
+    const k=failed?'aviso':'guardar';
+    if(sv.dataset.k!==k){sv.dataset.k=k;sv.innerHTML=icono(k);}
+    svc.className='fin-save'+(failed?' red':'');
     svc.title=failed?'No se pudo guardar: el almacenamiento del navegador está lleno. Exporta la partida a texto para no perderla.'
                     :'Guardar partida';
-    const lbl=svc.querySelector('.fin-top');
-    if(lbl)lbl.textContent=failed?'Sin guardar':'Guardar';
+    svc.setAttribute('aria-label',failed?'Sin guardar: '+svc.title:'Guardar partida');
   }
   // T10 (v82): durante la carrera la celda 💾 se oculta. Guardar ya estaba
   // bloqueado en saveCurrentToSlot(), pero el onclick cambiaba G.screen igual y
@@ -187,9 +242,11 @@ function updateFinBar(){
 function fmt(s){s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;return h>0?h+'h '+pad(m)+'m '+pad(ss)+'s':pad(m)+'m '+pad(ss)+'s';}
 function pad(n){return String(n).padStart(2,'0');}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function rbar(v,col){const p=Math.max(0,Math.min(100,Math.round(v)));const c=p>50?col:p>25?'#d4920a':'#c0392b';return `<div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div>`;}
-function srow(label,val){const p=Math.max(0,Math.min(100,Math.round(val)));const c=p>=70?'#4a8a2a':p>=50?'#4a90d9':p>=35?'#c07a10':'#c0392b';return `<div class="bar-row"><span class="bar-label">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><span class="bar-pct">${Math.round(val)}</span></div>`;}
-function raceStats(){const r=G.runner;return `<div class="card">${[['Energía',r.energy,'#4a8a2a'],['Hidratación',r.hydration,'#4a90d9'],['Piernas',r.legs,'#c07a10']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label" style="color:${v<25?'#c0392b':'#666'}">${l}${v<25?' ⚠':''}</span>${rbar(v,c)}<span class="bar-pct" style="color:${v<25?'#c0392b':'#1a1a1a'}">${Math.round(v)}%</span></div>`).join('')}</div>`;}
+// v102 (chasis): barras con tokens. Energía, hidratación y piernas en azul (Cuerpo);
+// ámbar o rojo solo cuando bajan. El segundo parámetro (color) ya no se usa.
+function rbar(v){const p=Math.max(0,Math.min(100,Math.round(v)));const c=p>50?'var(--cuerpo)':p>25?'var(--avi-bar)':'var(--neg)';return `<div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div>`;}
+function srow(label,val){const p=Math.max(0,Math.min(100,Math.round(val)));const c=p>=70?'var(--pos)':p>=50?'var(--cuerpo)':p>=35?'var(--avi-bar)':'var(--neg)';return `<div class="bar-row"><span class="bar-label">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><span class="bar-pct">${Math.round(val)}</span></div>`;}
+function raceStats(){const r=G.runner;return `<div class="card">${[['Energía',r.energy],['Hidratación',r.hydration],['Piernas',r.legs]].map(([l,v])=>`<div class="bar-row"><span class="bar-label" style="color:${v<25?'var(--neg)':'var(--ink2)'}">${l}${v<25?' ⚠':''}</span>${rbar(v)}<span class="bar-pct" style="color:${v<25?'var(--neg)':'var(--ink)'}">${Math.round(v)}%</span></div>`).join('')}</div>`;}
 function progBar(){const segs=curSegs();const done=segs.slice(0,G.seg).reduce((a,s)=>a+s.km,0);const total=segs.reduce((a,s)=>a+s.km,0);const pct=total>0?Math.round(done/total*100):0;return `<div class="prog-wrap"><div class="prog-meta"><span>${done}km hechos</span><span>${total-done}km restantes</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;}
 function topBar(){const race=G.selectedRaces[G.currentRaceIdx];return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:12px;color:#999">${race?.name||''} · ${G.seg+1}/${curSegs().length}</span><span style="font-size:13px;font-weight:600">${fmt(G.time)}</span></div>`;}
 // T102 (v88): sin optional chaining sobre statBonus, un sponsor o club sin ese
@@ -210,29 +267,26 @@ function updateTabNav(){
   const isCoach=coachViewActive();   // H15-bis (v95) · BUG-08: también el lado Entrenador del solapamiento
   const isCanicross=G.gameMode==='canicross';
   if(isExpres&&G.activeTab==='fame')G.activeTab='game';
+  aplicarModoChasis();
+  // v102: sin Finanzas en carrera (TG-Direccion-Visual § 4). Si ya estaba abierta al
+  // entrar, se deja a la vista para no esconder la pestaña en la que estás.
+  const enCarrera=RACE_SCREENS.includes(G.screen);
+  // v102: [icono, etiqueta] por pestaña y modo. Iconos de línea en lugar de emojis.
+  const TABS=isCanicross
+    ?{game:['corredor','Corredor'],calendar:['calendario','Calendario'],finances:['finanzas','Finanzas'],runner:['perro','Perro'],fame:['equipo','Equipo']}
+    :{game:['temporada','Temporada'],calendar:['calendario','Calendario'],finances:['finanzas','Finanzas'],
+      runner:['corredor',isCoach?'Atleta':'Corredor'],fame:['reputacion','Reputación']};
   ['game','calendar','finances','runner','fame'].forEach(t=>{
     const btn=document.getElementById('tab-'+t);
     if(!btn)return;
     btn.className='tab-btn'+(G.activeTab===t?' active':'');
-    if(t==='fame')btn.style.display=isExpres?'none':'';
+    const oculta=(t==='fame'&&isExpres&&!isCanicross)||(t==='finances'&&enCarrera&&G.activeTab!=='finances');
+    btn.style.display=oculta?'none':'';
+    const [ico,label]=TABS[t];
     const iconEl=btn.querySelector('.tab-icon');
     const labelEl=btn.querySelector('.tab-label');
-    if(isCanicross){
-      btn.style.display='';
-      if(t==='game'){if(iconEl)iconEl.textContent='🏃';if(labelEl)labelEl.textContent='Corredor';}
-      if(t==='runner'){if(iconEl)iconEl.textContent='🐕';if(labelEl)labelEl.textContent='Perro';}
-      if(t==='fame'){if(iconEl)iconEl.textContent='🎒';if(labelEl)labelEl.textContent='Equipo';}
-      if(t==='calendar'&&labelEl)labelEl.textContent='Calendario';
-      if(t==='finances'&&labelEl)labelEl.textContent='Finanzas';
-    } else if(isCoach){
-      if(t==='runner'&&labelEl)labelEl.textContent='Atleta';
-      if(t==='fame'&&labelEl)labelEl.textContent='Reputación';
-      if(t==='game'&&labelEl)labelEl.textContent='Temporada';
-    } else {
-      if(t==='runner'){if(iconEl)iconEl.textContent='👤';if(labelEl)labelEl.textContent='Corredor';}
-      if(t==='fame'){if(iconEl)iconEl.textContent='⭐';if(labelEl)labelEl.textContent='Reputación';}
-      if(t==='game'){if(iconEl)iconEl.textContent='🏃';if(labelEl)labelEl.textContent='Temporada';}
-    }
+    if(iconEl&&iconEl.dataset.k!==ico){iconEl.dataset.k=ico;iconEl.innerHTML=icono(ico);}
+    if(labelEl&&labelEl.textContent!==label)labelEl.textContent=label;
   });
 }
 
@@ -254,13 +308,16 @@ window.switchTab=t=>{
 // cola, 1,8 s cada uno; un texto igual al que se ve o al último encolado no se repite, y
 // la cola no pasa de cuatro para no ir mostrando avisos de hace rato.
 const TOAST_QUEUE=[];
-function showToast(msg,color='#1a1a1a'){
+// v102 (dirección visual): el aviso es siempre neutro oscuro (#toast-notif en index.html).
+// Ya no recibe color: con 200 llamadas pasando su hex, el verde, el rojo y el ámbar
+// salían en fondos, justo donde el sistema no los quiere.
+function showToast(msg){
   const t=document.getElementById('toast-notif');
   if(!t)return;
   const last=TOAST_QUEUE.length?TOAST_QUEUE[TOAST_QUEUE.length-1]:t._cur;
   if(last&&last.msg===msg)return;
   if(TOAST_QUEUE.length>=4)TOAST_QUEUE.shift();
-  TOAST_QUEUE.push({msg,color});
+  TOAST_QUEUE.push({msg});
   if(!t._tmr)nextToast(t);
 }
 function nextToast(t){
@@ -268,7 +325,6 @@ function nextToast(t){
   if(!it){t._tmr=null;t._cur=null;t.classList.remove('show');return;}
   t._cur=it;
   t.textContent=it.msg;
-  t.style.background=it.color;
   t.classList.remove('show');
   void t.offsetWidth; // reflow
   t.classList.add('show');
@@ -533,9 +589,9 @@ window.loadSlot=slot=>{
     }
     render();
     if(savedBuild>0&&savedBuild<GAME_BUILD){
-      setTimeout(()=>showToast(`Partida de v${savedBuild} actualizada a v${GAME_BUILD} ✓`,'#4a90d9'),300);
+      setTimeout(()=>showToast(`Partida de v${savedBuild} actualizada a v${GAME_BUILD} ✓`),300);
     } else if(savedBuild===0){
-      setTimeout(()=>showToast('Partida antigua cargada — datos actualizados automáticamente ✓','#4a90d9'),300);
+      setTimeout(()=>showToast('Partida antigua cargada — datos actualizados automáticamente ✓'),300);
     }
   }catch(err){
     console.error('[loadSlot] Error al cargar ranura',slot,err);
@@ -873,7 +929,8 @@ function renderModeSwitcher(){
   const barVisible=bar&&bar.style.display!=='none'&&bar.offsetHeight>0;
   el.style.top=barVisible?(bar.getBoundingClientRect().top+bar.offsetHeight/2-23)+'px':'16px';
   const onCoachSide=G.screen.startsWith('coach');
-  el.innerHTML=`<div class="msw-btn" title="${onCoachSide?'Volver a Corredor':'Ir a Entrenador'}"><span class="msw-icon">${onCoachSide?'🏃':'📋'}</span><span>${onCoachSide?'Corredor':'Entrenador'}</span></div>`;
+  // v102: icono de línea y el acento del modo al que vas
+  el.innerHTML=`<div class="msw-btn ${onCoachSide?'to-clasico':'to-entrenador'}" title="${onCoachSide?'Volver a Corredor':'Ir a Entrenador'}"><span class="msw-icon">${icono(onCoachSide?'corredor':'entrenador')}</span><span>${onCoachSide?'Corredor':'Entrenador'}</span></div>`;
 }
 
 // ══════════════════════════════════════

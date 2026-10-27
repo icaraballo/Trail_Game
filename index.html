@@ -69,23 +69,80 @@ addEventListener('keydown',e=>{
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<title>Trail Game · v101</title>
+<title>Trail Game · v102</title>
 <style>
 :root{--color-background-primary:#fff;--color-background-secondary:#f8f7f3;--color-background-tertiary:#f0ede8;--color-text-primary:#1a1a1a;--color-text-secondary:#888;--color-text-tertiary:#aaa;--color-border-tertiary:#e0dfd8;--border-radius-md:8px;--border-radius-lg:12px}
+/* ══ DIRECCIÓN VISUAL (v102) · TOKENS ══════════════════════════════════════════
+   Vault: Diseño/TG-Direccion-Visual § 2. ÚNICO sitio con hex permitido: los renders
+   escriben var(--token). tests/content.js cuenta los hex del resto de ficheros y
+   no deja que suban (su lista de excepciones baja según se migran pantallas).
+   Las --color-* de arriba son las de antes y siguen hasta migrar cada pantalla. */
+:root{
+  /* Base */
+  --ground:#F3F1EB;--card:#FFFFFF;--soft:#F7F5F0;--line:#E4E0D6;--line2:#CDC7B9;--trk:#EAE6DC;
+  --ink:#1F221D;--ink2:#5C6058;--ink3:#696C64; /* ink3: #7E8178 del lienzo no llegaba a 4,5:1 */
+  /* Familias de decisión: color · tinte (fondo de etiqueta) · tinta (texto sobre tinte) */
+  --carrera:#A84B24;--carrera-t:#F6E5D9;--carrera-i:#6B2C11;
+  --cuerpo:#2B6A97;--cuerpo-t:#E0EBF4;--cuerpo-i:#173F5E;
+  --dinero:#6E4E8A;--dinero-t:#ECE5F3;--dinero-i:#43295A;
+  --gente:#A63D63;--gente-t:#F6E1E9;--gente-i:#66213C;
+  /* Señales: solo en cifras y signos, nunca en bordes, fondos ni botones */
+  --pos:#2B7238;--pos-t:#E3F0E2;--pos-i:#1E5428;
+  --neg:#AE2E1D;--neg-t:#F8E1DC;--neg-i:#86200F;
+  --avi:#7E5700;--avi-t:#FAEFD3;--avi-bar:#C08A12;
+  /* Acento de modo (lo cambia data-modo en <html>): selección, pestaña activa */
+  --acc-clasico:#A84B24;--acc-clasico-t:#F6E5D9;
+  --acc-expres:#8A6600;--acc-expres-t:#F7EDCF;
+  --acc-canicross:#4A7A2E;--acc-canicross-t:#E5EFDC; /* abierto: verde o azul frío, se decide en su rediseño */
+  --acc-entrenador:#3B5B82;--acc-entrenador-t:#E2E9F2;
+  --acc-club:#A63D63;--acc-club-t:#F6E1E9;
+  --acc:var(--acc-clasico);--acc-t:var(--acc-clasico-t);
+  /* Dificultad: etiqueta de la barra de arriba. No tiñe la selección */
+  --dif-facil:#2B7238;--dif-facil-t:#E3F0E2;--dif-facil-b:#8DBF8F;
+  --dif-medio:#B07D0E;--dif-medio-t:#FAEFD3;--dif-medio-b:#DDB65A;
+  --dif-dificil:#AE2E1D;--dif-dificil-t:#F8E1DC;--dif-dificil-b:#E0A196;
+  --dif-hardcore:#3F433B;--dif-hardcore-t:#E6E3DC;--dif-hardcore-b:#9C9A92;
+  /* Terreno (perfil de elevación) y nivel de carrera */
+  --ter-subida:#E2A585;--ter-subida-l:#8F3D1B;
+  --ter-bajada:#F6E5D9;--ter-bajada-l:#D98C66;
+  --ter-llano:#ECE8DF;--ter-llano-l:#9C9A92;
+  --ter-pend:#9C9A92;--ter-avi:#2B6A97;
+  --tier-regional:#E9E5DB;--tier-nacional:#4A4D45;--tier-elite:#1F221D;
+  /* Momento negativo (crisis, club disuelto) */
+  --momento-neg:#2C2F29;
+  /* Tipografía */
+  --f-text:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --f-num:'Barlow Condensed','Barlow',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+:root[data-modo="expres"]{--acc:var(--acc-expres);--acc-t:var(--acc-expres-t)}
+:root[data-modo="canicross"]{--acc:var(--acc-canicross);--acc-t:var(--acc-canicross-t)}
+:root[data-modo="entrenador"]{--acc:var(--acc-entrenador);--acc-t:var(--acc-entrenador-t)}
+:root[data-modo="club"]{--acc:var(--acc-club);--acc-t:var(--acc-club-t)}
+/* Barlow servida desde el repo (la CSP tiene font-src 'self'). Licencia: fonts/OFL.txt */
+@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/barlow-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/barlow-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-latin-600-normal.woff2) format('woff2')}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;display:flex;justify-content:center;padding:1.5rem 1rem 5rem}
 #app{width:100%;max-width:560px}
-#tab-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;background:#fff;border-top:1px solid #e8e6e0;display:none;z-index:200}
-/* PUB-09 (v99): minmax(0,1fr) para que una etiqueta larga no ensanche la barra más que la pantalla */
-.tab-nav-inner{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
-.tab-btn{padding:10px 4px 12px;text-align:center;cursor:pointer;border:none;background:none;transition:background .15s;border-top:2px solid transparent;width:100%}
-.tab-btn:hover{background:#f8f7f3}
-.tab-btn.active{border-top-color:#1a1a1a}
-.tab-icon{font-size:18px;display:block;margin-bottom:2px}
+/* ── PESTAÑAS (chasis, v102) — iconos de línea y raya del acento del modo en la activa ── */
+#tab-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;background:var(--card);border-top:1px solid var(--line);display:none;z-index:200;font-family:var(--f-text)}
+/* v102: flex en vez de rejilla de 5 — sin Finanzas en carrera o sin Reputación en Exprés,
+   las que quedan se reparten el ancho en lugar de dejar un hueco.
+   PUB-09 (v99): min-width:0 para que una etiqueta larga no ensanche la barra más que la pantalla */
+.tab-nav-inner{display:flex}
+.tab-btn{flex:1 1 0;min-width:0;padding:9px 4px 11px;text-align:center;cursor:pointer;border:none;background:none;transition:background .15s;border-top:2.5px solid transparent;color:var(--ink3)}
+.tab-btn:hover{background:var(--soft)}
+.tab-btn.active{border-top-color:var(--acc);color:var(--ink)}
+.tab-icon{display:block;height:22px;margin-bottom:2px}
+.tab-icon svg{width:22px;height:22px}
 /* PUB-09 (v99): en mayúsculas, «REPUTACIÓN» no cabía en ningún móvil (se leía «REP»); en minúscula cabe desde 320 px */
-.tab-label{display:block;font-size:12px;font-weight:600;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:359px){.tab-btn{padding-left:1px;padding-right:1px}.tab-label{font-size:10.5px}}
-.tab-btn.active .tab-label{color:#1a1a1a}
+.tab-label{display:block;font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:359px){.tab-btn{padding-left:1px;padding-right:1px}.tab-label{font-size:11px}}
+.tab-btn.active .tab-label{font-weight:600}
+/* Icono de línea del chasis: trazo 1,9, color heredado */
+.ico{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 .quarter-wrap{border:1.5px solid #1a1a1a;border-radius:10px;margin-bottom:10px;overflow:hidden}
 .quarter-toggle{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:#fff;transition:background .15s}
 .quarter-toggle:hover{background:var(--color-background-secondary)}
@@ -126,7 +183,7 @@ button.secondary:hover{background:#f0ede8}
 .spec-desc{font-size:12px;color:#888}
 .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .bar-label{font-size:12px;color:#666;width:96px;flex-shrink:0}
-.bar-track{flex:1;height:6px;background:#e5e4de;border-radius:3px;overflow:hidden}
+.bar-track{flex:1;height:6px;background:var(--trk);border-radius:3px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px;transition:width .4s}
 .bar-pct{font-size:12px;font-weight:500;min-width:30px;text-align:right}
 .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
@@ -316,15 +373,37 @@ button.secondary:hover{background:#f0ede8}
 .contract-row:last-child{border-bottom:none}
 
 /* ── BARRA FINANCIERA PERSISTENTE ── */
-#fin-bar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #e8e6e0;padding:8px 0 10px;margin-bottom:16px;display:none}
-.fin-inner{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:0}
-.fin-cell{text-align:center;padding:0 4px}
-.fin-cell:not(:last-child){border-right:1px solid #eee}
-.fin-top{font-size:12px;color:#aaa;margin-bottom:2px}
-.fin-val{font-size:14px;font-weight:700}
-.fin-val.green{color:#2d7a2d}
-.fin-val.red{color:#c0392b}
-.fin-val.neutral{color:#1a1a1a}
+/* v102 (chasis): 4 datos —dinero con el neto debajo, fecha, global, especialidad—, la
+   deuda si la hay, y a la derecha la etiqueta de dificultad y guardar como icono.
+   Cifras en Barlow Condensed; el color, solo en el neto, la deuda y el ⚠ de guardado. */
+#fin-bar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--line);padding:8px 2px 9px;margin-bottom:16px;display:none;font-family:var(--f-text);color:var(--ink)}
+.fin-inner{display:flex;align-items:center;gap:2px}
+.fin-cell{flex:1 1 0;min-width:0;text-align:center;padding:0 3px}
+.fin-cell+.fin-cell{border-left:1px solid var(--line)}
+.fin-top{font-size:11.5px;font-weight:500;color:var(--ink3);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fin-val{font-family:var(--f-num);font-size:17px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fin-sub{font-family:var(--f-num);font-size:12.5px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fin-val.green,.fin-sub.green{color:var(--pos)}
+.fin-val.red,.fin-sub.red{color:var(--neg)}
+.fin-val.neutral,.fin-sub.neutral{color:var(--ink)}
+.fin-side{display:flex;flex-direction:column;align-items:center;gap:5px;padding:0 4px 0 8px;border-left:1px solid var(--line);flex-shrink:0}
+.fin-save{display:flex;align-items:center;justify-content:center;width:34px;height:30px;border:1px solid var(--line2);border-radius:8px;background:var(--card);color:var(--ink2);cursor:pointer;padding:0}
+.fin-save:hover{background:var(--soft)}
+.fin-save .ico{width:18px;height:18px}
+.fin-save.red{color:var(--neg);border-color:var(--neg)}
+/* Etiqueta de dificultad: nivel + indicador de 1 a 4 barras (en lugar de 🟢🟡🔴💀) */
+.dif-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-text);font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;border:1px solid var(--dif-b);background:var(--dif-t);color:var(--dif);white-space:nowrap;line-height:1.2}
+.dif-tag[hidden]{display:none}
+.dif-tag .dif-bars{display:inline-flex;align-items:flex-end;gap:1.5px;height:9px}
+.dif-tag .dif-bars i{display:block;width:2.5px;border-radius:1px;background:currentColor;opacity:.25}
+.dif-tag .dif-bars i:nth-child(1){height:3px}.dif-tag .dif-bars i:nth-child(2){height:5px}.dif-tag .dif-bars i:nth-child(3){height:7px}.dif-tag .dif-bars i:nth-child(4){height:9px}
+.dif-tag .dif-bars i.on{opacity:1}
+.dif-facil{--dif:var(--dif-facil);--dif-t:var(--dif-facil-t);--dif-b:var(--dif-facil-b)}
+.dif-medio{--dif:var(--dif-medio);--dif-t:var(--dif-medio-t);--dif-b:var(--dif-medio-b)}
+.dif-dificil{--dif:var(--dif-dificil);--dif-t:var(--dif-dificil-t);--dif-b:var(--dif-dificil-b)}
+.dif-hardcore{--dif:var(--dif-hardcore);--dif-t:var(--dif-hardcore-t);--dif-b:var(--dif-hardcore-b)}
+@media (max-width:419px){.dif-tag .dif-name{display:none}}
+@media (max-width:389px){.fin-top{font-size:10.5px}.fin-val{font-size:15.5px}.fin-sub{font-size:11.5px}.fin-side{padding-left:5px}}
 
 /* ── TABLA ECONOMÍA ── */
 .eco-table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:14px}
@@ -338,23 +417,29 @@ button.secondary:hover{background:#f0ede8}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeIn 150ms ease-out both}
 /* ── TOAST FEEDBACK ── */
-#toast-notif{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;width:max-content;max-width:calc(100vw - 32px);text-align:center;transition:opacity .35s;opacity:0} /* PUB-21 (v99): a 320 px se salía por el borde */
+/* v102: siempre neutro oscuro — showToast ya no recibe colores */
+#toast-notif{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:7px 18px;border-radius:20px;font-family:var(--f-text);font-size:14px;font-weight:500;box-shadow:0 3px 12px rgba(0,0,0,.18);z-index:999;pointer-events:none;width:max-content;max-width:calc(100vw - 32px);text-align:center;transition:opacity .35s;opacity:0} /* PUB-21 (v99): a 320 px se salía por el borde */
 #toast-notif.show{opacity:1}
 /* ── TIP INLINE BUTTON ── */
-.tip-btn{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid #d0cec8;background:#fafaf8;color:#aaa;font-size:10px;cursor:pointer;vertical-align:middle;margin-left:5px;padding:0;line-height:1;flex-shrink:0;font-style:normal;transition:background .15s}
-.tip-btn:hover{background:#f0ede8;color:#666;border-color:#bbb}
+/* v102 (chasis): ⓘ y su hoja inferior con los tokens; la hoja, con el estilo de la tarjeta */
+.tip-btn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--line2);background:var(--card);color:var(--ink3);font-size:10px;cursor:pointer;vertical-align:middle;margin-left:5px;padding:0;line-height:1;flex-shrink:0;font-style:normal;transition:background .15s}
+.tip-btn:hover{background:var(--soft);color:var(--ink2);border-color:var(--ink3)}
 /* ── TIP OVERLAY (bottom sheet) ── */
 #tip-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;align-items:flex-end;justify-content:center;padding-bottom:0}
-.tip-modal{background:#fff;border-radius:16px 16px 0 0;padding:20px 20px 36px;width:100%;max-width:560px;box-shadow:0 -4px 24px rgba(0,0,0,.12);animation:slideUp 200ms ease-out both}
+.tip-modal{background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:16px 16px 0 0;padding:20px 20px 36px;width:100%;max-width:560px;box-shadow:0 -4px 24px rgba(0,0,0,.12);animation:slideUp 200ms ease-out both;font-family:var(--f-text);color:var(--ink)}
 @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
-.tip-modal-title{font-size:15px;font-weight:700;margin-bottom:10px}
-.tip-modal-body{font-size:13px;color:#555;line-height:1.7}
-.tip-modal-close{border:none;background:none;font-size:20px;color:#bbb;cursor:pointer;padding:0;line-height:1;flex-shrink:0}
-.tip-modal-close:hover{color:#888}
+.tip-modal-title{font-family:var(--f-num);font-size:19px;font-weight:600;margin-bottom:10px}
+.tip-modal-body{font-size:14.5px;color:var(--ink2);line-height:1.6}
+.tip-modal-close{border:none;background:none;font-size:20px;color:var(--ink3);cursor:pointer;padding:0;line-height:1;flex-shrink:0}
+.tip-modal-close:hover{color:var(--ink)}
 /* ── MODE SWITCH BUTTON (solapamiento Corredor/Entrenador) — círculo flotante junto a "Guardar" del fin-bar, misma técnica de centrado que #tab-nav para seguir la columna del juego a cualquier ancho ── */
 #mode-switch-tab{display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);width:100%;max-width:560px;height:0;z-index:9200;pointer-events:none}
-#mode-switch-tab .msw-btn{position:absolute;left:100%;margin-left:10px;top:0;height:46px;padding:0 16px 0 12px;border-radius:23px;background:#2d2a24;color:#fff;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.28);pointer-events:auto}
-#mode-switch-tab .msw-btn:hover{background:#3a362e}
+#mode-switch-tab .msw-btn{position:absolute;left:100%;margin-left:10px;top:0;height:46px;padding:0 16px 0 12px;border-radius:23px;background:var(--msw-acc,var(--ink));color:var(--card);display:flex;align-items:center;gap:6px;font-family:var(--f-text);font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.28);pointer-events:auto}
+/* v102: con el acento del modo al que vas */
+#mode-switch-tab .msw-btn.to-entrenador{--msw-acc:var(--acc-entrenador)}
+#mode-switch-tab .msw-btn.to-clasico{--msw-acc:var(--acc-clasico)}
+#mode-switch-tab .msw-btn:hover{filter:brightness(1.1)}
+#mode-switch-tab .msw-icon .ico{width:19px;height:19px}
 #mode-switch-tab .msw-icon{font-size:19px;line-height:1}
 /* ── UTILITY CLASSES (D1) — patterns repeated 5+ times ── */
 .sec-title{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
@@ -378,6 +463,112 @@ button.secondary:hover{background:#f0ede8}
 .narrative-item{padding:9px 12px;border-radius:8px;margin-bottom:6px;font-size:13px;border:0.5px solid #e0dfd8;background:#fff;animation:fadeIn 300ms ease-out}
 .narrative-item.aid-stop{background:#fef9ec;border-color:#e8c97a}
 .personality-badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px}
+
+/* v102 (chasis): leyenda del perfil de elevación, profLeyenda() en race.js */
+.prof-ley{display:flex;gap:10px;font-size:12px;color:var(--ink3);margin-top:8px;flex-wrap:wrap}
+.prof-ley-caja{display:inline-block;width:10px;height:10px;border-radius:2px;border:1.5px solid;margin-right:4px;vertical-align:-1px}
+.prof-ley-avi{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--card);border:1.8px solid var(--ter-avi);margin-right:4px;vertical-align:-1px}
+
+/* ══ DIRECCIÓN VISUAL (v102) · PIEZAS ═══════════════════════════════════════════
+   Vault: Diseño/TG-Direccion-Visual § 4. Prefijo pz- para no pisar las clases de
+   antes (.card, .opt-btn…), que siguen hasta migrar cada pantalla. Una pantalla
+   nueva o migrada se escribe con estas piezas y var(--token), sin hex ni style=. */
+.pz{font-family:var(--f-text);color:var(--ink)}
+.pz-num{font-family:var(--f-num);font-weight:600;font-variant-numeric:tabular-nums}
+.pz-titulo{font-family:var(--f-num);font-size:24px;font-weight:600;line-height:1.15;margin-bottom:4px}
+.pz-sub{font-size:14px;color:var(--ink2);line-height:1.45}
+.pz-label{font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:.3px}
+/* Tarjeta y tarjeta de estado (lo que condiciona la decisión, en líneas) */
+.pz-tarjeta{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.pz-estado .pz-linea{display:flex;align-items:center;gap:10px;padding:8px 0}
+.pz-estado .pz-linea+.pz-linea{border-top:1px solid var(--line)}
+/* Etiqueta de familia: icono + «Cuerpo · pretemporada», arriba del título */
+.pz-etiqueta{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 8px 3px 6px;border-radius:6px;background:var(--fam-t);color:var(--fam-i);margin-bottom:8px}
+.pz-etiqueta .ico{width:14px;height:14px}
+.fam-carrera{--fam:var(--carrera);--fam-t:var(--carrera-t);--fam-i:var(--carrera-i)}
+.fam-cuerpo{--fam:var(--cuerpo);--fam-t:var(--cuerpo-t);--fam-i:var(--cuerpo-i)}
+.fam-dinero{--fam:var(--dinero);--fam-t:var(--dinero-t);--fam-i:var(--dinero-i)}
+.fam-gente{--fam:var(--gente);--fam-t:var(--gente-t);--fam-i:var(--gente-i)}
+/* Consejo: caja neutra con bombilla. Sale abierto; «Entendido» lo pliega a «Ver consejo» */
+.pz-consejo{display:flex;gap:10px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:14px;color:var(--ink2);line-height:1.5}
+.pz-consejo>.ico{width:18px;height:18px;flex-shrink:0;color:var(--ink3);margin-top:1px}
+.pz-consejo b:first-child{color:var(--ink)}
+.pz-consejo .pz-consejo-ok{margin-top:6px;border:none;background:none;padding:0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.pz-consejo.plegado{padding:7px 12px;cursor:pointer;color:var(--ink3);font-weight:500}
+/* Opción: borde fino; elegida, borde de 2 px del acento + check. Nunca fondo de color */
+.pz-opcion{position:relative;display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:12px 40px 12px 14px;margin-bottom:8px;cursor:pointer;font:inherit;color:inherit}
+.pz-opcion:hover{border-color:var(--ink3)}
+.pz-opcion.sel{border:2px solid var(--acc);padding:11px 39px 11px 13px}
+.pz-opcion.sel::after{content:'';position:absolute;right:13px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/13px no-repeat}
+/* Bloqueado: borde discontinuo, gris, candado y el motivo. Nunca en rojo */
+.pz-bloqueado,.pz-opcion.pz-bloqueado{border:1px dashed var(--line2);color:var(--ink3);background:var(--card);cursor:default}
+.pz-motivo{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink3);margin-top:3px}
+.pz-motivo .ico{width:13px;height:13px}
+/* Efectos en gestión: línea de texto, solo la cifra en color. En momentos: etiquetas con tinte */
+.pz-efectos{font-size:13.5px;color:var(--ink2)}
+.pz-mas{color:var(--pos);font-family:var(--f-num);font-weight:600}
+.pz-menos{color:var(--neg);font-family:var(--f-num);font-weight:600}
+.pz-ojo{color:var(--avi);font-family:var(--f-num);font-weight:600}
+.pz-chip{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:6px;margin:0 4px 4px 0}
+.pz-chip.mas{background:var(--pos-t);color:var(--pos-i)}
+.pz-chip.menos{background:var(--neg-t);color:var(--neg-i)}
+.pz-chip.ojo{background:var(--avi-t);color:var(--avi)}
+/* Fila: listas largas. Icono, texto, dato a la derecha, chevron si navega */
+.pz-fila{display:flex;align-items:center;gap:11px;padding:11px 2px;border-bottom:1px solid var(--line);min-height:44px}
+.pz-fila:last-child{border-bottom:none}
+.pz-fila .pz-fila-txt{flex:1;min-width:0}
+.pz-fila .pz-fila-dato{font-family:var(--f-num);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pz-fila .ico{width:20px;height:20px;color:var(--ink2);flex-shrink:0}
+.pz-fila.navega{cursor:pointer}
+.pz-fila.navega::after{content:'';width:7px;height:7px;border-right:1.9px solid var(--ink3);border-top:1.9px solid var(--ink3);transform:rotate(45deg);margin:0 4px 0 2px;flex-shrink:0}
+/* Casilla: cuadrado redondeado, marcada con el acento */
+.pz-casilla{appearance:none;-webkit-appearance:none;width:20px;height:20px;border:1.5px solid var(--line2);border-radius:5px;background:var(--card);cursor:pointer;flex-shrink:0;vertical-align:middle;margin:0}
+.pz-casilla:checked{background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--acc)}
+/* Interruptor sí/no */
+.pz-interruptor{appearance:none;-webkit-appearance:none;position:relative;width:42px;height:24px;border-radius:12px;background:var(--line2);cursor:pointer;flex-shrink:0;transition:background .15s;margin:0;vertical-align:middle}
+.pz-interruptor::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .15s}
+.pz-interruptor:checked{background:var(--acc)}
+.pz-interruptor:checked::after{transform:translateX(18px)}
+/* Stepper −/+: botones de 44 px, número grande en el centro */
+.pz-stepper{display:inline-flex;align-items:center;gap:6px}
+.pz-stepper button{width:44px;height:44px;border:1px solid var(--line2);border-radius:10px;background:var(--card);font-size:22px;line-height:1;color:var(--ink);cursor:pointer}
+.pz-stepper button:disabled{opacity:.35;cursor:default}
+.pz-stepper .pz-stepper-n{min-width:52px;text-align:center;font-family:var(--f-num);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+/* Barra con umbrales (carga: 70 % baja el rendimiento, 100 % lesión). Azul; ámbar o rojo solo al bajar */
+.pz-barra{position:relative;height:8px;background:var(--trk);border-radius:4px;overflow:visible}
+.pz-barra>.pz-relleno{height:100%;border-radius:4px;background:var(--cuerpo);transition:width .4s}
+.pz-barra>.pz-relleno.ojo{background:var(--avi-bar)}
+.pz-barra>.pz-relleno.menos{background:var(--neg)}
+.pz-barra>.pz-umbral{position:absolute;top:-3px;bottom:-3px;width:1.5px;background:var(--ink2)}
+/* Diagnóstico: línea con punto de color dentro de la tarjeta, en lugar de una caja de color */
+.pz-diag{display:flex;align-items:baseline;gap:8px;font-size:14px;color:var(--ink2);padding:3px 0}
+.pz-diag::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink3);flex-shrink:0;transform:translateY(-1px)}
+.pz-diag.mas::before{background:var(--pos)}
+.pz-diag.ojo::before{background:var(--avi-bar)}
+.pz-diag.menos::before{background:var(--neg)}
+/* Botones: principal fondo tinta, secundario blanco con borde. Uno solo principal por pantalla */
+.pz-btn{display:block;width:100%;padding:13px 16px;border:1px solid var(--ink);border-radius:10px;background:var(--ink);color:var(--card);font-family:var(--f-text);font-size:16px;font-weight:600;cursor:pointer;text-align:center}
+.pz-btn:hover:not([disabled]){filter:brightness(1.25)}
+.pz-btn.sec{background:var(--card);color:var(--ink);border-color:var(--line2)}
+.pz-btn.sec:hover:not([disabled]){filter:none;background:var(--soft)}
+.pz-btn[disabled]{opacity:.35;cursor:default}
+/* Franja de momento (§ 5): podio, fuera del podio, no terminó, negativo, cierre, transición */
+.pz-franja{position:relative;overflow:hidden;border-radius:14px;padding:22px 18px 18px;margin-bottom:14px;color:var(--card);background:var(--ink)}
+.pz-franja .pz-franja-num{font-family:var(--f-num);font-size:64px;font-weight:600;line-height:.95}
+.pz-franja .pz-franja-sub{font-size:14px;opacity:.85;margin-top:4px}
+.pz-franja.podio{background:var(--carrera)}
+.pz-franja.fuera{background:var(--tier-nacional)}
+.pz-franja.dnf{background:var(--trk);color:var(--ink)}
+.pz-franja.negativo{background:var(--momento-neg)}
+.pz-franja.cierre{background:var(--ink)}
+.pz-franja.transicion{background:var(--acc)}
+.pz-franja>svg.pz-franja-fondo{position:absolute;inset:auto 0 0 0;width:100%;height:60%;opacity:.18;pointer-events:none}
+/* Cabecera de carrera: posición en grande, tiempo, km y perfil por terreno con tu punto */
+.pz-cab-carrera{background:var(--card);border-bottom:1px solid var(--line);padding:8px 2px 10px;margin-bottom:14px}
+.pz-cab-carrera .pz-cab-fila{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pz-cab-carrera .pz-cab-pos{font-family:var(--f-num);font-size:34px;font-weight:600;line-height:1}
+.pz-cab-carrera .pz-cab-dato{font-family:var(--f-num);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.pz-cab-carrera .pz-cab-nombre{font-size:12.5px;color:var(--ink3)}
 </style>
 </head>
 <body>
@@ -424,19 +615,19 @@ button.secondary:hover{background:#f0ede8}
   </div>
   <div id="fin-bar">
     <div class="fin-inner">
-      <div class="fin-cell"><div class="fin-top">Dinero</div><div class="fin-val neutral" id="fb-money">€0</div></div>
-      <div class="fin-cell"><div class="fin-top">Neto/mes</div><div class="fin-val" id="fb-net">€0</div></div>
+      <!-- v102: el neto va debajo del dinero (antes, celda propia «Neto/mes») -->
+      <div class="fin-cell"><div class="fin-top">Dinero</div><div class="fin-val neutral" id="fb-money">€0</div><div class="fin-sub" id="fb-net">€0</div></div>
       <!-- T29 (v86): solo visible con deuda pendiente -->
       <div class="fin-cell" id="fb-debt-cell" style="display:none"><div class="fin-top">Deuda</div><div class="fin-val red" id="fb-debt">€0</div></div>
       <div class="fin-cell"><div class="fin-top">Año · Mes</div><div class="fin-val neutral" id="fb-year">1</div></div>
       <div class="fin-cell"><div class="fin-top">Global</div><div class="fin-val neutral" id="fb-rank">—</div></div>
       <div class="fin-cell"><div class="fin-top">Espec.</div><div class="fin-val neutral" id="fb-specrank">—</div></div>
-      <!-- T10 (v82): openSaveScreen() recuerda la pantalla actual para poder
-           volver. Antes hacía G.screen='saveScreen' a pelo y la única salida de
-           esa pantalla era modeSelect, así que pulsarlo en carrera la perdía. -->
-      <div class="fin-cell" id="fb-save-cell" style="cursor:pointer" onclick="openSaveScreen()" title="Guardar partida">
-        <div class="fin-top">Guardar</div>
-        <div class="fin-val neutral" id="fb-save">💾</div>
+      <div class="fin-side">
+        <span class="dif-tag" id="fb-diff" hidden></span>
+        <!-- T10 (v82): openSaveScreen() recuerda la pantalla actual para poder
+             volver. Antes hacía G.screen='saveScreen' a pelo y la única salida de
+             esa pantalla era modeSelect, así que pulsarlo en carrera la perdía. -->
+        <button type="button" class="fin-save" id="fb-save-cell" onclick="openSaveScreen()" title="Guardar partida" aria-label="Guardar partida"><span id="fb-save"></span></button>
       </div>
     </div>
   </div>
@@ -444,43 +635,44 @@ button.secondary:hover{background:#f0ede8}
 </div>
 <nav id="tab-nav">
   <div class="tab-nav-inner">
+    <!-- v102: los iconos (SVG de línea) los pone updateTabNav() según el modo -->
     <button class="tab-btn" id="tab-game" onclick="switchTab('game')">
-      <span class="tab-icon">🏃</span>
+      <span class="tab-icon"></span>
       <span class="tab-label">Temporada</span>
     </button>
     <button class="tab-btn" id="tab-calendar" onclick="switchTab('calendar')">
-      <span class="tab-icon">📅</span>
+      <span class="tab-icon"></span>
       <span class="tab-label">Calendario</span>
     </button>
     <button class="tab-btn" id="tab-finances" onclick="switchTab('finances')">
-      <span class="tab-icon">💰</span>
+      <span class="tab-icon"></span>
       <span class="tab-label">Finanzas</span>
     </button>
     <button class="tab-btn" id="tab-runner" onclick="switchTab('runner')">
-      <span class="tab-icon">👤</span>
+      <span class="tab-icon"></span>
       <span class="tab-label">Corredor</span>
     </button>
     <button class="tab-btn" id="tab-fame" onclick="switchTab('fame')">
-      <span class="tab-icon">⭐</span>
-      <span class="tab-label">Fama</span>
+      <span class="tab-icon"></span>
+      <span class="tab-label">Reputación</span>
     </button>
   </div>
 </nav>
 
 
-<script src="js/constants.js?v=101"></script>
-<script src="js/state.js?v=101"></script>
-<script src="js/save.js?v=101"></script>
-<script src="js/race.js?v=101"></script>
-<script src="js/coach.js?v=101"></script>
-<script src="js/club.js?v=101"></script>
-<script src="js/canicross.js?v=101"></script>
+<script src="js/constants.js?v=102"></script>
+<script src="js/state.js?v=102"></script>
+<script src="js/save.js?v=102"></script>
+<script src="js/race.js?v=102"></script>
+<script src="js/coach.js?v=102"></script>
+<script src="js/club.js?v=102"></script>
+<script src="js/canicross.js?v=102"></script>
 <!-- T53 (v92): render.js partido en tres. El orden importa solo para las
      sentencias de nivel raíz, y entre estos tres no hay ninguna que dependa
      de otra — pero se mantiene el orden temático por legibilidad. -->
-<script src="js/render-core.js?v=101"></script>
-<script src="js/render-clasico.js?v=101"></script>
-<script src="js/render-temporada.js?v=101"></script>
+<script src="js/render-core.js?v=102"></script>
+<script src="js/render-clasico.js?v=102"></script>
+<script src="js/render-temporada.js?v=102"></script>
 <script>
 // T70 (v90): devmode.js solo sirve con ?dev=1. Se carga a
 // demanda; render() espera a que esté dentro para que renderDevOverlay()
@@ -490,7 +682,7 @@ button.secondary:hover{background:#f0ede8}
 // v98: DEV_ON lo pone el script del <head>; el panel crea su propio botón y drawer.
 if(window.DEV_ON){
   const s=document.createElement('script');
-  s.src='js/devmode.js?v=101';
+  s.src='js/devmode.js?v=102';
   s.onload=()=>render();
   s.onerror=()=>{console.warn('devmode.js no se pudo cargar; se arranca sin panel');window.DEV_ON=false;render();};
   document.body.appendChild(s);

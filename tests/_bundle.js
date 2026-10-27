@@ -47,7 +47,7 @@ function build(names){
 // interfaz que se calcula y nunca se interpola (el caso de zegamaBadge en v92).
 function domStub(ctx){
   const nodo=()=>({_h:'',set innerHTML(v){this._h=v},get innerHTML(){return this._h},
-    textContent:'',className:'',value:'',checked:false,scrollTop:0,offsetWidth:1,
+    textContent:'',className:'',value:'',checked:false,scrollTop:0,offsetWidth:1,dataset:{},hidden:false,
     style:new Proxy({},{get:()=>'',set:()=>true}),
     classList:{add(){},remove(){},contains:()=>false,toggle(){}},
     querySelectorAll:()=>[],querySelector:()=>null,appendChild(){},removeChild(){},

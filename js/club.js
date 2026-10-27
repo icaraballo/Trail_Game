@@ -142,7 +142,7 @@ window.doClubMonthlyFocus=(focus)=>{
   const msgs={resultados:'🏆 Foco en resultados — rendimiento +5% esta temporada',
     marketing:'📣 Campaña de marketing activa',formacion:'🌱 Plan de formación de cantera',
     ahorro:'💰 Control de costes activado'};
-  showToast(msgs[focus]||'Foco mensual establecido','#8e44ad');
+  showToast(msgs[focus]||'Foco mensual establecido');
   autoSave();render();
 };
 // v96: el foco se aplica al simular la temporada (doClubSimulateSeason), no al
@@ -559,16 +559,16 @@ window.doClubSetRole=(pool,idx,role)=>{
     if(d.cantera)d.cantera.forEach(r=>{if(r.role==='capitan')r.role='normal';});
   }
   arr[idx].role=role;
-  showToast(`${arr[idx].name.split(' ')[0]}: ${CLUB_ROLES[role].emoji} ${CLUB_ROLES[role].label}`,'#555');
+  showToast(`${arr[idx].name.split(' ')[0]}: ${CLUB_ROLES[role].emoji} ${CLUB_ROLES[role].label}`);
   autoSave();render();
 };
 
 window.doClubBuyInstalacion=(id,cost)=>{
   const d=G.clubModeData;if(!d)return;
-  if(d.presupuesto<cost){showToast('Presupuesto insuficiente','#c0392b');return;}
+  if(d.presupuesto<cost){showToast('Presupuesto insuficiente');return;}
   d.instalaciones[id]=true;
   d.presupuesto-=cost;
-  showToast(`✅ ${id} — instalación activa`,'#2d7a2d');
+  showToast(`✅ ${id} — instalación activa`);
   autoSave();render();
 };
 
@@ -576,11 +576,11 @@ window.doClubSign=id=>{
   const d=G.clubModeData;if(!d)return;
   const r=CLUB_RUNNER_POOL.find(x=>x.id===id);if(!r)return;
   const maxSize=d.instalaciones&&d.instalaciones.residencia?8:6;
-  if(d.plantilla.length>=maxSize){showToast(`Plantilla completa — máx. ${maxSize}`,'#c07a10');return;}
-  if(d.presupuesto<r.salary*3){showToast('Presupuesto insuficiente','#c0392b');return;}   // v96: la guarda solo estaba en la tarjeta
+  if(d.plantilla.length>=maxSize){showToast(`Plantilla completa — máx. ${maxSize}`);return;}
+  if(d.presupuesto<r.salary*3){showToast('Presupuesto insuficiente');return;}   // v96: la guarda solo estaba en la tarjeta
   d.plantilla.push({...r,stats:{...r.stats},currentSalary:r.salary,role:'normal'});
   d.presupuesto-=r.salary*3;
-  showToast(`${r.name} fichado — coste inicial €${r.salary*3}`,'#4a8a2a');
+  showToast(`${r.name} fichado — coste inicial €${r.salary*3}`);
   autoSave();render();
 };
 
@@ -588,24 +588,24 @@ window.doClubSignYouth=id=>{
   const d=G.clubModeData;if(!d)return;
   const r=CLUB_YOUTH_POOL.find(x=>x.id===id);if(!r)return;
   if(!d.cantera)d.cantera=[];
-  if(d.cantera.length>=3){showToast('Cantera completa — máx. 3','#c07a10');return;}
-  if(d.presupuesto<r.salary*2){showToast('Presupuesto insuficiente','#c0392b');return;}   // v96
+  if(d.cantera.length>=3){showToast('Cantera completa — máx. 3');return;}
+  if(d.presupuesto<r.salary*2){showToast('Presupuesto insuficiente');return;}   // v96
   d.cantera.push({...r,stats:{...r.stats},currentSalary:r.salary,role:'promesa'});
   d.presupuesto-=r.salary*2;
-  showToast(`🌱 ${r.name} a la cantera — €${r.salary*2}`,'#2d7a2d');
+  showToast(`🌱 ${r.name} a la cantera — €${r.salary*2}`);
   autoSave();render();
 };
 
 window.doClubRelease=idx=>{
   const d=G.clubModeData;if(!d)return;
-  if(d.plantilla.length<=2){showToast('Necesitas al menos 2 corredores','#c07a10');return;}
+  if(d.plantilla.length<=2){showToast('Necesitas al menos 2 corredores');return;}
   const r=d.plantilla[idx];
   if(!confirm(`¿Liberar a ${r.name}?`))return;
   d.plantilla.splice(idx,1);
   Object.keys(d.calAssignments||{}).forEach(k=>{
     if(Array.isArray(d.calAssignments[k]))d.calAssignments[k]=d.calAssignments[k].filter(id=>id!==r.id);
   });
-  showToast(`${r.name} liberado`,'#888');
+  showToast(`${r.name} liberado`);
   autoSave();render();
 };
 function renderClubCalendar(){
@@ -678,7 +678,7 @@ window.doClubToggleAssign=(raceId,runnerId)=>{
   const idx=arr.indexOf(runnerId);
   if(idx>=0)arr.splice(idx,1);
   else if(arr.length<4)arr.push(runnerId);
-  else{showToast('Máximo 4 corredores por carrera','#c07a10');return;}
+  else{showToast('Máximo 4 corredores por carrera');return;}
   autoSave();render();
 };
 
@@ -855,16 +855,16 @@ function renderClubStaff(){
 }
 window.doClubHireStaff=(id,cost)=>{
   const d=G.clubModeData;if(!d)return;
-  if(d.presupuesto<cost*3){showToast('Presupuesto insuficiente','#c0392b');return;}
+  if(d.presupuesto<cost*3){showToast('Presupuesto insuficiente');return;}
   if(!d.staff)d.staff={};
   d.staff[id]=true;
-  showToast(`${CLUB_STAFF_TYPES[id].emoji} ${CLUB_STAFF_TYPES[id].label} contratado`,'#2d7a2d');
+  showToast(`${CLUB_STAFF_TYPES[id].emoji} ${CLUB_STAFF_TYPES[id].label} contratado`);
   autoSave();render();
 };
 window.doClubFireStaff=(id)=>{
   const d=G.clubModeData;if(!d)return;
   if(d.staff)delete d.staff[id];
-  showToast(`${CLUB_STAFF_TYPES[id].label} despedido`,'#888');
+  showToast(`${CLUB_STAFF_TYPES[id].label} despedido`);
   autoSave();render();
 };
 
@@ -915,13 +915,13 @@ window.doClubAddSponsor=(id)=>{
   const sp=CLUB_SPONSORS_POOL.find(s=>s.id===id);if(!sp)return;
   if(!d.clubSponsors)d.clubSponsors=[];
   d.clubSponsors.push({...sp,seasonsLeft:sp.duration||1});   // v96: el contrato dura lo que dice
-  showToast(`🤝 ${sp.name} — contrato firmado`,'#2d7a2d');
+  showToast(`🤝 ${sp.name} — contrato firmado`);
   autoSave();render();
 };
 window.doClubRemoveSponsor=(id)=>{
   const d=G.clubModeData;if(!d)return;
   d.clubSponsors=(d.clubSponsors||[]).filter(s=>s.id!==id);
-  showToast('Contrato rescindido','#888');
+  showToast('Contrato rescindido');
   autoSave();render();
 };
 
@@ -1014,12 +1014,12 @@ function renderClubMonthly(){
 
 window.doClubApplyMonthlyFull=()=>{
   const d=G.clubModeData;if(!d)return;
-  if(d.monthlyDecisionDone){showToast('Ya has tomado la decisión de esta temporada','#c07a10');return;}   // v96: se confirmaba sin límite y cada vez volvía a sumar
+  if(d.monthlyDecisionDone){showToast('Ya has tomado la decisión de esta temporada');return;}   // v96: se confirmaba sin límite y cada vez volvía a sumar
   const sel=G._monthlySelections||{};
   const costs={invertir:200,evento:100};
   // BUG-15 (v96): sin presupuesto para la opción elegida se aplicaban igual las otras dos
   // áreas y se gastaba la decisión de la temporada. Se comprueba antes de aplicar nada.
-  if((costs[sel.budget]||0)>(d.presupuesto||0)){showToast(`Sin fondos para esa opción (€${costs[sel.budget]}): elige otra`,'#c0392b');return;}
+  if((costs[sel.budget]||0)>(d.presupuesto||0)){showToast(`Sin fondos para esa opción (€${costs[sel.budget]}): elige otra`);return;}
   const effects={
     training:{
       intensivo:  (d)=>d.plantilla.forEach(r=>Object.keys(r.stats).forEach(k=>r.stats[k]=Math.min(95,(r.stats[k]||40)+3))),
@@ -1032,9 +1032,9 @@ window.doClubApplyMonthlyFull=()=>{
       formacion:  (d)=>{(d.cantera||[]).forEach(r=>Object.keys(r.stats).forEach(k=>r.stats[k]=Math.min(90,(r.stats[k]||30)+2)));},
     },
     budget:{
-      invertir:   (d,cost)=>{if(d.presupuesto<cost){showToast('Sin fondos','#c0392b');return false;}d.presupuesto-=cost;d.cohesion=Math.min(100,(d.cohesion||50)+2);d.plantilla.forEach(r=>Object.keys(r.stats).forEach(k=>r.stats[k]=Math.min(95,(r.stats[k]||40)+2)));},
+      invertir:   (d,cost)=>{if(d.presupuesto<cost){showToast('Sin fondos');return false;}d.presupuesto-=cost;d.cohesion=Math.min(100,(d.cohesion||50)+2);d.plantilla.forEach(r=>Object.keys(r.stats).forEach(k=>r.stats[k]=Math.min(95,(r.stats[k]||40)+2)));},
       ahorrar:    (d)=>{d.presupuesto=(d.presupuesto||0)+150;},
-      evento:     (d,cost)=>{if(d.presupuesto<cost){showToast('Sin fondos','#c0392b');return false;}d.presupuesto-=cost;d.cohesion=Math.min(100,(d.cohesion||50)+6);d.socios=Math.min(999,(d.socios||8)+2);},
+      evento:     (d,cost)=>{if(d.presupuesto<cost){showToast('Sin fondos');return false;}d.presupuesto-=cost;d.cohesion=Math.min(100,(d.cohesion||50)+6);d.socios=Math.min(999,(d.socios||8)+2);},
     },
   };
   let msgs=[];
@@ -1046,7 +1046,7 @@ window.doClubApplyMonthlyFull=()=>{
   });
   G._monthlySelections={};
   d.monthlyDecisionDone=true;
-  showToast(`✅ Decisiones aplicadas`,'#2d7a2d');
+  showToast(`✅ Decisiones aplicadas`);
   autoSave();G.screen='clubHub';render();
 };
 
@@ -1225,9 +1225,9 @@ window.doClubNextSeason=(socioGain,socioLoss,netBalance)=>{
   d.clubSponsors=(d.clubSponsors||[]).filter(sp=>{
     const o=_evaluados.find(x=>x.id===sp.id);
     if(!o)return true;
-    if(!o.met){showToast(`${sp.name} rescinde: objetivo no cumplido`,'#c0392b');return false;}
+    if(!o.met){showToast(`${sp.name} rescinde: objetivo no cumplido`);return false;}
     sp.seasonsLeft=(sp.seasonsLeft||sp.duration||1)-1;
-    if(sp.seasonsLeft<=0){showToast(`Termina el contrato con ${sp.name}: puedes volver a firmarlo`,'#888');return false;}
+    if(sp.seasonsLeft<=0){showToast(`Termina el contrato con ${sp.name}: puedes volver a firmarlo`);return false;}
     return true;
   });
   d.sponsorOutcomes=[];d.monthlyDecisionDone=false;
@@ -1240,14 +1240,14 @@ window.doClubNextSeason=(socioGain,socioLoss,netBalance)=>{
     d.redSeasons=(d.redSeasons||0)+1;
     if(d.redSeasons>=CLUB_RED_SEASONS_MAX){d.dissolved=true;G.screen='clubDissolved';autoSave();render();return;}
     d.cohesion=Math.max(0,(d.cohesion||50)-10);
-    if(d.redSeasons>=3&&Object.keys(d.staff||{}).length){d.staff={};showToast('Números rojos: se despide a todo el staff','#c0392b');}
+    if(d.redSeasons>=3&&Object.keys(d.staff||{}).length){d.staff={};showToast('Números rojos: se despide a todo el staff');}
     if(d.redSeasons===4&&d.plantilla.length>1){
       const i=d.plantilla.reduce((best,r,j,arr)=>(r.currentSalary||r.salary)>(arr[best].currentSalary||arr[best].salary)?j:best,0);
       const gone=d.plantilla.splice(i,1)[0];
-      showToast(`Números rojos: ${gone.name} se va del club`,'#c0392b');
+      showToast(`Números rojos: ${gone.name} se va del club`);
     }
     // BUG-12 (v96): el −10 se aplica en todas, pero el aviso solo salía en las dos primeras.
-    showToast(`Números rojos (${d.redSeasons}/${CLUB_RED_SEASONS_MAX}): ${d.redSeasons<3?'los sueldos llegan tarde':'el vestuario lo nota'}, −10 cohesión`,'#c07a10');
+    showToast(`Números rojos (${d.redSeasons}/${CLUB_RED_SEASONS_MAX}): ${d.redSeasons<3?'los sueldos llegan tarde':'el vestuario lo nota'}, −10 cohesión`);
   } else d.redSeasons=0;
   d.temporada++;
   d.calAssignments={};d.seasonResults=[];d.seasonSimulated=false;
@@ -1290,7 +1290,7 @@ window.doClubNextSeason=(socioGain,socioLoss,netBalance)=>{
         d.plantilla.push({...r,role:'normal'});
         d.cantera=d.cantera.filter(c=>c.id!==r.id);
         G._clubCanteraPromoted=true; // CR-38 (v76): logro cm_cantera_promote
-        showToast(`🎓 ${r.name} sube a la plantilla principal`,'#2d7a2d');
+        showToast(`🎓 ${r.name} sube a la plantilla principal`);
       }
     }
   });
@@ -1381,7 +1381,7 @@ window.doClubEvent=idx=>{
     if(avail.length&&d.plantilla.length<6){
       const newR={...avail[0],stats:{...avail[0].stats},currentSalary:avail[0].salary};
       d.plantilla.push(newR);
-      showToast(`${newR.name} se une al club`,'#4a8a2a');
+      showToast(`${newR.name} se une al club`);
     }
   }
   if(opt.salaryIncrease&&d.plantilla.length>0){
@@ -1390,21 +1390,21 @@ window.doClubEvent=idx=>{
   }
   if(opt.salarySpecificIncrease&&opt.targetId){
     const tr=d.plantilla.find(r=>r.id===opt.targetId);
-    if(tr){tr.currentSalary=(tr.currentSalary||tr.salary)+(opt.increaseAmount||0);showToast(`${tr.name.split(' ')[0]}: +€${opt.increaseAmount}/mes`,'#2d7a2d');}
+    if(tr){tr.currentSalary=(tr.currentSalary||tr.salary)+(opt.increaseAmount||0);showToast(`${tr.name.split(' ')[0]}: +€${opt.increaseAmount}/mes`);}
   }
   if(opt.loseRunner&&d.plantilla.length>2){
     const leavingIdx=Math.floor(Math.random()*d.plantilla.length);
     const leaving=d.plantilla.splice(leavingIdx,1)[0];
-    showToast(`${leaving.name} se va al club rival`,'#c0392b');
+    showToast(`${leaving.name} se va al club rival`);
   }
   if(opt.loseRunnerById&&d.plantilla.length>2){
     if(Math.random()<(opt.loseChance||0.3)){
       const idx=d.plantilla.findIndex(r=>r.id===opt.loseRunnerById);
-      if(idx>=0){const leaving=d.plantilla.splice(idx,1)[0];showToast(`${leaving.name} se va — no aceptó la oferta`,'#c0392b');}
+      if(idx>=0){const leaving=d.plantilla.splice(idx,1)[0];showToast(`${leaving.name} se va — no aceptó la oferta`);}
     }
   }
   let toastMsg=opt.repDelta>0?`+${opt.repDelta} reputación`:opt.repDelta<0?`${opt.repDelta} reputación`:'Decisión tomada';
-  showToast(toastMsg,opt.repDelta>=0?'#4a8a2a':'#c0392b');
+  showToast(toastMsg);
   d.pendingEvent=null;
   autoSave();G.screen='clubHub';render();
 };

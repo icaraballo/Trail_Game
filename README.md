@@ -65,3 +65,6 @@ npm run check # lint + pruebas + contenido
 
 © 2026 Iñigo Caraballo. **Todos los derechos reservados** (ver [LICENSE](LICENSE)): el código
 se puede leer como parte de un portfolio, pero no copiar, modificar ni distribuir.
+
+Las fuentes de `fonts/` (Barlow y Barlow Condensed, © The Barlow Project Authors) no son
+mías: van con su propia licencia, la SIL Open Font License 1.1 ([fonts/OFL.txt](fonts/OFL.txt)).

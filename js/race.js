@@ -6,8 +6,14 @@ function circuitPoints(pos,total){
 
 // T75/T76 (v90): COL, COL_LIGHT y el cálculo de bounds estaban duplicados
 // literalmente entre profSvg y profSegInfo. Una sola definición para las dos.
-const PROF_COL={climb:'#639922',descent:'#E24B4A',flat:'#888780'};
-const PROF_COL_LIGHT={climb:'#EAF3DE',descent:'#FCEBEB',flat:'#F1EFE8'};
+// v102 (dirección visual, TG-Direccion-Visual § 2 *Terreno*): una sola paleta por
+// terreno para todos los modos, con tokens. f = relleno, l = línea, w = grosor.
+// En el SVG van en style= y no en fill=/stroke=: var() no vale en un atributo.
+const PROF_TER={
+  climb:  {f:'var(--ter-subida)',l:'var(--ter-subida-l)',w:2.5},
+  descent:{f:'var(--ter-bajada)',l:'var(--ter-bajada-l)',w:2.5},
+  flat:   {f:'var(--ter-llano)', l:'var(--ter-llano-l)', w:2},
+};
 // bounds[i] = km de inicio del tramo i · bounds[i+1] = km de su final.
 function profBounds(segs){const b=[0];let c=0;for(const s of segs){c+=s.km;b.push(c);}return b;}
 
@@ -23,7 +29,6 @@ function profSvg(race, activeSeg, mode, raceProgress, containerId){
   if(!race||!Array.isArray(race.segs)||!race.segs.length||!race.km)return '';
   const W=560,H=100,PT=8,PB=18,PL=4,PR=4;
   const cW=W-PL-PR,cH=H-PT-PB;
-  const COL=PROF_COL, COL_LIGHT=PROF_COL_LIGHT;
   const prog=raceProgress||0;
   const selSeg=activeSeg!=null?activeSeg:-1;
 
@@ -62,35 +67,37 @@ function profSvg(race, activeSeg, mode, raceProgress, containerId){
     const segPts=[{km:bounds[si],elev:prev.elev},...bySeg[si]];
     if(segPts.length<2)return;
     const last=segPts[segPts.length-1];
-    const isDone=mode==='race'&&si<prog;
+    // v102: lo corrido y lo que se ve antes de salir, con el color de su terreno; lo
+    // que queda por correr en carrera, solo la línea gris discontinua (sin relleno).
     const isCur=mode==='race'&&si===prog;
     const isSel=si===selSeg;
-    const fill=isDone?'#D3D1C7':isSel||isCur?COL[s.type]:COL_LIGHT[s.type];
-    const stroke=isDone?'#B4B2A9':COL[s.type];
-    const sw=isSel||isCur?2.5:1.5;
-    const op=(mode==='race'&&si>prog&&!isSel)?0.55:1;
+    const porCorrer=mode==='race'&&si>prog&&!isSel;
+    const ter=PROF_TER[s.type]||PROF_TER.flat;
+    const sw=isSel||isCur?ter.w+0.75:ter.w;
     const pp=segPts.map(p=>`${tx(p.km).toFixed(1)},${ty(p.elev).toFixed(1)}`).join(' ');
     const cp=` ${tx(last.km).toFixed(1)},${(PT+cH).toFixed(1)} ${tx(bounds[si]).toFixed(1)},${(PT+cH).toFixed(1)}`;
-    html+=`<polygon points="${pp}${cp}" fill="${fill}" opacity="${op}"/>`;
-    html+=`<polyline points="${pp}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round" opacity="${op}"/>`;
+    if(!porCorrer)html+=`<polygon points="${pp}${cp}" style="fill:${ter.f}"/>`;
+    html+=porCorrer
+      ?`<polyline points="${pp}" style="fill:none;stroke:var(--ter-pend);stroke-width:1.75;stroke-dasharray:4 3" stroke-linejoin="round" stroke-linecap="round"/>`
+      :`<polyline points="${pp}" style="fill:none;stroke:${ter.l};stroke-width:${sw}" stroke-linejoin="round" stroke-linecap="round"/>`;
   });
 
   // Segment dividers
   bounds.slice(1,-1).forEach((k,i)=>{
     const ep=ultimo(bySeg[i]);
     if(!ep)return;
-    html+=`<line x1="${tx(k).toFixed(1)}" y1="${ty(ep.elev).toFixed(1)}" x2="${tx(k).toFixed(1)}" y2="${PT+cH}" stroke="#e8e6e0" stroke-width="0.5" stroke-dasharray="3,2"/>`;
+    html+=`<line x1="${tx(k).toFixed(1)}" y1="${ty(ep.elev).toFixed(1)}" x2="${tx(k).toFixed(1)}" y2="${PT+cH}" style="stroke:var(--line)" stroke-width="0.75" stroke-dasharray="3,2"/>`;
   });
 
   // Baseline
-  html+=`<line x1="${PL}" y1="${PT+cH}" x2="${W-PR}" y2="${PT+cH}" stroke="#e0dfd8" stroke-width="0.5"/>`;
+  html+=`<line x1="${PL}" y1="${PT+cH}" x2="${W-PR}" y2="${PT+cH}" style="stroke:var(--line2)" stroke-width="0.75"/>`;
 
   // Aid stations
   race.segs.forEach((s,si)=>{
     if(!s.aid)return;
     const ep=ultimo(bySeg[si]);
     if(!ep)return;
-    html+=`<circle cx="${tx(bounds[si+1]).toFixed(1)}" cy="${ty(ep.elev).toFixed(1)}" r="4" fill="#378ADD"/>`;
+    html+=`<circle cx="${tx(bounds[si+1]).toFixed(1)}" cy="${ty(ep.elev).toFixed(1)}" r="4" style="fill:var(--card);stroke:var(--ter-avi)" stroke-width="1.8"/>`;
   });
 
   // Current position marker in race mode
@@ -102,18 +109,18 @@ function profSvg(race, activeSeg, mode, raceProgress, containerId){
     const cp=prog>=0?(bySeg[prog]||[]):pts.filter(p=>p.seg<0);
     const mid=cp[Math.floor(cp.length/2)];
     if(mid){
-      html+=`<circle cx="${tx(mid.km).toFixed(1)}" cy="${ty(mid.elev).toFixed(1)}" r="5" fill="#1a1a1a"/>`;
-      html+=`<circle cx="${tx(mid.km).toFixed(1)}" cy="${ty(mid.elev).toFixed(1)}" r="8.5" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>`;
+      html+=`<circle cx="${tx(mid.km).toFixed(1)}" cy="${ty(mid.elev).toFixed(1)}" r="5" style="fill:var(--ink)"/>`;
+      html+=`<circle cx="${tx(mid.km).toFixed(1)}" cy="${ty(mid.elev).toFixed(1)}" r="8.5" style="fill:none;stroke:var(--ink)" stroke-width="1.5"/>`;
     }
   }
 
   // Km axis — ends exactly at race.km
   const step=totalKm<=20?5:totalKm<=35?10:10;
   for(let k=0;k<=totalKm;k+=step)
-    html+=`<text x="${tx(k).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="9" fill="#aaa">${k}km</text>`;
+    html+=`<text x="${tx(k).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="10" style="fill:var(--ink3);font-family:var(--f-num)">${k}km</text>`;
   // Always show final km label if not already shown
   if(totalKm%step!==0)
-    html+=`<text x="${tx(totalKm).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="9" fill="#aaa">${totalKm}km</text>`;
+    html+=`<text x="${tx(totalKm).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="10" style="fill:var(--ink3);font-family:var(--f-num)">${totalKm}km</text>`;
 
   // Transparent tap/click zones
   race.segs.forEach((s,si)=>{
@@ -125,9 +132,17 @@ function profSvg(race, activeSeg, mode, raceProgress, containerId){
   return `<svg id="${svgId}" viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block;overflow:visible;cursor:pointer">${html}</svg>`;
 }
 
+// v102: la leyenda del perfil, una para todos (antes, cuatro copias con los colores
+// viejos en race, coach y canicross). Los colores, los mismos tokens que PROF_TER.
+function profLeyenda(conAvi){
+  const caja=t=>`<span class="prof-ley-caja" style="background:${t.f};border-color:${t.l}"></span>`;
+  return `<div class="prof-ley">
+      <span>${caja(PROF_TER.climb)}Subida</span><span>${caja(PROF_TER.descent)}Bajada</span><span>${caja(PROF_TER.flat)}Llano</span>${conAvi?'<span><span class="prof-ley-avi"></span>Avituallamiento</span>':''}
+    </div>`;
+}
 function profSegInfo(race, si, mode, raceProgress){
-  if(si==null||si<0)return `<div style="font-size:12px;color:#aaa;text-align:center;padding:4px 0">Toca un tramo para ver los detalles</div>`;
-  const COL=PROF_COL, COL_LIGHT=PROF_COL_LIGHT;
+  if(si==null||si<0)return `<div style="font-size:12px;color:var(--ink3);text-align:center;padding:4px 0">Toca un tramo para ver los detalles</div>`;
+  const ter=PROF_TER[race.segs[si]?.type]||PROF_TER.flat;   // v102
   const TYPE_LABEL={climb:'▲ Subida',descent:'▼ Bajada',flat:'▶ Llano'};
   const prog=raceProgress||0;
   const s=race.segs[si];
@@ -137,14 +152,14 @@ function profSegInfo(race, si, mode, raceProgress){
   const isCur=mode==='race'&&si===prog;
   const isAhead=mode==='race'&&si>prog;
   let badge='';
-  if(isCur)badge=`<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:${COL_LIGHT[s.type]};color:${COL[s.type]};margin-left:7px">Aquí estás</span>`;
-  else if(isDone)badge=`<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:#f5f4f0;color:#888;margin-left:7px">Completado</span>`;
-  else if(isAhead)badge=`<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:#f5f4f0;color:#aaa;margin-left:7px">Por delante</span>`;
-  const bg=isDone?'#f5f4f0':COL_LIGHT[s.type];
-  const border=isDone?'#e0dfd8':COL[s.type];
-  return `<div style="margin-top:8px;padding:8px 11px;border-radius:8px;background:${bg};border:0.5px solid ${border}">
-    <div style="font-size:13px;font-weight:600;color:${isDone?'#888':COL[s.type]};margin-bottom:2px">${TYPE_LABEL[s.type]} — ${s.name}${badge}</div>
-    <div style="font-size:12px;color:#666">${s.km}km${s.gain>0?` · +${s.gain}m`:s.gain<0?` · ${s.gain}m`:''}${s.aid?' · 🔵 Avituallamiento':''}${mode==='race'&&!isDone?` · <strong>${kmLeft.toFixed(0)}km para meta</strong>`:''}</div>
+  if(isCur)badge=`<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:var(--card);color:var(--ink);margin-left:7px">Aquí estás</span>`;
+  else if(isDone)badge=`<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:var(--card);color:var(--ink2);margin-left:7px">Completado</span>`;
+  else if(isAhead)badge=`<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:var(--card);color:var(--ink3);margin-left:7px">Por delante</span>`;
+  const bg=isAhead?'var(--soft)':ter.f;
+  const border=isAhead?'var(--line2)':ter.l;
+  return `<div style="margin-top:8px;padding:8px 11px;border-radius:8px;background:${bg};border:1px solid ${border}">
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px">${TYPE_LABEL[s.type]} — ${s.name}${badge}</div>
+    <div style="font-size:12px;color:var(--ink2)">${s.km}km${s.gain>0?` · +${s.gain}m`:s.gain<0?` · ${s.gain}m`:''}${s.aid?' · 🔵 Avituallamiento':''}${mode==='race'&&!isDone?` · <strong>${kmLeft.toFixed(0)}km para meta</strong>`:''}</div>
   </div>`;
 }
 
@@ -179,12 +194,7 @@ function racePreviewCard(race, mode, raceProgress){
     <div style="font-size:12px;color:#888;margin-bottom:10px">${race.type} · ${race.km}km · ${raceDesnivel(race)}</div>
     <div id="prof-wrap-${cid}">${profSvg(race,-1,mode||'preview',raceProgress||0,cid)}</div>
     <div id="prof-info-${cid}" data-sel="-1" style="min-height:20px">${profSegInfo(race,null,mode||'preview',raceProgress||0)}</div>
-    <div style="display:flex;gap:10px;font-size:12px;color:#aaa;margin-top:8px;flex-wrap:wrap">
-      <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#EAF3DE;border:1px solid #639922;margin-right:3px;vertical-align:middle"></span>Subida</span>
-      <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#FCEBEB;border:1px solid #E24B4A;margin-right:3px;vertical-align:middle"></span>Bajada</span>
-      <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#F1EFE8;border:1px solid #888;margin-right:3px;vertical-align:middle"></span>Llano</span>
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#378ADD;margin-right:3px;vertical-align:middle"></span>Avituallamiento</span>
-    </div>
+    ${profLeyenda(true)}
   </div>`;
 }
 function effForWork(){
@@ -697,7 +707,7 @@ window.doUseGel=()=>{
   G.runner.energy=Math.min(100,G.runner.energy+gelEnergy);
   G.time+=8; // 8 segundos de pausa para el gel
   G.gelsUsed=(G.gelsUsed||0)+1;
-  showToast(`🧃 Gel · +${gelEnergy} energía`,'#4a8a2a');
+  showToast(`🧃 Gel · +${gelEnergy} energía`);
   render();
 };
 const AID_OPTIONS=[
@@ -2427,7 +2437,7 @@ function applyPostRaceTracking(race,res){
   // Clasificación Zegama por tiempo (corte: 4h20 = 260 min)
   if(race.id==='mayo'&&!G.injuryType&&G.time<=260){
     G.zegamaQualNext=true;
-    showToast('¡Bajo el corte de Zegama! Clasificado para el año que viene 🏔️','#4a8a2a');
+    showToast('¡Bajo el corte de Zegama! Clasificado para el año que viene 🏔️');
   }
   G.careerHistory.push({name:race.name,year:G.year,time:G.time,pos,dnf:false,prize,catPos,catTotal,catName:playerCat.label});
   G.money+=prize;
@@ -2486,8 +2496,8 @@ function applyPostRaceTracking(race,res){
   if(!existingPB||G.time<existingPB.time){
     const isNew=!existingPB;
     G.personalBests[race.id]={time:G.time,year:G.year,pos};
-    if(isNew) setTimeout(()=>showToast('🏆 ¡Primer registro en '+(race.km||'?')+'K! '+fmt(G.time),'#c07a10'),600);
-    else setTimeout(()=>showToast('🏆 ¡Nuevo récord personal! '+fmt(G.time),'#c07a10'),600);
+    if(isNew) setTimeout(()=>showToast('🏆 ¡Primer registro en '+(race.km||'?')+'K! '+fmt(G.time)),600);
+    else setTimeout(()=>showToast('🏆 ¡Nuevo récord personal! '+fmt(G.time)),600);
   }
   if(G.stormActive)G.stormSurvivedCount=(G.stormSurvivedCount||0)+1;
 
@@ -2518,7 +2528,7 @@ function applyPostRaceTracking(race,res){
   });
   const raceFollowers=followersFromRaceResult(pos,race.tier,false);
   addFollowers(raceFollowers);
-  if(raceFollowers>0)setTimeout(()=>showToast('+'+raceFollowers+' seguidores 📱','#4a90d9'),400);
+  if(raceFollowers>0)setTimeout(()=>showToast('+'+raceFollowers+' seguidores 📱'),400);
   checkFollowerThresholds();
 
   // Historial y carga

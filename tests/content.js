@@ -421,6 +421,43 @@ for(const [n,f] of manejadores)
   if(!definidos.has(n)){err('un manejador del HTML llama a algo que no existe', n+'() citado desde '+f);sinDefinir++;}
 if(!sinDefinir) ok('los '+manejadores.size+' manejadores citados desde el HTML existen y están definidos');
 
+// ── 10 · v102 · Dirección visual: ningún hex fuera de los tokens ─────────────
+// TG-Direccion-Visual § 6. Los colores viven como tokens en el :root de
+// index.html y los renders escriben var(--token). Hoy hay ~2.000 hex repartidos
+// por todo el juego: cada fichero tiene un TECHO con los que lleva, y es ERROR
+// pasarse. Al migrar una pantalla el número baja y aquí se avisa de bajar su
+// techo, para que lo ganado no se pueda volver a perder. Cuando un fichero llega
+// a 0 se quita de la lista y desde ahí cualquier hex es ERROR.
+// devmode.js queda fuera a propósito: el panel de desarrollo tiene estilo propio.
+bloque('10 · Dirección visual: hex fuera de los tokens');
+const HEX_TECHO={
+  'index.html':247,'constants.js':71,'state.js':17,'race.js':104,'coach.js':374,'club.js':187,
+  'canicross.js':257,'render-core.js':117,'render-clasico.js':453,'render-temporada.js':163,
+};
+const HEX_FUERA=new Set(['devmode.js']);
+// `&#127939;` es una entidad HTML, no un color; `#tab-nav` un selector, no un hex.
+const RE_HEX=/(?<![&\w])#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![\w-])/g;
+function sinTokens(html){
+  // El bloque de tokens es el único sitio con hex permitido (del comentario
+  // «DIRECCIÓN VISUAL (v102) · TOKENS» a las @font-face de Barlow).
+  const a=html.indexOf('/* ══ DIRECCIÓN VISUAL (v102) · TOKENS'),b=html.indexOf('/* Barlow servida');
+  if(a<0||b<a){err('index.html: no encuentro el bloque de tokens','¿se ha movido el comentario de cabecera?');return html;}
+  return (html.slice(0,a)+html.slice(b)).replace(/\/\*[\s\S]*?\*\//g,'').replace(/<!--[\s\S]*?-->/g,'');
+}
+{
+  const cuentas=Object.entries(LIMPIO).filter(([f])=>!HEX_FUERA.has(f))
+    .map(([f,t])=>[f,(t.match(RE_HEX)||[]).length]).concat([['index.html',(sinTokens(HTML).match(RE_HEX)||[]).length]]);
+  let total=0,mal=0;
+  for(const [f,n] of cuentas){
+    total+=n;
+    const techo=HEX_TECHO[f]||0;
+    if(n>techo){err(f+': '+n+' hex, el techo es '+techo,'usa var(--token) de index.html (TG-Direccion-Visual § 2)');mal++;}
+    else if(n<techo) avi(f+': '+n+' hex, por debajo del techo '+techo,'baja HEX_TECHO[\''+f+'\'] a '+n+' en tests/content.js');
+  }
+  for(const f of Object.keys(HEX_TECHO)) if(!cuentas.some(([g])=>g===f)) avi('HEX_TECHO cita '+f+', que no existe','quítalo de la lista');
+  if(!mal) ok(total+' hex fuera de los tokens, ninguno nuevo (techo por fichero en HEX_TECHO)');
+}
+
 console.log('\n'+(errores===0
   ? '✅ CONTENIDO OK'+(avisos?'  ('+avisos+' avisos, ninguno bloquea)':'')
   : '❌ '+errores+' ERRORES de contenido'+(avisos?' · '+avisos+' avisos':'')));

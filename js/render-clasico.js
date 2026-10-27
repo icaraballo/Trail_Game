@@ -77,7 +77,7 @@ function renderClubSetup(){
 window.selectClub=id=>{
   const club=CLUBS.find(c=>c.id===id);
   if(!club)return;
-  if((club.minYear||1)>G.year){showToast('Disponible a partir del año '+club.minYear,'#c07a10');return;}
+  if((club.minYear||1)>G.year){showToast('Disponible a partir del año '+club.minYear);return;}
   const prev=G.club||CLUBS[0];
   if(prev.id!=='none'&&prev.id!==id&&id!=='none'){
     G.clubReputation=Math.max(0,(G.clubReputation||0)-20);
@@ -88,7 +88,7 @@ window.selectClub=id=>{
   G.clubCompanion=assignClubCompanion(club);
   const msg=id==='none'?'Sin club — independiente':
     G.clubCompanion?`Te unes a ${club.name}. Tu compañero: ${G.clubCompanion}`:`Te unes a ${club.name}`;
-  showToast(msg,'#4a8a2a');
+  showToast(msg);
   render();
 };
 // ── CALENDAR TAB ───────────────────────
@@ -720,15 +720,15 @@ window.doExpresPrep=choice=>{
     const mainStat={fondista:'resistencia',montanero:'subida',tecnico:'bajada',todoterreno:'resistencia'}[spec]||'resistencia';
     stat[mainStat]=Math.min(100,(stat[mainStat]||50)+6);
     G.bodyLoad=Math.min(100,(G.bodyLoad||0)+12);
-    showToast('🏃 Entrenado — +6 '+mainStat.charAt(0).toUpperCase()+mainStat.slice(1),'#4a90d9');
+    showToast('🏃 Entrenado — +6 '+mainStat.charAt(0).toUpperCase()+mainStat.slice(1));
   } else if(choice==='rest'){
     stat.mental=Math.min(100,(stat.mental||50)+3);
     G.bodyLoad=Math.max(0,(G.bodyLoad||0)-14);
-    showToast('🛌 Descansado — +3 Mental · Carga -14','#2d7a2d');
+    showToast('🛌 Descansado — +3 Mental · Carga -14');
   } else {
     stat.mental=Math.min(100,(stat.mental||50)+5);
     G.bodyLoad=Math.max(0,(G.bodyLoad||0)-4);
-    showToast('🎯 Foco mental — +5 Mental · Carga -4','#4a8a2a');
+    showToast('🎯 Foco mental — +5 Mental · Carga -4');
   }
   // Go to simplified pre-race prep
   resetRaceFlags();resetRaceDayState();
@@ -1247,12 +1247,12 @@ window.negotiatePenalty=id=>{
     G.money=Math.max(0,G.money-reducida);
     G.sponsorPenalties.splice(idx,1);
     G._sponsorNegotiations=(G._sponsorNegotiations||0)+1; // tracking logro 'sponsor_negotiate'
-    showToast(`Acuerdo con ${p.name} · -€${reducida} en vez de -€${p.amount}`,'#4a8a2a');
+    showToast(`Acuerdo con ${p.name} · -€${reducida} en vez de -€${p.amount}`);
   } else {
     G.money=Math.max(0,G.money-p.amount);
     G.sponsorPenalties.splice(idx,1);
     applyRepDecay('bad_result');
-    showToast(`${p.name} no cede. Pagas los €${p.amount} completos.`,'#c0392b');
+    showToast(`${p.name} no cede. Pagas los €${p.amount} completos.`);
   }
   checkAndUnlockAchievements();
   autoSave();
@@ -1374,8 +1374,8 @@ function lifeAthleteEffMult(h){
 window.setAthleteHours=h=>{
   G.lifeAthleteHours=h;
   const first=G.lifeAthlete?esc(G.lifeAthlete.name.split(' ')[0]):'el atleta';
-  if(h>0)showToast(`–${h}h para ti · +${h}h para ${first}`,'#c07a10');
-  else showToast('Entrenas al 100% — sin horas para el atleta','#4a90d9');
+  if(h>0)showToast(`–${h}h para ti · +${h}h para ${first}`);
+  else showToast('Entrenas al 100% — sin horas para el atleta');
   // DS06 (v95): buscaba [data-athlete-hours] para repintar solo este bloque, pero
   // el bloque nunca llevó ese atributo y siempre caía en render(). Y menos mal: la
   // «Efectividad» de la cabecera y lo que sube cada bloque dependen de estas
@@ -1710,7 +1710,7 @@ window.doFameAction=id=>{
   G.fameActionsThisSeason[id]=(G.fameActionsThisSeason[id]||0)+1;
   if(a.income)G.money+=a.income;
   if(a.statBonus)Object.entries(a.statBonus).forEach(([k,v])=>{G.runner.stats[k]=Math.min(100,(G.runner.stats[k]||0)+v);});
-  showToast('+'+a.followers+' seguidores 📱','#4a90d9');
+  showToast('+'+a.followers+' seguidores 📱');
   checkFollowerThresholds();
   render();
 };
@@ -1719,7 +1719,7 @@ window.addRepInvitation=id=>{
   if(!inv)return;
   if(!G.selectedRaces.find(r=>r.id===id))G.selectedRaces.push(inv);
   G.repInvitations=(G.repInvitations||[]).filter(r=>r.id!==id);
-  showToast('📩 '+inv.name+' añadida al calendario','#2d7a2d');
+  showToast('📩 '+inv.name+' añadida al calendario');
   render();
 };
 // ── BETWEEN RACE MANAGEMENT ────────────
@@ -1795,7 +1795,7 @@ function renderBetweenManage(){
     </div>`;
 }
 window.doRecovery=id=>{
-  if(G._recoveryUsed){showToast('Ya has usado una acción de recuperación','#c07a10');return;}
+  if(G._recoveryUsed){showToast('Ya has usado una acción de recuperación');return;}
   const opts={session:{cost:40,loadRedux:15},massage:{cost:25,loadRedux:8},rest:{cost:0,loadRedux:5}};
   const o=opts[id];if(!o)return;
   if(o.cost>G.money){alert('Sin presupuesto.');return;}
@@ -1803,7 +1803,7 @@ window.doRecovery=id=>{
   G.bodyLoad=Math.max(0,G.bodyLoad-o.loadRedux);
   G._recoveryUsed=true;
   const _rec=recoverInjurySequel(INJURY_SEQUEL_RECOVERY[id]);   // v96: también recupera secuela de lesión
-  showToast(`Carga -${o.loadRedux}%${o.cost>0?' · -€'+o.cost:''}${_rec?' · stats +'+_rec:''}`,'#4a8a2a');
+  showToast(`Carga -${o.loadRedux}%${o.cost>0?' · -€'+o.cost:''}${_rec?' · stats +'+_rec:''}`);
   render();
 };
 function renderBetweenRace(){
@@ -1880,7 +1880,7 @@ window.toggleRace=id=>{
 window.selectYearObjective=(objId)=>{
   G.yearObjective=objId;
   G._yearObjectiveRewardPaid=false;
-  showToast(`Objetivo elegido: ${SEASON_OBJECTIVES.find(o=>o.id===objId)?.label||''}`, '#4a90d9');
+  showToast(`Objetivo elegido: ${SEASON_OBJECTIVES.find(o=>o.id===objId)?.label||''}`);
   autoSave();
   render();
 };
@@ -1890,8 +1890,8 @@ window.selectSponsor=(cat,spId)=>{
   if(!sp)return;
   const cur=G.sponsors[cat];
   if(cur){
-    if(cur.id===spId){showToast('Ya es tu sponsor activo — rompe el contrato para cambiarlo','#4a90d9');return;}
-    showToast(`Primero rompe el contrato con ${cur.name}`,'#c07a10');return;
+    if(cur.id===spId){showToast('Ya es tu sponsor activo — rompe el contrato para cambiarlo');return;}
+    showToast(`Primero rompe el contrato con ${cur.name}`);return;
   }
   if(!G._pendingSponsors)G._pendingSponsors={};
   // Toggle: si ya está pendiente lo deselecciona, si no lo selecciona
@@ -1912,7 +1912,7 @@ window.confirmSponsors=()=>{
     }
   });
   G._pendingSponsors={};
-  if(count>0)showToast(`✓ ${count} patrocinio${count>1?'s':''} confirmado${count>1?'s':''}`,'#2d7a2d');
+  if(count>0)showToast(`✓ ${count} patrocinio${count>1?'s':''} confirmado${count>1?'s':''}`);
   autoSave();render();
 };
 window.breakSponsorContract=(cat)=>{
@@ -1951,7 +1951,7 @@ window.confirmBreakSponsor=(cat)=>{
   const spName=sp.name;
   G.sponsors[cat]=null;
   G._sponsorBreaks=(G._sponsorBreaks||0)+1;   // tracking logro 'joke_fire_sponsor'
-  showToast(`Roto contrato con ${spName} · -€${penaltyAmount}`, '#c0392b');
+  showToast(`Roto contrato con ${spName} · -€${penaltyAmount}`);
   checkAndUnlockAchievements();
   autoSave();
   render();
@@ -1986,13 +1986,12 @@ window.selectTraining=id=>{
     // ── Toast: flavor text si existe, sino deltas ──────────────────
     if(b.flavor&&b.flavor.length){
       const txt=b.flavor[Math.floor(Math.random()*b.flavor.length)];
-      showToast('"'+txt+'"','#555');
+      showToast('"'+txt+'"');
     } else {
       const parts=Object.entries(b.effects)
         .filter(([,v])=>v!==0)
         .map(([k,v])=>{const r=Math.round(v*eff);const label=k.charAt(0).toUpperCase()+k.slice(1);return r>0?`+${r} ${label}`:(r<0?`${r} ${label}`:'');}).filter(Boolean);
-      if(parts.length) showToast('Al cerrar la temporada: '+parts.join(' · '),   // BUG-02 (v96): parecía inmediato
-        parts.some(p=>p.startsWith('+'))?'#2d7a2d':'#c07a10');
+      if(parts.length) showToast('Al cerrar la temporada: '+parts.join(' · '));   // BUG-02 (v96): parecía inmediato
     }
   }
   autoSave();render();
@@ -2048,8 +2047,7 @@ function applyTraining(force){
     if(tev.statBonus) Object.entries(tev.statBonus).forEach(([k,v])=>{G.runner.stats[k]=Math.max(10,Math.min(100,(G.runner.stats[k]||50)+v));});
     if(tev.loadMod) G.bodyLoad=Math.max(0,Math.min(100,(G.bodyLoad||0)+(tev.loadMod||0)));
     // Toast del evento de entrenamiento (después de un pequeño delay para no solaparse)
-    const col=tev.type==='good'?'#2d7a2d':'#c07a10';
-    setTimeout(()=>showToast(tev.icon+' '+tev.title,col),400);
+    setTimeout(()=>showToast(tev.icon+' '+tev.title),400);
     G.trainingEvent=null;
   }
 
@@ -2085,7 +2083,7 @@ function applyTraining(force){
 // forzosa tampoco: la crisis acaba de cancelar el staff.
 window.toggleSpend=id=>{
   if(G.spending[id]){G.spending[id]=false;render();return;}
-  if(G.forcedFullTime){showToast('Con la jornada forzosa por deuda no puedes contratar staff','#c0392b');return;}
+  if(G.forcedFullTime){showToast('Con la jornada forzosa por deuda no puedes contratar staff');return;}
   const cost=(STAFF_COSTS[id]||0)*12;
   if(cost>(G.money||0)+seasonYearNet()){alert('No te llega: contratarlo te dejaría en números rojos al cerrar la temporada.');return;}
   G.spending[id]=true;
@@ -2138,7 +2136,7 @@ window.handleEv=(evId,choiceIdx)=>{
         G.selectedRaces.splice(i,0,nueva);
       }else{
         // DS11 (v95): sin carreras libres, aceptar no hacía nada y no lo decía.
-        showToast('No quedan carreras libres en el calendario — la invitación se queda en nada','#4a90d9');
+        showToast('No quedan carreras libres en el calendario — la invitación se queda en nada');
       }
       break;
     }

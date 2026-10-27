@@ -190,7 +190,7 @@ function cnCheckBirthday(){
     G.cnBirthdayToastShown[key]=true;
     d.bond=Math.min(100,(d.bond||0)+3);
     d.peakBond=Math.max(d.peakBond||0,d.bond);
-    setTimeout(()=>showToast('🎂 ¡Cumpleaños de '+esc(d.name)+'! '+age+' año'+(age>1?'s':'')+' juntos · +3 vínculo','#c07a10'),350);
+    setTimeout(()=>showToast('🎂 ¡Cumpleaños de '+esc(d.name)+'! '+age+' año'+(age>1?'s':'')+' juntos · +3 vínculo'),350);
   }
 }
 
@@ -344,9 +344,9 @@ window.doStartCanicross=()=>{
 window.doCreateDog=()=>{
   const nm=document.getElementById('dogname');
   const name=(nm?nm.value:'').trim();
-  if(!name){showToast('Ponle nombre al perro primero','#c0392b');return;}
-  if(!G._cnDogBreed){showToast('Elige una raza','#c0392b');return;}
-  if(!G._cnAdoptionOrigin){showToast('Elige cómo llegó el perro a ti','#c0392b');return;}
+  if(!name){showToast('Ponle nombre al perro primero');return;}
+  if(!G._cnDogBreed){showToast('Elige una raza');return;}
+  if(!G._cnAdoptionOrigin){showToast('Elige cómo llegó el perro a ti');return;}
   G.dog=cnInitDog(name,G._cnDogBreed);
   // Apply adoption origin bond
   const origin=CN_ADOPTION_ORIGINS.find(o=>o.id===G._cnAdoptionOrigin);
@@ -360,7 +360,7 @@ window.doCreateDog=()=>{
   G._cnDogBreed=null;G._cnDogName=null;G._cnAdoptionOrigin=null;
   G.activeTab='game';G.screen='canicrossPreseason';
   autoSave();
-  showToast('¡'+esc(G.dog.name)+' se une a tu equipo! 🐕','#4a8a2a');
+  showToast('¡'+esc(G.dog.name)+' se une a tu equipo! 🐕');
   render();
 };
 
@@ -368,7 +368,7 @@ window.cnSelectBreed=breed=>{G._cnDogBreed=breed;const nm=document.getElementByI
 window.cnSelectTraining=id=>{G.cnTrainingBlock=id;render();};
 
 window.cnConfirmTraining=()=>{
-  if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento','#c0392b');return;}
+  if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento');return;}
   G.screen='canicrossCalendarSetup';render();
 };
 
@@ -396,7 +396,7 @@ window.cnToggleMonth=m=>{
 
 window.cnAdvanceRestWeek=()=>{
   const daysLeft=(G.cnVacationDays||0)-(G.cnVacationUsed||0);
-  if(daysLeft<=0){showToast('Sin días de vacaciones disponibles','#c0392b');return;}
+  if(daysLeft<=0){showToast('Sin días de vacaciones disponibles');return;}
   const d=G.dog;
   const days=Math.min(7,daysLeft);
   const healthBonus=Math.round(days*1.2);
@@ -413,10 +413,10 @@ window.cnAdvanceRestWeek=()=>{
   if((G.cnWeek||0)%4===0){
     const cost=cnMonthlyDogCost();
     G.cnMoney=Math.max(0,(G.cnMoney||0)-cost);
-    showToast('Gastos del perro: -€'+cost+'/mes','#c07a10');
+    showToast('Gastos del perro: -€'+cost+'/mes');
   }
   autoSave();render();
-  setTimeout(()=>showToast(days+'d de vacaciones — '+esc(d?.name||'el perro')+' descansa ✓','#4a8a2a'),150);
+  setTimeout(()=>showToast(days+'d de vacaciones — '+esc(d?.name||'el perro')+' descansa ✓'),150);
 };
 
 function cnApplyOneWeekTraining(){
@@ -446,7 +446,7 @@ function cnApplyOneWeekTraining(){
         G.cnTrainAdrainSessions[next]=(G.cnTrainAdrainSessions[next]||0)+1;
         if(G.cnTrainAdrainSessions[next]>=2){
           d.commands[next]=true;G.cnTrainAdrainSessions[next]=0;
-          setTimeout(()=>showToast('¡'+esc(d.name)+' aprende "'+cnCommandLabel(next)+'"! ✅','#4a8a2a'),50);
+          setTimeout(()=>showToast('¡'+esc(d.name)+' aprende "'+cnCommandLabel(next)+'"! ✅'),50);
         }
       }
     }
@@ -455,7 +455,7 @@ function cnApplyOneWeekTraining(){
 }
 
 window.cnAdvanceWeek=()=>{
-  if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento','#c0392b');return;}
+  if(!G.cnTrainingBlock){showToast('Elige un bloque de entrenamiento');return;}
   const doneMonth=cnCurrentMonth();   // BUG-17 (v96): el aviso nombra el mes que termina, no el siguiente
   // Avanzar 4 semanas (1 mes) de una vez
   for(let i=0;i<4;i++){
@@ -468,19 +468,19 @@ window.cnAdvanceWeek=()=>{
   }
   const MONTH_NAMES={10:'Octubre',11:'Noviembre',12:'Diciembre',1:'Enero',2:'Febrero',3:'Marzo'};
   autoSave();render();
-  setTimeout(()=>showToast((MONTH_NAMES[doneMonth]||'Mes')+' completado ✓','#4a8a2a'),150);
+  setTimeout(()=>showToast((MONTH_NAMES[doneMonth]||'Mes')+' completado ✓'),150);
 };
 
 window.cnStartRace=idx=>{
   if(!cnCanRace()){
     const d=G.dog;
-    if(!d){showToast('Sin perro asignado','#c0392b');return;}
-    if(d.bond<cnRaceThreshold()){showToast('Vínculo insuficiente — necesitas ≥'+cnRaceThreshold()+' para competir (actual: '+d.bond+')','#c0392b');return;}
-    if(d.injury&&d.injuryRaces>0){showToast(esc(d.name)+' está de baja ('+d.injuryRaces+' carreras)','#c0392b');return;}
-    showToast('El perro no puede correr ahora','#c0392b');return;
+    if(!d){showToast('Sin perro asignado');return;}
+    if(d.bond<cnRaceThreshold()){showToast('Vínculo insuficiente — necesitas ≥'+cnRaceThreshold()+' para competir (actual: '+d.bond+')');return;}
+    if(d.injury&&d.injuryRaces>0){showToast(esc(d.name)+' está de baja ('+d.injuryRaces+' carreras)');return;}
+    showToast('El perro no puede correr ahora');return;
   }
   const race=(G.cnSelectedRaces||[])[idx];
-  if(!race){showToast('Carrera no disponible','#c0392b');return;}
+  if(!race){showToast('Carrera no disponible');return;}
   G.cnCurrentRaceIdx=idx;
   // Achievement tracking
   if(G.dog&&G.dog.bond<20)G._cnLowBondRaced=(G._cnLowBondRaced||0)+1;
@@ -565,16 +565,16 @@ window.cnChoosePace=paceId=>{
 
   if(paceId==='atope'&&d?.commands?.forward){
     rs.time=Math.max(0,(rs.time||0)-10);rs.bondDelta=(rs.bondDelta||0)+1;
-    setTimeout(()=>showToast(esc(d.name)+' responde "Adelante" ✓ −10s','#4a8a2a'),50);
+    setTimeout(()=>showToast(esc(d.name)+' responde "Adelante" ✓ −10s'),50);
   }
   if(paceId==='suave'&&d?.commands?.hold){
     rs.dogHealth=Math.min(100,(rs.dogHealth||100)+4);
-    setTimeout(()=>showToast(esc(d.name)+' mantiene el ritmo — "Aguanta" ✓','#4a8a2a'),50);
+    setTimeout(()=>showToast(esc(d.name)+' mantiene el ritmo — "Aguanta" ✓'),50);
   }
   if(seg?.type==='descent'&&d?.commands?.left){
     rs.time=Math.max(0,(rs.time||0)-8);
     rs.dogHealth=Math.min(100,(rs.dogHealth||100)+2);
-    setTimeout(()=>showToast(esc(d.name)+' toma las curvas — "Izquierda" ✓ −8s','#4a8a2a'),50);
+    setTimeout(()=>showToast(esc(d.name)+' toma las curvas — "Izquierda" ✓ −8s'),50);
   }
 
   const ev=cnPickEvent(rs.month||1);
@@ -608,38 +608,38 @@ window.cnToggleRace=id=>{
   const idx=sel.findIndex(r=>r.id===id);
   if(idx>=0){G.cnSelectedRaces.splice(idx,1);}
   else{
-    if(sel.length>=5){showToast('Máximo 5 carreras por temporada','#c0392b');return;}
+    if(sel.length>=5){showToast('Máximo 5 carreras por temporada');return;}
     G.cnSelectedRaces=[...sel,race];
   }
   render();
 };
 
 window.cnConfirmCalendar=()=>{
-  if(!(G.cnSelectedRaces||[]).length){showToast('Selecciona al menos una carrera','#c0392b');return;}
+  if(!(G.cnSelectedRaces||[]).length){showToast('Selecciona al menos una carrera');return;}
   G.cnSelectedRaces=[...G.cnSelectedRaces].sort((a,b)=>a.month-b.month);
   G.activeTab='game';G.screen='canicrossHub';
   autoSave();
-  showToast('Calendario confirmado: '+G.cnSelectedRaces.length+' carrera(s)','#4a8a2a');
+  showToast('Calendario confirmado: '+G.cnSelectedRaces.length+' carrera(s)');
   render();
 };
 
 window.cnCallVet=type=>{
   const d=G.dog;if(!d)return;
   const cost=type==='complete'?120:50;
-  if((G.cnMoney||0)<cost){showToast('Sin fondos suficientes','#c0392b');return;}
+  if((G.cnMoney||0)<cost){showToast('Sin fondos suficientes');return;}
   G.cnMoney-=cost;
   if(!G.cnVetHistory)G.cnVetHistory=[];
   G.cnVetHistory.push({type,season:G.cnSeason,cost});
   G._cnVetThisSeason=true;
   if(type==='basic'&&(d.injuryRaces||0)>0){
     d.injuryRaces=Math.ceil(d.injuryRaces/2);
-    showToast('Revisión completada — baja reducida a '+d.injuryRaces+' carrera(s)','#4a8a2a');
+    showToast('Revisión completada — baja reducida a '+d.injuryRaces+' carrera(s)');
   } else if(type==='complete'&&d.injury){
     d.injuryRaces=Math.max(0,(d.injuryRaces||0)-1);
-    if(d.injuryRaces===0){d.injury=null;showToast(esc(d.name)+' se recupera ✓','#4a8a2a');}
-    else showToast('Tratamiento en curso — '+d.injuryRaces+' carrera(s) de baja','#4a90d9');
+    if(d.injuryRaces===0){d.injury=null;showToast(esc(d.name)+' se recupera ✓');}
+    else showToast('Tratamiento en curso — '+d.injuryRaces+' carrera(s) de baja');
   } else {
-    showToast('Revisión completada ✓','#4a8a2a');
+    showToast('Revisión completada ✓');
   }
   autoSave();render();
 };
@@ -648,12 +648,12 @@ window.cnBuyEquip=(category,id)=>{
   const items=CANICROSS_EQUIPMENT[category]||[];
   const item=items.find(i=>i.id===id);if(!item)return;
   if(!G.cnOwnedEquipment)G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
-  if((G.cnOwnedEquipment[category]||[]).includes(id)){showToast('Ya tienes este equipo','#888');return;}
-  if((G.cnMoney||0)<item.price){showToast('Sin fondos suficientes','#c0392b');return;}
+  if((G.cnOwnedEquipment[category]||[]).includes(id)){showToast('Ya tienes este equipo');return;}
+  if((G.cnMoney||0)<item.price){showToast('Sin fondos suficientes');return;}
   G.cnMoney-=item.price;
   G.cnOwnedEquipment[category]=[...(G.cnOwnedEquipment[category]||[]),id];
   G.equipment[category]=id;
-  showToast('¡'+item.name+' comprado! 🎒','#4a8a2a');
+  showToast('¡'+item.name+' comprado! 🎒');
   autoSave();render();
 };
 
@@ -716,18 +716,18 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
 window.cnResolveDislasia=opt=>{
   const d=G.dog;if(!d)return;
   if(opt==='treat'){
-    if((G.cnMoney||0)<300){showToast('Sin fondos para el tratamiento (€300)','#c0392b');return;}
+    if((G.cnMoney||0)<300){showToast('Sin fondos para el tratamiento (€300)');return;}
     G.cnMoney-=300;
     d.speed=Math.round((d.speed||50)*0.85);
     d.stamina=Math.round((d.stamina||50)*0.85);
-    showToast('Tratamiento intensivo iniciado 💊','#4a90d9');
+    showToast('Tratamiento intensivo iniciado 💊');
     cnDoSeasonTransition();
   } else if(opt==='retire'){
     d.retired=true;G.screen='canicrossDogRetirement';render();
   } else if(opt==='ignore'){
     d.health=Math.max(0,(d.health||100)-5);
     d.bond=Math.max(0,(d.bond||0)-5);
-    showToast(esc(d.name)+' nota que no le cuidas. -5 vínculo','#c0392b');
+    showToast(esc(d.name)+' nota que no le cuidas. -5 vínculo');
     cnDoSeasonTransition();
   }
 };
@@ -788,10 +788,10 @@ window.cnDoPreseasonAct=id=>{
   if(act.bondBonus&&d){d.bond=Math.min(100,(d.bond||0)+act.bondBonus);d.peakBond=Math.max(d.peakBond||0,d.bond);}
   if(act.healthBonus&&d)d.health=Math.min(100,(d.health||100)+act.healthBonus);
   if(act.mentalBonus&&G.runner?.stats)bumpStat(G.runner,'mental',act.mentalBonus);
-  if(act.teachFirst&&d){d.commands=d.commands||{};if(!d.commands.forward){d.commands.forward=true;showToast(esc(d.name)+' aprende "Adelante" en el entreno ✅','#4a8a2a');}}
+  if(act.teachFirst&&d){d.commands=d.commands||{};if(!d.commands.forward){d.commands.forward=true;showToast(esc(d.name)+' aprende "Adelante" en el entreno ✅');}}
   G.cnPreseasonDone.push(id);
   autoSave();render();
-  setTimeout(()=>showToast(act.label+' completado ✓','#4a8a2a'),100);
+  setTimeout(()=>showToast(act.label+' completado ✓'),100);
 };
 
 function renderCnCreateDog(){
@@ -1533,11 +1533,7 @@ function renderCanicrossPreRace(){
         <div style="font-size:12px;color:#888;margin-bottom:10px">${race.km}km · Tier ${race.tier} · ${esc(race.location)}</div>
         <div id="prof-wrap-cn-pre">${profSvg(cnRaceObj,-1,'preview',0,'cn-pre')}</div>
         <div id="prof-info-cn-pre" data-sel="-1" style="min-height:20px">${profSegInfo(cnRaceObj,null,'preview',0)}</div>
-        <div style="display:flex;gap:10px;font-size:12px;color:#aaa;margin-top:8px;flex-wrap:wrap">
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#EAF3DE;border:1px solid #639922;margin-right:3px;vertical-align:middle"></span>Subida</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#FCEBEB;border:1px solid #E24B4A;margin-right:3px;vertical-align:middle"></span>Bajada</span>
-          <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#F1EFE8;border:1px solid #888;margin-right:3px;vertical-align:middle"></span>Llano</span>
-        </div>
+        ${profLeyenda(false)}
         <div style="font-size:12px;color:#888;margin-top:8px">${rs.rivals?.length||0} equipos rivales en carrera</div>
       </div>`;
     })()}

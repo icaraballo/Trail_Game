@@ -404,7 +404,7 @@ function applyRepDecay(cause){
   const before=G.followers||0;
   G.followers=Math.max(0,Math.round(before*(1-pct)));
   const lost=before-G.followers;
-  if(lost>200)setTimeout(()=>showToast('-'+lost+' seguidores 📉','#c07a10'),400);
+  if(lost>200)setTimeout(()=>showToast('-'+lost+' seguidores 📉'),400);
 }
 // T71 (v90): eran cinco bloques `if` casi idénticos donde solo cambiaban el
 // umbral, el tier y el filtro. Dos de los cinco excluían las carreras ya
@@ -454,7 +454,7 @@ function checkFollowerThresholds(){
     if(f<nivel.min||G._thresholdsSeen.includes(nivel.min))continue;
     G._thresholdsSeen.push(nivel.min);
     const tier=TIER_LABEL_RACE[nivel.tier]||nivel.tier;
-    setTimeout(()=>showToast('Tu presencia en redes te abre una puerta: invitación '+tier+' la próxima temporada 📩','#4a8a2a'),1200);
+    setTimeout(()=>showToast('Tu presencia en redes te abre una puerta: invitación '+tier+' la próxima temporada 📩'),1200);
   }
 }
 function monthlyClubCost(){return G.club?.cost||0;}
@@ -689,7 +689,7 @@ function settleDebtSeason(){
     const pay=Math.min(G.debt,G.money||0);
     G.debt-=pay; G.money-=pay;
     if(pay>0&&typeof showToast==='function')
-      setTimeout(()=>showToast(`Deuda amortizada: −€${pay}`,'#c07a10'),800);
+      setTimeout(()=>showToast(`Deuda amortizada: −€${pay}`),800);
     checkDebtEscalation();
     return;
   }
@@ -708,8 +708,7 @@ function settleDebtSeason(){
 
   if((minPay>0||interest>0)&&typeof showToast==='function'){
     setTimeout(()=>showToast(
-      `Deuda: −€${minPay} amortizado · +€${interest} de intereses`,
-      interest>minPay?'#c0392b':'#c07a10'),800);
+      `Deuda: −€${minPay} amortizado · +€${interest} de intereses`),800);
   }
   checkDebtEscalation();
 }
@@ -717,16 +716,16 @@ function settleDebtSeason(){
 // T29b: amortización voluntaria. Disponible en Finanzas y entre carreras, para
 // que la deuda sea una decisión recurrente y no un descuento automático.
 window.doPayDebt=(amount)=>{
-  if((G.debt||0)<=0){showToast('No tienes deuda pendiente','#888');return;}
+  if((G.debt||0)<=0){showToast('No tienes deuda pendiente');return;}
   const want=(amount==='all')?Math.min(G.debt,G.money||0):Math.min(Number(amount)||0,G.debt,G.money||0);
-  if(want<=0){showToast('Sin saldo para amortizar','#c0392b');return;}
+  if(want<=0){showToast('Sin saldo para amortizar');return;}
   G.debt-=want; G.money-=want;
   if(G.debt<=0){
     G.debt=0;
-    showToast('✓ Deuda saldada','#4a8a2a');
+    showToast('✓ Deuda saldada');
     checkDebtEscalation();   // libera forcedFullTime si estaba activo
   } else {
-    showToast(`−€${want} · quedan €${G.debt}`,'#c07a10');
+    showToast(`−€${want} · quedan €${G.debt}`);
   }
   autoSave();render();
 };
@@ -747,7 +746,7 @@ function checkDebtEscalation(){
     G.debtSeasons=0;
     if(G.forcedFullTime){
       G.forcedFullTime=false;
-      if(typeof showToast==='function')showToast('✓ Deuda saldada — vuelves a elegir jornada','#4a8a2a');
+      if(typeof showToast==='function')showToast('✓ Deuda saldada — vuelves a elegir jornada');
     }
     return;
   }

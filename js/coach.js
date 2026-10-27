@@ -38,7 +38,7 @@ function updateEmotionalState(){
   if(next!==prev){
     G.coachEmotionalState=next;
     const es=EMOTIONAL_STATES[next];
-    showToast(`${es.emoji} ${G.coachAthlete?.name?.split(' ')[0]||'Atleta'}: estado → ${es.label}`,'#555');
+    showToast(`${es.emoji} ${G.coachAthlete?.name?.split(' ')[0]||'Atleta'}: estado → ${es.label}`);
   }
 }
 // ── Estilos de entrenador (E10) ─────────────────────────────────────────────
@@ -246,7 +246,7 @@ window.doConfirmTrainerStyle=()=>{
   if(!G._pendingTrainerStyle)return;
   G.coachTrainerStyle=G._pendingTrainerStyle;
   G._pendingTrainerStyle=null;
-  showToast(`Estilo: ${TRAINER_STYLES[G.coachTrainerStyle].emoji} ${TRAINER_STYLES[G.coachTrainerStyle].label}`,'#1a1a1a');
+  showToast(`Estilo: ${TRAINER_STYLES[G.coachTrainerStyle].emoji} ${TRAINER_STYLES[G.coachTrainerStyle].label}`);
   G.screen='coachHub';G.activeTab='game';
   autoSave();render();
 };
@@ -446,11 +446,7 @@ function renderCoachTraining(){
       <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Perfil — ${esc(nextRace.name)}</div>
       <div id="coach-train-prof-wrap">${profSvg(nextRace,-1,'preview',0,'coach-train')}</div>
       <div id="coach-train-prof-info" data-sel="-1" style="min-height:16px">${profSegInfo(nextRace,null,'preview',0)}</div>
-      <div style="display:flex;gap:8px;font-size:11px;color:#aaa;margin-top:6px;flex-wrap:wrap">
-        <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#EAF3DE;border:1px solid #639922;margin-right:2px;vertical-align:middle"></span>Subida</span>
-        <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#FCEBEB;border:1px solid #E24B4A;margin-right:2px;vertical-align:middle"></span>Bajada</span>
-        <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#F1EFE8;border:1px solid #888;margin-right:2px;vertical-align:middle"></span>Llano</span>
-      </div>
+      ${profLeyenda(false)}
     </div>
     ${recLabel?`<div class="note" style="margin-bottom:12px;font-size:13px">💡 Para este perfil se recomienda: <strong>${recLabel}</strong></div>`:''}
     `:''}
@@ -694,12 +690,7 @@ function renderCoachPreRace(){
       <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Perfil de la carrera</div>
       <div id="coach-pre-prof-wrap">${profSvg(race,-1,'preview',0,'coach-pre')}</div>
       <div id="coach-pre-prof-info" data-sel="-1" style="min-height:16px">${profSegInfo(race,null,'preview',0)}</div>
-      <div style="display:flex;gap:8px;font-size:11px;color:#aaa;margin-top:6px;flex-wrap:wrap">
-        <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#EAF3DE;border:1px solid #639922;margin-right:2px;vertical-align:middle"></span>Subida</span>
-        <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#FCEBEB;border:1px solid #E24B4A;margin-right:2px;vertical-align:middle"></span>Bajada</span>
-        <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#F1EFE8;border:1px solid #888;margin-right:2px;vertical-align:middle"></span>Llano</span>
-        <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#378ADD;margin-right:2px;vertical-align:middle"></span>Avituallamiento</span>
-      </div>
+      ${profLeyenda(true)}
     </div>
     ${(()=>{
       // Rival hijo en esta carrera
@@ -1123,7 +1114,7 @@ window.doCoachAidAdvice=advice=>{
     G.coachTrust=Math.max(0,Math.min(100,G.coachTrust+trustDelta));
     G.coachBodyLoad=Math.max(0,G.coachBodyLoad-8);
     G.coachRaceIdx++;
-    showToast('DNF — el atleta abandona','#c0392b');
+    showToast('DNF — el atleta abandona');
     clearCoachRaceTimer();clearCoachRadioPause();G.coachRadioWindowOpen=false;
     G.screen='coachHome';render();return;
   }
@@ -1151,10 +1142,10 @@ window.doCoachRadio=msgIdx=>{
   if(msg.trustBoost)G.coachTrust=Math.min(100,(G.coachTrust||60)+(msg.trustBoost||0));
   // Rebelde ignores sometimes
   if(G.coachAthlete?.personality==='rebelde'&&Math.random()<0.3){
-    showToast(`${G.coachAthlete.name} ignora la indicación`,'#c0392b');
+    showToast(`${G.coachAthlete.name} ignora la indicación`);
     G.coachRadioUsed[segIdx]='(ignorado)';
   } else {
-    showToast(msg.id==='silent'?'Sin radio':msg.label,'#4a90d9');
+    showToast(msg.id==='silent'?'Sin radio':msg.label);
   }
   render();
 };
@@ -1171,7 +1162,7 @@ window.doCoachGiveGel=aidNum=>{
     data.segments[i].energy=Math.min(100,(data.segments[i].energy||60)+12);
   }
   data.totalTime-=15; // small time benefit from better energy
-  showToast('🍬 Gel dado — +12% energía','#c07a10');
+  showToast('🍬 Gel dado — +12% energía');
   render();
 };
 
@@ -1185,7 +1176,7 @@ window.doCoachSocksChange=aidNum=>{
   for(let i=startIdx;i<data.segments.length;i++){
     data.segments[i].legs=Math.min(100,(data.segments[i].legs||40)+8);
   }
-  showToast('🧦 Calcetines cambiados (+90s pero km finales mejor)','#888');
+  showToast('🧦 Calcetines cambiados (+90s pero km finales mejor)');
   render();
 };
 
@@ -1207,7 +1198,7 @@ window.doCoachTacticInfo=aidNum=>{
       G.coachTrust=Math.min(100,G.coachTrust+2);data.totalTime-=15;
     }
   }
-  showToast('📊 Información dada','#4a90d9');
+  showToast('📊 Información dada');
   // store message to show in feed
   const seg=data.segments[G.coachRaceAnimIdx-1];
   if(seg)seg.tacticMsg=msg;
@@ -1225,7 +1216,7 @@ function applyCoachInjury(inj){
   });
   G.coachTrust=Math.max(0,G.coachTrust-4); // coach pushed too hard
   logCoachDecision('forced_injury','Forzaste al atleta hasta la lesión',false);
-  showToast(`⚠️ ${inj.label} — ${inj.racesOut} carrera${inj.racesOut>1?'s':''} de baja`,'#c0392b');
+  showToast(`⚠️ ${inj.label} — ${inj.racesOut} carrera${inj.racesOut>1?'s':''} de baja`);
 }
 
 window.doCoachRaceFinish=()=>{
@@ -1637,7 +1628,7 @@ window.doCoachRenewEnthusiastic=()=>{
   });
   G._skipMaturityThisSeason=true;
   a.monthlyFee=Math.round((a.monthlyFee||250)*1.10);
-  showToast(`🤝 Renovación entusiasta — honorarios +10%`,'#2d7a2d');
+  showToast(`🤝 Renovación entusiasta — honorarios +10%`);
   doCoachNextSeason();
 };
 
@@ -1727,11 +1718,11 @@ function renderCoachHub(){
   const prevRep=G._prevCoachRep||0;
   if(prevRep<40&&rep>=40&&!G._slot1Celebrated){
     G._slot1Celebrated=true;
-    setTimeout(()=>showToast('🎉 ¡Slot 2 desbloqueado! Ya puedes entrenar a un segundo atleta','#c07a10'),400);
+    setTimeout(()=>showToast('🎉 ¡Slot 2 desbloqueado! Ya puedes entrenar a un segundo atleta'),400);
   }
   if(prevRep<70&&rep>=70&&!G._slot2Celebrated){
     G._slot2Celebrated=true;
-    setTimeout(()=>showToast('🌟 ¡Slot 3 desbloqueado! Agencia de tres atletas','#c0392b'),400);
+    setTimeout(()=>showToast('🌟 ¡Slot 3 desbloqueado! Agencia de tres atletas'),400);
   }
   G._prevCoachRep=rep;
   const repTier=rep<20?{label:'Entrenador novato',color:'#aaa'}:rep<40?{label:'Entrenador regional',color:'#4a90d9'}:rep<60?{label:'Entrenador conocido',color:'#2d7a2d'}:rep<80?{label:'Entrenador nacional',color:'#c07a10'}:{label:'Entrenador élite 🌟',color:'#c0392b'};
@@ -1879,7 +1870,7 @@ window.addCoachSlot=idx=>{
       }
     }
   }
-  if(targetIdx===-1){showToast('No hay slots disponibles','#c07a10');return;}
+  if(targetIdx===-1){showToast('No hay slots disponibles');return;}
   // Save current slot, switch to target, show select
   saveCoachSlot();
   G.coachActiveIdx=targetIdx;
@@ -1953,7 +1944,7 @@ window.doCoachDelegateRace=()=>{
   addCoachNotif(`${icon} ${race.name} — ${pos<=3?'¡Podio! ':''}#${pos} · ${dialogue}`,'race_result');
   generateCoachBetweenEvent();
   saveCoachSlot();autoSave();
-  showToast(`📡 ${esc(a.name)} ha terminado — #${pos}`,'#4a90d9');
+  showToast(`📡 ${esc(a.name)} ha terminado — #${pos}`);
   G.screen='coachHub';render();
 };
 
@@ -2163,7 +2154,7 @@ window.doCoachMidRaceEvent=choiceIdx=>{
     G.coachRaceResults.push({pos:null,dnf:true,dnfReason:'abandono',prize:0,coachCut:0,raceName:G.coachRaceData?.race?.name||''}); // T45 (v89)
     G.coachRaceIdx++;G.coachRaceData=null;G.coachRaceEventPending=null;
     generateCoachBetweenEvent();
-    showToast('DNF — el atleta abandona','#c0392b');
+    showToast('DNF — el atleta abandona');
     G.screen='coachHome';render();return;
   }
   // Apply stat effects
@@ -2240,7 +2231,7 @@ window.doCoachEventChoice=choiceIdx=>{
   // Registrar decisión si el evento la define
   if(c.decisionType)logCoachDecision(c.decisionType, c.text.replace(/"/g,'').slice(0,60), c.decisionPositive===true);
   const delta=c.trust||0;
-  showToast(delta>0?`+${delta} confianza`:delta<0?`${delta} confianza`:'Evento resuelto',delta>0?'#2d7a2d':delta<0?'#c0392b':'#888');
+  showToast(delta>0?`+${delta} confianza`:delta<0?`${delta} confianza`:'Evento resuelto');
   if(!G.coachEventLog)G.coachEventLog=[];
   G.coachEventLog.push({evtId:ev.id,choice:c.text,trust:c.trust||0});
   G.coachPendingEvent=null;
@@ -2398,6 +2389,6 @@ window.doCoachAcceptSponsor=id=>{
   if(!sp||(G.coachSponsors||[]).find(s=>s.id===id))return;
   if(!G.coachSponsors)G.coachSponsors=[];
   G.coachSponsors.push({...sp});
-  showToast(`🤝 ${sp.name} — contrato firmado`,'#2d7a2d');
+  showToast(`🤝 ${sp.name} — contrato firmado`);
   render();
 };

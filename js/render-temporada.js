@@ -205,7 +205,7 @@ window.resolveMonthlyEvent=(evIdx,optIdx)=>{
     if(opt.effect==='work_promotion_accept'){
       G.workBonus=(G.workBonus||0)+20;
       G.trainingHPenalty=(G.trainingHPenalty||0)+2;
-      showToast('Ascenso aceptado — +€20/mes · −2h/sem de entrenamiento','#c07a10');
+      showToast('Ascenso aceptado — +€20/mes · −2h/sem de entrenamiento');
     }
   }
   if(opt.clubRepDelta)changeClubRep(opt.clubRepDelta);
@@ -227,18 +227,18 @@ window.resolveMonthlyEvent=(evIdx,optIdx)=>{
   if(opt.loadRedux)parts.push(`Carga -${opt.loadRedux}`);
   if(opt.loadAdd)parts.push(`Carga +${opt.loadAdd}`);
   if(opt.clubRepDelta)parts.push(opt.clubRepDelta>0?`Rep +${opt.clubRepDelta}`:`Rep ${opt.clubRepDelta}`);
-  if(parts.length)showToast(parts.join(' · '), opt.value<0||opt.loadAdd||(opt.clubRepDelta&&opt.clubRepDelta<0)?'#c07a10':'#2d7a2d');
+  if(parts.length)showToast(parts.join(' · '));
   render();
 };
 // ══════════════════════════════════════
 //  TIENDA PROPIA
 // ══════════════════════════════════════
 window.doLaunchBrand=()=>{
-  if(G.money<2500){showToast('Necesitas €2.500 para lanzar tu marca','#c0392b');return;}
+  if(G.money<2500){showToast('Necesitas €2.500 para lanzar tu marca');return;}
   if(!confirm('¿Lanzar tu propia marca de ropa trail?\n\nCosta €2.500 de inversión inicial.\nGenerará €300/mes pero consumirá 6h/semana de entrenamiento.\n\nA los 2 años podrás contratar un empleado para recuperar esas horas.'))return;
   G.money-=2500;
   G.ownBrand={launched:G.year,hasEmployee:false,employeeYear:null};
-  showToast('¡Marca lanzada! 👟 +€300/mes · −6h entrenamiento/semana','#c07a10');
+  showToast('¡Marca lanzada! 👟 +€300/mes · −6h entrenamiento/semana');
   autoSave();render();
 };
 window.doHireEmployee=()=>{
@@ -246,7 +246,7 @@ window.doHireEmployee=()=>{
   if(!confirm('¿Contratar empleado para tu marca?\n\nCoste: €700/mes (se deduce de los ingresos de la marca).\nBeneficio: recuperas 6h/semana de entrenamiento.\nIngresos netos de la marca: €600/mes.'))return;
   G.ownBrand.hasEmployee=true;
   G.ownBrand.employeeYear=G.year;
-  showToast('Empleado contratado 👟 — ingresos netos €600/mes · sin coste de horas','#4a8a2a');
+  showToast('Empleado contratado 👟 — ingresos netos €600/mes · sin coste de horas');
   autoSave();render();
 };
 
@@ -292,7 +292,7 @@ window.doNextYear=yearNet=>{
     if(objRes&&objRes.met){
       G.money+=objRes.reward;
       G._yearObjectiveRewardPaid=true;
-      setTimeout(()=>showToast(`✓ Objetivo cumplido: +€${objRes.reward}`,'#4a8a2a'),400);
+      setTimeout(()=>showToast(`✓ Objetivo cumplido: +€${objRes.reward}`),400);
     }
   }
 
@@ -305,7 +305,7 @@ window.doNextYear=yearNet=>{
     const _totalVenc=_vencidas.reduce((a,p)=>a+p.amount,0);
     applyYearBalance(-_totalVenc);
     G.sponsorPenalties=G.sponsorPenalties.filter(p=>p.year>=G.year);
-    setTimeout(()=>showToast(`Penalizaciones vencidas cobradas: -€${_totalVenc}`,'#c0392b'),600);
+    setTimeout(()=>showToast(`Penalizaciones vencidas cobradas: -€${_totalVenc}`),600);
   }
 
   // Ingresos anuales de marca (ya están en yearNet a través de monthlyNet, pero el empleado se paga aparte)
@@ -346,7 +346,7 @@ window.doNextYear=yearNet=>{
     // forzosa por deuda activa no debe bajar nada.
     G.workByQuarter={1:80,2:80,3:80,4:80};
     G.workPct=currentWorkPct();
-    if(typeof showToast==='function')showToast('Tu ranking te permite reducir la jornada al 80 % — puedes volver a subirla cuando quieras','#4a8a2a');
+    if(typeof showToast==='function')showToast('Tu ranking te permite reducir la jornada al 80 % — puedes volver a subirla cuando quieras');
   }
   // Traspasar clasificación Zegama
   G.zegamaQual=G.zegamaQualNext;G.zegamaQualNext=false;
@@ -521,11 +521,11 @@ window.acceptLifeAthlete=()=>{
   // Antes esto ponía lifecyclePhase='overlap': devolvía la partida a la fase de solapamiento.
   if(G.carreraVida&&G.lifecyclePhase==='coach'){
     const idx=coachFreeSlotIdx();
-    if(idx<0){showToast('No tienes hueco libre para otro atleta','#c0392b');return;}
+    if(idx<0){showToast('No tienes hueco libre para otro atleta');return;}
     G.pendingLifeAthleteOffer=null;
     addCoachSlot(idx);                   // guarda el slot actual y deja el nuevo vacío
     G.coachPool=[{...a,currentStats:{...(a.currentStats||a.baseStats)}}];
-    showToast(`${a.name.split(' ')[0]} se une a tu equipo de entrenamiento.`,'#4a8a2a');
+    showToast(`${a.name.split(' ')[0]} se une a tu equipo de entrenamiento.`);
     doCoachSelect(a.id);
     return;
   }
@@ -533,7 +533,7 @@ window.acceptLifeAthlete=()=>{
   G.lifecyclePhase='overlap';
   G.pendingLifeAthleteOffer=null;
   G.coachReputation=(G.coachReputation||0)+10;
-  showToast(`${a.name.split(' ')[0]} confía en ti. Empieza el solapamiento.`,'#4a8a2a');
+  showToast(`${a.name.split(' ')[0]} confía en ti. Empieza el solapamiento.`);
   G.screen='overlapHub';
   autoSave();render();
 };
@@ -546,7 +546,7 @@ window.rejectLifeAthlete=()=>{
   G.lifeAthleteOfferCount=(G.lifeAthleteOfferCount||0)+1;
   G.pendingLifeAthleteOffer=null;
   const enCoach=G.lifecyclePhase==='coach';   // v96: siendo entrenador, de vuelta a tu hub
-  showToast(enCoach?'Sigues con tus atletas. Quizás vuelva a cruzarse contigo.':'Sigues con tus carreras. Quizás llegue alguien más adelante.','#888');
+  showToast(enCoach?'Sigues con tus atletas. Quizás vuelva a cruzarse contigo.':'Sigues con tus carreras. Quizás llegue alguien más adelante.');
   G.screen=enCoach?'coachHome':'workSetup';
   autoSave();render();
 };
@@ -580,7 +580,7 @@ function renderOverlapHub(){
 }
 
 window.goToCoachFromOverlap=()=>{
-  if(!G.lifeAthlete){showToast('Sin atleta asignado todavía','#c0392b');return;}
+  if(!G.lifeAthlete){showToast('Sin atleta asignado todavía');return;}
   if(!G.coachAthlete)G.coachAthlete={...G.lifeAthlete};
   if(!Array.isArray(G.coachRoster))G.coachRoster=[];
   if(!Array.isArray(G.coachSelectedRaces))G.coachSelectedRaces=[];
@@ -708,7 +708,7 @@ function applyAgingPenalties(){
   // Aviso pasivo si la degradación ya es notable
   if(mult>=2.5){
     const msgs=['Las bajadas ya no salen solas.','El cuerpo tarda más en recuperar.','Necesitas el doble de tiempo para recuperarte.','Las piernas ya no responden igual.'];
-    showToast(msgs[Math.floor(Math.random()*msgs.length)],'#c07a10');
+    showToast(msgs[Math.floor(Math.random()*msgs.length)]);
   }
 }
 
@@ -833,7 +833,7 @@ function applyLifeClubFounding(){
     ul.club=true;
     LS.set('unlocked',JSON.stringify(ul));
   }catch(e){}
-  showToast('El club nace. Una nueva etapa empieza.','#1D9E75');
+  showToast('El club nace. Una nueva etapa empieza.');
 }
 
 function renderClubIntro(){
@@ -898,7 +898,7 @@ function renderClubIntro(){
 
 window.rejectClubOffer=()=>{
   G._clubOfferDelay=(G.coachSeason||1)+2;
-  showToast('Les dices que no de momento. Volverán a llamar.','#888');
+  showToast('Les dices que no de momento. Volverán a llamar.');
   G.screen='coachHome';
   autoSave();render();
 };
@@ -1072,7 +1072,7 @@ window.confirmLifeCoachTransition=()=>{
     ul.coach=true;
     LS.set('unlocked',JSON.stringify(ul));
   }catch(e){}
-  showToast(`${G.lifeAthlete.name.split(' ')[0]} te espera. Empieza una nueva etapa.`,'#534AB7');
+  showToast(`${G.lifeAthlete.name.split(' ')[0]} te espera. Empieza una nueva etapa.`);
   G.screen='coachIntro';
   autoSave();render();
 };

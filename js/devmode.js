@@ -187,7 +187,7 @@ function devAct(label,fn,{undo=true,render:doRender=true}={}){
   }catch(e){
     devLog('error',label+': '+e.message,[e]);
     devStatus('Error: '+e.message,true);
-    showToast('DEV error: '+e.message,'#c0392b');
+    showToast('DEV error: '+e.message);
   }finally{DEV.busy--;}
 }
 window.devAct=devAct;
@@ -274,20 +274,20 @@ window.devJumpToClub=()=>{
   // con otras cuentas que el creado desde el menú. Lo mismo que doClubCreate().
   if(nuevo){generateClubEvent();generateClubObjective();}
   G.screen='clubHub';G.activeTab='game';
-  showToast('DEV: saltado a Club','#1D9E75');
+  showToast('DEV: saltado a Club');
   render();
 };
 window.devJumpToCanicross=()=>{
   G.gameMode='canicross';
   if(!G.dog)G.dog=cnInitDog('DevDog','mestizo');
   G.screen='canicrossHub';G.activeTab='game';
-  showToast('DEV: saltado a Canicross','#4a8a2a');
+  showToast('DEV: saltado a Canicross');
   render();
 };
 window.devJumpToClassic=()=>{
   G.gameMode='medio';
   G.screen='workSetup';G.activeTab='game';
-  showToast('DEV: saltado a Clásico','#1a1a1a');
+  showToast('DEV: saltado a Clásico');
   render();
 };
 window.devForceAthleteOffer=()=>{
@@ -297,7 +297,7 @@ window.devForceAthleteOffer=()=>{
   const pick=(available.length?available:LIFE_ATHLETE_POOL)[0];
   G.pendingLifeAthleteOffer={...pick,currentStats:{...pick.baseStats}};
   G.screen='lifeAthleteOffer';
-  showToast('DEV: oferta de atleta forzada','#534AB7');
+  showToast('DEV: oferta de atleta forzada');
   render();
 };
 
@@ -306,12 +306,12 @@ window.devForceAthleteOffer=()=>{
 // así que forzamos G.time y dejamos que finishRace() haga TODO lo demás
 // (stat gains, logros, premio, ranking...) exactamente como en una carrera real.
 window.devWinRace=()=>{
-  if(!G.rivals||!G.rivals.length){showToast('DEV: no hay carrera en curso','#c0392b');return;}
+  if(!G.rivals||!G.rivals.length){showToast('DEV: no hay carrera en curso');return;}
   G.time=Math.max(1,Math.min(...G.rivals.map(r=>r.time))-60);
   finishRace();
 };
 window.devLoseRace=()=>{
-  if(!G.rivals||!G.rivals.length){showToast('DEV: no hay carrera en curso','#c0392b');return;}
+  if(!G.rivals||!G.rivals.length){showToast('DEV: no hay carrera en curso');return;}
   G.time=Math.max(...G.rivals.map(r=>r.time))+60;
   finishRace();
 };
@@ -336,7 +336,7 @@ window.devSimulateClasicoSeasons=(n)=>{
           picks.push(r);spent+=r.cost;
         }
         G.selectedRaces=picks;
-        if(!picks.length){showToast('DEV: sin dinero/ranking para ninguna carrera — simulación detenida en temporada '+(i+1),'#c0392b');break;}
+        if(!picks.length){showToast('DEV: sin dinero/ranking para ninguna carrera — simulación detenida en temporada '+(i+1));break;}
       }
       G.currentRaceIdx=0;
       while(G.currentRaceIdx<G.selectedRaces.length){
@@ -353,9 +353,9 @@ window.devSimulateClasicoSeasons=(n)=>{
       doNextYear(seasonYearNet());   // H19 (v95): con 0 la economía no se movía nunca
       if(G.careerEnded)break;
     }
-    showToast('DEV: '+n+' temporada(s) de Clásico simuladas','#1a1a1a');
+    showToast('DEV: '+n+' temporada(s) de Clásico simuladas');
   }catch(e){
-    showToast('DEV error simulando Clásico: '+e.message,'#c0392b');
+    showToast('DEV error simulando Clásico: '+e.message);
     devLog('error','[devSimulateClasicoSeasons] '+e.message,[e]);
   }
   render();
@@ -365,12 +365,12 @@ window.devSimulateClasicoSeasons=(n)=>{
 // doCoachRaceFinish() lee G.coachRaceData.finalPos, ya fijado al generar la
 // carrera — lo sobreescribimos y dejamos que la función real haga el resto.
 window.devWinCoachRace=()=>{
-  if(!G.coachRaceData){showToast('DEV: no hay carrera de Entrenador en curso','#c0392b');return;}
+  if(!G.coachRaceData){showToast('DEV: no hay carrera de Entrenador en curso');return;}
   G.coachRaceData.finalPos=1;
   doCoachRaceFinish();
 };
 window.devLoseCoachRace=()=>{
-  if(!G.coachRaceData){showToast('DEV: no hay carrera de Entrenador en curso','#c0392b');return;}
+  if(!G.coachRaceData){showToast('DEV: no hay carrera de Entrenador en curso');return;}
   G.coachRaceData.finalPos=G.coachRaceData.totalParticipants||99;
   doCoachRaceFinish();
 };
@@ -383,7 +383,7 @@ window.devLoseCoachRace=()=>{
 // sin tocar la pantalla de carrera en absoluto.
 window.devSimulateCoachSeasons=(n)=>{
   n=Math.max(1,Number(n)||1);
-  if(!G.coachAthlete){showToast('DEV: no hay atleta de Entrenador — usa "Ir a Entrenador ahora" primero','#c0392b');return;}
+  if(!G.coachAthlete){showToast('DEV: no hay atleta de Entrenador — usa "Ir a Entrenador ahora" primero');return;}
   try{
     for(let i=0;i<n;i++){
       if(!G.coachSelectedRaces||!G.coachSelectedRaces.length){
@@ -400,9 +400,9 @@ window.devSimulateCoachSeasons=(n)=>{
       });
       doCoachNextSeason();
     }
-    showToast('DEV: '+n+' temporada(s) de Entrenador simuladas','#534AB7');
+    showToast('DEV: '+n+' temporada(s) de Entrenador simuladas');
   }catch(e){
-    showToast('DEV error simulando Entrenador: '+e.message,'#c0392b');
+    showToast('DEV error simulando Entrenador: '+e.message);
     devLog('error','[devSimulateCoachSeasons] '+e.message,[e]);
   }
   render();
@@ -413,14 +413,14 @@ window.devSimulateCoachSeasons=(n)=>{
 // rápido/lento y dejamos que cnFinishRace() real haga el resto.
 window.devWinCnRace=()=>{
   const rs=G.cnRaceState;
-  if(!rs||!rs.rivals||!rs.rivals.length||rs.done){showToast('DEV: no hay carrera de Canicross en curso','#c0392b');return;}
+  if(!rs||!rs.rivals||!rs.rivals.length||rs.done){showToast('DEV: no hay carrera de Canicross en curso');return;}
   rs.timePenalty=0;
   rs.time=Math.max(1,Math.min(...rs.rivals.map(r=>r.estimatedTime))-60);
   cnFinishRace();
 };
 window.devLoseCnRace=()=>{
   const rs=G.cnRaceState;
-  if(!rs||!rs.rivals||!rs.rivals.length||rs.done){showToast('DEV: no hay carrera de Canicross en curso','#c0392b');return;}
+  if(!rs||!rs.rivals||!rs.rivals.length||rs.done){showToast('DEV: no hay carrera de Canicross en curso');return;}
   rs.timePenalty=0;
   rs.time=Math.max(...rs.rivals.map(r=>r.estimatedTime))+60;
   cnFinishRace();
@@ -433,7 +433,7 @@ window.devLoseCnRace=()=>{
 // directo, sin pasar por tramos ni por la pantalla de carrera.
 window.devSimulateCanicrossSeasons=(n)=>{
   n=Math.max(1,Number(n)||1);
-  if(!G.dog){showToast('DEV: no hay perro — usa "Ir a Canicross ahora" primero','#c0392b');return;}
+  if(!G.dog){showToast('DEV: no hay perro — usa "Ir a Canicross ahora" primero');return;}
   try{
     for(let i=0;i<n;i++){
       if(!G.cnSelectedRaces||!G.cnSelectedRaces.length){
@@ -451,9 +451,9 @@ window.devSimulateCanicrossSeasons=(n)=>{
       });
       cnDoSeasonTransition();
     }
-    showToast('DEV: '+n+' temporada(s) de Canicross simuladas','#4a8a2a');
+    showToast('DEV: '+n+' temporada(s) de Canicross simuladas');
   }catch(e){
-    showToast('DEV error simulando Canicross: '+e.message,'#c0392b');
+    showToast('DEV error simulando Canicross: '+e.message);
     devLog('error','[devSimulateCanicrossSeasons] '+e.message,[e]);
   }
   render();
@@ -475,7 +475,7 @@ window.devClubClose=devClubClose;
 window.devSimulateClubSeasons=(n)=>{
   n=Math.max(1,Number(n)||1);
   const d=G.clubModeData;
-  if(!d){showToast('DEV: no hay club fundado — usa "Ir a Club ahora" primero','#c0392b');return;}
+  if(!d){showToast('DEV: no hay club fundado — usa "Ir a Club ahora" primero');return;}
   try{
     for(let i=0;i<n;i++){
       const dd=G.clubModeData;if(!dd)break;
@@ -489,9 +489,9 @@ window.devSimulateClubSeasons=(n)=>{
       devClubClose();
       if(G.screen==='clubDissolved')break;
     }
-    showToast('DEV: '+n+' temporada(s) de Club simuladas','#1D9E75');
+    showToast('DEV: '+n+' temporada(s) de Club simuladas');
   }catch(e){
-    showToast('DEV error simulando Club: '+e.message,'#c0392b');
+    showToast('DEV error simulando Club: '+e.message);
     devLog('error','[devSimulateClubSeasons] '+e.message,[e]);
   }
   render();
@@ -507,9 +507,9 @@ window.devForceSeasonEnd=(mode)=>{
 
 // ── Lesión rápida ──
 window.devSetInjury=(type)=>{
-  if(!type){G.injuryStatus=null;G.injuryType=null;G.injuryRacesLeft=0;showToast('DEV: lesión retirada','#4a8a2a');render();return;}
+  if(!type){G.injuryStatus=null;G.injuryType=null;G.injuryRacesLeft=0;showToast('DEV: lesión retirada');render();return;}
   const injData=INJURY_TYPES[type];
-  if(!injData){showToast('DEV: tipo de lesión desconocido','#c0392b');return;}
+  if(!injData){showToast('DEV: tipo de lesión desconocido');return;}
   // BUG-18 (v96): hace lo mismo que una lesión de verdad —quita stats como secuela
   // recuperable y la apunta en injuryHistory—. En carrera cuenta las carreras posteriores a la
   // actual, como el juego. Entre carreras se trata como sufrida en la anterior: si impide
@@ -529,11 +529,11 @@ window.devSetInjury=(type)=>{
     afterRace();                     // pinta la baja de la próxima carrera
     applyInjuryStatPenalty(type);    // después: afterRace devuelve un 15 % de la secuela pendiente
     autoSave();
-    showToast('DEV: lesión aplicada — '+(injData.label||type),'#c0392b');
+    showToast('DEV: lesión aplicada — '+(injData.label||type));
     return;
   }
   applyInjuryStatPenalty(type);
-  showToast('DEV: lesión aplicada — '+(injData.label||type),'#c0392b');
+  showToast('DEV: lesión aplicada — '+(injData.label||type));
   render();
 };
 
@@ -553,7 +553,7 @@ window.devUnlockAllAchievements=()=>{
   if(!G.achievementMeta)G.achievementMeta={};
   G.unlockedAchievements=ACHIEVEMENTS.map(a=>a.id);
   ACHIEVEMENTS.forEach(a=>{if(!G.achievementMeta[a.id])G.achievementMeta[a.id]={difficulty:G.gameMode||'medio',year:G.year||1};});
-  showToast('DEV: todos los logros desbloqueados (solo esta partida)','#c07a10');
+  showToast('DEV: todos los logros desbloqueados (solo esta partida)');
   render();
 };
 window.devEndAchPreview=()=>{
@@ -581,7 +581,7 @@ window.devToggleAchievement=(id)=>{
     G.unlockedAchievements.splice(idx,1);
     delete globalAchs[id];
     LS.set('globalAchs',JSON.stringify(globalAchs));
-    showToast('DEV: logro bloqueado de nuevo (también en el trofeo global)','#888');
+    showToast('DEV: logro bloqueado de nuevo (también en el trofeo global)');
   }else{
     G.unlockedAchievements.push(id);
     if(!G.achievementMeta)G.achievementMeta={};
@@ -589,7 +589,7 @@ window.devToggleAchievement=(id)=>{
     if(!G.achievementMeta[id])G.achievementMeta[id]={difficulty:diff,year:G.year||G.cnSeason||1};
     if(!globalAchs[id])globalAchs[id]={difficulty:diff,year:G.year||G.cnSeason||1};
     LS.set('globalAchs',JSON.stringify(globalAchs));
-    showToast('DEV: logro desbloqueado','#c07a10');
+    showToast('DEV: logro desbloqueado');
   }
   render();
 };
@@ -611,7 +611,7 @@ window.devUnlockCategory=(cat)=>{
     if(!globalAchs[a.id])globalAchs[a.id]={difficulty:diff,year:G.year||G.cnSeason||1};
   });
   LS.set('globalAchs',JSON.stringify(globalAchs));
-  showToast('DEV: '+targets.length+' logro(s) desbloqueados','#c07a10');
+  showToast('DEV: '+targets.length+' logro(s) desbloqueados');
   render();
 };
 
@@ -757,7 +757,7 @@ function devLaunchMonthly(id){
   const ev=MONTHLY_EVENTS_POOL.find(e=>e.id===id);if(!ev)throw new Error('Evento desconocido');
   if(ev.requiresClub&&(!G.club||G.club.id==='none')){
     G.club=CLUBS.find(c=>c.id!=='none')||CLUBS[0];
-    showToast('DEV: unido a "'+G.club.name+'" para que el evento tenga sentido','#4a8a2a');
+    showToast('DEV: unido a "'+G.club.name+'" para que el evento tenga sentido');
   }
   if(!Array.isArray(G.monthlyEvents))G.monthlyEvents=[];
   G.monthlyEvents.unshift({...ev,resolved:false});
@@ -777,13 +777,13 @@ function devEvtCan(g,kind){
 window.devEvtLaunch=(gid,id)=>{
   const g=devEvtGroup(gid);if(!g)return;
   const why=devEvtCan(g,'launch');
-  if(why){devStatus(why,true);showToast('DEV: '+why,'#c07a10');return;}
+  if(why){devStatus(why,true);showToast('DEV: '+why);return;}
   devAct('Lanzar evento '+devEvtTitle(id),()=>{DEV.forced[gid+':'+id]=true;g.launch(id);});
 };
 window.devEvtArm=(gid,id)=>{
   const g=devEvtGroup(gid);if(!g)return;
   const why=devEvtCan(g,'arm');
-  if(why){devStatus(why,true);showToast('DEV: '+why,'#c07a10');return;}
+  if(why){devStatus(why,true);showToast('DEV: '+why);return;}
   DEV.forced[gid+':'+id]=true;
   devArm(g.armKey,id);
   devStatus('Armado: '+devArmLabel(g.armKey,id));
@@ -1009,7 +1009,7 @@ function devPlain(html){return String(html).replace(/<[^>]+>/g,'').replace(/\s+/
 function devBtn(label,fn,o={}){
   const h=devHandler(el=>{
     const why=o.need&&o.need();
-    if(why){devStatus(why,true);showToast('DEV: '+why,'#c07a10');return;}
+    if(why){devStatus(why,true);showToast('DEV: '+why);return;}
     if(o.confirm&&!confirm(typeof o.confirm==='function'?o.confirm():o.confirm))return;
     if(o.raw)return fn(el);
     devAct(o.act||devPlain(label),()=>fn(el),{render:o.render!==false});
@@ -1901,7 +1901,7 @@ function devEvtListHtml(g){
 window.devEvtWhy=gid=>{
   const g=devEvtGroup(gid);if(!g)return;
   const why=(g.launch?devEvtCan(g,'launch'):null)||(g.armKey?devEvtCan(g,'arm'):null)||'Ahora sí se puede: vuelve a pintar';
-  devStatus(why,true);showToast('DEV: '+why,'#c07a10');
+  devStatus(why,true);showToast('DEV: '+why);
 };
 function devSystemsBody(){
   const needClassic=()=>devIsClassic()?null:'Necesita una partida de Clásico o Exprés';
@@ -2685,7 +2685,7 @@ window.devRecipeRun=id=>{
   devSnapNew('Antes de: '+r.label);
   devAct('Receta · '+r.label,()=>r.pasos());
   devStatus('Receta «'+r.label+'» (sesión '+r.sesion+' · '+r.casilla+'). Ahora: '+r.luego);
-  showToast('DEV: receta lista — mira la línea de estado del panel','#534AB7');
+  showToast('DEV: receta lista — mira la línea de estado del panel');
 };
 
 // ══ §13 ARRANQUE Y ENVOLTORIOS ══════════════════════════════════════════
