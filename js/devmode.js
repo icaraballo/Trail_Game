@@ -1504,6 +1504,15 @@ function devSeasonBody(am){
   let h=`<div class="dev-row">${devBtn('⏭ Forzar fin de temporada',()=>M.seasonEnd(),{when:'ya',need})}</div>
     <div class="dev-row"><input id="dev-sim-n" class="dev-in dev-n" type="number" min="1" value="3">${devBtn('⏩ Simular temporadas',()=>M.simulate(devNum('dev-sim-n',1)),{when:'ya',need})}</div>`;
   if(am==='club')h+='<div class="dev-note">Club cierra con las cuentas de la pantalla de balance: cuotas, sueldos, staff y socios (P15).</div>';
+  // Rediseño de Canicross, paso 8: calibración. Nivel de equipo X → posiciones por tier.
+  if(am==='canicross'){
+    const lv=Math.round(typeof cnTeamLevel==='function'?cnTeamLevel():50);
+    h+=`<div class="dev-row">Nivel <input id="dev-cal-lv" class="dev-in dev-n" type="number" min="0" max="100" value="${DEV.cnCalLv!=null?DEV.cnCalLv:lv}">
+      Carreras <input id="dev-cal-n" class="dev-in dev-n" type="number" min="20" value="200">
+      ${devBtn('📊 Calibrar',()=>{DEV.cnCalLv=devNum('dev-cal-lv',lv);DEV.cnCal=cnCalibrate(DEV.cnCalLv,Math.max(20,devNum('dev-cal-n',200)),'mantener',60);},{when:'ya'})}</div>`;
+    if(DEV.cnCal)h+=`<div class="dev-note">Nivel ${DEV.cnCalLv} · «Mantener», sincronía 60 (nivel actual del equipo: ${lv})<br>${[1,2,3,4].map(t=>{const c=DEV.cnCal[t];return `Tier ${t}: gana ${c.win} % · podio ${c.podio} % · top 5 ${c.top5} % · puesto medio ${c.media} de ${c.campo}`;}).join('<br>')}</div>`;
+    h+='<div class="dev-note">No cambia la partida: los rivales y el nivel de la temporada vuelven a como estaban.</div>';
+  }
   if(am==='clasico'){
     h+=`<div class="dev-row">Trimestre: ${[1,2,3,4].map(q=>devBtn('T'+q,()=>{G.currentQuarter=q;},{cls:'dev-sm'+(G.currentQuarter===q?' dev-sel':'')})).join('')} ${devWhen('ya')}</div>
       <div class="dev-warn">Escribe G.currentQuarter como los enlaces «Otros trimestres» de la jornada laboral. No dispara lo que el juego hace al cambiar de trimestre.</div>`;

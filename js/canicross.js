@@ -2355,3 +2355,32 @@ function renderCnEpilogo(){
     <button class="pz-btn" onclick="backToMainMenu()">Volver al menú</button>
   </div>`;
 }
+
+// ── CALIBRACIÓN (rediseño, paso 8 · § 12) ─────────────────────────────────────
+// Corre n carreras de cada tier con un equipo de nivel `level` y devuelve la distribución
+// de posiciones: lo que hace falta para ajustar CN_TIER_LEVELS contra una tabla y no contra
+// una intuición. No toca la partida: deja G.cnRivals y G.cnSeasonShift como estaban.
+function cnCalibrate(level,n,intentId,sync){
+  const intent=CN_INTENTS.find(x=>x.id===(intentId||'mantener'))||CN_INTENTS[1];
+  const fs=0.85+0.003*(sync==null?60:sync);
+  const keep=JSON.stringify({r:G.cnRivals||{},s:G.cnSeasonShift||{}});
+  const out={};
+  try{
+    [1,2,3,4].forEach(tier=>{
+      const races=CANICROSS_RACES.filter(r=>r.tier===tier);
+      const pos=[];let campo=0;
+      for(let k=0;k<n;k++){
+        const race=races[k%races.length];
+        if(k%5===0)G.cnSeasonShift={};   // una «temporada» cada cinco carreras
+        const rv=cnGenerateRivals(race);
+        const my=race.segs.reduce((a,sg)=>a+cnSegTime(race,sg,level,intent.time),0)/fs;
+        pos.push(rv.filter(r=>cnRivalTime(r)<my).length+1);campo+=rv.length+1;
+      }
+      const pct=f=>Math.round(pos.filter(f).length/pos.length*100);
+      out[tier]={win:pct(p=>p===1),podio:pct(p=>p<=3),top5:pct(p=>p<=5),media:Math.round(pos.reduce((a,b)=>a+b,0)/pos.length*10)/10,campo:Math.round(campo/n)};
+    });
+  }finally{
+    const k=JSON.parse(keep);G.cnRivals=k.r;G.cnSeasonShift=k.s;
+  }
+  return out;
+}

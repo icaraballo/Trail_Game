@@ -37,7 +37,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
   'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
   'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnApplyMonthHours','cnHoursUsed','cnSponsorIncome','CN_EQUIP','CN_CMD_LEVEL_HOURS','cnEquipSeg',
-  'cnDestiny','cnRetireDogAs','cnCircuitStanding','cnHomeDogs','cnCompanionStrip','cnSyncGraph','renderCnNotebook','renderCnEpilogo',
+  'cnDestiny','cnRetireDogAs','cnCircuitStanding','cnHomeDogs','cnCompanionStrip','cnSyncGraph','renderCnNotebook','renderCnEpilogo','cnCalibrate',
   'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
@@ -1265,6 +1265,17 @@ console.log('\n── Canicross, rediseño paso 7 · cuaderno, circuito, retiro 
   t('el cuaderno con ≥4 vistas enseña la correlación, sin conclusión', pinta(()=>T.renderCnNotebook()).includes('Las 1 veces que elegiste mantener'));
   t('el epílogo cuenta a todos los perros', pinta(()=>T.renderCnEpilogo()).includes('Nuevo'));
   ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
+}
+
+console.log('\n── Canicross, rediseño paso 8 · calibración ──');
+{
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnRivals:{r_aguirre:{name:'x',level:10,age:1,dogAge:1,style:'regular'}},cnSeasonShift:{1:3}});
+  const antes=JSON.stringify({r:g.cnRivals,s:g.cnSeasonShift});
+  const c40=T.cnCalibrate(40,60),c80=T.cnCalibrate(80,60);
+  t('la calibración no cambia la partida', JSON.stringify({r:g.cnRivals,s:g.cnSeasonShift})===antes);
+  t('da los cuatro tiers con porcentajes', [1,2,3,4].every(k=>c40[k]&&c40[k].win>=0&&c40[k].win<=100&&c40[k].campo>0));
+  t('más nivel, mejor puesto medio en cada tier', [1,2,3,4].every(k=>c80[k].media<=c40[k].media));
+  t('con el mismo nivel el tier 4 es más duro que el 1', c40[4].media/c40[4].campo>c40[1].media/c40[1].campo);
 }
 
 t.done('TODO OK');
