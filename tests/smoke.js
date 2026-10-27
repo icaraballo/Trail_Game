@@ -35,7 +35,8 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS',
   'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS',
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
-  'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival']);
+  'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
+  'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnNextCommand']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -1089,6 +1090,55 @@ console.log('\n── Canicross, rediseño paso 3 · nivel de equipo y rivales p
   t('cuando su perro se retira, vuelve con uno joven y peor', st.dogAge===2&&st.level<60&&st.newDog===true);
   t('los equipos con nombre: tiers y nivel dentro del rango de su tier (content § 10.8)',
     T.CN_RIVAL_TEAMS.length===22&&T.CN_RIVAL_TEAMS.every(x=>x.tiers.length&&x.tiers.every(tr=>x.level>=T.CN_TIER_LEVELS[tr].min&&x.level<=T.CN_TIER_LEVELS[tr].max)));
+}
+
+console.log('\n── Canicross, rediseño paso 4 · conducta, sincronía y diálogo ──');
+{
+  const B=T.CN_BEHAVIOURS;
+  t('content §10.4: 14 conductas de salida y 18 de tramo', B.filter(b=>b.when==='pre').length>=14&&B.filter(b=>b.when==='seg').length>=18);
+  t('content §10.4: el juego describe, no concluye', B.every(b=>!/parece|cansad|quiere|está (contento|triste|nervioso)/i.test(b.text)), B.filter(b=>/parece|cansad|quiere/i.test(b.text)).map(b=>b.id).join());
+  t('las tres intenciones salen pedidas por varias frases', ['conservar','mantener','apretar'].every(w=>B.filter(b=>b.when==='seg'&&b.wants===w).length>=3));
+  t('content §10.5: seis comandos con etiqueta y descripción', T.CN_COMMANDS.length===6&&T.CN_COMMANDS.every(c=>c.label&&c.desc));
+  t('ids de conducta únicos', new Set(B.map(b=>b.id)).size===B.length);
+  const _r=ctx.render,_t=ctx.showToast,_a=ctx.autoSave,_st=ctx.setTimeout,_M=ctx.Math;
+  ctx.render=()=>{};ctx.autoSave=()=>{};ctx.setTimeout=f=>f();ctx.showToast=()=>{};
+  const g=setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:1});
+  const d=T.cnAddDog(T.cnInitDog('Txuri','husky'));
+  t('el perro nace con estado oculto, 1-2 rasgos y seis comandos a 0', d.mood===60&&d.fatigue===0&&d.temperament.length>=1&&d.temperament.length<=2
+    &&d.temperament.every(x=>T.CN_TEMPERAMENTS.includes(x))&&T.CN_COMMANDS.every(c=>d.commands[c.id]===0));
+  t('se enseña primero el de menos dominio', T.cnNextCommand()==='forward');
+  d.bond=50;d.temperament=['estoico'];
+  const race=T.CANICROSS_RACES.find(r=>r.id==='cn_guadarrama');
+  g.cnSelectedRaces=[{...race}];
+  ctx.cnStartRace(0);
+  const rs=g.cnRaceState;
+  t('la carrera empieza con sincronía 40 + vínculo/2 y una conducta', rs.sync===65&&rs.behaviour&&rs.preBehaviour, rs.sync);
+  // Coincidir sube la sincronía; no coincidir la baja
+  rs.behaviour={id:'clavado',wants:'mantener'};
+  ctx.cnDecide('mantener','');
+  t('coincidir con lo que pide el perro sube la sincronía', rs.sync===73, rs.sync);
+  if(rs.pendingEvent)rs.pendingEvent=null;
+  rs.paceChosen=false;rs.behaviour={id:'clavado',wants:'mantener'};
+  ctx.cnDecide('apretar','');
+  t('ir a otra cosa sin orden la baja', rs.sync===61, rs.sync);
+  // Orden fallida peor que ninguna: forzamos que no obedezca
+  d.commands.forward=1;
+  ctx.Math=Object.assign(Object.create(Math),{random:()=>0.99});
+  const sAntes=rs.sync;rs.paceChosen=false;rs.pendingEvent=null;rs.behaviour={id:'clavado',wants:'mantener'};
+  ctx.cnDecide('apretar','forward');
+  t('una orden que no sale es peor que no dar orden (−10)', rs.sync===sAntes-10, rs.sync);
+  ctx.Math=_M;
+  t('obediencia entre 0,15 y 0,95', [0,100].every(b=>{d.bond=b;const p=T.cnObedience(d,rs,'forward');return p>=0.15&&p<=0.95;}));
+  // B1 · una carrera entera apretando deja fatiga y quita salud
+  setG({gameMode:'canicross',canicrossMode:true,cnMoney:500,cnSeason:1});
+  const d2=T.cnAddDog(T.cnInitDog('Beltza','malinois'));d2.bond=60;
+  T.getG().cnSelectedRaces=[{...race}];
+  ctx.cnStartRace(0);
+  let k=0;while(T.getG().cnRaceState&&!T.getG().cnRaceState.done&&k<30){k++;const r2=T.getG().cnRaceState;
+    if(r2.pendingEvent){ctx.cnMakeDecision(0);continue;} ctx.cnDecide('apretar','');}
+  t('B1: una carrera apretando deja fatiga en el perro y le quita salud', d2.fatigue>0&&d2.health<100, d2.fatigue+' / '+d2.health);
+  t('y el cuaderno apunta lo que ha visto', Object.keys(T.getG().cnNotebook||{}).length>0);
+  ctx.setTimeout=_st;ctx.render=_r;ctx.showToast=_t;ctx.autoSave=_a;
 }
 
 t.done('TODO OK');

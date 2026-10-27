@@ -168,7 +168,7 @@ const ACHIEVEMENTS=[
   {id:'cn_first_race', rarity:'easy',   mode:'cn',label:'Primera carrera juntos', desc:'Completar la primera carrera de canicross',          check:()=>(G.cnRaceResults||[]).filter(r=>!r.dnf).length>=1},
   {id:'cn_bond_50',    rarity:'easy',   mode:'cn',label:'Buen equipo',            desc:'Alcanzar vínculo 50 con tu perro',                   check:()=>(cnActiveDog()?.peakBond||0)>=50},
   {id:'cn_first_season',rarity:'easy',  mode:'cn',label:'Primer invierno juntos', desc:'Completar la primera temporada de canicross',        check:()=>(G.cnSeason||1)>=2},
-  {id:'cn_all_cmds',   rarity:'easy',   mode:'cn',label:'Bien adiestrado',        desc:'Enseñar los 3 comandos al perro (adelante, aguanta, izquierda)',check:()=>{const c=cnActiveDog()?.commands||{};return !!(c.left&&c.hold&&c.forward);}},
+  {id:'cn_all_cmds',   rarity:'easy',   mode:'cn',label:'Bien adiestrado',        desc:'Enseñar los 6 comandos al perro, al menos el primer nivel',check:()=>{const c=cnActiveDog()?.commands||{};return CN_COMMANDS.every(k=>(Number(c[k.id])||0)>=1);}},
   // ══ CANICROSS — MEDIO ════════════════════════════════
   {id:'cn_win_1',      rarity:'medium', mode:'cn',label:'Primer triunfo juntos',  desc:'Ganar una carrera de canicross',                     check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos===1)},
   {id:'cn_bond_80',    rarity:'medium', mode:'cn',label:'Compenetrados',          desc:'Alcanzar vínculo 80 con tu perro',                   check:()=>(cnActiveDog()?.peakBond||0)>=80},
@@ -2251,6 +2251,67 @@ const CN_TIER_LEVELS={
 // Multiplicadores de tiempo por terreno y superficie (§ 5.2).
 const CN_TERRAIN_MULT={climb:1.15,descent:0.88,flat:1.00};
 const CN_SURFACE_MULT={pista:1.00,tierra:1.02,hierba:1.03,piedra:1.06,barro:1.12,nieve:1.09};
+
+// Rediseño de Canicross, paso 4 (TG-Diseno-Canicross § 4.1-4.5): el perro no tiene barra,
+// tiene gestos. Cada conducta es una frase SECA (el juego describe, el jugador concluye: nada
+// de «parece», «está cansado», «quiere») y unas causas internas que la pueden producir; cada
+// causa puede llevar su propio `wants`, que es lo que hace ambiguas a algunas frases.
+// Claves de causa: mood, fatigue, temp ('>12', '<5'…), temperament, terrain, surface, tier,
+// injury, rivalNear, mismatch, aid. `distraction:true` marca las que «Deja» puede cortar.
+const CN_BEHAVIOURS=[
+  // ── Antes de la salida (14) ──
+  {id:'pre_tira_salida', when:'pre', wants:'apretar',  text:'[DOG] tira del arnés en la línea de salida y no aparta la vista del frente.', causes:[{mood:'>65'},{temperament:'competitivo'}]},
+  {id:'pre_bosteza',     when:'pre', wants:'conservar',text:'[DOG] bosteza dos veces seguidas mientras esperáis.', causes:[{mood:'<40'},{fatigue:'>40'}]},
+  {id:'pre_olfatea',     when:'pre', wants:'mantener', text:'[DOG] olfatea el suelo de la zona de salida, sin prisa.', causes:[{temperament:'olfateador'},{mood:'<60',fatigue:'<30'}]},
+  {id:'pre_pegado',      when:'pre', wants:'conservar',text:'[DOG] se queda pegado a tu pierna y no se separa.', causes:[{temperament:'miedoso',tier:'>2'},{temperament:'pegajoso'}]},
+  {id:'pre_ladra',       when:'pre', wants:'apretar',  text:'[DOG] ladra a los perros de al lado.', causes:[{temperament:'competitivo'},{temperament:'tirador'}]},
+  {id:'pre_tiembla',     when:'pre', wants:'conservar',text:'[DOG] tiembla un poco y se sienta sobre tus pies.', causes:[{temperament:'friolero',temp:'<6'},{temp:'<1'}]},
+  {id:'pre_jadea',       when:'pre', wants:'conservar',text:'[DOG] jadea antes de empezar, con la lengua fuera.', causes:[{temp:'>11'},{fatigue:'>60'}]},
+  {id:'pre_cola_alta',   when:'pre', wants:'apretar',  text:'[DOG] lleva la cola alta y no para de moverse.', causes:[{mood:'>70'}]},
+  {id:'pre_tumbado',     when:'pre', wants:'conservar',text:'[DOG] se tumba en cuanto os paráis un momento.', causes:[{fatigue:'>50'}]},
+  {id:'pre_mira_cajon',  when:'pre', wants:'apretar',  text:'[DOG] mira fijo al equipo que tenéis delante en el cajón.', causes:[{temperament:'competitivo'},{mood:'>60',tier:'>2'}]},
+  {id:'pre_tranquilo',   when:'pre', wants:'mantener', text:'[DOG] espera de pie, quieto, con las orejas hacia ti.', causes:[{mood:'>39',fatigue:'<40'}]},
+  {id:'pre_lame_pata',   when:'pre', wants:'conservar',text:'[DOG] se lame una pata delantera.', causes:[{injury:true}]},
+  {id:'pre_sacude',      when:'pre', wants:'mantener', text:'[DOG] se sacude entero, como quitándose algo de encima.', causes:[{mood:'>55',wants:'mantener'},{fatigue:'>35',wants:'conservar'}]},
+  {id:'pre_estira',      when:'pre', wants:'mantener', text:'[DOG] se estira hacia delante y luego hacia atrás.', causes:[{fatigue:'<35'}]},
+  // ── En el tramo (18) ──
+  {id:'tira_sin_mirar',  when:'seg', wants:'apretar',  text:'[DOG] tira del arnés y mira al frente. No se gira.', causes:[{mood:'>70',fatigue:'<30'},{temperament:'competitivo'}]},
+  {id:'linea_floja',     when:'seg', wants:'conservar',text:'[DOG] se queda medio metro por detrás. La línea va floja.', causes:[{fatigue:'>45'},{mood:'<35'}]},
+  {id:'distraido_olor',  when:'seg', wants:'conservar',text:'[DOG] se distrae con el olor del monte y gira la cabeza.', distraction:true, causes:[{temperament:'olfateador'},{mood:'<45'}]},
+  {id:'jadeo_ancho',     when:'seg', wants:'conservar',text:'[DOG] jadea con la boca muy abierta y la lengua ancha.', causes:[{temp:'>12'},{fatigue:'>60',terrain:'climb'}]},
+  {id:'levanta_pata',    when:'seg', wants:'conservar',text:'[DOG] levanta una pata del suelo cuando os paráis un segundo.', causes:[{injury:true},{surface:'piedra',temperament:'tirador'}]},
+  {id:'clavado',         when:'seg', wants:'mantener', text:'[DOG] va clavado a tu ritmo, ni delante ni detrás.', causes:[{mood:'>39',fatigue:'<45'}]},
+  {id:'mira_reojo',      when:'seg', wants:'apretar',  text:'[DOG] mira de reojo al equipo que os adelanta.', causes:[{rivalNear:true},{temperament:'competitivo',mood:'>50'}]},
+  {id:'sacude_arrancar', when:'seg', wants:'mantener', text:'[DOG] se sacude al empezar el tramo.', causes:[{mood:'>60',wants:'mantener'},{fatigue:'>40',wants:'conservar'}]},
+  {id:'cuesta_tira',     when:'seg', wants:'apretar',  text:'En la cuesta, [DOG] baja la cabeza y tira con todo el cuerpo.', causes:[{terrain:'climb',mood:'>55'},{terrain:'climb',temperament:'tirador'}]},
+  {id:'bajada_frena',    when:'seg', wants:'conservar',text:'En la bajada, [DOG] frena con las patas delanteras.', causes:[{terrain:'descent',temperament:'miedoso'},{terrain:'descent',fatigue:'>40'}]},
+  {id:'bajada_suelto',   when:'seg', wants:'apretar',  text:'En la bajada, [DOG] se lanza y la línea se tensa de golpe.', causes:[{terrain:'descent',mood:'>60'}]},
+  {id:'orejas_atras',    when:'seg', wants:'conservar',text:'[DOG] lleva las orejas hacia atrás y la cola baja.', causes:[{temperament:'miedoso',tier:'>2'},{mismatch:true,mood:'<50'}]},
+  {id:'busca_mirada',    when:'seg', wants:'mantener', text:'[DOG] gira la cabeza para mirarte cada pocos pasos.', causes:[{mismatch:true},{temperament:'pegajoso'}]},
+  {id:'trote_corto',     when:'seg', wants:'conservar',text:'[DOG] acorta el paso y cambia a un trote corto.', causes:[{fatigue:'>55'}]},
+  {id:'zigzag',          when:'seg', wants:'mantener', text:'[DOG] va en zigzag de un lado al otro del camino.', distraction:true, causes:[{temperament:'olfateador'},{mood:'>80'}]},
+  {id:'bebe_charco',     when:'seg', wants:'conservar',text:'[DOG] intenta beber de cada charco que pasa.', distraction:true, causes:[{temp:'>10'},{aid:true}]},
+  {id:'acelera_solo',    when:'seg', wants:'apretar',  text:'[DOG] acelera solo al oír a otro perro detrás.', causes:[{rivalNear:true,mood:'>45'},{temperament:'competitivo'}]},
+  {id:'nieve_salta',     when:'seg', wants:'mantener', text:'[DOG] da saltos en la nieve y muerde el suelo.', distraction:true, causes:[{surface:'nieve',mood:'>50'}]},
+];
+// Rasgos ocultos (§ 4.2): 1 o 2 por perro, nunca en una ficha; se descubren en el cuaderno.
+const CN_TEMPERAMENTS=['cabezota','miedoso','olfateador','competitivo','tirador','pegajoso','estoico','friolero'];
+// Seis comandos con dominio 0-3 (§ 4.5). `valida`: la intención que la orden hace suya.
+const CN_COMMANDS=[
+  {id:'forward', label:'Adelante',  desc:'Arrancar o atacar. Si sale bien, el tramo es un 4 % más rápido.', valida:'apretar'},
+  {id:'hold',    label:'Aguanta',   desc:'Contener. Si sale bien, el tramo cansa un 30 % menos.',          valida:'mantener'},
+  {id:'easy',    label:'Despacio',  desc:'Frenar al que tira demasiado. Si sale bien, +6 de sincronía.',    valida:'conservar'},
+  {id:'left',    label:'Izquierda', desc:'Trazar en bajadas y curvas: un 6 % más rápido en la bajada.',     valida:null},
+  {id:'leaveit', label:'Deja',      desc:'Ignorar una distracción sin perder tiempo.',                      valida:null},
+  {id:'water',   label:'Agua',      desc:'Beber en el avituallamiento: −12 de fatiga.',                     valida:null},
+];
+// Las tres intenciones (§ 4.4). time: multiplicador del tramo; legs: piernas del corredor;
+// fatigue: fatiga del perro en el tramo, antes de terreno y resistencia.
+const CN_INTENTS=[
+  {id:'conservar', label:'Conservar', desc:'Por debajo de vuestro ritmo.', time:1.10, legs:5,  fatigue:4},
+  {id:'mantener',  label:'Mantener',  desc:'Vuestro ritmo.',               time:1.00, legs:10, fatigue:8},
+  {id:'apretar',   label:'Apretar',   desc:'Por encima, gastando.',        time:0.92, legs:17, fatigue:14},
+];
 
 const CANICROSS_EQUIPMENT={
   dogHarness:[

@@ -36,12 +36,6 @@ const CN_EVENTS_SPECIAL=[
    options:[{label:'Retirar (sin penalización vínculo)',retire:true,bondMod:2},{label:'Continuar (riesgo lesión grave)',injuryRisk:true,injurySevere:true,bondMod:-3}]},
 ];
 
-const CN_PACES=[
-  {id:'suave',   label:'Suave',         desc:'Conserváis energía juntos',      timeMult:1.18, energyCost:5,  dogCost:4,  bondMod:2 },
-  {id:'ritmo',   label:'Ritmo conjunto',desc:'Equilibrado — buena sincronía',  timeMult:1.00, energyCost:10, dogCost:8,  bondMod:0 },
-  {id:'apretar', label:'Apretar',       desc:'Rápido, el perro va al límite',  timeMult:0.90, energyCost:17, dogCost:14, bondMod:-2},
-  {id:'atope',   label:'A tope',        desc:'Máximo esfuerzo — riesgo real',  timeMult:0.82, energyCost:25, dogCost:21, bondMod:-5},
-];
 const CN_RIVAL_NAMES=[
   'Elena & Nala','Carlos & Thor','Ana & Kira','Javi & Bolt','Laura & Max',
   'Pedro & Zara','Marta & Rex','Iñaki & Txuri','Sara & Nina','Pol & Ares',
@@ -76,9 +70,17 @@ function cnInitDog(name,breed){
     bond:0,health:100,birthSeason:G.cnSeason||1,
     retired:false,races:0,kmTogether:0,peakBond:0,
     injury:null,injuryRaces:0,
-    commands:{left:false,hold:false,forward:false},
+    // Paso 4 (§ 3.2, § 4.1-4.5): estado oculto (nunca se enseña como número), temperamento
+    // y seis comandos con dominio 0-3.
+    mood:60,fatigue:0,temperament:cnPickTemperament(),
+    commands:{forward:0,hold:0,easy:0,left:0,leaveit:0,water:0},
   };
 }
+function cnPickTemperament(){
+  const pool=shuffle([...CN_TEMPERAMENTS]);
+  return pool.slice(0,Math.random()<0.5?1:2);
+}
+function cnHasTrait(d,t){return !!(d&&Array.isArray(d.temperament)&&d.temperament.includes(t));}
 
 function cnComputeDogStats(){
   const results=G.cnRaceResults||[];
@@ -107,21 +109,20 @@ function cnCanRace(){
 
 function cnRaceThreshold(){return(G.cnSeason||1)===1?20:30;}
 
+// Paso 4: el siguiente comando a enseñar es el de menos dominio, en el orden de CN_COMMANDS
+// (todos al nivel 1 antes de llevar ninguno al 2). null con los seis al 3.
 function cnNextCommand(){
-  if(!cnActiveDog())return null;
-  const c=cnActiveDog().commands;
-  if(!c.left)return 'left';
-  if(!c.hold)return 'hold';
-  if(!c.forward)return 'forward';
-  return null;
+  const d=cnActiveDog();if(!d)return null;
+  const c=d.commands||{};
+  let best=null;
+  CN_COMMANDS.forEach(k=>{const v=Number(c[k.id])||0;if(v<3&&(best==null||v<(Number(c[best])||0)))best=k.id;});
+  return best;
 }
-
-function cnCommandLabel(id){return{left:'Izquierda',hold:'Aguanta',forward:'Adelante'}[id]||id;}
-
+function cnCommandLabel(id){return(CN_COMMANDS.find(k=>k.id===id)||{}).label||id;}
 function cnCommandsList(){
-  if(!cnActiveDog())return[];
-  const c=cnActiveDog().commands||{};
-  return[{id:'left',label:'Izquierda',learned:c.left},{id:'hold',label:'Aguanta',learned:c.hold},{id:'forward',label:'Adelante',learned:c.forward}];
+  const d=cnActiveDog();if(!d)return[];
+  const c=d.commands||{};
+  return CN_COMMANDS.map(k=>({id:k.id,label:k.label,desc:k.desc,level:Number(c[k.id])||0,learned:(Number(c[k.id])||0)>=1}));
 }
 
 function cnDogAgeLabel(){
@@ -222,6 +223,67 @@ function cnGetCategory(age){
   // primera categoría, que es la que de verdad le corresponde.
   const a=Number.isFinite(age)?Math.max(0,age):0;
   return CN_CATEGORIES.find(c=>a>=c.min&&a<=c.max)||CN_CATEGORIES[1];
+}
+
+// ── CONDUCTA (rediseño, paso 4 · § 4.1-4.4) ──────────────────────────────
+// El estado del perro (ánimo, fatiga, temperamento) no se enseña nunca como número: sale una
+// frase de CN_BEHAVIOURS cuyas causas casan con el estado y el contexto, y esa frase dice
+// qué intención «pide» el perro. El jugador aprende a leerla; el cuaderno lo apunta.
+function cnCauseOk(c,ctx){
+  const cmp=(v,expr)=>{const m=/^([<>])(-?\d+)$/.exec(String(expr));if(!m)return true;return m[1]==='>'?v>Number(m[2]):v<Number(m[2]);};
+  for(const [k,v] of Object.entries(c)){
+    if(k==='wants')continue;
+    if(k==='mood'||k==='fatigue'||k==='temp'||k==='tier'){if(!cmp(ctx[k],v))return false;}
+    else if(k==='temperament'){if(!ctx.temperament.includes(v))return false;}
+    else if(k==='terrain'||k==='surface'){if(ctx[k]!==v)return false;}
+    else if(!!ctx[k]!==!!v)return false;
+  }
+  return true;
+}
+function cnBehaviourCtx(rs,when){
+  const d=cnActiveDog()||{};
+  const seg=when==='seg'?(rs.segs||[])[rs.currentSeg]||{}:{};
+  const def=CANICROSS_RACES.find(x=>x.id===rs.raceId)||{};
+  const myT=(rs.time||0)+(rs.timePenalty||0);
+  const rivalNear=when==='seg'&&rs.currentSeg>0&&(rs.rivals||[]).some(r=>Math.abs(cnRivalTime(r,rs.currentSeg)-myT)<15);
+  const temperament=Array.isArray(d.temperament)?d.temperament:[];
+  return {mood:Number(rs.mood!=null?rs.mood:d.mood)||60,fatigue:(Number(d.fatigue)||0)+(rs.fatigueGained||0),
+    temp:def.tempBase!=null?def.tempBase:8,tier:rs.tier||1,temperament,terrain:seg.type,surface:seg.surface,
+    // estoico: oculta el dolor, sus conductas de lesión salen la mitad de las veces
+    injury:!!(d.injury||rs.injuryPending)&&!(temperament.includes('estoico')&&Math.random()<0.5),
+    rivalNear,mismatch:!!rs.lastMismatch,aid:!!seg.aid};
+}
+function cnPickBehaviour(rs,when){
+  const ctx=cnBehaviourCtx(rs,when);
+  const cands=[];
+  CN_BEHAVIOURS.filter(b=>b.when===when||b.when==='both').forEach(b=>{
+    const c=(b.causes||[]).find(c=>cnCauseOk(c,ctx));
+    if(c)cands.push({id:b.id,wants:c.wants||b.wants,distraction:!!b.distraction});
+  });
+  // olfateador: las distracciones salen el doble
+  const pool=cands.flatMap(c=>c.distraction&&ctx.temperament.includes('olfateador')?[c,c]:[c]);
+  const pick=pool.length?pool[Math.floor(Math.random()*pool.length)]
+    :{id:when==='pre'?'pre_tranquilo':'clavado',wants:'mantener',distraction:false};
+  return {...pick,temp:ctx.temp,terrain:ctx.terrain||null};
+}
+function cnBehaviourText(id){
+  const b=CN_BEHAVIOURS.find(x=>x.id===id);
+  return b?cnReplaceVars(b.text):'';
+}
+// Cuaderno (§ 4.3): cada conducta vista se apunta con su contexto y, si lo hay, qué hiciste y
+// cómo salió. La pantalla del cuaderno llega en el paso 7; los datos se guardan desde ya.
+function cnNoteSeen(beh){
+  if(!beh||!beh.id)return;
+  if(!G.cnNotebook||typeof G.cnNotebook!=='object')G.cnNotebook={};
+  const n=G.cnNotebook[beh.id]||(G.cnNotebook[beh.id]={seen:0,ctx:[],out:[],note:''});
+  n.seen++;
+  n.ctx.push({temp:beh.temp,terrain:beh.terrain,season:G.cnSeason||1});
+  if(n.ctx.length>20)n.ctx.shift();
+}
+function cnNoteOutcome(beh,chose,good){
+  const n=G.cnNotebook&&beh&&G.cnNotebook[beh.id];if(!n)return;
+  n.out.push({chose,result:good?'good':'bad'});
+  if(n.out.length>20)n.out.shift();
 }
 
 // ── NIVEL DE EQUIPO Y RIVALES (rediseño, paso 3 · § 4.7, § 5.1-5.3) ──────────
@@ -379,6 +441,10 @@ function cnFinishRace(){
     rs.time=Math.max(1,Math.min(...rs.rivals.map(r=>cnRivalTime(r)).filter(Number.isFinite))-60);
   }
 
+  // Paso 4 (§ 4.4) · B1: la fatiga de la carrera vuelve al perro y le cuesta salud. Antes
+  // rs.dogHealth se calculaba tramo a tramo y se tiraba al acabar.
+  d.fatigue=Math.max(0,Math.min(100,(Number(d.fatigue)||0)+(rs.fatigueGained||0)));
+  d.health=Math.max(0,Math.min(100,(d.health==null?100:d.health)-Math.round((rs.fatigueGained||0)*0.12)));
   const totalBond=rs.bondDelta||0;
   const prevBond=d.bond||0;
   d.bond=Math.max(0,Math.min(100,d.bond+totalBond));
@@ -470,7 +536,7 @@ window.doStartCanicross=()=>{
   G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
   G.cnDogFoodPremium=false;G.cnDogSupplements=false;
   G.cnVetHistory=[];G.cnBirthdayToastShown={};G.cnRaceState=null;
-  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G.cnRivals={};G.cnNemesis={};G.cnSeasonShift={};G._cnDogBreed=null;G._cnDogName=null;
+  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G.cnRivals={};G.cnNemesis={};G.cnSeasonShift={};G.cnNotebook={};G._cnDogBreed=null;G._cnDogName=null;
   G.screen='canicrossCreateDog';
   render();
 };
@@ -488,7 +554,7 @@ window.doCreateDog=()=>{
     cnActiveDog().bond=origin.bondStart;
     cnActiveDog().peakBond=origin.bondStart;
     cnActiveDog().adoptionOrigin=G._cnAdoptionOrigin;
-    if(G._cnAdoptionOrigin==='retirado')cnActiveDog().commands.forward=true;
+    if(G._cnAdoptionOrigin==='retirado')cnActiveDog().commands.forward=1;
   }
   G.cnPreseasonDone=[];
   G._cnDogBreed=null;G._cnDogName=null;G._cnAdoptionOrigin=null;
@@ -537,6 +603,7 @@ window.cnAdvanceRestWeek=()=>{
   const bondBonus=Math.round(days*0.6);
   const mentalBonus=Math.round(days*0.8);
   if(d){
+    d.fatigue=Math.max(0,(Number(d.fatigue)||0)-20);   // paso 4: descansar baja la fatiga
     d.health=Math.min(100,(d.health||100)+healthBonus);
     d.bond=Math.min(100,(d.bond||0)+bondBonus);
     d.peakBond=Math.max(d.peakBond||0,d.bond);
@@ -570,7 +637,13 @@ function cnApplyOneWeekTraining(){
     if(block.dogMod?.speed)d.speed=Math.max(0,Math.min(100,(d.speed||50)+cnDogGain(d.speed||50,block.dogMod.speed)));
     if(block.dogMod?.stamina)d.stamina=Math.max(0,Math.min(100,(d.stamina||50)+cnDogGain(d.stamina||50,block.dogMod.stamina)));
     if(block.dogMod?.health)d.health=Math.min(100,(d.health||100)+(block.dogMod.health||0));
+    // Paso 4: la fatiga baja con la semana (más si es descanso) y el ánimo se regenera hacia
+    // un punto que sube con el vínculo, con algo de azar: el perro tiene días.
+    d.fatigue=Math.max(0,(Number(d.fatigue)||0)-(block.id==='descanso'?20:8));
+    const moodTarget=45+(d.bond||0)*0.3;
+    d.mood=Math.round(Math.max(0,Math.min(100,(Number(d.mood)||60)*0.5+moodTarget*0.5+(Math.random()*2-1)*10)));
     let bMod=block.bondMod||0;
+    if(cnHasTrait(d,'pegajoso'))bMod=bMod>0?Math.round(bMod*1.3):Math.round(bMod*1.3);
     if(d.breed==='malinois'&&block.id==='solo')bMod-=CN_BREED_MODS.malinois.bondDecayPerWeek;
     d.bond=Math.max(0,Math.min(100,(d.bond||0)+bMod));
     d.peakBond=Math.max(d.peakBond||0,d.bond);
@@ -580,8 +653,9 @@ function cnApplyOneWeekTraining(){
         if(!G.cnTrainAdrainSessions)G.cnTrainAdrainSessions={left:0,hold:0,forward:0};
         G.cnTrainAdrainSessions[next]=(G.cnTrainAdrainSessions[next]||0)+1;
         if(G.cnTrainAdrainSessions[next]>=2){
-          d.commands[next]=true;G.cnTrainAdrainSessions[next]=0;
-          setTimeout(()=>showToast('¡'+esc(d.name)+' aprende "'+cnCommandLabel(next)+'"! ✅'),50);
+          d.commands[next]=Math.min(3,(Number(d.commands[next])||0)+1);G.cnTrainAdrainSessions[next]=0;
+          const lv=d.commands[next];
+          setTimeout(()=>showToast(lv===1?'¡'+esc(d.name)+' aprende "'+cnCommandLabel(next)+'"! ✅':esc(d.name)+' domina mejor "'+cnCommandLabel(next)+'" (nivel '+lv+') ✅'),50);
         }
       }
     }
@@ -617,7 +691,7 @@ window.cnStartRace=idx=>{
   if(cnActiveDog()&&cnActiveDog().bond<20)G._cnLowBondRaced=(G._cnLowBondRaced||0)+1;
   if(idx===0){
     const cmds=cnActiveDog()?.commands||{};
-    if(!cmds.left&&!cmds.hold&&!cmds.forward)G._cnRacedWithoutCommands=true;
+    if(CN_COMMANDS.every(k=>!(Number(cmds[k.id])||0)))G._cnRacedWithoutCommands=true;
     if(!(G.cnPreseasonDone||[]).length)G._cnPreseasonNothing=true;
   }
   // Paso 2: el perfil es el de la carrera (constants.js), siempre el mismo. Se busca por id
@@ -633,7 +707,16 @@ window.cnStartRace=idx=>{
     time:0,bondDelta:0,energyBonus:0,speedBonus:0,timePenalty:0,
     dogHealth:cnActiveDog().health,dogBond:cnActiveDog().bond,runnerEnergy:100+(G.cnDogFoodPremium?5:0),
     eventLog:[],retired:false,injuryPending:null,done:false,
+    // Paso 4: sincronía (la barra central), ánimo del día, fatiga ganada y la conducta.
+    sync:0,mood:0,fatigueGained:0,behaviour:null,preBehaviour:null,lastMismatch:false,
   };
+  {
+    const rs=G.cnRaceState,dd=cnActiveDog();
+    rs.mood=Math.max(0,Math.min(100,(Number(dd.mood)||60)+Math.round((Math.random()*2-1)*10)));
+    rs.sync=Math.max(0,Math.min(100,Math.round(40+(dd.bond||0)*0.5-(cnHasTrait(dd,'miedoso')&&(race.tier||1)>=3?8:0))));
+    rs.preBehaviour=cnPickBehaviour(rs,'pre');cnNoteSeen(rs.preBehaviour);
+    rs.behaviour=cnPickBehaviour(rs,'seg');cnNoteSeen(rs.behaviour);
+  }
   G.screen='canicrossPreRace';render();
 };
 
@@ -644,6 +727,7 @@ window.cnNextSegment=()=>{
   rs.currentSeg++;
   rs.pendingEvent=null;rs.paceChosen=false;
   if(rs.currentSeg>=rs.numSegs){cnFinishRace();return;}
+  rs.behaviour=cnPickBehaviour(rs,'seg');cnNoteSeen(rs.behaviour);   // paso 4
   render();
 };
 
@@ -668,57 +752,97 @@ window.cnMakeDecision=optIdx=>{
   else{cnNextSegment();}
 };
 
-window.cnChoosePace=paceId=>{
-  const rs=G.cnRaceState;if(!rs)return;
-  const pace=CN_PACES.find(p=>p.id===paceId);if(!pace)return;
-  const d=cnActiveDog();
-  const seg=rs.segs?.[rs.currentSeg];
-  const mods=cnGetEquipMods();
-  const staminaFactor=Math.max(0.8,((d?.stamina||50)+mods.staminaMod)/100);
-  // Paso 3: el tiempo sale del trazado y del nivel del equipo (terreno y superficie dentro).
+// ── EL DIÁLOGO (paso 4 · § 4.4) ─────────────────────────────────────────
+// Sustituye a cnChoosePace(): el perro ha dicho algo (rs.behaviour), tú eliges intención y,
+// si quieres, una orden. Se cruza lo que pide el perro con lo que haces.
+// Probabilidad de que el perro obedezca una orden (§ 4.4).
+function cnObedience(d,rs,cmd){
+  const mastery=Number((d.commands||{})[cmd])||0;
+  const fatigue=(Number(d.fatigue)||0)+(rs.fatigueGained||0);
+  const moodPen=(d.condition||d.injury?0.20:0)+((rs.mood||60)<35?0.10:0);
+  return Math.max(0.15,Math.min(0.95,0.25+(d.bond||0)*0.005+(rs.sync||0)*0.003+mastery*0.15-fatigue*0.004-moodPen-(cnHasTrait(d,'cabezota')?0.15:0)));
+}
+// ¿Tiene sentido la orden ahora? Las de intención validan la tuya; las de situación, su caso.
+function cnCommandFits(cmd,intent,rs,seg){
+  const k=CN_COMMANDS.find(x=>x.id===cmd);if(!k)return false;
+  if(k.valida)return k.valida===intent;
+  if(cmd==='left')return seg&&seg.type==='descent';
+  if(cmd==='leaveit')return !!(rs.behaviour&&rs.behaviour.distraction);
+  if(cmd==='water')return !!(seg&&seg.aid);
+  return false;
+}
+// Tabla de resolución (§ 4.4): [sincronía, tiempo, vínculo, fatiga]
+const CN_CROSS={
+  coincide:[8,0.97,1,1.00], coincideOrden:[4,0.98,0,1.00],
+  difiere:[-12,1.06,-2,1.15], ordenAcertada:[5,0.99,1,1.08], ordenFallida:[-10,1.08,-3,1.20],
+};
+window.cnDecide=(intentId,cmd)=>{
+  const rs=G.cnRaceState;if(!rs||rs.paceChosen||rs.pendingEvent)return;
+  const intent=CN_INTENTS.find(x=>x.id===intentId);if(!intent)return;
+  if(cmd===undefined&&typeof document!=='undefined'&&document.querySelector){
+    const el=document.querySelector('input[name="cncmd"]:checked');cmd=el?el.value:'';
+  }
+  const d=cnActiveDog();if(!d)return;
+  cmd=cmd&&(Number((d.commands||{})[cmd])||0)>=1?cmd:'';
+  const seg=rs.segs?.[rs.currentSeg]||{km:(rs.km||8)/rs.numSegs,type:'flat'};
+  const beh=rs.behaviour||{wants:'mantener'};
+  // Sin piernas no se sigue al perro que tira: «Apretar» con menos de 40 no cuenta como acierto.
+  const coincide=intent.id===beh.wants&&!(intent.id==='apretar'&&(rs.runnerEnergy||0)<40);
+  const fits=cmd?cnCommandFits(cmd,intent.id,rs,seg):false;
+  const obeys=cmd?Math.random()<cnObedience(d,rs,cmd):false;
+  const ok=cmd&&fits&&obeys;
+  const caso=coincide?(cmd?'coincideOrden':'coincide'):(cmd?(ok?'ordenAcertada':'ordenFallida'):'difiere');
+  let [dSync,tMult,dBond,fMult]=CN_CROSS[caso];
+  // Efecto propio de la orden cuando sale bien
+  let extraT=1,extraF=1;
+  if(ok){
+    if(cmd==='forward')extraT=0.96;
+    if(cmd==='hold')extraF=0.70;
+    if(cmd==='easy')dSync+=6;
+    if(cmd==='left'&&seg.type==='descent')extraT=0.94;
+    if(cmd==='water')rs.fatigueGained=Math.max(0,(rs.fatigueGained||0)-12);
+    if(cmd==='leaveit')rs.skipDistraction=true;
+  }
+  // cabezota: si el perro tenía razón y no le hiciste caso, la sincronía no baja tanto
+  if(caso==='difiere'&&cnHasTrait(d,'cabezota'))dSync=Math.round(dSync/2);
+  const syncBefore=rs.sync||0;
+  rs.sync=Math.max(0,Math.min(100,syncBefore+dSync));
+  // Tiempo: el del trazado al nivel del equipo, por intención y cruce, entre la sincronía
   const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
-  let tm=Math.round(cnSegTime(raceDef,seg||{km:(rs.km||8)/rs.numSegs,type:'flat'},cnTeamLevel(),pace.timeMult));
-  let ec=pace.energyCost;
-  let dc=Math.round(pace.dogCost/staminaFactor);
-  let bm=pace.bondMod;
-
-  // jerkMod: hard_line (-5) reduce el coste de salud del perro un 10% en ritmos altos
-  if(mods.jerkMod<0&&(paceId==='apretar'||paceId==='atope')){
-    dc=Math.round(dc*0.9);
-  }
-
-  if(seg?.type==='climb'){ec=Math.round(ec*1.3);dc=Math.round(dc*1.2);}
-  if(seg?.type==='descent'){ec=Math.round(ec*0.8);dc=Math.round(dc*0.85);}
-
+  const factorSync=0.85+0.003*syncBefore;
+  const tm=Math.round(cnSegTime(raceDef,seg,cnTeamLevel(),intent.time*tMult*extraT)/factorSync);
   rs.time=(rs.time||0)+tm;
-  rs.runnerEnergy=Math.max(0,(rs.runnerEnergy||100)-ec);
-  rs.dogHealth=Math.max(0,(rs.dogHealth||100)-dc);
-  rs.bondDelta=(rs.bondDelta||0)+bm;
-
-  if(paceId==='atope'&&d?.commands?.forward){
-    rs.time=Math.max(0,(rs.time||0)-10);rs.bondDelta=(rs.bondDelta||0)+1;
-    setTimeout(()=>showToast(esc(d.name)+' responde "Adelante" ✓ −10s'),50);
-  }
-  if(paceId==='suave'&&d?.commands?.hold){
-    rs.dogHealth=Math.min(100,(rs.dogHealth||100)+4);
-    setTimeout(()=>showToast(esc(d.name)+' mantiene el ritmo — "Aguanta" ✓'),50);
-  }
-  if(seg?.type==='descent'&&d?.commands?.left){
-    rs.time=Math.max(0,(rs.time||0)-8);
-    rs.dogHealth=Math.min(100,(rs.dogHealth||100)+2);
-    setTimeout(()=>showToast(esc(d.name)+' toma las curvas — "Izquierda" ✓ −8s'),50);
+  // Piernas del corredor y fatiga del perro
+  const terr=seg.type==='climb'?1.3:seg.type==='descent'?0.8:1;
+  rs.runnerEnergy=Math.max(0,(rs.runnerEnergy||100)-Math.round(intent.legs*terr));
+  const mods=cnGetEquipMods();
+  const staminaFactor=Math.max(0.6,((d.stamina||50)+(mods.staminaMod||0))/100);
+  let f=intent.fatigue/staminaFactor*(seg.type==='climb'?1.2:seg.type==='descent'?0.85:1)*fMult*extraF;
+  if(cnHasTrait(d,'tirador'))f*=1.1;
+  if(mods.jerkMod<0&&intent.id==='apretar')f*=0.9;
+  rs.fatigueGained=Math.round(((rs.fatigueGained||0)+f)*10)/10;
+  rs.bondDelta=(rs.bondDelta||0)+dBond;
+  rs.lastMismatch=!coincide&&!ok;
+  rs.lastCross={caso,intent:intent.id,cmd:cmd||null,obeys,fits};
+  cnNoteOutcome(beh,intent.id+(cmd?'+'+cmd:''),coincide||ok);
+  // Si el perro ya no puede más, se para: la carrera acaba ahí.
+  if((Number(d.fatigue)||0)+rs.fatigueGained>=100){
+    rs.retired=true;
+    setTimeout(()=>showToast(esc(d.name)+' se para y no quiere seguir'),50);
   }
 
   const ev=cnPickEvent(rs.month||1);
   // Evento 'dessinc': si el perro sabe "Izquierda", se convierte en decisión con opción de controlarlo
-  if(ev&&ev.id==='dessinc'&&d?.commands?.left){
+  if(ev&&ev.id==='dessinc'&&(Number(d?.commands?.left)||0)>=1){
     ev.decision=true;
     ev.options=[
       {label:'Controlar con "Izquierda" (+2 vínculo, −100s)',bondMod:2,timeLoss:-100},
       {label:'Ignorar y seguir (−5 vínculo)',bondMod:-5,timeLoss:0},
     ];
   }
-  if(ev&&!ev.decision){
+  // «Deja» acertada corta la distracción: no hay evento negativo en este tramo
+  if(ev&&rs.skipDistraction&&ev.eventType==='neg'){rs.skipDistraction=false;rs.eventLog.push({seg:rs.currentSeg,event:{text:'[DOG] obedece «Deja» y sigue a lo suyo.',eventType:'pos'},resolved:true});}
+  else if(ev&&!ev.decision){
     cnApplyEventAuto(ev,rs);
     rs.eventLog.push({seg:rs.currentSeg,event:ev,resolved:true});
   }else if(ev&&ev.decision){
@@ -848,6 +972,7 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
   // §0.4 del diseño: el cumpleaños (+3 vínculo) lo daban el hub y la ficha del perro al
   // pintarse. Ahora, aquí, al empezar la temporada: una pantalla no cambia la partida.
   cnCheckBirthday();
+  cnDogs().forEach(x=>{x.fatigue=Math.max(0,(Number(x.fatigue)||0)-40);});   // paso 4: el verano descansa
   cnAgeRivals();   // paso 3: los rivales cumplen años y su nivel sigue a su perro
   G.activeTab='game';G.screen='canicrossHub';
   autoSave();render();
@@ -928,7 +1053,7 @@ window.cnDoPreseasonAct=id=>{
   if(act.bondBonus&&d){d.bond=Math.min(100,(d.bond||0)+act.bondBonus);d.peakBond=Math.max(d.peakBond||0,d.bond);}
   if(act.healthBonus&&d)d.health=Math.min(100,(d.health||100)+act.healthBonus);
   if(act.mentalBonus&&G.runner?.stats)bumpStat(G.runner,'mental',act.mentalBonus);
-  if(act.teachFirst&&d){d.commands=d.commands||{};if(!d.commands.forward){d.commands.forward=true;showToast(esc(d.name)+' aprende "Adelante" en el entreno ✅');}}
+  if(act.teachFirst&&d){d.commands=d.commands||{};if(!(Number(d.commands.forward)||0)){d.commands.forward=1;showToast(esc(d.name)+' aprende "Adelante" en el entreno ✅');}}
   G.cnPreseasonDone.push(id);
   autoSave();render();
   setTimeout(()=>showToast(act.label+' completado ✓'),100);
@@ -1634,9 +1759,11 @@ function renderCanicrossPreRace(){
   const line=(CANICROSS_EQUIPMENT.line||[]).find(e=>e.id===eq.line)||{name:'—'};
   const mods=cnGetEquipMods();
 
+  const pre=G.cnRaceState&&G.cnRaceState.preBehaviour;   // paso 4: lo que hace el perro en la salida
   el.innerHTML=`
     <h2>🐕 Pre-carrera</h2>
     <p class="sub">${esc(race.name)} · ${race.km}km · ${esc(race.location)}</p>
+    ${pre?`<div class="pz-tarjeta pz" style="border-color:var(--acc)"><div class="pz-etiqueta acento">${icono('perro')}En la salida</div><div style="font-size:16px;line-height:1.45">${cnBehaviourText(pre.id)}</div></div>`:''}
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Estado del equipo</div>
@@ -1714,7 +1841,12 @@ function renderCanicrossSegment(){
   //  que faltase, era un resto de antes de usar profSegInfo.)
 
 
-  const lastLogEntry=rs.eventLog?.length>0&&!ev?rs.eventLog[rs.eventLog.length-1]:null;
+  const lastLogEntry=rs.eventLog?.length>0&&!ev&&rs.eventLog[rs.eventLog.length-1].seg===rs.currentSeg-1?rs.eventLog[rs.eventLog.length-1]:null;
+  // Paso 4: qué pasó en el tramo anterior, en una línea (sin números del perro)
+  const lc=rs.lastCross;
+  const crossTxt=lc&&rs.currentSeg>0?({coincide:'Ibais a lo mismo. La línea va tensa y suave.',coincideOrden:'Ibais a lo mismo; la orden sobraba.',
+    difiere:'No ibais a lo mismo. La línea da tirones.',ordenAcertada:esc(d?.name||'El perro')+' hace caso a «'+cnCommandLabel(lc.cmd)+'».',
+    ordenFallida:esc(d?.name||'El perro')+' no hace caso a «'+cnCommandLabel(lc.cmd)+'». Lo has forzado.'})[lc.caso]:'';
 
   el.innerHTML=`
     <div class="flex-between-center" style="margin-bottom:10px">
@@ -1727,10 +1859,23 @@ function renderCanicrossSegment(){
       <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
     </div>
 
-    <div class="card" style="margin-bottom:10px">
-      ${[['Vínculo',curBond,'#c07a10'],['Salud '+esc(d?.name||'perro'),rs.dogHealth||100,'#e74c3c'],['Energía corredor',rs.runnerEnergy||100,'#4a8a2a']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label" style="color:${v<25?'#c0392b':'#666'}">${l}${v<25?' ⚠':''}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(Math.max(0,v))}%;background:${c}"></div></div><span class="bar-pct">${Math.round(Math.max(0,v))}</span></div>`).join('')}
-    </div>
+    ${(()=>{
+      // Paso 4: la sincronía es la barra central; sustituye a «Salud» y «Energía» del perro.
+      // Lo del perro no se enseña como número: lo dice su conducta, justo debajo.
+      const sync=Math.round(rs.sync||0),legs=Math.round(Math.max(0,rs.runnerEnergy||0));
+      const cls=v=>v<30?'menos':v<50?'ojo':'';
+      return`<div class="pz-tarjeta pz" style="margin-bottom:10px">
+        <div class="pz-cab-fila" style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="pz-label">Sincronía</span><span class="pz-num" style="font-size:22px">${sync}</span></div>
+        <div class="pz-barra"><div class="pz-relleno ${cls(sync)}" style="width:${sync}%"></div><div class="pz-umbral" style="left:50%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px" class="pz-efectos"><span>Tus piernas <span class="pz-num ${legs<40?'pz-ojo':''}">${legs}</span></span><span>Vínculo <span class="pz-num">${curBond}</span></span></div>
+      </div>`;
+    })()}
+    ${rs.behaviour&&!rs.paceChosen&&!ev?`<div class="pz-tarjeta pz" style="margin-bottom:10px;border-color:var(--acc)">
+      <div class="pz-etiqueta acento">${icono('perro')}Tramo ${rs.currentSeg+1}</div>
+      <div style="font-size:16px;line-height:1.45">${cnBehaviourText(rs.behaviour.id)}</div>
+    </div>`:''}
 
+    ${crossTxt?`<div class="pz-diag ${lc.caso==='coincide'||lc.caso==='ordenAcertada'?'mas':lc.caso==='coincideOrden'?'':'menos'}" style="margin:0 2px 10px">${crossTxt}</div>`:''}
     ${cnLiveClassPanel(rs)}
 
     ${(()=>{
@@ -1755,26 +1900,25 @@ function renderCanicrossSegment(){
       ${(ev.options||[]).map((opt,i)=>`<button class="main" style="margin-top:6px;font-size:13px" onclick="cnMakeDecision(${i})">${esc(opt.label)}</button>`).join('')}
     </div>`:''}
 
-    ${!rs.paceChosen&&!ev?`
-    <div class="section-label">Elige el ritmo del tramo:</div>
-    <div class="pace-grid">
-      ${CN_PACES.map(p=>{
-        const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
-        const tm=Math.round(cnSegTime(raceDef,seg||{km:(rs.km||8)/rs.numSegs,type:'flat'},cnTeamLevel(),p.timeMult));
-        const mins=Math.floor(tm/60);const secs=tm%60;
-        const timeStr=mins+'m'+(secs>0?' '+secs+'s':'');
-        const dogWarn=p.dogCost>14&&(rs.dogHealth||100)<35?`<div style="font-size:11px;color:#c0392b;margin:3px 0">⚠ ${esc(d?.name||'perro')} al límite</div>`:'';
-        const bondBadge=p.bondMod>0?`<span style="font-size:11px;color:#4a8a2a">vínculo +${p.bondMod}</span>`:p.bondMod<0?`<span style="font-size:11px;color:#c07a10">vínculo ${p.bondMod}</span>`:'';
-        return`<div class="pace" onclick="cnChoosePace('${p.id}')">
-          <div class="pace-label">${p.label}</div>
-          <div class="pace-desc">${p.desc}</div>
-          ${dogWarn}
-          <div class="pace-meta">
-            <div style="display:flex;flex-direction:column;gap:2px">${bondBadge}<span style="font-size:11px;color:#aaa">−${p.energyCost} energía · −${p.dogCost} salud</span></div>
-            <span>~${timeStr}</span>
-          </div>
-        </div>`;}).join('')}
-    </div>`:''}
+    ${!rs.paceChosen&&!ev?(()=>{
+      // Paso 4: intención (obligatoria) y orden (opcional). La orden se lee al pulsar la intención.
+      const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
+      const lvl=cnTeamLevel();
+      const cmds=cnCommandsList().filter(c=>c.level>=1);
+      const dots=n=>'●'.repeat(n)+'○'.repeat(3-n);
+      return`<div class="pz">
+        <div class="pz-label" style="margin:4px 0 6px">Orden (opcional)</div>
+        ${cmds.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+          <label class="pz-chip" style="border:1px solid var(--line2);cursor:pointer"><input type="radio" name="cncmd" value="" checked> Ninguna</label>
+          ${cmds.map(c=>`<label class="pz-chip" style="border:1px solid var(--line2);cursor:pointer" title="${esc(c.desc)}"><input type="radio" name="cncmd" value="${c.id}"> ${c.label} <span style="color:var(--ink3)">${dots(c.level)}</span></label>`).join('')}
+        </div>`:`<div class="pz-sub">${esc(d?.name||'El perro')} aún no conoce ninguna orden: se enseñan con «Adiestramiento».</div>`}
+        <div class="pz-label" style="margin-bottom:6px">Intención</div>
+        ${CN_INTENTS.map(it=>{
+          const tm=Math.round(cnSegTime(raceDef,seg||{km:(rs.km||8)/rs.numSegs,type:'flat'},lvl,it.time)/(0.85+0.003*(rs.sync||0)));
+          return`<button class="pz-opcion" onclick="cnDecide('${it.id}')"><b>${it.label}</b> <span class="pz-efectos">· ${it.desc}</span><div class="pz-efectos" style="margin-top:3px">~${fmt(tm)} · piernas −${it.legs}</div></button>`;
+        }).join('')}
+      </div>`;
+    })():''}
 
 
     ${(rs.bondDelta||0)!==0?`<div style="font-size:12px;color:#888;text-align:center;margin-top:10px">Vínculo acumulado: <span style="color:${(rs.bondDelta||0)>=0?'#4a8a2a':'#c0392b'};font-weight:600">${(rs.bondDelta||0)>=0?'+':''}${rs.bondDelta||0}</span></div>`:''}

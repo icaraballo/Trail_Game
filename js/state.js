@@ -10,7 +10,8 @@ function assignClubCompanion(club){
 // 1 = G.dogs[] en lugar de G.dog (2026-10-27).
 // 2 = reloj por mes (cnMonthIdx/cnMonthWeek, adiós a cnWeek) y carreras con perfil fijo.
 // 3 = rivales persistentes (cnRivals) con parciales en cnRaceState y nivel de equipo.
-const CN_REV=3;
+// 4 = perro con ánimo, fatiga, temperamento y seis comandos con dominio; sincronía en carrera.
+const CN_REV=4;
 function freshState(){
   return{
     screen:'saveScreen',year:1,ranking:999,specRanking:999,money:300,
@@ -263,7 +264,8 @@ function freshState(){
     cnSeason:1, cnSelectedRaces:[], cnCurrentRaceIdx:0, cnRaceResults:[],
     cnMoney:500, cnTrainingBlock:null,
     cnMonthIdx:0, cnMonthWeek:0,
-    cnRivals:{}, cnNemesis:{}, cnSeasonShift:{},   // paso 3: rivales persistentes, némesis y nivel de la temporada por tier   // reloj de Canicross (paso 2): mes 0-5 (6 = terminada) y semana del mes
+    cnRivals:{}, cnNemesis:{}, cnSeasonShift:{},
+    cnNotebook:{},   // paso 4: el cuaderno — por conducta, veces vista, contexto, qué hiciste y tu nota   // paso 3: rivales persistentes, némesis y nivel de la temporada por tier   // reloj de Canicross (paso 2): mes 0-5 (6 = terminada) y semana del mes
     cnTrainAdrainSessions:{left:0,hold:0,forward:0},
     cnOwnedEquipment:{dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']},
     equipment:{dogHarness:'basic_harness',humanBelt:'basic_belt',line:'soft_line'},
