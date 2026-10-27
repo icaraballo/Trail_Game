@@ -224,20 +224,147 @@ function cnGetCategory(age){
   return CN_CATEGORIES.find(c=>a>=c.min&&a<=c.max)||CN_CATEGORIES[1];
 }
 
+// ── NIVEL DE EQUIPO Y RIVALES (rediseño, paso 3 · § 4.7, § 5.1-5.3) ──────────
+// Antes el tier no hacía la carrera más difícil: basePace salía en mi tiempo y en el del
+// rival y se cancelaba, y la habilidad del rival era la misma en los cuatro tiers (§ 2.2).
+// Ahora hay UNA escala de nivel 0-100 para el jugador y para los rivales, y el tiempo sale
+// del trazado (refPace) dividido por cnPerfFactor(nivel), que no satura.
+function cnPerfFactor(level){return 0.70+0.0075*level;}
+function cnAgeCurve(age){
+  const a=Number(age)||1;
+  return a<=1?0.80:a===2?0.92:a<=5?1.00:a===6?0.95:a===7?0.88:a===8?0.78:a===9?0.66:0.52;
+}
+// Techo blando del perro: cuanto más alto, menos rinde entrenar (como statCapMult del corredor).
+// Desde 97 ya no sube (el máximo de los rivales): un perro no llega a 100 (test 4 de § 10).
+function cnDogCapMult(v){return v<60?1.00:v<75?0.65:v<85?0.35:v<92?0.18:v<97?0.07:0;}
+// Ganancia entera con el techo aplicado: la parte decimal se gana por sorteo, con la misma
+// media, para que las stats del perro sigan siendo números enteros.
+function cnDogGain(v,g){
+  const x=(g||0)*(g>0?cnDogCapMult(v):1);
+  const f=Math.floor(x);
+  return f+(Math.random()<x-f?1:0);
+}
+function cnDogPerf(d){
+  const m=cnGetEquipMods();
+  const speed=(d.speed||0)+(m.speedMod||0),stamina=(d.stamina||0)+(m.staminaMod||0);
+  const healM=0.70+0.003*Math.max(0,Math.min(100,d.health==null?100:d.health));
+  const condM=d.condition&&d.condition.severity?(1-0.06*d.condition.severity):1;
+  return (speed*0.60+stamina*0.40)*cnAgeCurve(d.age)*healM*condM;
+}
+// Frescura del corredor: en carrera baja con la energía (0,75 … 1); fuera de carrera, 1.
+function cnRunnerFreshness(){
+  const rs=G.cnRaceState;
+  if(!rs||rs.done||rs.runnerEnergy==null)return 1;
+  return 0.75+0.25*Math.max(0,Math.min(100,rs.runnerEnergy))/100;
+}
+function cnRunnerPerf(){
+  const st=(G.runner&&G.runner.stats)||{};
+  const base=(st.resistencia||0)*0.40+(st.velocidad||0)*0.30+(st.subida||0)*0.15+(st.bajada||0)*0.15;
+  return base*cnRunnerFreshness();
+}
+function cnTeamLevel(){
+  const d=cnActiveDog();
+  if(!d)return 0;
+  return Math.max(0,Math.min(100,cnDogPerf(d)*0.55+cnRunnerPerf()*0.45));
+}
+// Tiempo de un tramo con un nivel y un multiplicador de ritmo dados: el mismo cálculo para
+// el jugador y para los rivales.
+function cnSegTime(race,seg,level,mult){
+  const ref=race.refPace||240;
+  return ref*(seg.km||0)*(mult||1)*(CN_TERRAIN_MULT[seg.type]||1)*(CN_SURFACE_MULT[seg.surface]||1)/cnPerfFactor(level);
+}
+
+// Rivales persistentes. Los 22 de CN_RIVAL_TEAMS van a todas las carreras de sus tiers; el
+// resto del campo son equipos de relleno, también persistentes y atados a un tier
+// (id «f<tier>_<n>»), con nombre, edad y nivel fijos (B2: la edad ya no cambia por carrera).
+const CN_FILL_HUMANS=['Elena','Carlos','Ana','Javi','Laura','Pedro','Marta','Iñaki','Sara','Pol','Eva','Tomás',
+  'Noa','Rubén','Lidia','Diego','Claudia','Andrei','Miriam','Sergio','Verónica','Pau','Sofía','Alberto'];
+const CN_FILL_DOGS=['Nala','Thor','Kira','Bolt','Max','Zara','Rex','Txuri','Nina','Ares','Lola','Figo',
+  'Coco','Draco','Hera','Rayo','Boss','Cuco','Nyx','Llamp','Koda','Zeus','Mika','Duna'];
+function cnRandNormal(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function cnRival(id,tier){
+  if(!G.cnRivals||typeof G.cnRivals!=='object')G.cnRivals={};
+  if(G.cnRivals[id])return G.cnRivals[id];
+  const team=CN_RIVAL_TEAMS.find(t=>t.id===id);
+  let st;
+  if(team){
+    st={name:team.human+' · '+team.dog,human:team.human,dog:team.dog,level:team.level,style:team.style,age:team.age,dogAge:team.dogAge,tier:Math.min(...team.tiers)};
+  }else{
+    const T=CN_TIER_LEVELS[tier]||CN_TIER_LEVELS[1];
+    const n=Number(String(id).split('_')[1])||0;
+    const human=CN_FILL_HUMANS[(n+tier*7)%CN_FILL_HUMANS.length],dog=CN_FILL_DOGS[(n*5+tier*3)%CN_FILL_DOGS.length];
+    const level=Math.round(Math.max(T.min,Math.min(T.max,T.mean+T.sd*cnRandNormal())));
+    st={name:human+' · '+dog,human,dog,level,style:['salidor','remontador','tecnico','regular'][(n+tier)%4],
+      age:20+Math.floor(Math.random()*36),dogAge:1+Math.floor(Math.random()*7),tier};
+  }
+  G.cnRivals[id]=st;
+  return st;
+}
+// Desplazamiento de nivel de la temporada por tier (±4): hay temporadas con un campo más duro.
+function cnSeasonShift(tier){
+  if(!G.cnSeasonShift||typeof G.cnSeasonShift!=='object')G.cnSeasonShift={};
+  if(G.cnSeasonShift[tier]==null)G.cnSeasonShift[tier]=Math.round((Math.random()*2-1)*4);
+  return G.cnSeasonShift[tier];
+}
+function cnStyleMult(style,si,n,type){
+  if(style==='salidor')return si<2?0.96:si===n-1?1.06:1;
+  if(style==='remontador')return si<2?1.04:si>=n-2?0.96:1;
+  if(style==='tecnico')return type==='descent'?0.94:type==='flat'?1.04:1;
+  return 1;
+}
+const CN_RIVAL_PUSH=0.92;   // los rivales corren como «Apretar»: «Ritmo conjunto» a igual nivel pierde
 function cnGenerateRivals(race){
-  const n=(race.tier||1)*4+Math.floor(Math.random()*4)+3;
-  const base={1:360,2:390,3:415,4:440}[race.tier||1]||390;
-  // T117 (v92): sort(()=>Math.random()-0.5) no da una permutación uniforme.
-  // shuffle() de render-core.js ya es Fisher-Yates. Da igual el orden de carga:
-  // esto se llama en partida, no al evaluar el fichero.
-  const pool=shuffle([...CN_RIVAL_NAMES]).slice(0,Math.min(n,CN_RIVAL_NAMES.length));
-  while(pool.length<n)pool.push('Equipo #'+(pool.length+1));
-  return pool.map(name=>{
-    const skill=0.80+Math.random()*0.40;
-    // Realistic age distribution: mostly 25-50
-    const age=Math.round(18+Math.random()*45);
-    return{name,estimatedTime:Math.round(base/skill*(race.km||8)),age};
+  const tier=race.tier||1,T=CN_TIER_LEVELS[tier]||CN_TIER_LEVELS[1];
+  const def=CANICROSS_RACES.find(r=>r.id===race.id)||race;
+  const segs=def.segs||[];
+  const named=CN_RIVAL_TEAMS.filter(t=>t.tiers.includes(tier)).map(t=>t.id);
+  const want=T.n[0]+Math.floor(Math.random()*(T.n[1]-T.n[0]+1));
+  const fillers=shuffle(Array.from({length:Math.max(0,T.n[1]-named.length)},(_,k)=>'f'+tier+'_'+k)).slice(0,Math.max(0,want-named.length));
+  const shift=cnSeasonShift(tier);
+  // 12 %: un equipo atípico, muy por encima de la media del tier, solo en esta carrera
+  const atipico=Math.random()<0.12&&fillers.length?fillers[0]:null;
+  return [...named,...fillers].map(id=>{
+    const st=cnRival(id,tier);
+    const level=Math.max(0,Math.min(100,st.level+shift+(id===atipico?Math.max(0,T.mean+12-st.level):0)));
+    const splits=segs.map((sg,si)=>Math.round(cnSegTime(def,sg,level,CN_RIVAL_PUSH*cnStyleMult(st.style,si,segs.length,sg.type))*(0.97+Math.random()*0.06)));
+    // Incidentes (patrón de planRivalIncidents de race.js): revienta, problema con el perro o abandona
+    let incident=null;
+    if(segs.length&&Math.random()<0.08){
+      const seg=Math.floor(Math.random()*segs.length),k=Math.random();
+      incident=k<0.4?{seg,type:'revienta',loss:90+Math.floor(Math.random()*110)}
+              :k<0.8?{seg,type:'perro',loss:40+Math.floor(Math.random()*80)}
+              :{seg,type:'abandona',loss:0};
+    }
+    return {id,name:st.name,level:Math.round(level),style:st.style,age:st.age,splits,incident};
   });
+}
+// Tiempo de un rival tras `upTo` tramos (todos si se omite); Infinity si ha abandonado antes.
+function cnRivalTime(r,upTo){
+  const n=upTo==null?(r.splits||[]).length:upTo;
+  if(r.incident&&r.incident.type==='abandona'&&r.incident.seg<n)return Infinity;
+  let t=0;for(let i=0;i<n;i++)t+=(r.splits||[])[i]||0;
+  if(r.incident&&r.incident.type!=='abandona'&&r.incident.seg<n)t+=r.incident.loss;
+  return t;
+}
+// Némesis: el equipo con el que más veces has llegado a menos de 30 s (al menos dos).
+function cnNemesisId(){
+  let best=null,max=1;
+  Object.entries(G.cnNemesis||{}).forEach(([id,c])=>{if(c>max){max=c;best=id;}});
+  return best;
+}
+// Entre temporadas los rivales cumplen años y su perro también: el nivel sigue la edad del
+// perro y, cuando le toca retirarse, el equipo vuelve con uno nuevo, más joven y peor.
+function cnAgeRivals(){
+  Object.values(G.cnRivals||{}).forEach(st=>{
+    st.age=(st.age||30)+1;st.dogAge=(st.dogAge||3)+1;
+    const delta=st.dogAge<=3?3:st.dogAge<=5?0:st.dogAge<=7?-3:-6;
+    st.level=Math.max(5,Math.min(97,(st.level||40)+delta));
+    if(st.dogAge>=10){
+      const dog=CN_FILL_DOGS[Math.floor(Math.random()*CN_FILL_DOGS.length)];
+      st.dog=dog;st.name=st.human+' · '+dog;st.dogAge=2;st.level=Math.max(5,st.level-8);st.newDog=true;
+    }else st.newDog=false;
+  });
+  G.cnSeasonShift={};
 }
 
 // ── RACE FINISH ───────────────────────────────────────
@@ -249,7 +376,7 @@ function cnFinishRace(){
   // Canicross. Ver js/devmode.js. No afecta a partidas normales.
   if(window.devGod?.('cn')&&rs.rivals&&rs.rivals.length){
     rs.timePenalty=0;
-    rs.time=Math.max(1,Math.min(...rs.rivals.map(r=>r.estimatedTime))-60);
+    rs.time=Math.max(1,Math.min(...rs.rivals.map(r=>cnRivalTime(r)).filter(Number.isFinite))-60);
   }
 
   const totalBond=rs.bondDelta||0;
@@ -262,11 +389,16 @@ function cnFinishRace(){
 
   let totalTime=Math.round((rs.time||0)+(rs.timePenalty||0));
   const rivals=rs.rivals||[];
-  const pos=Math.max(1,rivals.filter(r=>r.estimatedTime<totalTime).length+1);
+  const pos=Math.max(1,rivals.filter(r=>cnRivalTime(r)<totalTime).length+1);
   const myAge=G.runner.age||28;
   const myCat=cnGetCategory(myAge);
   const catRivals=rivals.filter(r=>cnGetCategory(r.age||30).id===myCat.id);
-  const catPos=Math.max(1,catRivals.filter(r=>r.estimatedTime<totalTime).length+1);
+  const catPos=Math.max(1,catRivals.filter(r=>cnRivalTime(r)<totalTime).length+1);
+  // Némesis (§ 4.7): quien llega a menos de 30 s de ti suma; el que más veces, lo es.
+  if(!rs.retired){
+    if(!G.cnNemesis||typeof G.cnNemesis!=='object')G.cnNemesis={};
+    rivals.forEach(r=>{const t=cnRivalTime(r);if(Number.isFinite(t)&&Math.abs(t-totalTime)<30)G.cnNemesis[r.id]=(G.cnNemesis[r.id]||0)+1;});
+  }
 
   // T07 (v82): race es `||{}` en la línea 235, así que race.prize puede ser
   // undefined. Sin el ||0, una 1.ª posición con la carrera fuera de rango metía
@@ -338,7 +470,7 @@ window.doStartCanicross=()=>{
   G.cnOwnedEquipment={dogHarness:['basic_harness'],humanBelt:['basic_belt'],line:['soft_line']};
   G.cnDogFoodPremium=false;G.cnDogSupplements=false;
   G.cnVetHistory=[];G.cnBirthdayToastShown={};G.cnRaceState=null;
-  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G._cnDogBreed=null;G._cnDogName=null;
+  G.dogs=[];G.activeDogId=null;G.cnNextDogId=1;G.cnRev=CN_REV;G.cnRivals={};G.cnNemesis={};G.cnSeasonShift={};G._cnDogBreed=null;G._cnDogName=null;
   G.screen='canicrossCreateDog';
   render();
 };
@@ -434,8 +566,9 @@ function cnApplyOneWeekTraining(){
     }
   });
   if(d){
-    if(block.dogMod?.speed)d.speed=Math.min(100,(d.speed||50)+(block.dogMod.speed||0));
-    if(block.dogMod?.stamina)d.stamina=Math.min(100,(d.stamina||50)+(block.dogMod.stamina||0));
+    // Paso 3 (§ 5.3): techo blando del perro, como statCapMult del corredor.
+    if(block.dogMod?.speed)d.speed=Math.max(0,Math.min(100,(d.speed||50)+cnDogGain(d.speed||50,block.dogMod.speed)));
+    if(block.dogMod?.stamina)d.stamina=Math.max(0,Math.min(100,(d.stamina||50)+cnDogGain(d.stamina||50,block.dogMod.stamina)));
     if(block.dogMod?.health)d.health=Math.min(100,(d.health||100)+(block.dogMod.health||0));
     let bMod=block.bondMod||0;
     if(d.breed==='malinois'&&block.id==='solo')bMod-=CN_BREED_MODS.malinois.bondDecayPerWeek;
@@ -452,7 +585,7 @@ function cnApplyOneWeekTraining(){
         }
       }
     }
-    if(G.cnDogSupplements)d.stamina=Math.min(100,(d.stamina||50)+1);
+    if(G.cnDogSupplements)d.stamina=Math.min(100,(d.stamina||50)+cnDogGain(d.stamina||50,1));
   }
 }
 
@@ -492,7 +625,7 @@ window.cnStartRace=idx=>{
   const def=CANICROSS_RACES.find(r=>r.id===race.id)||race;
   const segs=(def.segs||[]).map(sg=>({...sg}));
   const numSegs=segs.length;
-  const basePace={1:360,2:390,3:415,4:440}[race.tier]||390;
+  const basePace=def.refPace||240;   // queda por compatibilidad con la recompensa de devmode; el tiempo usa refPace
   G.cnRaceState={
     raceId:race.id,raceName:race.name,km:race.km,tier:race.tier,month:race.month,
     numSegs,segs,rivals:cnGenerateRivals(race),basePace,
@@ -540,13 +673,11 @@ window.cnChoosePace=paceId=>{
   const pace=CN_PACES.find(p=>p.id===paceId);if(!pace)return;
   const d=cnActiveDog();
   const seg=rs.segs?.[rs.currentSeg];
-  const basePace=rs.basePace||390;
-  const kmPerSeg=(rs.km||8)/rs.numSegs;
   const mods=cnGetEquipMods();
-  const speedFactor=Math.max(0.7,Math.min(1.3,((d?.speed||50)+mods.speedMod)/50));
   const staminaFactor=Math.max(0.8,((d?.stamina||50)+mods.staminaMod)/100);
-
-  let tm=Math.round(basePace*kmPerSeg*pace.timeMult/speedFactor);
+  // Paso 3: el tiempo sale del trazado y del nivel del equipo (terreno y superficie dentro).
+  const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
+  let tm=Math.round(cnSegTime(raceDef,seg||{km:(rs.km||8)/rs.numSegs,type:'flat'},cnTeamLevel(),pace.timeMult));
   let ec=pace.energyCost;
   let dc=Math.round(pace.dogCost/staminaFactor);
   let bm=pace.bondMod;
@@ -556,8 +687,8 @@ window.cnChoosePace=paceId=>{
     dc=Math.round(dc*0.9);
   }
 
-  if(seg?.type==='climb'){tm=Math.round(tm*1.15);ec=Math.round(ec*1.3);dc=Math.round(dc*1.2);}
-  if(seg?.type==='descent'){tm=Math.round(tm*0.88);ec=Math.round(ec*0.8);dc=Math.round(dc*0.85);}
+  if(seg?.type==='climb'){ec=Math.round(ec*1.3);dc=Math.round(dc*1.2);}
+  if(seg?.type==='descent'){ec=Math.round(ec*0.8);dc=Math.round(dc*0.85);}
 
   rs.time=(rs.time||0)+tm;
   rs.runnerEnergy=Math.max(0,(rs.runnerEnergy||100)-ec);
@@ -717,6 +848,7 @@ window.cnDoSeasonTransition=function cnDoSeasonTransition(){
   // §0.4 del diseño: el cumpleaños (+3 vínculo) lo daban el hub y la ficha del perro al
   // pintarse. Ahora, aquí, al empezar la temporada: una pantalla no cambia la partida.
   cnCheckBirthday();
+  cnAgeRivals();   // paso 3: los rivales cumplen años y su nivel sigue a su perro
   G.activeTab='game';G.screen='canicrossHub';
   autoSave();render();
 };
@@ -1442,14 +1574,17 @@ function renderCnFinanzasTab(){
 function cnLiveClassPanel(rs){
   if(!rs||!rs.rivals?.length||rs.currentSeg===0)return'';
   const myTime=(rs.time||0)+(rs.timePenalty||0);
-  const segFrac=rs.currentSeg/rs.numSegs;
   const myAge=G.runner.age||28;
   const myCat=cnGetCategory(myAge);
 
+  // Paso 3: cada rival lleva sus parciales; quien ha abandonado sale de la tabla.
+  const nem=cnNemesisId();
   const all=[
     {name:G.runner.name||'Tú',time:myTime,me:true,age:myAge},
-    ...rs.rivals.map(r=>({name:r.name,time:Math.round(r.estimatedTime*segFrac),me:false,age:r.age||30}))
+    ...rs.rivals.map(r=>({name:r.name+(r.id===nem?' · némesis':'')+(r.incident&&r.incident.seg<rs.currentSeg&&r.incident.type!=='abandona'?(r.incident.type==='revienta'?' · ha reventado':' · problema con el perro'):''),
+      time:cnRivalTime(r,rs.currentSeg),me:false,age:r.age||30})).filter(x=>Number.isFinite(x.time))
   ].sort((a,b)=>a.time-b.time);
+
 
   const myPos=all.findIndex(x=>x.me);
   const start=Math.max(0,myPos-2);
@@ -1624,12 +1759,8 @@ function renderCanicrossSegment(){
     <div class="section-label">Elige el ritmo del tramo:</div>
     <div class="pace-grid">
       ${CN_PACES.map(p=>{
-        const basePace=rs.basePace||390;
-        const kmPerSeg=(rs.km||8)/rs.numSegs;
-        const speedFactor=Math.max(0.7,Math.min(1.3,(d?.speed||50)/50));
-        let tm=Math.round(basePace*kmPerSeg*p.timeMult/speedFactor);
-        if(seg?.type==='climb')tm=Math.round(tm*1.15);
-        if(seg?.type==='descent')tm=Math.round(tm*0.88);
+        const raceDef=CANICROSS_RACES.find(x=>x.id===rs.raceId)||rs;
+        const tm=Math.round(cnSegTime(raceDef,seg||{km:(rs.km||8)/rs.numSegs,type:'flat'},cnTeamLevel(),p.timeMult));
         const mins=Math.floor(tm/60);const secs=tm%60;
         const timeStr=mins+'m'+(secs>0?' '+secs+'s':'');
         const dogWarn=p.dogCost>14&&(rs.dogHealth||100)<35?`<div style="font-size:11px;color:#c0392b;margin:3px 0">⚠ ${esc(d?.name||'perro')} al límite</div>`:'';
@@ -1681,6 +1812,15 @@ function renderCanicrossPostRace(){
         <div class="stat"><div class="stat-label">Vínculo</div><div class="stat-val" style="color:${(rs.bondDelta||0)>=0?'#4a8a2a':'#c0392b'}">${(rs.bondDelta||0)>=0?'+':''}${rs.bondDelta||0}</div></div>
       </div>
     </div>`:''}
+
+    ${(()=>{
+      // Paso 3 (§ 4.7): el némesis tiene línea propia. Pieza nueva: tokens, sin hex.
+      const nid=cnNemesisId();const nr=nid&&(rs.rivals||[]).find(x=>x.id===nid);
+      if(!nr||rs.retired)return'';
+      const t=cnRivalTime(nr);
+      const txt=!Number.isFinite(t)?'abandonó':t<(rs.finalTime||0)?'llegó '+fmt((rs.finalTime||0)-t)+' antes que tú':'llegó '+fmt(t-(rs.finalTime||0))+' después que tú';
+      return`<div class="pz-tarjeta pz" style="margin-bottom:12px"><div class="pz-label">Tu némesis</div><div class="pz-efectos"><b>${esc(nr.name)}</b> ${txt}.</div></div>`;
+    })()}
 
     ${d?`<div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Estado de ${esc(d.name)} tras la carrera</div>

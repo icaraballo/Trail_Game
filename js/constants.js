@@ -2213,6 +2213,45 @@ const CANICROSS_RACES=[
           {km:1.8,type:'climb',gain:95,surface:'barro',name:'Repecho del barro'},{km:2.0,type:'descent',gain:-140,surface:'pista',name:'Bajada a meta'}]},
 ];
 
+// Rediseño de Canicross, paso 3 (TG-Diseno-Canicross § 4.7 y § 5.2). Equipos rivales que
+// PERSISTEN: mismo nombre, misma edad y su nivel evoluciona entre temporadas (G.cnRivals).
+// Personas inventadas (v99: nada de personas reales). `level` en la escala absoluta 0-100,
+// la misma que cnTeamLevel() del jugador. `style`: salidor · remontador · tecnico · regular.
+const CN_RIVAL_TEAMS=[
+  {id:'r_aguirre',  human:'Elena Aguirre',     dog:'Nala',   breed:'malinois', level:58, style:'remontador', age:34, dogAge:4, tiers:[1,2,3]},
+  {id:'r_lasa',     human:'Unai Lasa',         dog:'Txuri',  breed:'husky',    level:44, style:'regular',    age:27, dogAge:3, tiers:[1,2]},
+  {id:'r_moreno',   human:'Carla Moreno',      dog:'Kira',   breed:'vizsla',   level:63, style:'salidor',    age:31, dogAge:5, tiers:[2,3,4]},
+  {id:'r_benet',    human:'Pau Benet',         dog:'Llamp',  breed:'mestizo',  level:39, style:'tecnico',    age:45, dogAge:6, tiers:[1,2]},
+  {id:'r_quiroga',  human:'Iria Quiroga',      dog:'Breixo', breed:'malinois', level:70, style:'regular',    age:29, dogAge:3, tiers:[3,4]},
+  {id:'r_salcedo',  human:'Rubén Salcedo',     dog:'Draco',  breed:'husky',    level:52, style:'salidor',    age:38, dogAge:4, tiers:[1,2,3]},
+  {id:'r_vidal',    human:'Marta Vidal',       dog:'Lola',   breed:'mestizo',  level:33, style:'regular',    age:52, dogAge:7, tiers:[1]},
+  {id:'r_etxeberria',human:'Ander Etxeberria', dog:'Beltza', breed:'malinois', level:76, style:'remontador', age:33, dogAge:4, tiers:[3,4]},
+  {id:'r_navas',    human:'Lucía Navas',       dog:'Coco',   breed:'vizsla',   level:41, style:'tecnico',    age:24, dogAge:2, tiers:[1,2]},
+  {id:'r_robles',   human:'Diego Robles',      dog:'Rayo',   breed:'husky',    level:48, style:'remontador', age:41, dogAge:5, tiers:[1,2]},
+  {id:'r_ferrer',   human:'Noa Ferrer',        dog:'Koda',   breed:'malinois', level:66, style:'salidor',    age:28, dogAge:3, tiers:[2,3,4]},
+  {id:'r_pallares', human:'Sergi Pallarès',    dog:'Nyx',    breed:'mestizo',  level:36, style:'regular',    age:57, dogAge:6, tiers:[1]},
+  {id:'r_ortega',   human:'Sofía Ortega',      dog:'Hera',   breed:'vizsla',   level:55, style:'tecnico',    age:36, dogAge:4, tiers:[2,3]},
+  {id:'r_garmendia',human:'Iker Garmendia',    dog:'Zeus',   breed:'husky',    level:61, style:'regular',    age:30, dogAge:5, tiers:[2,3]},
+  {id:'r_castro',   human:'Andrea Castro',     dog:'Luna',   breed:'mestizo',  level:29, style:'salidor',    age:19, dogAge:2, tiers:[1]},
+  {id:'r_mendez',   human:'Tomás Méndez',      dog:'Figo',   breed:'malinois', level:80, style:'regular',    age:35, dogAge:4, tiers:[4]},
+  {id:'r_soler',    human:'Clara Soler',       dog:'Ares',   breed:'vizsla',   level:73, style:'remontador', age:42, dogAge:5, tiers:[3,4]},
+  {id:'r_iglesias', human:'Hugo Iglesias',     dog:'Bolt',   breed:'husky',    level:46, style:'tecnico',    age:48, dogAge:4, tiers:[1,2]},
+  {id:'r_arregui',  human:'Maite Arregui',     dog:'Itzal',  breed:'mestizo',  level:57, style:'regular',    age:44, dogAge:6, tiers:[2,3]},
+  {id:'r_campos',   human:'Álex Campos',       dog:'Thor',   breed:'malinois', level:68, style:'tecnico',    age:26, dogAge:3, tiers:[3,4]},
+  {id:'r_bravo',    human:'Rocío Bravo',       dog:'Kala',   breed:'husky',    level:50, style:'remontador', age:39, dogAge:5, tiers:[1,2,3]},
+  {id:'r_lorente',  human:'Javier Lorente',    dog:'Max',    breed:'vizsla',   level:84, style:'salidor',    age:32, dogAge:4, tiers:[4]},
+];
+// Nivel de los rivales de relleno por tier (§ 5.2): media, desviación, rango y tamaño del campo.
+const CN_TIER_LEVELS={
+  1:{mean:38,sd:12,min:15,max:75,n:[8,12]},
+  2:{mean:50,sd:11,min:25,max:85,n:[12,18]},
+  3:{mean:62,sd:9, min:35,max:92,n:[18,26]},
+  4:{mean:72,sd:7, min:45,max:97,n:[26,36]},
+};
+// Multiplicadores de tiempo por terreno y superficie (§ 5.2).
+const CN_TERRAIN_MULT={climb:1.15,descent:0.88,flat:1.00};
+const CN_SURFACE_MULT={pista:1.00,tierra:1.02,hierba:1.03,piedra:1.06,barro:1.12,nieve:1.09};
+
 const CANICROSS_EQUIPMENT={
   dogHarness:[
     {id:'basic_harness', name:'Arnés Corto Básico',    price:35,  desc:'Equilibrado. Viene de inicio.',                     speedMod:0,  staminaMod:0,  default:true},

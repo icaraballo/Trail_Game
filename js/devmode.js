@@ -416,14 +416,14 @@ window.devWinCnRace=()=>{
   const rs=G.cnRaceState;
   if(!rs||!rs.rivals||!rs.rivals.length||rs.done){showToast('DEV: no hay carrera de Canicross en curso');return;}
   rs.timePenalty=0;
-  rs.time=Math.max(1,Math.min(...rs.rivals.map(r=>r.estimatedTime))-60);
+  rs.time=Math.max(1,Math.min(...rs.rivals.map(r=>cnRivalTime(r)).filter(Number.isFinite))-60);
   cnFinishRace();
 };
 window.devLoseCnRace=()=>{
   const rs=G.cnRaceState;
   if(!rs||!rs.rivals||!rs.rivals.length||rs.done){showToast('DEV: no hay carrera de Canicross en curso');return;}
   rs.timePenalty=0;
-  rs.time=Math.max(...rs.rivals.map(r=>r.estimatedTime))+60;
+  rs.time=Math.max(...rs.rivals.map(r=>cnRivalTime(r)).filter(Number.isFinite))+60;
   cnFinishRace();
 };
 

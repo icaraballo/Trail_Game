@@ -34,7 +34,8 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'COACH_INJURY_TYPES','EXPRESS_TIMED_EVENTS','clubSeasonClosing','applyCoachInjury','CLASSIC_MID_RACE_EVENTS','MID_RACE_RESOLVERS','COACH_ATHLETE_POOL',
   'inspectSlot','sanitizeState','importFromText','GAME_BUILD','RIVALS_POOL','PRIVACY_KEY_PHRASES','PRIVACY_PARAGRAPHS',
   'opinionCuerpo','opinionModo','opinionMomento','OPINION_CAMPOS',
-  'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES']);
+  'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
+  'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -1052,6 +1053,42 @@ console.log('\n── Canicross, rediseño paso 2 · reloj por mes y carreras fi
   t('§0.4: ninguna pantalla da el cumpleaños ni rellena los meses al pintarse',
     !/function render[\s\S]*?cnCheckBirthday\(\)/.test(src['canicross.js'].split('function cnDoSeasonTransition')[0].replace(/function cnCheckBirthday[\s\S]*?\n}\n/,''))
     &&!/G\.cnOpenSeasonMonths=\[10,11,12,1,2,3\]/.test(src['canicross.js']));
+}
+
+console.log('\n── Canicross, rediseño paso 3 · nivel de equipo y rivales persistentes ──');
+{
+  t('§10.1 cnPerfFactor crece y no satura', T.cnPerfFactor(100)>T.cnPerfFactor(90)&&T.cnPerfFactor(90)>T.cnPerfFactor(40)&&Math.abs(T.cnPerfFactor(40)-1)<1e-9);
+  const g=setG({gameMode:'canicross',canicrossMode:true});
+  t('§10.2 nivel 0 sin perro', T.cnTeamLevel()===0);
+  const d=T.cnAddDog(T.cnInitDog('Txuri','husky'));
+  const l1=T.cnTeamLevel();
+  d.speed=100;d.stamina=100;d.age=4;Object.keys(g.runner.stats).forEach(k=>g.runner.stats[k]=100);
+  const l2=T.cnTeamLevel();
+  t('§10.2 nivel entre 0 y 100 con perro nuevo y al máximo', l1>0&&l1<=100&&l2<=100&&l2>l1, l1.toFixed(1)+' / '+l2.toFixed(1));
+  let ok=true;for(let v=0;v<=100;v++){const m=T.cnDogCapMult(v);if(T.cnDogCapMult(v+1)>m)ok=false;}
+  t('§10.3 el techo del perro nunca crece con el valor', ok&&T.cnDogCapMult(50)===1);
+  let v=50;for(let s=0;s<10;s++)for(let w=0;w<24;w++)v=Math.min(100,v+T.cnDogGain(v,3));
+  t('§10.4 diez temporadas entrenando no llevan al perro a 100', v<100, v);
+  t('las ganancias son enteras', [55,70,80,90].every(x=>Number.isInteger(T.cnDogGain(x,2))));
+  // §10.10 · regresión directa de §2.2: el tier hace la carrera más difícil
+  const media=tier=>{let s=0,n=0;for(let k=0;k<40;k++){g.cnSeasonShift={};T.cnGenerateRivals({id:'x',tier}).forEach(r=>{s+=r.level;n++;});}return s/n;};
+  const m1=media(1),m4=media(4);
+  t('§10.10 los rivales del tier 4 tienen más nivel que los del tier 1', m4>m1+15, m1.toFixed(1)+' → '+m4.toFixed(1));
+  // B2 · el mismo rival, la misma edad en dos carreras del mismo tier
+  const a=T.cnGenerateRivals({id:'cn_guadarrama',tier:1}),b=T.cnGenerateRivals({id:'cn_volcanic',tier:1});
+  const comunes=a.filter(x=>b.some(y=>y.id===x.id));
+  t('B2: el mismo rival repite y con la misma edad', comunes.length>=5&&comunes.every(x=>b.find(y=>y.id===x.id).age===x.age), comunes.length);
+  t('los equipos con nombre van a todas las carreras de su tier', T.CN_RIVAL_TEAMS.filter(x=>x.tiers.includes(1)).every(x=>a.some(y=>y.id===x.id)));
+  const r0=a[0];
+  t('cada rival lleva un parcial por tramo', r0.splits.length===T.CANICROSS_RACES.find(x=>x.id==='cn_guadarrama').segs.length&&T.cnRivalTime(r0)>0);
+  t('quien abandona no te gana', T.cnRivalTime({splits:[100,100],incident:{seg:0,type:'abandona',loss:0}})===Infinity);
+  const st=T.cnRival('r_aguirre',1),edad=st.age,perro=st.dogAge;
+  T.cnAgeRivals();
+  t('entre temporadas el rival cumple un año y su perro también', st.age===edad+1&&st.dogAge===perro+1);
+  st.dogAge=9;st.level=60;T.cnAgeRivals();
+  t('cuando su perro se retira, vuelve con uno joven y peor', st.dogAge===2&&st.level<60&&st.newDog===true);
+  t('los equipos con nombre: tiers y nivel dentro del rango de su tier (content § 10.8)',
+    T.CN_RIVAL_TEAMS.length===22&&T.CN_RIVAL_TEAMS.every(x=>x.tiers.length&&x.tiers.every(tr=>x.level>=T.CN_TIER_LEVELS[tr].min&&x.level<=T.CN_TIER_LEVELS[tr].max)));
 }
 
 t.done('TODO OK');
