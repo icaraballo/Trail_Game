@@ -49,9 +49,9 @@ function renderCnCreateDog(){
       const spd=50+(m.speed||0);const sta=50+(m.stamina||0);
       return`<div class="card" style="margin-bottom:16px">
         <div class="sec-title-sm">Stats iniciales</div>
-        <div class="bar-row"><span class="bar-label">Velocidad</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${spd}%;background:#4a90d9"></div></div><span class="bar-pct">${spd}</span></div>
-        <div class="bar-row"><span class="bar-label">Resistencia</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${sta}%;background:#4a8a2a"></div></div><span class="bar-pct">${sta}</span></div>
-        <div class="bar-row"><span class="bar-label">Vínculo inicial</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${bondPreview}%;background:#c07a10"></div></div><span class="bar-pct">${bondPreview}</span></div>
+        <div class="bar-row"><span class="bar-label">Velocidad</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${spd}%;background:var(--acc)"></div></div><span class="bar-pct">${spd}</span></div>
+        <div class="bar-row"><span class="bar-label">Resistencia</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${sta}%;background:var(--acc)"></div></div><span class="bar-pct">${sta}</span></div>
+        <div class="bar-row"><span class="bar-label">Vínculo inicial</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${bondPreview}%;background:var(--gente)"></div></div><span class="bar-pct">${bondPreview}</span></div>
         ${origin==='retirado'?`<div style="font-size:12px;color:var(--pos);margin-top:6px">🏅 Ya conoce la orden "Adelante"</div>`:''}
       </div>`;
     })():`<div class="hint" style="margin-bottom:16px">Elige origen y raza para ver los stats iniciales</div>`}
@@ -86,7 +86,7 @@ function renderCanicrossPreseason(){
       <div class="bar-row">
         <span class="bar-label">Vínculo</span>
         <div class="bar-track" style="flex:1">
-          <div class="bar-fill" style="width:${d.bond}%;background:#c07a10"></div>
+          <div class="bar-fill" style="width:${d.bond}%;background:var(--gente)"></div>
         </div>
         <span class="bar-pct" style="color:${d.bond>=bondThreshold?'var(--pos)':'var(--neg)'}">${d.bond}</span>
       </div>
@@ -158,7 +158,7 @@ function renderCnCorredorTab(){
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Stats del corredor</div>
-      ${Object.entries(G.runner.stats||{}).slice(0,4).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${v}%;background:${v>=70?'#4a8a2a':v>=50?'#4a90d9':'#c07a10'}"></div></div><span class="bar-pct">${v}</span></div>`).join('')}
+      ${Object.entries(G.runner.stats||{}).slice(0,4).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${v}%;background:var(--acc)"></div></div><span class="bar-pct">${v}</span></div>`).join('')}
     </div>
 
     ${(()=>{
@@ -196,7 +196,7 @@ function renderCnCorredorTab(){
       const result=done?(G.cnRaceResults||[]).find(res=>res.raceId===race.id&&res.season===G.cnSeason):null;
       const overdue=isPast&&race&&!done;
       const idx=race?races.indexOf(race):-1;
-      return `<div style="border:1px solid ${isCurrent?'#b8ddb8':'#e8e6e0'};border-radius:10px;margin-bottom:6px;overflow:hidden;${isCurrent?'background:var(--soft)':'background:var(--card)'}">
+      return `<div style="border:1px solid ${isCurrent?'var(--acc)':'var(--line)'};border-radius:10px;margin-bottom:6px;overflow:hidden;${isCurrent?'background:var(--soft)':'background:var(--card)'}">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;cursor:${race?'pointer':'default'}" ${race?`onclick="cnToggleMonth(${m})"`:''}">
           <div style="flex:1;min-width:0">
             <span style="font-size:14px;font-weight:600;color:${isCurrent?'var(--pos)':isPast?'var(--ink3)':'var(--ink)'}">${mName}</span>
@@ -224,11 +224,11 @@ function renderCnCorredorTab(){
     }).join('')
     :`<div class="hint">Ve a <strong>📅 Calendario</strong> para seleccionar tus carreras de temporada (oct–mar).</div>`}
 
-    ${allRaceDone?`<button class="main" style="margin-top:12px;border-color:#4a8a2a;color:var(--pos)" onclick="G.screen='canicrossSeasonBalance';render()">Cerrar temporada ${G.cnSeason} →</button>`:''}
+    ${allRaceDone?`<button class="main" style="margin-top:12px;border-color:var(--acc);color:var(--acc)" onclick="G.screen='canicrossSeasonBalance';render()">Cerrar temporada ${G.cnSeason} →</button>`:''}
 
     ${(()=>{
-      const RARITY={easy:{c:'#4a8a2a',bg:'#eaf4ea',l:'Fácil'},medium:{c:'#4a90d9',bg:'#e8f0fb',l:'Medio'},hard:{c:'#c07a10',bg:'#fdf0e0',l:'Difícil'},legendary:{c:'#8b2252',bg:'#f8e8f2',l:'Legendario'}};
-      const rb=a=>{const r=RARITY[a.rarity]||{c:'#888',bg:'#eee',l:''};return`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:${r.bg};color:${r.c}">${r.l}</span>`;};
+      const RARITY={easy:{c:'var(--ink2)',bg:'var(--soft)',l:'Fácil'},medium:{c:'var(--ink)',bg:'var(--tier-regional)',l:'Medio'},hard:{c:'var(--card)',bg:'var(--tier-nacional)',l:'Difícil'},legendary:{c:'var(--card)',bg:'var(--tier-elite)',l:'Legendario'}};   // los niveles de logro con la escala de grises de los tiers
+      const rb=a=>{const r=RARITY[a.rarity]||{c:'var(--ink3)',bg:'var(--soft)',l:''};return`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:${r.bg};color:${r.c}">${r.l}</span>`;};
       const unlocked=G.unlockedAchievements||[];
       const cnAchs=ACHIEVEMENTS.filter(a=>a.mode==='cn');
       const unlockedCn=cnAchs.filter(a=>unlocked.includes(a.id));
@@ -278,7 +278,7 @@ function renderCnPerroTab(){
     <button class="pz-btn sec" style="margin-bottom:12px" onclick="G.screen='canicrossNotebook';render()">Abrir el cuaderno · ${Object.keys(G.cnNotebook||{}).length} conductas</button>
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Stats</div>
-      ${[['Velocidad',d.speed,'#4a90d9'],['Resistencia',d.stamina,'#4a8a2a'],['Vínculo',d.bond,'#c07a10'],['Salud',d.health,'#e74c3c']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
+      ${[['Velocidad',d.speed,'var(--acc)'],['Resistencia',d.stamina,'var(--acc)'],['Vínculo',d.bond,'var(--gente)'],['Salud',d.health,'var(--cuerpo)']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
     </div>
 
     <div class="card" style="margin-bottom:12px">
@@ -374,7 +374,6 @@ function renderCanicrossCalendarSetup(){
   const budget=G.cnMoney||0;
   const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
   const openMonths=G.cnOpenSeasonMonths||[];   // §0.4 del diseño: ya no se rellena al pintar (lo pone el arranque)
-  const tierColor={1:'#4a8a2a',2:'#4a90d9',3:'#c07a10',4:'#c0392b'};
   const tierLabel={1:'Tier 1',2:'Tier 2',3:'Tier 3',4:'Tier 4'};
   const byMonth={};
   CANICROSS_RACES.forEach(r=>{if(!byMonth[r.month])byMonth[r.month]=[];byMonth[r.month].push(r);});
@@ -389,7 +388,7 @@ function renderCanicrossCalendarSetup(){
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">
             <span class="card-title">${esc(r.name)}</span>
-            <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
+            ${nivelTag(r.tier,tierLabel[r.tier]||'')}
           </div>
           <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ${r.km}km · ${esc(r.location)}</div>
           ${otro?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">Ya tienes «${esc(otro.name)}» este mes</div>`:noMoney&&!isSel&&!maxed?`<div style="font-size:12px;color:var(--neg);margin-top:2px">Sin presupuesto</div>`:maxed&&!isSel?`<div style="font-size:12px;color:var(--avi);margin-top:2px">Máx. 6 carreras</div>`:''}
@@ -412,7 +411,7 @@ function renderCanicrossCalendarSetup(){
         <span style="font-weight:600;color:${pct>85?'var(--neg)':pct>50?'var(--avi)':'var(--ink3)'}">${pct}% (€${spent} / €${budget})</span>
       </div>
       <div style="height:4px;background:var(--trk);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${pct>85?'#c0392b':'#4a90d9'};border-radius:2px;transition:width .3s"></div>
+        <div style="height:100%;width:${pct}%;background:${pct>85?'var(--neg)':'var(--acc)'};border-radius:2px;transition:width .3s"></div>
       </div>
     </div>
     ${MONTHS.map(m=>{
@@ -450,7 +449,6 @@ function renderCnCalendarioTab(){
   const budget=G.cnMoney||0;
   const pct=budget>0?Math.min(100,Math.round(spent/budget*100)):0;
   const openMonths=G.cnOpenSeasonMonths||[];   // §0.4 del diseño: ya no se rellena al pintar (lo pone el arranque)
-  const tierColor={1:'#4a8a2a',2:'#4a90d9',3:'#c07a10',4:'#c0392b'};
   const tierLabel={1:'Tier 1',2:'Tier 2',3:'Tier 3',4:'Tier 4'};
 
   const byMonth={};
@@ -468,7 +466,7 @@ function renderCnCalendarioTab(){
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">
             <span class="card-title">${esc(r.name)}</span>
-            <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
+            ${nivelTag(r.tier,tierLabel[r.tier]||'')}
           </div>
           <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ${r.km}km · ${esc(r.location)}</div>
           ${isDone?`<div style="font-size:12px;color:var(--pos);margin-top:2px">✓ Ya corrida esta temporada</div>`:''}
@@ -494,7 +492,7 @@ function renderCnCalendarioTab(){
         <span style="font-weight:600;color:${pct>85?'var(--neg)':pct>50?'var(--avi)':'var(--ink3)'}">${pct}% (€${spent} / €${budget})</span>
       </div>
       <div style="height:4px;background:var(--trk);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${pct>85?'#c0392b':'#4a90d9'};border-radius:2px;transition:width .3s"></div>
+        <div style="height:100%;width:${pct}%;background:${pct>85?'var(--neg)':'var(--acc)'};border-radius:2px;transition:width .3s"></div>
       </div>
     </div>
     ${MONTHS.map(m=>{
@@ -708,8 +706,8 @@ function renderCanicrossSegment(){
   const ev=rs.pendingEvent;
   const curBond=Math.max(0,Math.min(100,(rs.dogBond||0)+(rs.bondDelta||0)));
 
-  const evBg={pos:'#eaf4ea',neg:'#fef0f0',special:'#fef9ec',rare:'#f0f6ff'}[ev?.eventType]||'#f5f4f0';
-  const evBorder={pos:'#b8ddb8',neg:'#f5b8b8',special:'#e8c97a',rare:'#b8d4f0'}[ev?.eventType]||'#e8e6e0';
+  const evBg={pos:'var(--pos-t)',neg:'var(--neg-t)',special:'var(--avi-t)',rare:'var(--acc-t)'}[ev?.eventType]||'var(--soft)';
+  const evBorder={pos:'var(--pos)',neg:'var(--neg)',special:'var(--avi-bar)',rare:'var(--acc)'}[ev?.eventType]||'var(--line)';
 
   // (aquí se calculaban segTypeLabel/Col/Bg — la etiqueta y los colores del tipo
   //  de tramo — y no se pintaban. Borrados en v92: profSegInfo() ya los muestra
@@ -766,8 +764,8 @@ function renderCanicrossSegment(){
 
     ${lastLogEntry?(()=>{
       const lev=lastLogEntry.event||{};
-      const bg={pos:'#eaf4ea',neg:'#fef0f0',special:'#fef9ec',rare:'#f0f6ff'}[lev.eventType]||'#f5f4f0';
-      const border={pos:'#b8ddb8',neg:'#f5b8b8',special:'#e8c97a',rare:'#b8d4f0'}[lev.eventType]||'#e8e6e0';
+      const bg={pos:'var(--pos-t)',neg:'var(--neg-t)',special:'var(--avi-t)',rare:'var(--acc-t)'}[lev.eventType]||'var(--soft)';
+      const border={pos:'var(--pos)',neg:'var(--neg)',special:'var(--avi-bar)',rare:'var(--acc)'}[lev.eventType]||'var(--line)';
       const label={pos:'✨ Evento positivo',neg:'⚡ Evento',special:'🌟 Especial',rare:'💫 Raro'}[lev.eventType]||'📍 Evento';
       return`<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${label}</div><div style="font-size:14px;font-weight:600">${cnReplaceVars(lev.text||'')}</div></div>`;
     })():''}
@@ -845,7 +843,7 @@ function renderCanicrossPostRace(){
 
     ${d?`<div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Estado de ${esc(d.name)} tras la carrera</div>
-      ${[['Vínculo',d.bond,'#c07a10'],['Salud',d.health,'#e74c3c']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
+      ${[['Vínculo',d.bond,'var(--gente)'],['Salud',d.health,'var(--cuerpo)']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
       ${d.injury?`<div class="danger" style="margin-top:8px">🤕 Lesión: ${d.injury} · ${d.injuryRaces} carrera(s) de baja</div>`:''}
     </div>`:''}
 
@@ -855,7 +853,7 @@ function renderCanicrossPostRace(){
     </div>`:''}
 
     ${seasonDone?
-      `<button class="main" style="border-color:#4a8a2a;color:var(--pos)" onclick="G.screen='canicrossSeasonBalance';render()">Cerrar temporada ${G.cnSeason} →</button>`:
+      `<button class="main" style="border-color:var(--acc);color:var(--acc)" onclick="G.screen='canicrossSeasonBalance';render()">Cerrar temporada ${G.cnSeason} →</button>`:
       `<button class="main" onclick="G.screen='canicrossHub';G.activeTab='game';render()">Continuar temporada →</button>`}`;
 }
 
@@ -898,7 +896,7 @@ function renderCnSeasonBalance(){
     })()}
     ${d?`<div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">🐕 ${esc(d.name)} · Temporada ${G.cnSeason}</div>
-      ${[['Vínculo',d.bond,'#c07a10'],['Velocidad',d.speed,'#4a90d9'],['Resistencia',d.stamina,'#4a8a2a'],['Salud',d.health,'#e74c3c']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
+      ${[['Vínculo',d.bond,'var(--gente)'],['Velocidad',d.speed,'var(--acc)'],['Resistencia',d.stamina,'var(--acc)'],['Salud',d.health,'var(--cuerpo)']].map(([l,v,c])=>`<div class="bar-row"><span class="bar-label">${l}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(v)}%;background:${c}"></div></div><span class="bar-pct">${Math.round(v)}</span></div>`).join('')}
       <div style="font-size:12px;color:var(--ink3);margin-top:8px">Vínculo máximo: ${d.peakBond||0} · Km juntos: ${d.kmTogether||0} · Vínculo ganado esta temporada: ${bondGain>=0?'+':''}${bondGain}</div>
       ${(d.age||1)>=5?`<div class="warn" style="margin-top:8px">🦴 ${esc(d.name)} tendrá ${(d.age||1)+1} años la próxima temporada. Considera su bienestar.</div>`:''}
     </div>`:''}
