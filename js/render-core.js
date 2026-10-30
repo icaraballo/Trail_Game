@@ -656,7 +656,7 @@ function renderModeSelect(){
   const otros=otherModes.slice().sort((a,b)=>rank(a)-rank(b));
   const icono2=t=>`<span style="width:36px;height:36px;border-radius:9px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${t}</span>`;
   el.innerHTML=`<div class="pz">
-    <div class="pz-franja" style="background:var(--ink);padding-top:26px">
+    <div class="pz-franja" style="background:var(--fill-oscuro);padding-top:26px">
       <svg class="pz-franja-fondo" viewBox="0 0 300 90" preserveAspectRatio="none" style="height:75%;opacity:.35"><path d="M0 90 L0 62 L40 40 L70 55 L110 18 L150 50 L180 34 L220 60 L260 28 L300 52 L300 90Z" style="fill:var(--carrera)"/></svg>
       <div class="pz-franja-num" style="font-size:46px;position:relative">Trail Game</div>
       <div class="pz-franja-sub" style="position:relative">Elige cómo quieres correr</div>

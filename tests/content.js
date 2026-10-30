@@ -441,9 +441,9 @@ function sinTokens(html){
   // «DIRECCIÓN VISUAL (v102) · TOKENS» a las @font-face de Barlow).
   const a=html.indexOf('/* ══ DIRECCIÓN VISUAL (v102) · TOKENS'),b=html.indexOf('/* Barlow servida');
   if(a<0||b<a){err('index.html: no encuentro el bloque de tokens','¿se ha movido el comentario de cabecera?');return html;}
-  // La meta theme-color tampoco cuenta: es el --ground escrito a mano porque una meta no lee var().
+  // Las meta theme-color tampoco cuentan: son el --ground de cada tema a mano (una meta no lee var()).
   return (html.slice(0,a)+html.slice(b)).replace(/\/\*[\s\S]*?\*\//g,'').replace(/<!--[\s\S]*?-->/g,'')
-    .replace(/<meta name="theme-color" content="#[0-9a-fA-F]{6}">/,'');
+    .replace(/<meta name="theme-color"[^>]*content="#[0-9a-fA-F]{6}">/g,'');
 }
 {
   const cuentas=Object.entries(LIMPIO).filter(([f])=>!HEX_FUERA.has(f))

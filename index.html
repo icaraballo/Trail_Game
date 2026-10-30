@@ -65,7 +65,7 @@ addEventListener('keydown',e=>{
 <meta property="og:image:alt" content="Trail Game: una carrera en curso, con el perfil del recorrido y las barras de energía, hidratación y piernas">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#F3F1EB"><!-- = --ground; una meta no lee var(), tests/content.js la deja fuera de la regla de hex -->
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F3F1EB"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161814"><!-- = --ground de cada tema; una meta no lee var(), tests/content.js las deja fuera de la regla de hex -->
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
@@ -109,9 +109,45 @@ addEventListener('keydown',e=>{
   --tier-regional:#E9E5DB;--tier-nacional:#4A4D45;--tier-elite:#1F221D;
   /* Momento negativo (crisis, club disuelto) */
   --momento-neg:#2C2F29;
+  /* Rellenos con texto encima: el texto (--on-fill) es blanco en los dos temas y los rellenos
+     oscuros siguen oscuros en el modo oscuro (si fueran --ink, se volverían claros) */
+  --on-fill:#FFFFFF;--fill-oscuro:#1F221D;--fill-medio:#4A4D45;
   /* Tipografía */
   --f-text:'Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --f-num:'Barlow Condensed','Barlow',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+/* ── Modo oscuro (paso 6, 2026-10-30): los mismos tokens, redefinidos. Sigue al sistema.
+   Las señales y familias se aclaran para leerse sobre fondo oscuro; los tintes (-t) se
+   oscurecen y las tintas (-i) se aclaran. Los niveles se invierten: más prestigio, más claro. */
+@media (prefers-color-scheme: dark){
+:root{
+  --ground:#161814;--card:#1F221D;--soft:#252821;--line:#33372F;--line2:#474B42;--trk:#2E312A;
+  --ink:#ECEAE3;--ink2:#BDBAB1;--ink3:#9A978E;
+  --carrera:#C9673C;--carrera-t:#3D2418;--carrera-i:#F2C2A8;
+  --cuerpo:#6AA6D3;--cuerpo-t:#182A38;--cuerpo-i:#BBD8EE;
+  --dinero:#A98BC4;--dinero-t:#2A2135;--dinero-i:#D8C8E8;
+  --gente:#D77598;--gente-t:#3A1C28;--gente-i:#F2C1D3;
+  --pos:#6DBE78;--pos-t:#1A2E1D;--pos-i:#B9E3BD;
+  --neg:#E7735F;--neg-t:#3A1C17;--neg-i:#F5BDB2;
+  --avi:#E0B04A;--avi-t:#33290F;--avi-bar:#C08A12;
+  --acc-clasico:#C9673C;--acc-clasico-t:#3D2418;
+  --acc-expres:#C29A2E;--acc-expres-t:#332A10;
+  --acc-canicross:#5E9A3B;--acc-canicross-t:#1F2D17;
+  --acc-entrenador:#5F83B0;--acc-entrenador-t:#1C2633;
+  --acc-club:#C4577F;--acc-club-t:#3A1C28;
+  --dif-facil:#6DBE78;--dif-facil-t:#1A2E1D;--dif-facil-b:#3F7A45;
+  --dif-medio:#E0B04A;--dif-medio-t:#33290F;--dif-medio-b:#8A6A1E;
+  --dif-dificil:#E7735F;--dif-dificil-t:#3A1C17;--dif-dificil-b:#8A3A2E;
+  --dif-hardcore:#BDBAB1;--dif-hardcore-t:#2E312A;--dif-hardcore-b:#5A5D55;
+  --ter-subida:#8F4A2C;--ter-subida-l:#E2A585;
+  --ter-bajada:#3D2A20;--ter-bajada-l:#D98C66;
+  --ter-llano:#2E312A;--ter-llano-l:#6E7068;
+  --ter-pend:#6E7068;--ter-avi:#6AA6D3;
+  --tier-regional:#3A3D35;--tier-nacional:#BDBAB1;--tier-elite:#ECEAE3;
+  --momento-neg:#3A2C29;
+  --fill-oscuro:#33362F;--fill-medio:#4A4D45;
+  color-scheme:dark;
+}
 }
 :root[data-modo="expres"]{--acc:var(--acc-expres);--acc-t:var(--acc-expres-t)}
 :root[data-modo="canicross"]{--acc:var(--acc-canicross);--acc-t:var(--acc-canicross-t)}
@@ -433,7 +469,7 @@ button.secondary:hover{background:var(--soft)}
 .tip-modal-close:hover{color:var(--ink)}
 /* ── MODE SWITCH BUTTON (solapamiento Corredor/Entrenador) — círculo flotante junto a "Guardar" del fin-bar, misma técnica de centrado que #tab-nav para seguir la columna del juego a cualquier ancho ── */
 #mode-switch-tab{display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);width:100%;max-width:560px;height:0;z-index:9200;pointer-events:none}
-#mode-switch-tab .msw-btn{position:absolute;left:100%;margin-left:10px;top:0;height:46px;padding:0 16px 0 12px;border-radius:23px;background:var(--msw-acc,var(--ink));color:var(--card);display:flex;align-items:center;gap:6px;font-family:var(--f-text);font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.28);pointer-events:auto}
+#mode-switch-tab .msw-btn{position:absolute;left:100%;margin-left:10px;top:0;height:46px;padding:0 16px 0 12px;border-radius:23px;background:var(--msw-acc,var(--fill-oscuro));color:var(--on-fill);display:flex;align-items:center;gap:6px;font-family:var(--f-text);font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.28);pointer-events:auto}
 /* v102: con el acento del modo al que vas */
 #mode-switch-tab .msw-btn.to-entrenador{--msw-acc:var(--acc-entrenador)}
 #mode-switch-tab .msw-btn.to-clasico{--msw-acc:var(--acc-clasico)}
@@ -617,14 +653,14 @@ input[type=text]:focus{border-color:var(--ink3)}
 .pz-btn[disabled]{opacity:.35;cursor:default}
 .pz-btn+.pz-btn{margin-top:8px}
 /* Franja de momento (§ 5): podio, fuera del podio, no terminó, negativo, cierre, transición */
-.pz-franja{position:relative;overflow:hidden;border-radius:14px;padding:22px 18px 18px;margin-bottom:14px;color:var(--card);background:var(--ink)}
+.pz-franja{position:relative;overflow:hidden;border-radius:14px;padding:22px 18px 18px;margin-bottom:14px;color:var(--on-fill);background:var(--fill-oscuro)}
 .pz-franja .pz-franja-num{font-family:var(--f-num);font-size:64px;font-weight:600;line-height:.95}
 .pz-franja .pz-franja-sub{font-size:14px;opacity:.85;margin-top:4px}
 .pz-franja.podio{background:var(--carrera)}
-.pz-franja.fuera{background:var(--tier-nacional)}
+.pz-franja.fuera{background:var(--fill-medio)}
 .pz-franja.dnf{background:var(--trk);color:var(--ink)}
 .pz-franja.negativo{background:var(--momento-neg)}
-.pz-franja.cierre{background:var(--ink)}
+.pz-franja.cierre{background:var(--fill-oscuro)}
 .pz-franja.transicion{background:var(--acc)}
 .pz-franja>svg.pz-franja-fondo{position:absolute;inset:auto 0 0 0;width:100%;height:60%;opacity:.18;pointer-events:none}
 /* Cabecera de carrera: posición en grande, tiempo, km y perfil por terreno con tu punto */

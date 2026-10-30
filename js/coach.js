@@ -1184,7 +1184,7 @@ function renderCoachPostRace(){
     </div>
     ${G.coachLastDialogue?`<div class="pz-tarjeta">
       <span class="pz-etiqueta fam-gente">${a.name} dice</span>
-      <p style="font-style:italic;margin:6px 0">«${esc(G.coachLastDialogue)}»</p>
+      <p style="font-style:italic;margin:6px 0">${esc(G.coachLastDialogue)}</p>
       <div class="pz-efectos">${es.emoji} Estado: <b>${es.label}</b></div>
     </div>`:''}
     ${styleReaction?`<div class="pz-diag">Reacción a tu estilo ${TRAINER_STYLES[G.coachTrainerStyle].emoji}: <i>${esc(styleReaction)}</i></div>`:''}
