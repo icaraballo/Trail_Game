@@ -573,7 +573,7 @@ console.log('\n── v96 · el objetivo de temporada del Club se aplica una vez
 }
 
 console.log('\n── v96 · Canicross se puede cerrar en marzo ──');
-t('el cierre sale con marzo terminado aunque queden carreras', /const marchDone=cnSeasonOver\(\);/.test(src['canicross.js'])&&/const allRaceDone=marchDone\|\|\(races\.length>0&&pendingRaces\.length===0\);/.test(src['canicross.js']));
+t('el cierre sale con marzo terminado aunque queden carreras', /const marchDone=cnSeasonOver\(\);/.test(src['canicross-render.js'])&&/const allRaceDone=marchDone\|\|\(races\.length>0&&pendingRaces\.length===0\);/.test(src['canicross-render.js']));
 
 console.log('\n── Tanda del playtest v96 ──');
 {
@@ -995,6 +995,7 @@ console.log('\n── Canicross, rediseño paso 1 · G.dog → G.dogs[] ──')
   t('los logros leen el perro activo', logro.check()===true);
   g.activeDogId=2;b.peakBond=10;
   t('…y no otro de la lista', logro.check()===false);
+  t('el patrón de modos: Canicross registra rutas y estado', !!T.screenRoutes().canicrossHub&&'dogs' in T.freshState()&&'cnRev' in T.freshState());
   t('el código ya no usa G.dog', !/\bG\.dog\b/.test(Object.values(src).join('\n').replace(/\/\/.*$/gm,'')));
 }
 {
@@ -1051,8 +1052,8 @@ console.log('\n── Canicross, rediseño paso 2 · reloj por mes y carreras fi
   t('refPace y tempBase en todas', R.every(r=>r.refPace>150&&r.refPace<400&&typeof r.tempBase==='number'));
   t('el generador aleatorio de tramos ya no existe', !/cnGenerateSegs|CN_SEG_NAMES/.test(src['canicross.js'].replace(/\/\/.*$/gm,'')));
   t('§0.4: ninguna pantalla da el cumpleaños ni rellena los meses al pintarse',
-    !/function render[\s\S]*?cnCheckBirthday\(\)/.test(src['canicross.js'].split('function cnDoSeasonTransition')[0].replace(/function cnCheckBirthday[\s\S]*?\n}\n/,''))
-    &&!/G\.cnOpenSeasonMonths=\[10,11,12,1,2,3\]/.test(src['canicross.js']));
+    !/cnCheckBirthday\(\)/.test(src['canicross-render.js'])
+    &&!/G\.cnOpenSeasonMonths=/.test(src['canicross-render.js']));
 }
 
 console.log('\n── Canicross, rediseño paso 3 · nivel de equipo y rivales persistentes ──');

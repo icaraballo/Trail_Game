@@ -1,3 +1,9 @@
+// Patrón de carga de modos (paso 4 de TG-Orden-de-Ejecucion, 2026-10-30). Cada modo con
+// fichero propio registra aquí sus rutas (MODE_ROUTES.<modo>={ruta:render}) y los campos de G
+// que estrena (MODE_STATE.<modo>=()=>({...})). screenRoutes() y freshState() los juntan.
+const MODE_ROUTES={};
+const MODE_STATE={};
+
 const WORK_OPTIONS=[
   {pct:100,label:'Jornada completa',hours:40,income:190,trainingH:5,
    desc:'Máximo dinero. Casi sin tiempo para entrenar.'},

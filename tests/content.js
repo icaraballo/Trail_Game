@@ -127,7 +127,7 @@ if(nuncaCiertos.length) avi(nuncaCiertos.length+' logros siguen falsos con el es
 
 // ── 3 · Campos de G que freshState() no declara ──────────────────────────────
 // T48/T49 (v93): antes esto solo barría el bloque de ACHIEVEMENTS y avisaba.
-// Cerradas las dos tareas, barre los ONCE ficheros y es ERROR: un campo de G
+// Cerradas las dos tareas, barre los DOCE ficheros (once hasta el patrón de modos) y es ERROR: un campo de G
 // que se escribe sin estar declarado vuelve a ser la trampa de T02/T03 — se
 // guarda en disco, migrateState() no le da valor por defecto y el siguiente
 // `undefined+1` es NaN, o el `.prop` de turno revienta el render.
@@ -156,7 +156,7 @@ const huerfanos=[...citados.keys()].filter(k=>!declarados.has(k)).sort();
 if(huerfanos.length){
   err(huerfanos.length+' campos de G usados y no declarados en freshState() (T48/T49)',
       huerfanos.map(k=>k+' ['+[...citados.get(k)].join(' ')+']').join(', '));
-} else ok('los '+citados.size+' campos de G usados en los 11 ficheros existen en freshState()');
+} else ok('los '+citados.size+' campos de G usados en los '+Object.keys(LIMPIO).length+' ficheros existen en freshState()');
 
 // ── 4 · Nombres de carrera escritos a mano dentro de los check() ─────────────
 bloque('Logros · literales que citan contenido');
@@ -432,7 +432,7 @@ if(!sinDefinir) ok('los '+manejadores.size+' manejadores citados desde el HTML e
 bloque('10 · Dirección visual: hex fuera de los tokens');
 const HEX_TECHO={
   'index.html':247,'constants.js':71,'state.js':17,'race.js':104,'coach.js':374,'club.js':187,
-  'canicross.js':201,'render-core.js':117,'render-clasico.js':453,'render-temporada.js':163,
+  'canicross-render.js':201,'render-core.js':117,'render-clasico.js':453,'render-temporada.js':163,
 };
 const HEX_FUERA=new Set(['devmode.js']);
 // `&#127939;` es una entidad HTML, no un color; `#tab-nav` un selector, no un hex.

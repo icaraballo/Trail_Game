@@ -2,22 +2,8 @@ function assignClubCompanion(club){
   if(!club||club.id==='none'||!club.companions?.length) return null; // T41 (v88): club migrado sin companions → TypeError
   return club.companions[Math.floor(Math.random()*club.companions.length)];
 }
-// Revisión del modelo de Canicross. Sube en cada paso del rediseño que cambia la forma de
-// su estado (TG-Diseno-Canicross § 12). Una partida de Canicross guardada con una revisión
-// menor no pasa: migrateState() la lleva a la pantalla «canicrossAntigua» en lugar de
-// intentar jugarla. Canicross avisaba en su ficha de que sus partidas no pasarían al
-// rediseño; es lo que evita escribir una migración en cada paso.
-// 1 = G.dogs[] en lugar de G.dog (2026-10-27).
-// 2 = reloj por mes (cnMonthIdx/cnMonthWeek, adiós a cnWeek) y carreras con perfil fijo.
-// 3 = rivales persistentes (cnRivals) con parciales en cnRaceState y nivel de equipo.
-// 4 = perro con ánimo, fatiga, temperamento y seis comandos con dominio; sincronía en carrera.
-// 5 = temperatura y clima por carrera, salud cotidiana (d.condition, d.sex) y carreras suspendidas.
-// 6 = reparto de horas, equipación y consumibles nuevos, economía con quiebra; adiós a
-//     bloques de entreno, vacaciones (B6) y cnMonthWeek.
-// 7 = circuito con puntos, destinos de retiro (status/destiny), fase del modo y epílogo.
-const CN_REV=7;
 function freshState(){
-  return{
+  const s={
     screen:'saveScreen',year:1,ranking:999,specRanking:999,money:300,
     gameMode:'medio',
     runner:{name:'',specialty:'fondista',energy:100,hydration:100,legs:100,age:25,
@@ -111,10 +97,6 @@ function freshState(){
     // las secuelas que dicen guardar no se aplican en ninguna parte.
     postRaceRestWeeks:0,         // semanas de descanso obligado tras una secuela
     seasonLegsPenalty:0,         // penalización de piernas arrastrada toda la temporada
-    // ── Canicross ──
-    cnPreseasonDone:[],          // ids de actividades de pretemporada hechas (es array, pese al nombre)
-    cnOpenMonths:[],             // meses desplegados en el calendario mensual
-    cnOpenSeasonMonths:[],       // meses desplegados en el calendario de temporada
     // ── Tanda B/C — campos antes lazy-init ──
     unlockedAchievements:[],     // logros desbloqueados (acumulado partida)
     nemesisLog:{},               // {rivalName: {wins, gapSum, gapCount}}
@@ -259,29 +241,6 @@ function freshState(){
     _cnPreseasonNothing:false,
     _cnIgnoredVetSeason:false,
     _cnVetThisSeason:false,
-    // ── Modo Canicross ───────────────────────────
-    canicrossMode:false,
-    cnSeason:1, cnSelectedRaces:[], cnCurrentRaceIdx:0, cnRaceResults:[],
-    cnMoney:500,
-    cnMonthIdx:0,
-    cnRivals:{}, cnNemesis:{}, cnSeasonShift:{},
-    cnNotebook:{},
-    cnSeasonWinter:'normal',   // paso 5: frio · normal · suave, sorteado al empezar cada temporada
-    cnCancelledRaces:[],       // paso 5: carreras suspendidas por calor o no corridas por el perro ({raceId,season,why})   // paso 4: el cuaderno — por conducta, veces vista, contexto, qué hiciste y tu nota   // paso 3: rivales persistentes, némesis y nivel de la temporada por tier   // reloj de Canicross (paso 2): mes 0-5 (6 = terminada) y semana del mes
-    // Paso 6: reparto de horas del mes, equipación contextual, consumibles y economía
-    cnHoursTotal:40, cnHoursPlan:{solo:0,perro:0,juntos:0,descanso:0}, cnHoursCmd:'forward',
-    cnOwned:{harness:['h_basic'],line:['l_medium'],belt:['b_basic']},
-    cnEquipped:{harness:'h_basic',line:'l_medium',belt:'b_basic'},
-    cnConsumables:{booties:0,coat:0,coolvest:0,recovery:0,electrolytes:0},
-    cnMinCare:false, cnBrokeSeason:0,
-    // Paso 7: circuito, fase del modo y contadores de los logros nuevos
-    cnCircuitPoints:0, cnCircuitTable:{}, cnCircuitWins:0, cnPhase:'runner',
-    cnWinNoForce:0, cnExDogPodium:0,   // manutención mínima (estrechez) y temporada en que se vio la pantalla
-    cnVetHistory:[], cnBirthdayToastShown:{}, cnRaceState:null,
-    // Rediseño de Canicross, paso 1 (TG-Diseno-Canicross § 3.1): G.dog pasa a una lista.
-    // El perro que compite es el de activeDogId; se lee con cnActiveDog().
-    dogs:[], activeDogId:null, cnNextDogId:1,
-    cnRev:CN_REV,   // revisión del modo: una partida con una menor no se carga (ver migrateState)
     // ── T49 (v93) · los 46 campos `_` transitorios ───────────────────────────
     // No se guardan (serializableState() los descarta por no estar en
     // PERSISTENT_UNDERSCORE_KEYS) y por eso nadie los había declarado. El
@@ -322,15 +281,14 @@ function freshState(){
     _monthlySelections:null,     // {decisionId:opcionId} del consejo mensual
     _clubFromBetween:false,      // se entró al club desde la pantalla de gestión
     _clubUnlockedHint:false,
-    // canicross
-    _cnDogBreed:null,            // raza elegida antes de crear el perro
-    _cnDogName:null,
-    _cnAdoptionOrigin:null,      // 'cachorro'|'retirado'|…
-    _cnAgingWarned:false,        // ya se avisó de que el perro envejece
-    _cnDislasiaEvent:false,      // el evento de displasia ya saltó
-    _cnHadInjuryLastRace:false,
   };
+  // Patrón de carga de modos (2026-10-30): cada modo declara sus campos en MODE_STATE desde
+  // su fichero de lógica (canicross.js…). Aquí se juntan; content.js los ve igual.
+  Object.values(MODE_STATE).forEach(f=>Object.assign(s,f()));
+  return s;
 }
+// Antes de cargar los modos: index.html vuelve a llamar a freshState() justo antes del
+// primer render, cuando ya se han registrado todos.
 let G=freshState();
 // T22 (v89): «jornada actual» tenía CUATRO fuentes de verdad que divergían en
 // cuanto cambiabas de jornada entre trimestres: G.workPct, G.workByQuarter[1],

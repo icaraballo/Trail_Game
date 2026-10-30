@@ -346,7 +346,7 @@ function nextToast(t){
 let _SCREEN_ROUTES=null;
 function screenRoutes(){
   if(_SCREEN_ROUTES)return _SCREEN_ROUTES;
-  return _SCREEN_ROUTES={
+  _SCREEN_ROUTES={
     intro:renderIntro,workSetup:renderWorkSetup,seasonStart:renderSeasonStart,
     modeSelect:renderModeSelect,saveScreen:renderSaveScreen,
     calendar:renderCalendar,sponsors:renderSponsors,training:renderTraining,
@@ -378,25 +378,12 @@ function screenRoutes(){
     coachIntro:renderCoachIntro,
     clubOffer:renderClubOffer,
     clubIntro:renderClubIntro,
-    canicrossCreateDog:renderCnCreateDog,
-    canicrossPreseason:renderCanicrossPreseason,
-    canicrossTrainingSetup:renderCanicrossTrainingSetup,
-    canicrossCalendarSetup:renderCanicrossCalendarSetup,
-    canicrossHub:renderCnCorredorTab,
-    canicrossPreRace:renderCanicrossPreRace,
-    canicrossSegment:renderCanicrossSegment,
-    canicrossPostRace:renderCanicrossPostRace,
-    canicrossSeasonBalance:renderCnSeasonBalance,
-    canicrossDogRetirement:renderCnDogRetirement,
-    canicrossDisplasia:renderCnDisplasia,
-    canicrossAntigua:renderCnAntigua,
-    canicrossRaceMorning:renderCnRaceMorning,
-    canicrossQuiebra:renderCnQuiebra,
-    canicrossNotebook:renderCnNotebook,
-    canicrossEpilogo:renderCnEpilogo,
     achievements:renderAchievements,
     debtCrisis:renderDebtCrisis,careerEnd:renderCareerEnd,   // T29 (v86)
-};
+  };
+  // Patrón de carga de modos: las rutas que registra cada modo (canicross-render.js…)
+  Object.values(MODE_ROUTES).forEach(r=>Object.assign(_SCREEN_ROUTES,r));
+  return _SCREEN_ROUTES;
 }
 
 // T81 (v90): document.getElementById('main') aparecía en 89 sitios.

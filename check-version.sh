@@ -2,7 +2,7 @@
 # Comprueba que el número de build coincide en los 3 sitios donde vive:
 #   - js/save.js  (const GAME_BUILD=NN, fuente de verdad)
 #   - index.html  (<title>)
-#   - index.html  (11 query strings ?v=NN de los <script src="js/*.js?v=...">)
+#   - index.html  (12 query strings ?v=NN de los <script src="js/*.js?v=...">)
 #
 # Uso: ./check-version.sh
 # Sale con código 0 si todo coincide, 1 si hay algún sitio desincronizado.
