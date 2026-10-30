@@ -143,7 +143,26 @@ const ICONOS={
   entrenador:'<rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 3.5h6v2.5H9zM8.5 11h7M8.5 14.5h7M8.5 18h4"/>',
   guardar:'<path d="M5.5 4h10.5l3 3v12a1 1 0 01-1 1H6.5a1 1 0 01-1-1z"/><path d="M8.5 4v4.5h6.5V4M8.5 20v-6h7v6"/>',
   aviso:'<path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.3v.2"/>',
+  candado:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  bombilla:'<path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
 };
+// Piezas de pantalla del sistema (paso 6). El consejo sale abierto; «Entendido» lo pliega a
+// «Ver consejo» y se recuerda por consejo en este navegador (preferencia de quien juega, no
+// de la partida: no va en G).
+function consejoCerrado(id){try{return LS.get('consejo_'+id)==='1';}catch(e){return false;}}
+window.toggleConsejo=id=>{try{LS.set('consejo_'+id,consejoCerrado(id)?'0':'1');}catch(e){}render();};
+function consejoHTML(id,negrita,resto){
+  if(consejoCerrado(id))return `<div class="pz-consejo plegado" onclick="toggleConsejo('${id}')">${icono('bombilla')}Ver consejo</div>`;
+  return `<div class="pz-consejo">${icono('bombilla')}<div><span class="pz-label" style="display:block;margin-bottom:2px">Consejo</span><b>${negrita}</b> ${resto||''}<br><button class="pz-consejo-ok" onclick="toggleConsejo('${id}')">Entendido</button></div></div>`;
+}
+// Nivel de carrera en escala de grises (§ 2 *Terreno*): local con borde, regional claro,
+// nacional y élite oscuros. Más prestigio, más oscuro.
+function nivelTag(tier){
+  const st={local:'border:1px solid var(--line2);color:var(--ink2)',regional:'background:var(--tier-regional);color:var(--ink)',
+    nacional:'background:var(--tier-nacional);color:var(--card)',elite:'background:var(--tier-elite);color:var(--card)'}[tier]||'border:1px solid var(--line2)';
+  return `<span class="pz-chip" style="${st};margin:0">${TIER_LABEL_RACE[tier]||''}</span>`;
+}
+function motivoHTML(txt){return `<div class="pz-motivo">${icono('candado')}${txt}</div>`;}
 function icono(k){return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONOS[k]||''}</svg>`;}
 // Cifras del chasis: «€1.800», «−€50». Separador de miles a mano: toLocaleString('es-ES')
 // no agrupa los números de cuatro cifras («1800»).

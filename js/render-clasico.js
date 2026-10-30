@@ -99,7 +99,7 @@ function inviteBadge(r){
   const ev=(G.selectedRaces||[]).some(s=>s.id===r.id&&s._invite);
   const rep=(G.repInvitations||[]).some(i=>i.id===r.id);
   if(!ev&&!rep)return '';
-  return `<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#2d7a2a22;color:#2d7a2a">📩 ${ev?'Invitación del organizador':'Invitación por reputación'}</span>`;
+  return `<span class="pz-chip mas" style="margin:0">📩 ${ev?'Invitación del organizador':'Invitación por reputación'}</span>`;
 }
 function renderCalendarTab(){
   const el=$main();
@@ -817,6 +817,9 @@ function renderExpresSeasonBalance(){
 }
 
 // ── WORK SETUP (TRIMESTRAL) ────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Jornada»
+// (TG-Direccion-Visual § 7): consejo plegable, el sueldo en negro y solo el neto en color,
+// y lo bloqueado con su motivo. Sin hex.
 function renderWorkSetup(){
   const el=$main();
   const q=G.currentQuarter||1;
@@ -832,19 +835,18 @@ function renderWorkSetup(){
   const totalTrainingH=wo.trainingH+vacBonus;
 
   if(G.year===1&&q===1&&!G._workTipSeen){G._workTipSeen=true;}
-  el.innerHTML=`
-    <h2>Jornada laboral</h2>
-    <p class="sub">${qLabel[q]} · ${esc(G.runner.name||'Corredor')}${G.carreraVida?` · <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:#E6F1FB;color:#185FA5;font-weight:600">🏔 Carrera de Vida · Año ${G.year} · ${{runner:'Corredor',overlap:'Solapamiento',coach:'Entrenador',club:'Club'}[G.lifecyclePhase||'runner']}</span>`:''}</p>
-    ${G.year===1&&q===1?`<div class="note" style="border-left-color:#c07a10">💡 <strong>Las horas que no dediques a trabajar van a entrenar — y las que no uses entrenando, a reputación.</strong> Atleta puro, mediático o equilibrado: tú eliges cada trimestre.</div>`:''}
-    ${qRaces.length>0?`<div class="note">Este trimestre tienes ${qRaces.length} carrera${qRaces.length>1?'s':''}: ${qRaces.map(r=>r.name).join(', ')}. Valora bajar jornada o usar vacaciones.</div>`:''}
-    ${G.workChangePenalties?.[q]?`<div class="warn">⚠ Cambio brusco de jornada${G.workChangePenalties[q]?.amount>0?' — pierdes €'+G.workChangePenalties[q].amount:''} · eficiencia entrenamiento ${Math.round((G.workChangePenalties[q]?.trainingEff||1)*100)}% este trimestre.</div>`:''}
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px">Gastos fijos mensuales</div>
-      <table class="eco-table">
-        <tr><td>Alquiler + comida + transporte</td><td class="right minus">-€${FIXED_COSTS.total}/mes</td></tr>
-      </table>
+  const pen=G.workChangePenalties?.[q];
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-dinero">${icono('finanzas')}Dinero · ${qLabel[q]}</div>
+    <div class="pz-titulo">Jornada laboral</div>
+    <p class="pz-sub">${esc(G.runner.name||'Corredor')}${G.carreraVida?` · <span class="pz-chip" style="background:var(--soft)">🏔 Carrera de Vida · Año ${G.year} · ${{runner:'Corredor',overlap:'Solapamiento',coach:'Entrenador',club:'Club'}[G.lifecyclePhase||'runner']}</span>`:''}</p>
+    ${consejoHTML('jornada','Las horas que no dediques a trabajar van a entrenar — y las que no uses entrenando, a reputación.','Atleta puro, mediático o equilibrado: tú eliges cada trimestre.')}
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea"><span class="pz-fila-txt">Alquiler + comida + transporte</span><span class="pz-num">${fmtEur(-FIXED_COSTS.total)}/mes</span></div>
+      ${qRaces.length>0?`<div class="pz-linea"><span class="pz-diag">Este trimestre tienes ${qRaces.length} carrera${qRaces.length>1?'s':''}: ${qRaces.map(r=>esc(r.name)).join(', ')}. Valora bajar jornada o usar vacaciones.</span></div>`:''}
+      ${pen?`<div class="pz-linea"><span class="pz-diag ojo">Cambio brusco de jornada${pen.amount>0?' — pierdes €'+pen.amount:''} · eficiencia de entrenamiento ${Math.round((pen.trainingEff||1)*100)} % este trimestre.</span></div>`:''}
     </div>
-    <div class="section-label">¿Cuánto trabajas este trimestre?</div>
+    <div class="pz-label" style="margin:14px 0 8px">¿Cuánto trabajas este trimestre?</div>
     ${WORK_OPTIONS.map(wo2=>{
       const net=wo2.income+sponsorM-FIXED_COSTS.total-(G.club?.cost||0);
       const eff=Math.round(trainingEffFromH(wo2.trainingH+vacBonus)*100);
@@ -852,68 +854,40 @@ function renderWorkSetup(){
       const debtLocked=!!G.forcedFullTime&&wo2.pct!==100;
       const isLocked=(wo2.pct===0&&!canQuit)||debtLocked;
       const sel=curPct===wo2.pct;
-      return `<div class="work-card ${sel?'sel':''} ${isLocked?'locked-work':''}" onclick="${isLocked?'':'setWorkQ('+q+','+wo2.pct+')'}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-          <div>
-            <div class="card-title">${wo2.label}</div>
-            <div class="card-sub">${wo2.desc}</div>
-          </div>
-          ${debtLocked?`<span style="font-size:12px;color:var(--neg);flex-shrink:0;margin-left:8px">Bloqueado hasta saldar la deuda (€${G.debt||0})</span>`
-            :isLocked?`<span style="font-size:12px;color:var(--neg);flex-shrink:0;margin-left:8px">Necesitas €${FIXED_COSTS.total+(G.club?.cost||0)}/mes en sponsors (tienes €${sponsorM})</span>`:''}
+      return `<div class="pz-opcion${sel?' sel':''}${isLocked?' pz-bloqueado':''}" ${isLocked?'':`onclick="setWorkQ(${q},${wo2.pct})"`}>
+        <b>${wo2.label}</b><div class="pz-efectos">${wo2.desc}</div>
+        ${debtLocked?motivoHTML(`Bloqueado hasta saldar la deuda (€${G.debt||0})`)
+          :isLocked?motivoHTML(`Necesitas €${FIXED_COSTS.total+(G.club?.cost||0)}/mes en sponsors (tienes €${sponsorM})`):''}
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+          <div><div class="pz-label">Trabajo</div><div class="pz-num" style="font-size:16px">${wo2.income>0?'€'+wo2.income:'—'}/mes</div></div>
+          <div><div class="pz-label">Neto</div><div class="${net>=0?'pz-mas':'pz-menos'}" style="font-size:16px">${fmtEur(net,true)}/mes</div></div>
+          <div><div class="pz-label">Entreno</div><div class="pz-num" style="font-size:16px">${wo2.trainingH} h/sem</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px">
-          <div><div style="color:var(--ink3);margin-bottom:2px">Trabajo</div>
-            <div style="font-weight:600;color:${wo2.income>0?'var(--pos)':'var(--ink3)'}">${wo2.income>0?'+€'+wo2.income:'-'}/mes</div></div>
-          <div><div style="color:var(--ink3);margin-bottom:2px">Neto</div>
-            <div style="font-weight:600;color:${net>=0?'var(--pos)':'var(--neg)'}">${net>=0?'+':''}€${net}/mes</div></div>
-          <div><div style="color:var(--ink3);margin-bottom:2px">Entreno base</div>
-            <div style="font-weight:600;color:var(--cuerpo)">${wo2.trainingH}h/sem</div></div>
-        </div>
-        <div style="margin-top:8px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:3px">
-            <span>Eficiencia</span><span>${eff}%</span>
-          </div>
-          ${hbar(eff,100,'#4a90d9')}
-        </div>
+        <div style="display:flex;justify-content:space-between;margin:8px 0 4px" class="pz-efectos"><span>Eficiencia del entreno</span><span class="pz-num">${eff} %</span></div>
+        <div class="pz-barra"><div class="pz-relleno" style="width:${eff}%"></div></div>
       </div>`;}).join('')}
 
-    <div class="card" style="margin-top:8px;margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div class="card-title">Vacaciones este trimestre</div>
-        <div style="font-size:12px;color:var(--ink3)">${vacDaysUsed()} / ${G.vacDaysTotal||15} días usados este año</div>
+    <div class="pz-tarjeta" style="margin-top:8px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <b>Vacaciones este trimestre</b><span class="pz-efectos">${vacDaysUsed()} / ${G.vacDaysTotal||15} días usados este año</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-        <button class="secondary" onclick="setVacQ(${q},${Math.max(0,vacQ-1)})" ${vacQ<=0?'disabled':''} style="padding:6px 12px;font-size:16px">−</button>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:24px;font-weight:700;color:var(--avi)">${vacQ}</div>
-          <div style="font-size:12px;color:var(--ink3)">días este trimestre</div>
-        </div>
-        <button class="secondary" onclick="setVacQ(${q},${Math.min(vacLeft+vacQ,vacQ+1)})" ${vacLeft<=0?'disabled':''} style="padding:6px 12px;font-size:16px">+</button>
+      <div style="display:flex;justify-content:center;margin-bottom:8px">
+        <span class="pz-stepper"><button onclick="setVacQ(${q},${Math.max(0,vacQ-1)})" ${vacQ<=0?'disabled':''}>−</button><span class="pz-stepper-n">${vacQ}</span><button onclick="setVacQ(${q},${Math.min(vacLeft+vacQ,vacQ+1)})" ${vacLeft<=0?'disabled':''}>+</button></span>
       </div>
-      ${vacQ>0?`<div class="note" style="margin-bottom:0">
-        +${vacBonus}h/sem de entrenamiento extra este trimestre
-        · Entreno total: <strong>${totalTrainingH}h/sem</strong>
-        · ${vacLeft} días restantes en el año
-      </div>`:
-      `<div style="font-size:12px;color:var(--ink3)">Cada día de vacaciones añade 1.5h/sem de entrenamiento extra este trimestre. Te quedan ${vacLeft} días este año.</div>`}
+      ${vacQ>0?`<div class="pz-efectos" style="text-align:center">Entreno extra <span class="pz-mas">+${vacBonus} h/sem</span> · total <span class="pz-num">${totalTrainingH} h/sem</span> · te quedan ${vacLeft} días este año</div>`
+        :`<div class="pz-efectos" style="text-align:center">Cada día de vacaciones añade 1,5 h/sem de entrenamiento este trimestre. Te quedan ${vacLeft} días este año.</div>`}
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <button class="main" onclick="G.screen='seasonStart';autoSave();render()">← Volver</button>
-      <button class="main" onclick="G.screen='calendar';autoSave();render()">Confirmar →</button>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:8px">
+      <button class="pz-btn sec" onclick="G.screen='seasonStart';autoSave();render()">← Volver</button>
+      <button class="pz-btn" onclick="G.screen='calendar';autoSave();render()">Confirmar →</button>
     </div>
-    ${[2,3,4].includes(q)?`<div style="margin-top:12px">
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Otros trimestres</div>
-      ${[1,2,3,4].filter(n=>n!==q).map(n=>{
+    ${[2,3,4].includes(q)?`<div class="pz-label" style="margin:16px 0 6px">Otros trimestres</div>
+      <div class="pz-tarjeta" style="padding:2px 14px">${[1,2,3,4].filter(n=>n!==q).map(n=>{
         const wo2=WORK_OPTIONS.find(o=>o.pct===G.workByQuarter[n]);
         const vac2=G.vacByQuarter?.[n]||0;
-        return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
-          <span style="color:var(--color-text-secondary)">${{1:'Q1',2:'Q2',3:'Q3',4:'Q4'}[n]}</span>
-          <span style="cursor:pointer;color:var(--cuerpo)" onclick="G.currentQuarter=${n};render()">
-            ${wo2?.label||'—'} · ${wo2?.trainingH||5}h/sem${vac2>0?' + '+vac2+'d vac':''} ✎
-          </span>
-        </div>`;}).join('')}
-    </div>`:''}`;
+        return `<div class="pz-fila navega" onclick="G.currentQuarter=${n};render()"><span class="pz-num">Q${n}</span><span class="pz-fila-txt">${wo2?.label||'—'}</span><span class="pz-fila-dato">${wo2?.trainingH||5} h/sem${vac2>0?' + '+vac2+' d':''}</span></div>`;}).join('')}</div>`:''}
+  </div>`;
 }
 
 window.setVacQ=(q,days)=>{
@@ -988,6 +962,9 @@ function renderSeasonStart(){
 }
 
 // ── CALENDAR ───────────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Lista, referencia «Calendario» (§ 7):
+// presupuesto en morado y en euros, trimestres en tarjeta, carreras en filas con casilla y el
+// nivel en escala de grises. Sin hex.
 function renderCalendar(){
   const el=$main();
   const canAccess=canAccessRace;   // DS08 (v95)
@@ -995,13 +972,8 @@ function renderCalendar(){
   const spent=G.selectedRaces.reduce((a,r)=>a+r.cost,0);
   const budget=G.money;
   const pct=Math.min(100,Math.round(spent/Math.max(1,budget)*100));
-  const tierColor=TIER_COLOR_RACE;
-  const tierLabel=TIER_LABEL_RACE;
   const specRaces=getSpecRaces();
-  const specLabel=SPEC_LABEL;
-  const specColor={fondista:'#4a90d9',montanero:'#4a8a2a',tecnico:'#c07a10',todoterreno:'#888'};
-  const myColor=specColor[G.runner.specialty]||'#888';
-  const myLabel=specLabel[G.runner.specialty]||'';
+  const myLabel=SPEC_LABEL[G.runner.specialty]||'';
 
   function raceCard(r,isSpec){
     const sel=selIds.includes(r.id);
@@ -1009,87 +981,66 @@ function renderCalendar(){
     const noMoney=!sel&&(spent+r.cost>budget);
     const inCirc=isInCircuit(r.id);
     const circPts=inCirc?circuitPoints(3,15):0;
-    return `<div class="race-card ${sel?'sel':locked?'locked':''}" ${!locked&&!(noMoney&&!sel)?'onclick="toggleRace(\''+r.id+'\')"':''}>
-      <div class="flex-between">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">
-            <span class="card-title">${esc(r.name)}</span>
-            <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
-            ${inviteBadge(r)}
-            ${isSpec?`<span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${myColor}22;color:${myColor}">${myLabel}</span>`:''}
-            ${inCirc?`<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:4px;background:#c07a1022;color:var(--avi)">Liga · ~${circPts}pts</span>`:''}
-          </div>
-          <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
-          ${locked?(r.zegamaSpecial?`<div style="font-size:12px;color:var(--avi);margin-top:2px">🏔️ Invitación Top 20 o clasificación por tiempo (corte 4h20)</div>`:`<div style="font-size:12px;color:var(--ink3);margin-top:2px">🔒 Ranking #${r.reqRanking} requerido</div>`):''}
-          ${noMoney&&!sel?`<div class="text-warn">Sin presupuesto</div>`:''}
-          ${isSpec?`<div style="font-size:12px;color:${myColor};margin-top:2px">+15% rendimiento para ${myLabel}</div>`:''}
-        </div>
-        <div class="right-col">
-          <div style="font-size:13px;font-weight:600;color:var(--pos)">€${r.prize}</div>
-          <div style="font-size:12px;color:var(--ink3)">€${r.cost} inscr.</div>
-          ${sel?`<div style="font-size:12px;color:var(--pos);font-weight:600;margin-top:2px">✓</div>`:''}
-        </div>
-      </div>
+    const clic=!locked&&!(noMoney&&!sel);
+    return `<div class="pz-fila${clic?' navega-no':''}${locked?' pz-bloqueado':''}" style="${clic?'cursor:pointer':''};align-items:flex-start;border:none;border-top:1px solid var(--line)" ${clic?'onclick="toggleRace(\''+r.id+'\')"':''}>
+      <input type="checkbox" class="pz-casilla" style="pointer-events:none;margin-top:2px" ${sel?'checked':''} ${clic?'':'disabled'} tabindex="-1" aria-hidden="true">
+      <span class="pz-fila-txt">
+        <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><b>${esc(r.name)}</b>${nivelTag(r.tier)}${inviteBadge(r)}
+          ${isSpec?`<span class="pz-chip" style="margin:0;border:1px solid var(--acc);color:var(--ink)">★ ${myLabel}</span>`:''}
+          ${inCirc?`<span class="pz-chip" style="margin:0;background:var(--soft)">Liga · ~${circPts} pts</span>`:''}</span>
+        <div class="pz-efectos">${r.monthName} · ${r.type} · ${raceDesnivel(r)}${isSpec?` · <span class="pz-mas">+15 %</span> para ${myLabel}`:''}</div>
+        ${locked?motivoHTML(r.zegamaSpecial?'Invitación Top 20 o clasificación por tiempo (corte 4h20)':'Ranking #'+r.reqRanking+' requerido'):''}
+        ${noMoney&&!sel?motivoHTML('Sin presupuesto'):''}
+      </span>
+      <span style="text-align:right"><div class="pz-num">€${r.prize}</div><div class="pz-efectos">€${r.cost} inscr.</div></span>
     </div>`;
   }
 
-  el.innerHTML=`
-    <h2>Calendario anual</h2>
-    <p class="sub">Comunes + específicas de ${myLabel} · €${spent} de €${budget} gastados</p>
-    <div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
-        <span>Presupuesto de inscripciones <button class="tip-btn" onclick="showTip('Barra de presupuesto','Esta barra muestra qué porcentaje de tus ahorros llevas gastado en inscripciones de carrera. No es la carga corporal — eso lo puedes ver en la pestaña Corredor.<br><br>Si llega al 85% se vuelve roja: ojo con dejar reservas para imprevistos.')">ⓘ</button></span>
-        <span style="font-weight:600;color:${pct>85?'var(--neg)':pct>50?'var(--avi)':'var(--ink3)'}">${pct}% (€${spent} / €${budget})</span>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('calendario')}Carrera · temporada ${G.year}</div>
+    <div class="pz-titulo">Calendario anual</div>
+    <p class="pz-sub">Comunes y específicas de ${myLabel}.</p>
+    <div class="pz-tarjeta">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span class="pz-label">Inscripciones <button class="tip-btn" onclick="showTip('Barra de presupuesto','Esta barra muestra qué porcentaje de tus ahorros llevas gastado en inscripciones de carrera. No es la carga corporal — eso lo puedes ver en la pestaña Corredor.<br><br>Si llega al 85% se vuelve roja: ojo con dejar reservas para imprevistos.')">ⓘ</button></span>
+        <span><span class="pz-num" style="font-size:18px;color:var(--dinero)">${fmtEur(spent)}</span> <span class="pz-efectos">de ${fmtEur(budget)} · ${pct} %</span></span>
       </div>
-      <div style="height:4px;background:var(--trk);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${pct>85?'#c0392b':'#4a90d9'};border-radius:2px;transition:width .3s"></div>
-      </div>
+      <div class="pz-barra"><div class="pz-relleno${pct>85?' menos':''}" style="width:${pct}%;${pct>85?'':'background:var(--dinero)'}"></div><div class="pz-umbral" style="left:85%"></div></div>
     </div>
-    ${G.joinedCircuits.length>0?`<div class="note" style="margin-bottom:12px">
-      <span style="font-weight:600">Circuito${G.joinedCircuits.length>1?'s':''} activo${G.joinedCircuits.length>1?'s':''}:</span>
-      ${G.joinedCircuits.map(cid=>CIRCUITS_DB.find(c=>c.id===cid)?.name||cid).join(', ')}
-      — las carreras de liga están marcadas con <span style="color:var(--avi);font-weight:600">Liga</span>
-    </div>`:
-    `<div onclick="G.screen='circuits';render()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--card);border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;margin-bottom:12px">
-      <div>
-        <div class="card-title">🏆 Ligas y circuitos</div>
-        <div class="card-sub">Únete para ganar puntos y premios extra este año</div>
-      </div>
-      <span style="color:var(--ink3);font-size:14px">→</span>
-    </div>`}
+    ${G.joinedCircuits.length>0?`<div class="pz-diag mas" style="margin-bottom:12px"><span><b>Circuito${G.joinedCircuits.length>1?'s':''} activo${G.joinedCircuits.length>1?'s':''}:</b> ${G.joinedCircuits.map(cid=>esc(CIRCUITS_DB.find(c=>c.id===cid)?.name||cid)).join(', ')} — las carreras de liga llevan «Liga».</span></div>`:
+    `<div class="pz-tarjeta" style="padding:2px 14px"><div class="pz-fila navega" onclick="G.screen='circuits';render()"><span>🏆</span><span class="pz-fila-txt"><b>Ligas y circuitos</b><div class="pz-efectos">Únete para ganar puntos y premios extra este año</div></span></div></div>`}
     ${QUARTERS.map(q=>{
       const common=RACES_DB.filter(r=>r.quarter===q.n);
       const spec=specRaces.filter(r=>r.quarter===q.n);
       const qSel=[...common,...spec].filter(r=>selIds.includes(r.id)).length;
       const qLabel={1:'Primer trimestre',2:'Segundo trimestre',3:'Tercer trimestre',4:'Cuarto trimestre'};
       const isOpen=(G.openQuarters?.cal||[]).includes(q.n);
-      return `
-        <div class="quarter-wrap">
-          <div class="quarter-toggle ${qSel>0?'has-sel':''}" onclick="toggleQ(${q.n})">
-            <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]} <span style="font-size:12px;font-weight:400;color:var(--ink3)">· ${q.months}</span></span>
-            ${qSel>0?`<span style="font-size:12px;color:var(--pos);font-weight:600">${qSel} ✓</span>`:''}
-            <span style="font-size:12px;color:var(--ink3);display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
+      return `<div class="pz-tarjeta" style="padding:0;overflow:hidden">
+          <div class="pz-fila navega" style="padding:12px 14px;border:none;${qSel>0?'box-shadow:inset 3px 0 0 var(--acc)':''}" onclick="toggleQ(${q.n})">
+            <span class="pz-fila-txt"><b>${qLabel[q.n]}</b> <span class="pz-efectos">· ${q.months}</span></span>
+            ${qSel>0?`<span class="pz-fila-dato">${qSel} ✓</span>`:''}
           </div>
-          <div class="quarter-content ${isOpen?'open':''}" onclick="event.stopPropagation()">
+          ${isOpen?`<div style="padding:0 14px 8px" onclick="event.stopPropagation()">
             ${common.map(r=>raceCard(r,false)).join('')}
             ${spec.length>0?`
-              <div class="spec-toggle" id="spec-toggle-${q.n}" onclick="event.stopPropagation();toggleSpecQ(${q.n})">
-                <span style="color:${myColor}">★</span>
+              <div class="spec-toggle" id="spec-toggle-${q.n}" onclick="event.stopPropagation();toggleSpecQ(${q.n})" style="margin-top:8px">
+                <span style="color:var(--acc)">★</span>
                 <span style="flex:1">Carreras específicas — ${myLabel} (${spec.length})</span>
                 <span class="spec-arrow" id="spec-arrow-${q.n}">▶</span>
               </div>
               <div class="spec-races" id="spec-races-${q.n}">
                 ${spec.map(r=>raceCard(r,true)).join('')}
               </div>`:''}
-          </div>
+          </div>`:''}
         </div>`;}).join('')}
-    <div style="font-size:13px;color:var(--ink3);margin:8px 0 12px">
+    <div class="pz-efectos" style="margin:8px 0 12px">
       ${G.selectedRaces.length===0?'Sin carreras — puedes continuar igualmente.':G.selectedRaces.length+' carrera'+(G.selectedRaces.length>1?'s':'')+' seleccionada'+(G.selectedRaces.length>1?'s':'')+'.'}
     </div>
-    <div class="grid-2">
-      <button class="main" onclick="G.screen='seasonStart';autoSave();render()">← Volver</button>
-      <button class="main" onclick="G.screen='sponsors';autoSave();render()">Patrocinios →</button>
-    </div>`;
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+      <button class="pz-btn sec" onclick="G.screen='seasonStart';autoSave();render()">← Volver</button>
+      <button class="pz-btn" onclick="G.screen='sponsors';autoSave();render()">Patrocinios →</button>
+    </div>
+  </div>`;
 }
 
 window.toggleQ=q=>{
@@ -1260,6 +1211,9 @@ window.negotiatePenalty=id=>{
 };
 
 // ── TRAINING ───────────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Entreno» (§ 7):
+// versión limpia (sin etiquetas de color ni minibarras), tarjeta de estado con la carga, el
+// frío y la próxima carrera desplegable, y la frase real del bloque. Sin hex.
 function renderTraining(){
   const el=$main();
   const nextRace=G.selectedRaces[0];
@@ -1270,68 +1224,61 @@ function renderTraining(){
   const curMonth=nextRace?nextRace.month:(new Date().getMonth()+1);
   const se=getSeasonEffects(curMonth);
   const seEffPct=Math.round(effForWork()*(1+se.trainingMod)*100);
-  el.innerHTML=`
-    <h2>Bloque de entrenamiento</h2>
-    <p class="sub">Efectividad: <strong>${seEffPct}%</strong> · ${wo?.trainingH||5}h/sem · ${se.label}</p>
-    <div class="hint">📅 El bloque se aplica <strong>al cerrar la temporada</strong>, una sola vez: las cifras de cada tarjeta son lo que sumará entonces.</div>
-    ${G.zeroedOutThisRace&&G.postRaceConsequence?`<div class="danger">⚠ Secuelas de la última carrera — <strong>${G.postRaceConsequence.label}</strong>. ${G.postRaceConsequence.id==='descanso_forzado'?`El bloque de esta temporada rinde un ${Math.round((1-restWeeksEffMult())*100)} % menos.`:G.postRaceConsequence.id==='sobrecarga'?'Subida, bajada y velocidad entrenan al 80 % esta temporada.':'Recuperación en curso.'}</div>`:''}
-    ${hint?`<div class="${hint.type}">${hint.msg}</div>`:''}
-    ${se.trainingMod!==0?`<div class="hint">${se.note}</div>`:''}
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
-        <span>Carga corporal acumulada <button class="tip-btn" onclick="showTip('Carga corporal','Refleja el desgaste acumulado de entrenar. Por encima del <strong>70%</strong> empieza la bajada de rendimiento. Al <strong>100%</strong> aparece una lesión.<br><br>La degradación es exponencial: cuanta más carga tienes, más difícil bajarla. Se reduce parcialmente entre temporadas, pero nunca vuelve a cero sola. Nunca vayas a tope todo el rato.')">ⓘ</button></span>
-        <span style="color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--ink3)'}">${load}%</span>
+  const diagCls={warn:'ojo',danger:'menos',note:'mas',hint:''};
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-cuerpo">${icono('corredor')}Cuerpo · temporada ${G.year}</div>
+    <div class="pz-titulo">Bloque de entrenamiento</div>
+    <p class="pz-sub">Efectividad <span class="pz-num">${seEffPct} %</span> · ${wo?.trainingH||5} h/sem · ${se.label}</p>
+    ${consejoHTML('bloque','El bloque se aplica al cerrar la temporada, una sola vez:','las cifras de cada opción son lo que sumará entonces.')}
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span class="pz-label">Carga corporal <button class="tip-btn" onclick="showTip('Carga corporal','Refleja el desgaste acumulado de entrenar. Por encima del <strong>70%</strong> empieza la bajada de rendimiento. Al <strong>100%</strong> aparece una lesión.<br><br>La degradación es exponencial: cuanta más carga tienes, más difícil bajarla. Se reduce parcialmente entre temporadas, pero nunca vuelve a cero sola. Nunca vayas a tope todo el rato.')">ⓘ</button></span>
+          <span class="pz-num ${load>=lt.warningLevel2?'pz-menos':load>=lt.warningLevel1?'pz-ojo':''}" style="font-size:18px">${load} %</span>
+        </div>
+        <div class="pz-barra"><div class="pz-relleno${load>=lt.warningLevel2?' menos':load>=lt.warningLevel1?' ojo':''}" style="width:${Math.min(100,load)}%"></div><div class="pz-umbral" style="left:70%"></div><div class="pz-umbral" style="left:calc(100% - 1.5px)"></div></div>
       </div>
-      <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9'}"></div></div>
-    </div>
-    <div style="margin-bottom:12px">
-      <button class="secondary" id="btn-nr" onclick="toggleNR()">Ver próxima carrera ↓</button>
-    </div>
-    <div id="nr-panel" style="display:none;margin-bottom:12px">
-      ${nextRace?racePreviewCard(nextRace,'preview',0):'<p style="font-size:13px;color:var(--ink3)">Sin carrera seleccionada.</p>'}
+      ${G.zeroedOutThisRace&&G.postRaceConsequence?`<div class="pz-linea"><span class="pz-diag menos">Secuelas de la última carrera — <b>${G.postRaceConsequence.label}</b>. ${G.postRaceConsequence.id==='descanso_forzado'?`El bloque de esta temporada rinde un ${Math.round((1-restWeeksEffMult())*100)} % menos.`:G.postRaceConsequence.id==='sobrecarga'?'Subida, bajada y velocidad entrenan al 80 % esta temporada.':'Recuperación en curso.'}</span></div>`:''}
+      ${hint?`<div class="pz-linea"><span class="pz-diag ${diagCls[hint.type]||''}">${hint.msg}</span></div>`:''}
+      ${se.trainingMod!==0?`<div class="pz-linea"><span class="pz-diag">${se.note}</span></div>`:''}
+      <div class="pz-linea" style="display:block">
+        <button class="pz-btn sec" id="btn-nr" onclick="toggleNR()">Ver próxima carrera ↓</button>
+        <div id="nr-panel" style="display:none;margin-top:10px">
+          ${nextRace?racePreviewCard(nextRace,'preview',0):'<p class="pz-efectos">Sin carrera seleccionada.</p>'}
+        </div>
+      </div>
     </div>
     <div style="margin-bottom:16px">
       ${TRAINING_BLOCKS.map(b=>{
         const sel=G.trainingBlock&&G.trainingBlock.id===b.id;
         const eff=effForWork()*(1+se.trainingMod);
         const loadAfter=Math.round(bodyLoadAfterTraining(b.id));
-        const loadCol=loadAfter>=70?'#c0392b':loadAfter>=50?'#c07a10':'#888';
-        // Taper: contextual hint
+        const loadCls=loadAfter>=70?'pz-menos':loadAfter>=50?'pz-ojo':'pz-num';
         const hasFutureRace=nextRace!==null&&nextRace!==undefined;
-        const taperHint=b.taperBlock&&hasFutureRace?`<div class="text-ok">✓ Tienes carrera próxima — buen momento. +6 Energía y Piernas al salir.</div>`:
-                        b.taperBlock&&!hasFutureRace?`<div style="font-size:12px;color:var(--ink3);margin-top:4px">Sin carrera próxima — poco beneficio ahora.</div>`:'';
-        // Momentum warning
+        const taperHint=b.taperBlock&&hasFutureRace?`<div class="pz-diag mas">Tienes carrera próxima — buen momento. +6 Energía y Piernas al salir.</div>`:
+                        b.taperBlock&&!hasFutureRace?`<div class="pz-diag">Sin carrera próxima — poco beneficio ahora.</div>`:'';
         const mom=G.trainingMomentum;
-        const momWarn=mom&&mom.blockId===b.id&&mom.count>=2?
-          `<div style="font-size:12px;color:var(--avi);margin-top:4px">⚠ ${mom.count}º trimestre seguido — riesgo de estancamiento o revelación.</div>`:'';
-        // Flavor text when selected
-        const flavor=sel&&b.flavor&&b.flavor.length?
-          `<div style="font-size:12px;color:var(--ink2);font-style:italic;margin-top:5px;padding:5px 8px;background:var(--soft);border-radius:5px">"${b.flavor[0]}"</div>`:'';
+        const momWarn=mom&&mom.blockId===b.id&&mom.count>=2?`<div class="pz-diag ojo">${mom.count}.º trimestre seguido — riesgo de estancamiento o revelación.</div>`:'';
+        // La frase real del bloque, con la opción elegida
+        const flavor=sel&&b.flavor&&b.flavor.length?`<div class="pz-efectos" style="font-style:italic;margin-top:6px">«${b.flavor[0]}»</div>`:'';
         const effs=b.taperBlock?
-          `<span style="font-size:12px;color:var(--pos)">+2 Mental · Carga −18%</span>`:
+          `Mental <span class="pz-mas">+2</span> · Carga <span class="pz-mas">−18 %</span>`:
           Object.entries(b.effects).filter(([,v])=>v!==0).map(([k,v])=>{
-            const r=Math.round(v*eff*legsTrainingMult(k));const col=r>0?'#4a8a2a':'#c0392b';
-            return `<span style="font-size:12px;color:${col}">${k.charAt(0).toUpperCase()+k.slice(1)} ${r>0?'+':''}${r}</span>`;
-          }).join(' <span style="color:#ddd">·</span> ');
+            const r=Math.round(v*eff*legsTrainingMult(k));
+            return `${k.charAt(0).toUpperCase()+k.slice(1)} <span class="${r>0?'pz-mas':'pz-menos'}">${r>0?'+':'−'}${Math.abs(r)}</span>`;
+          }).join(' · ');
         const bkH=b.hours||8;const bkRepH=Math.max(0,(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1)-bkH);
-        return `<div class="train-card ${sel?'sel':''}" onclick="selectTraining('${b.id}')">
-          <div class="flex-between">
-            <div style="flex:1">
-              <div class="card-title">${b.name} <span style="font-size:11px;color:var(--ink3);font-weight:400">· ${bkH}h/sem · quedan ${bkRepH}h reputación</span></div>
-              <div style="font-size:12px;color:var(--ink3);margin:2px 0 6px">${b.desc} ${b.detail}</div>
-              <div class="flex-between-center">
-                <div>${effs}</div>
-                <span style="font-size:12px;color:${loadCol};flex-shrink:0;margin-left:8px">carga → ${loadAfter}%</span>
-              </div>
-              ${taperHint}${momWarn}${flavor}
-            </div>
-            ${sel?`<span style="color:var(--cuerpo);font-size:16px;margin-left:10px">✓</span>`:''}
-          </div>
+        return `<div class="pz-opcion${sel?' sel':''}" onclick="selectTraining('${b.id}')">
+          <b>${b.name}</b> <span class="pz-efectos">· ${bkH} h/sem · quedan ${bkRepH} h para reputación</span>
+          <div class="pz-efectos" style="margin:2px 0 6px">${b.desc} ${b.detail}</div>
+          <div class="pz-efectos" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>${effs}</span><span>carga → <span class="${loadCls}">${loadAfter} %</span></span></div>
+          ${taperHint}${momWarn}${flavor}
         </div>`;}).join('')}
     </div>
-    ${G.trainingEvent?`<div class="hint" style="margin-bottom:12px">${G.trainingEvent.icon} <strong>Evento de entrenamiento:</strong> ${G.trainingEvent.title} — ${G.trainingEvent.desc}</div>`:''}
+    ${G.trainingEvent?`<div class="pz-diag" style="margin-bottom:12px">${G.trainingEvent.icon} <b>Evento de entrenamiento:</b> ${G.trainingEvent.title} — ${G.trainingEvent.desc}</div>`:''}
     ${G.carreraVida&&G.lifecyclePhase==='overlap'&&G.lifeAthlete?renderAthleteHoursBlock():''}
-    <button class="main" onclick="doStartRaces()" ${!G.trainingBlock?'disabled':''}>${G.raceResults.length>0||G.currentRaceIdx>0?'Seguir con la temporada →':'¡Empezar temporada! →'}</button>`;
+    <button class="pz-btn" onclick="doStartRaces()" ${!G.trainingBlock?'disabled':''}>${G.raceResults.length>0||G.currentRaceIdx>0?'Seguir con la temporada →':'¡Empezar temporada! →'}</button>
+  </div>`;
   // T106 (v93): esto era un `<script>` interpolado dentro del innerHTML. El
   // navegador NO ejecuta los <script> insertados por innerHTML, así que el
   // perfil de «Ver próxima carrera» nunca ha tenido manejadores: tocar un tramo
