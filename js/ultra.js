@@ -109,6 +109,66 @@ const ULTRA_RACES=[
      {km:[156,161], dplus:100,  dminus:500, tipo:'bajada',  sector:'la bajada larga',  fin:'avituallamiento'},
      {km:[161,165], dplus:50,   dminus:150, tipo:'llano',   sector:'el pueblo',        fin:'meta'},
    ]},
+  // Las otras tres del calendario (2026-10-30). Bienal: años pares (paridad 0) o impares (1).
+  {id:'leire', name:'Ultra Sierra de Leire', km:55, dplus:3300, salida:7, dia:1, cierre:14, month:6,
+   tipo:'preparacion', aparicion:'bienal', paridad:0, semana:24, inscripcion:60, viaje:70, noches:0,
+   desc:'55 km por la sierra, del monasterio a la foz y vuelta. Bienal: solo los años pares.',
+   bloques:[
+     {km:[0,8],   dplus:650, dminus:100,  tipo:'subida',  sector:'el monasterio', fin:'avituallamiento'},
+     {km:[8,16],  dplus:500, dminus:300,  tipo:'crestas', sector:'la sierra',     fin:'avituallamiento'},
+     {km:[16,24], dplus:150, dminus:750,  tipo:'bajada',  sector:'la foz',        fin:'avituallamiento', barrera:{hora:6}},
+     {km:[24,32], dplus:700, dminus:100,  tipo:'subida',  sector:'la foz',        fin:'avituallamiento'},
+     {km:[32,40], dplus:450, dminus:400,  tipo:'crestas', sector:'el balcón',     fin:'avituallamiento'},
+     {km:[40,48], dplus:700, dminus:250,  tipo:'subida',  sector:'el balcón',     fin:'avituallamiento'},
+     {km:[48,55], dplus:150, dminus:1400, tipo:'bajada',  sector:'el monasterio', fin:'meta'},
+   ]},
+  // Emergente (§ 3): aparece en el año 4. De invierno: sale de madrugada y acaba de noche.
+  {id:'hielo', name:'Ultra del Hielo', km:100, dplus:5000, salida:6, dia:1, cierre:25, month:3,
+   tipo:'100k', aparicion:'emergente', desde:4, semana:10, inscripcion:110, viaje:120, noches:1,
+   desc:'100 km de invierno por el puerto helado y el circo blanco. Nueva: aparece en el año 4.',
+   bloques:[
+     {km:[0,8],   dplus:400, dminus:100, tipo:'subida',  sector:'el embalse',           fin:'avituallamiento'},
+     {km:[8,16],  dplus:700, dminus:100, tipo:'subida',  sector:'el puerto helado',     fin:'avituallamiento'},
+     {km:[16,23], dplus:200, dminus:450, tipo:'crestas', sector:'el puerto helado',     fin:'avituallamiento'},
+     {km:[23,31], dplus:100, dminus:600, tipo:'bajada',  sector:'la estación',          fin:'avituallamiento'},
+     {km:[31,39], dplus:750, dminus:100, tipo:'subida',  sector:'el circo blanco',      fin:'avituallamiento'},
+     {km:[39,47], dplus:300, dminus:350, tipo:'crestas', sector:'el circo blanco',      fin:'avituallamiento'},
+     {km:[47,55], dplus:100, dminus:650, tipo:'bajada',  sector:'el refugio',           fin:'bolsa_vida', barrera:{hora:12.5}},
+     {km:[55,63], dplus:800, dminus:100, tipo:'subida',  sector:'el refugio',           fin:'avituallamiento'},
+     {km:[63,71], dplus:350, dminus:400, tipo:'crestas', sector:'la cresta del viento', fin:'avituallamiento'},
+     {km:[71,79], dplus:150, dminus:700, tipo:'bajada',  sector:'la cresta del viento', fin:'avituallamiento'},
+     {km:[79,87], dplus:800, dminus:150, tipo:'subida',  sector:'la estación',          fin:'avituallamiento', barrera:{hora:20.5}},
+     {km:[87,94], dplus:250, dminus:600, tipo:'crestas', sector:'el embalse',           fin:'avituallamiento'},
+     {km:[94,100],dplus:100, dminus:700, tipo:'bajada',  sector:'el embalse',           fin:'meta'},
+   ]},
+  // La otra de 100 millas: bienal (años impares), sin sorteo. Dos noches junto al mar.
+  {id:'costa', name:'Gran Raid de la Costa', km:170, dplus:8000, salida:20, cierre:42, month:10,
+   tipo:'100m', aparicion:'bienal', paridad:1, semana:40, inscripcion:260, viaje:150, noches:2,
+   desc:'170 km de acantilados, dunas y sierra. Sale el viernes a las ocho de la tarde. Bienal: los años impares, y sin sorteo.',
+   bloques:[
+     {km:[0,8],    dplus:300, dminus:250, tipo:'crestas', sector:'el puerto pesquero',      fin:'avituallamiento'},
+     {km:[8,16],   dplus:500, dminus:300, tipo:'subida',  sector:'los acantilados',         fin:'avituallamiento'},
+     {km:[16,24],  dplus:350, dminus:450, tipo:'crestas', sector:'los acantilados',         fin:'avituallamiento'},
+     {km:[24,32],  dplus:200, dminus:500, tipo:'bajada',  sector:'el faro',                 fin:'avituallamiento'},
+     {km:[32,40],  dplus:600, dminus:150, tipo:'subida',  sector:'el monte del cabo',       fin:'avituallamiento'},
+     {km:[40,48],  dplus:400, dminus:400, tipo:'crestas', sector:'el monte del cabo',       fin:'avituallamiento'},
+     {km:[48,56],  dplus:150, dminus:650, tipo:'bajada',  sector:'la ría',                  fin:'avituallamiento'},
+     {km:[56,60],  dplus:50,  dminus:50,  tipo:'llano',   sector:'la ría',                  fin:'bolsa_vida', barrera:{hora:14}},
+     {km:[60,68],  dplus:650, dminus:100, tipo:'subida',  sector:'el bosque de eucaliptos', fin:'avituallamiento'},
+     {km:[68,76],  dplus:450, dminus:400, tipo:'crestas', sector:'el bosque de eucaliptos', fin:'avituallamiento'},
+     {km:[76,84],  dplus:200, dminus:650, tipo:'bajada',  sector:'las dunas',               fin:'avituallamiento'},
+     {km:[84,92],  dplus:100, dminus:100, tipo:'llano',   sector:'las dunas',               fin:'avituallamiento'},
+     {km:[92,100], dplus:700, dminus:100, tipo:'subida',  sector:'la sierra de la costa',   fin:'avituallamiento'},
+     {km:[100,108],dplus:450, dminus:450, tipo:'crestas', sector:'la sierra de la costa',   fin:'avituallamiento'},
+     {km:[108,115],dplus:150, dminus:700, tipo:'bajada',  sector:'la playa larga',          fin:'bolsa_vida', barrera:{hora:27.5}},
+     {km:[115,123],dplus:600, dminus:150, tipo:'subida',  sector:'el faro',                 fin:'avituallamiento'},
+     {km:[123,131],dplus:400, dminus:450, tipo:'crestas', sector:'los acantilados',         fin:'avituallamiento'},
+     {km:[131,139],dplus:850, dminus:150, tipo:'subida',  sector:'el monte del cabo',       fin:'avituallamiento', barrera:{hora:34}},
+     {km:[139,147],dplus:350, dminus:600, tipo:'crestas', sector:'el monte del cabo',       fin:'avituallamiento'},
+     {km:[147,155],dplus:200, dminus:800, tipo:'bajada',  sector:'la ría',                  fin:'avituallamiento'},
+     {km:[155,163],dplus:300, dminus:300, tipo:'crestas', sector:'el puerto pesquero',      fin:'avituallamiento'},
+     {km:[163,170],dplus:50,  dminus:300, tipo:'llano',   sector:'el puerto pesquero',      fin:'meta'},
+   ]},
 ];
 // Los corredores de la carrera suelta: tres perfiles con las seis estadísticas de Clásico.
 const ULTRA_CORREDORES=[
@@ -129,6 +189,19 @@ const ULTRA_AVITUALLA=[
   {id:'gel',     label:'Gel',                      min:0},
   {id:'sentarse',label:'Sentarte un momento',      min:3},
 ];
+// Grados de alucinación (§ 14; decidido el 2026-10-31). Por lucidez, de noche. La opción de
+// partida de Ultratrail dice hasta qué grado se ven: 1 en el diario (líneas que no son verdad),
+// 2 en pantalla (el margen y el km mienten, con el 👁) y 3 todas (el puesto miente, alguien te
+// adelanta sin existir, un avituallamiento fantasma). Siempre avisado. La suelta, grado 1.
+const ULTRA_ALUCINA={diario:1,pantalla:2,todas:3};
+const ULTRA_ALUCINA_LUCIDEZ=[null,25,20,10];
+function ultraGradoAlucina(c){
+  const max=ULTRA_ALUCINA[c.alucina]||1;
+  if(!ultraEsNoche(c))return 0;
+  let g=0;for(let i=1;i<=max;i++)if(c.lucidez<ULTRA_ALUCINA_LUCIDEZ[i])g=i;
+  return g;
+}
+const ULTRA_FANTASMA={id:'fantasma',label:'Luces de un avituallamiento entre los árboles',min:6};
 // Solo en las carreras de dos noches: dormir sin esperar a la bolsa (el sueño obligatorio, § 12).
 const ULTRA_SIESTA={id:'dormir',label:'Dormir 20 minutos en una manta',min:20};
 const ULTRA_BOLSA=[
@@ -142,6 +215,22 @@ const ULTRA_ESTOMAGO=['Estómago bien','Estómago revuelto','Estómago cerrado']
 // Cuánto gasta cada tramo frente a un tramo de Clásico (calibrado con un jugador automático).
 const ULTRA_GASTO={energy:0.62,hydration:0.7,legs:0.36};
 const ULTRA_FRONTAL={normal:7,bueno:12};   // horas de luz (§ 12)
+// El parte (meteorología): el calor lo pone el motor de race.js (G.weather 'soleado' gasta más
+// agua); lluvia, tormenta y frío son capa ultra. En Ultratrail lo decide la víspera (con la
+// variante: la tormenta trae el recorrido alternativo); suelta, se sortea al salir.
+const ULTRA_TIEMPO={
+  nublado: {label:'Nublado',  txt:'Cielo cubierto y fresco. El mejor día posible.'},
+  calor:   {label:'Calor',    txt:'Calor desde por la mañana: el agua se va el doble de rápido.'},
+  lluvia:  {label:'Lluvia',   txt:'Lluvia toda la noche: bajadas de barro y pies mojados.'},
+  tormenta:{label:'Tormenta', txt:'Tormenta en las crestas: todo cuesta más, y sin chaqueta se pasa frío.'},
+  frio:    {label:'Frío',     txt:'Helada de noche: sin chaqueta, la noche entera es frío.'},
+};
+function ultraSortearTiempo(month){
+  const x=Math.random();
+  if([12,1,2,3].includes(month))return x<0.5?'frio':x<0.7?'lluvia':'nublado';
+  if([6,7,8,9].includes(month))return x<0.35?'calor':x<0.5?'lluvia':x<0.58?'tormenta':'nublado';
+  return x<0.25?'lluvia':x<0.32?'tormenta':'nublado';
+}
 
 // ── Tramos a partir de los bloques (§ 14, modelo híbrido) ──
 // Unos 2,5 km por tramo; base en segundos: 7 min/km + 5 s por metro de subida + 1 s por
@@ -178,9 +267,9 @@ MODE_STATE.ultra=()=>({ut:null,_utPre:null});   // _utPre: lo elegido antes de l
 // Prepara la carrera sobre el motor de race.js: G.selectedRaces/G.currentRaceIdx/G.runner son
 // lo que leen calcPaceCosts() y getEffStat(). En Ultratrail corre tu corredor (G.runner) y la
 // carrera se guarda dentro de la carcasa; suelta, se elige uno de los tres de ULTRA_CORREDORES.
-function ultraStart({carrera,corredor,repuesto,bastones,chaqueta}){
+function ultraStart({carrera,corredor,repuesto,bastones,chaqueta,sinRivales}){
   const enModo=G.gameMode==='ultratrail'&&!!G.ut;
-  const def0=ULTRA_RACES.find(r=>r.id===carrera)||ULTRA_RACES[0];
+  const def0=(enModo?utDef(carrera):null)||ULTRA_RACES.find(r=>r.id===carrera)||ULTRA_RACES[0];
   // En el modo, con la variante de recorrido decidida la víspera (ultratrail.js, utVispera)
   const variante=enModo&&G.ut.vispera?.id===def0.id?G.ut.vispera.variante:'completo';
   const def=enModo?utRaceVariante(def0,variante):def0;
@@ -191,10 +280,16 @@ function ultraStart({carrera,corredor,repuesto,bastones,chaqueta}){
   G.runner=enModo?{...G.runner,energy:100,hydration:100,legs:Math.round(100-Math.max(0,(G.ut.carga||0)-40)*0.6)}
     :{...G.runner,name:co.name,age:34,stats:{...co.stats},energy:100,hydration:100,legs:100};
   if(!def.noches)repuesto='sin';   // de día no hace falta frontal
-  G.weather='nublado';G.startStrategy=null;G.raceEvent='';
+  // El parte: la víspera en el modo; suelta, ahora
+  const tiempo=enModo&&G.ut.vispera?.id===def0.id&&G.ut.vispera.tiempo?G.ut.vispera.tiempo:ultraSortearTiempo(def.month);
+  G.weather=tiempo==='calor'?'soleado':'nublado';G.startStrategy=null;G.raceEvent='';
   // Rivales con desgaste propio (§ 14): nivel, aguante y si siguen en carrera.
   const rivales=[];
-  for(let i=0;i<60;i++)rivales.push({id:'u'+i,mult:0.82+Math.random()*0.42,aguante:0.4+Math.random()*0.6,time:0,out:false,motivo:null,km:0});
+  // Sin rivales: el proyecto personal del epílogo (§ 16), solo contra el reloj
+  // Una docena con nombre (inventados, los del Backyard): de esos se cuenta quién se retira (§ 14)
+  const conNombre=shuffle(BY_NOMBRES).slice(0,12);
+  for(let i=0;i<(sinRivales?0:60);i++)rivales.push({id:'u'+i,mult:0.82+Math.random()*0.42,aguante:0.4+Math.random()*0.6,time:0,out:false,motivo:null,km:0,
+    name:i<conNombre.length?conNombre[i][0]:null});
   const carreraNueva={
     id:race.id,name:race.name,salida:race.salida,dia:race.dia||0,cierre:race.cierre,km:race.km,noches:race.noches??1,
     corredor:co?co.id:null,lucidez:100,estomago:0,pies:0,
@@ -214,9 +309,16 @@ function ultraStart({carrera,corredor,repuesto,bastones,chaqueta}){
     // Reconocimiento por sectores (§ 5): lo que conoces de cada uno. Fuera del modo, nada.
     reco:enModo?{...(G.ut.reco[def.id]||{})}:null,sectoresVistos:[],
     variante,
+    // Veteranía (§ 15): lucidez que cae más despacio, menos error de dosificación, mejor
+    // absorción y menos pánico. Solo crece corriendo ultras largas (ultratrail.js).
+    vet:enModo?(G.ut.veterania||0):0,
+    tiempo,
+    alucina:enModo?(G.ut.opciones?.alucina||'pantalla'):'diario',
   };
-  G.ut=enModo?{...G.ut,carrera:carreraNueva}:{carrera:carreraNueva};
-  ultraLog(race.noches?`Salida a las ${race.salida}:00. ${rivales.length+1} frontales en la plaza del pueblo.`
+  if(enModo)G.ut.carrera=carreraNueva;else G.ut={carrera:carreraNueva};   // en el modo, la misma carcasa (nada de copias)
+  ultraLog(`El parte: ${ULTRA_TIEMPO[tiempo].txt}`);
+  if(sinRivales)ultraLog(`Sales a las ${race.salida}:00, solo, sin dorsal. Nadie te espera en la meta.`);
+  else ultraLog(race.noches?`Salida a las ${race.salida}:00. ${rivales.length+1} frontales en la plaza del pueblo.`
     :`Salida a las ${race.salida}:00. ${rivales.length+1} dorsales en la plaza del pueblo.`);
 }
 function ultraLog(t){const c=ultraCarrera();c.log.push({bloque:c.bloque,t});if(c.log.length>40)c.log.splice(0,c.log.length-40);}
@@ -238,7 +340,7 @@ function ultraCorrerBloque(ritmo){
     const s=segs[G.seg];
     // Con la lucidez baja, el ritmo elegido se te va de las manos (error de dosificación)
     let p=ritmo;
-    if(c.lucidez<35&&p!=='push'&&Math.random()<(35-c.lucidez)/80)p=p==='conservar'?'steady':'push';
+    if(c.lucidez<35&&p!=='push'&&Math.random()<(35-c.lucidez)/80*(1-(c.vet||0)/150))p=p==='conservar'?'steady':'push';
     G.paceLog.push(p);
     const {tm,ec,hc,lc,alloutStreak,sb,injuryRiskBase}=calcPaceCosts(p,s,G.paceLog);
     const {descentFall,midRaceInjury}=checkSegInjury(p,s,alloutStreak,sb,injuryRiskBase);
@@ -257,24 +359,29 @@ function ultraCorrerBloque(ritmo){
       if(m.chaqueta)mult*=1.01;                                          // la chaqueta pesa
     }
     if(nReco!=null)mult*=[1.03,1.01,1,0.98][nReco];
+    // El parte: la lluvia hace barro en las bajadas; la tormenta lo encarece todo
+    if(c.tiempo==='lluvia'&&s.type==='descent')mult*=1.06;
+    if(c.tiempo==='tormenta')mult*=s.type==='flat'?1.03:1.08;
     if(c.pies>=2)mult*=1.04;
     G.time+=Math.round(s.base*mult);
     // Las preparaciones (§ 6): base → energía, encaje → piernas (más en bajada), térmica → agua
     const d=c.def||{};
     // Sin chaqueta, la madrugada se paga (2-6 h): más gasto y la cabeza más lenta
-    const frio=m&&!m.chaqueta&&noche&&ultraHora(c)>=2&&ultraHora(c)<6;
-    drain(r,'energy',ec*ULTRA_GASTO.energy*(c.estomago===2?1.3:1)*(1+(d.base||0)*0.8)*(frio?1.08:1));
+    // Con helada, la noche entera; con tormenta, el doble de frío
+    const frio=m&&!m.chaqueta&&noche&&(c.tiempo==='frio'||(ultraHora(c)>=2&&ultraHora(c)<6));
+    const frioX=c.tiempo==='tormenta'?2:1;
+    drain(r,'energy',ec*ULTRA_GASTO.energy*(c.estomago===2?1.3:1)*(1+(d.base||0)*0.8)*(frio?1+0.08*frioX:1));
     drain(r,'hydration',hc*ULTRA_GASTO.hydration*(1+(d.termica||0)*0.6));
     drain(r,'legs',lc*ULTRA_GASTO.legs*(1+(d.encaje||0)*(s.type==='descent'?1.3:0.7))*(1+0.03*(c.secuelas||0))*(m&&m.gastadas?1.08:1));
-    if(frio)c.lucidez=Math.max(0,c.lucidez-s.base*tm/3600);
+    if(frio)c.lucidez=Math.max(0,c.lucidez-s.base*tm/3600*frioX);
     // Lucidez: se va de noche y con las horas (§ 14, momento 3); la mental la frena
     const horas=s.base*mult/3600;
     const deuda=G.time>24*3600?1.8:1;   // segunda noche: el cuerpo pide dormir (§ 12)
-    c.lucidez=Math.max(0,c.lucidez-horas*(noche?7*deuda*(1+(d.nocturna||0)*1.2):1.5)*(1.25-sm/100)-horas*G.time/3600*0.08);
+    c.lucidez=Math.max(0,c.lucidez-(horas*(noche?7*deuda*(1+(d.nocturna||0)*1.2):1.5)*(1.25-sm/100)+horas*G.time/3600*0.08)*(1-(c.vet||0)/250));
     // Estómago (§ 6): sin entrenarlo, se cierra antes
     if(p==='push'&&Math.random()<0.10+Math.max(0,d.estomago||0)*0.15)c.estomago=Math.min(2,c.estomago+1);
     else if(Math.random()<horas*Math.max(0,d.estomago||0)*0.05)c.estomago=Math.min(2,c.estomago+1);
-    if(Math.random()<0.03*horas*(1+G.time/36000))c.pies=Math.min(3,c.pies+1);
+    if(Math.random()<0.03*horas*(1+G.time/36000)*(c.tiempo==='lluvia'||c.tiempo==='tormenta'?1.6:1))c.pies=Math.min(3,c.pies+1);
     if(descentFall){drain(r,'legs',12);G.time+=120;ultraLog(`Resbalón en la bajada de ${b.sector}. Las piernas lo notan.`);}
     if(midRaceInjury){
       c.fin={kind:'dnf',motivo:'lesion',km:Math.round(b.km[0]+(G.seg-segs.findIndex(x=>x.bloque===c.bloque)+1)*s.km),
@@ -284,9 +391,10 @@ function ultraCorrerBloque(ritmo){
     G.seg++;
   }
   // Te pierdes justo donde no habías estado (§ 5): de noche, por sector
-  if(nReco!=null&&nocheIni&&Math.random()<0.05*[2,1.4,0.8,0.4][nReco]){G.time+=720;c.despistes++;ultraLog(nReco?`Dudas en un cruce de ${b.sector}. Doce minutos.`:`Te pierdes en ${b.sector}: no lo habías pisado nunca. Doce minutos.`);}
+  if(nReco!=null&&nocheIni&&Math.random()<0.05*[2,1.4,0.8,0.4][nReco]*(1-(c.vet||0)/200)){G.time+=720;c.despistes++;ultraLog(nReco?`Dudas en un cruce de ${b.sector}. Doce minutos.`:`Te pierdes en ${b.sector}: no lo habías pisado nunca. Doce minutos.`);}
   // Despiste de ruta con la cabeza ida (−12 min, § 14)
-  if(c.lucidez<30&&Math.random()<0.45){G.time+=720;c.despistes++;ultraLog(`Te pasas un cruce en ${b.sector}. Doce minutos para volver a la cinta.`);}
+  if(c.lucidez<30&&Math.random()<0.45*(1-(c.vet||0)/200)){G.time+=720;c.despistes++;ultraLog(`Te pasas un cruce en ${b.sector}. Doce minutos para volver a la cinta.`);}
+  if(ultraGradoAlucina(c)>=3&&Math.random()<0.4)ultraLog(['Alguien te adelanta sin frontal. Cuando miras, no hay nadie.','Oyes a tu grupo hablando detrás. Vas solo desde hace horas.'][Math.floor(Math.random()*2)]);
   if(c.lucidez<25&&ultraEsNoche(c)&&Math.random()<0.5)ultraLog(['Una roca con forma de perro te mira desde la cuneta.','Oyes a alguien detrás. No hay nadie.','Las balizas se mueven cuando no las miras.'][Math.floor(Math.random()*3)]);
   // Amanecer: recuperas lucidez de golpe (§ 14, momento 4)
   const hIni=(c.salida+t0/3600),hFin=(c.salida+G.time/3600);
@@ -338,7 +446,7 @@ function ultraRivalesBloque(t0){
   const c=ultraCarrera(),race=G.selectedRaces[0],b=race.bloques[c.bloque];
   const blockBase=race.segs.filter(s=>s.bloque===c.bloque).reduce((a,s)=>a+s.base,0);
   const prog=b.km[1]/race.km;
-  let caen=0;
+  let caen=0;const nombres=[];
   c.rivales.filter(x=>!x.out).forEach(x=>{
     const desgaste=1+(1-x.aguante)*prog*prog*0.6;
     x.time+=Math.round(blockBase*x.mult*desgaste*(0.95+Math.random()*0.1)*(ultraEsNoche(c,x.time)?1.06:1));
@@ -347,8 +455,12 @@ function ultraRivalesBloque(t0){
     if(Math.random()<pDrop){x.out=true;x.motivo='abandono';caen++;}
     else if(b.barrera&&x.time>b.barrera.hora*3600){x.out=true;x.motivo='barrera';caen++;}
     else if(b.fin==='meta'&&x.time>c.cierre*3600){x.out=true;x.motivo='barrera';caen++;}
+    if(x.out&&x.name)nombres.push(x);
   });
-  if(caen)ultraLog(caen===1?'Uno más se retira en este tramo.':`${caen} se retiran en este tramo${b.barrera?', varios por la barrera':''}.`);
+  // Ver caer gente mientras tú sigues es media experiencia del ultra (§ 14): por su nombre
+  nombres.slice(0,2).forEach(x=>ultraLog(`${x.name} ${x.motivo==='barrera'?'se queda en la barrera':'se retira'} en el km ${b.km[1]}.`));
+  const anon=caen-Math.min(2,nombres.length);
+  if(anon>0)ultraLog(anon===1?'Uno más se retira en este tramo.':`${anon} más se retiran en este tramo${b.barrera?', varios por la barrera':''}.`);
 }
 // Puesto estimado ahora (los que siguen y van por delante en tiempo al mismo km).
 function ultraPuesto(){const c=ultraCarrera();return c.rivales.filter(x=>!x.out&&x.time<G.time).length+1;}
@@ -382,7 +494,7 @@ function ultraParar(id){
   if(c.paradaUsada.includes(id)&&id!=='gel')return false;
   c.paradaUsada.push(id);
   G.time+=a.min*60;
-  const abs=[1,0.5,0.15][c.estomago]*(0.7+getEffStat('nutricion')/170);
+  const abs=[1,0.5,0.15][c.estomago]*(0.7+getEffStat('nutricion')/170)*(1+(c.vet||0)/300);
   if(id==='beber'){r.hydration=Math.min(100,r.hydration+32);if(c.estomago>0&&Math.random()<0.3)c.estomago--;}
   if(id==='comer'){r.energy=Math.min(100,r.energy+(c.enBolsa?40:24)*abs);if(c.enBolsa&&c.estomago>0)c.estomago--;}
   if(id==='gel'){r.energy=Math.min(100,r.energy+10*abs);if(Math.random()<0.15)c.estomago=Math.min(2,c.estomago+1);}
@@ -390,12 +502,17 @@ function ultraParar(id){
   if(id==='calcetines'){c.pies=Math.max(0,c.pies-1);}
   if(id==='pies'){c.pies=0;}
   if(id==='dormir'){c.lucidez=Math.min(100,c.lucidez+35);r.legs=Math.min(100,r.legs+4);c.sueno=false;}
+  if(id==='fantasma'){ultraLog('No hay nadie. Eran frontales reflejados en un charco. Seis minutos.');}
   if(id==='bateria'){if(!ultraBateriaEnBolsa(c)){c.paradaUsada.pop();G.time-=a.min*60;return false;}
     c.frontal.bolsas.push(c.bolsaN);c.frontal.repuestoCogido=true;c.frontal.usado=false;}
   return true;
 }
 // Lo que hay en el avituallamiento: en las de dos noches, también una manta para dormir.
-function ultraAvitualla(c){return c.noches>=2?[...ULTRA_AVITUALLA,ULTRA_SIESTA]:ULTRA_AVITUALLA;}
+function ultraAvitualla(c){
+  const l=c.noches>=2?[...ULTRA_AVITUALLA,ULTRA_SIESTA]:[...ULTRA_AVITUALLA];
+  if(ultraGradoAlucina(c)>=3)l.push(ULTRA_FANTASMA);   // grado 3: un avituallamiento que no está
+  return l;
+}
 // ¿Hay batería esperando en esta bolsa? La del repuesto, en la primera; en las de dos noches,
 // otra en la segunda (la dejaste preparada).
 function ultraBateriaEnBolsa(c){

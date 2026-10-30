@@ -319,7 +319,7 @@ window.doNextYear=yearNet=>{
     G.workPct=currentWorkPct();
     if(typeof showToast==='function')showToast('Tu ranking te permite reducir la jornada al 80 % — puedes volver a subirla cuando quieras');
   }
-  // Traspasar clasificación Zegama
+  // Traspasar clasificación Harrigorri
   G.zegamaQual=G.zegamaQualNext;G.zegamaQualNext=false;
   G.selectedRaces=[];G.trainingBlock=null;G.trainingBlockApplied=false;G.raceResults=[];G.currentRaceIdx=0;G.trainingEff=1.0; // T25 (v89)
   G.activeTab='game';G.lastRaceGains=[];

@@ -61,6 +61,7 @@ function renderAchievements(){
     if(f.tab==='normal'&&a.mode)return false;
     if(f.tab==='expres'&&a.mode!=='expres')return false;
     if(f.tab==='cn'&&a.mode!=='cn')return false;
+    if(f.tab==='ut'&&a.mode!=='ut')return false;
     if(f.rarity!=='all'&&a.rarity!==f.rarity)return false;
     const isUnlocked=!!globalAchs[a.id];
     if(f.status==='unlocked'&&!isUnlocked)return false;
@@ -74,7 +75,7 @@ function renderAchievements(){
       <div><div class="pz-titulo" style="margin:0">🏅 Logros</div><div class="pz-efectos"><span class="pz-num">${totalUnlocked}</span> de ${ACHIEVEMENTS.length} conseguidos</div></div>
       <button class="pz-btn sec" style="width:auto;padding:7px 12px;margin:0" onclick="G.screen=G._achPrev||'modeSelect';if(G._achPrevTab)G.activeTab=G._achPrevTab;render()">← Volver</button>
     </div>
-    <div style="display:flex;border-bottom:1px solid var(--line);margin:12px 0">${tabBtn('Todos','all')}${tabBtn('Carrera','normal')}${tabBtn('Exprés','expres')}${tabBtn('Canicross','cn')}</div>
+    <div style="display:flex;border-bottom:1px solid var(--line);margin:12px 0">${tabBtn('Todos','all')}${tabBtn('Carrera','normal')}${tabBtn('Exprés','expres')}${tabBtn('Canicross','cn')}${tabBtn('Ultra','ut')}</div>
     <div class="pz-tarjeta">
       <div class="pz-label" style="margin-bottom:6px">Rareza</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${chip('Todos','rarity','all')}${chip('Fácil','rarity','easy')}${chip('Medio','rarity','medium')}${chip('Difícil','rarity','hard')}${chip('Legendario','rarity','legendary')}${chip('😄 Secreto','rarity','joke')}</div>
@@ -89,7 +90,7 @@ function renderAchievements(){
         const unlocked=!!meta;
         const isJoke=ach.rarity==='joke';
         const isHardDiff=unlocked&&(meta.difficulty==='dificil'||meta.difficulty==='hardcore');
-        const modeIcon=f.tab==='all'?(ach.mode==='cn'?'🐕 ':ach.mode==='expres'?'⚡ ':'🏃 '):'';
+        const modeIcon=f.tab==='all'?(ach.mode==='cn'?'🐕 ':ach.mode==='expres'?'⚡ ':ach.mode==='ut'?'🏔 ':'🏃 '):'';
         return`<div class="pz-fila" style="align-items:flex-start;${!unlocked?'color:var(--ink3)':''}">
           <span style="font-size:18px;margin-top:1px;${unlocked?'':'opacity:.5'}">${unlocked?'🏆':'🔒'}</span>
           <span class="pz-fila-txt">
@@ -502,7 +503,7 @@ function renderSaveScreen(){
   const slots=getAllSlots();
   // DS13 (v95): los logros globales son los mismos para las cinco ranuras y se
   // leían y recorrían una vez por ranura.
-  let achNormal=0,achCn=0,achExpres=0;
+  let achNormal=0,achCn=0,achExpres=0,achUt=0;
   try{
     const ga=JSON.parse(LS.get('globalAchs')||'{}');
     Object.keys(ga).forEach(id=>{
@@ -510,6 +511,7 @@ function renderSaveScreen(){
       if(!a)return;
       if(a.mode==='cn')achCn++;
       else if(a.mode==='expres')achExpres++;
+      else if(a.mode==='ut')achUt++;
       else achNormal++;
     });
   }catch(e){}
@@ -547,7 +549,7 @@ function renderSaveScreen(){
         ${lbl.ended?`<div class="pz-diag menos">📉 Carrera terminada</div>`:''}
         <div class="pz-efectos">${lbl.runName?esc(lbl.name)+' · ':''}${lbl.linea||`Año ${lbl.year} · Global ${lbl.ranking} · ${lbl.spec} ${lbl.specRanking}`}</div>
         <div class="pz-efectos">${lbl.mode}${lbl.phase?' · '+lbl.phase:''}${lbl.totalKm?' · '+lbl.totalKm+' km':''} · ${lbl.date}</div>
-        <div class="pz-efectos">🏆 ${achNormal} · 🐕 ${achCn} · ⚡ ${achExpres}</div>
+        <div class="pz-efectos">🏆 ${achNormal} · 🐕 ${achCn} · ⚡ ${achExpres} · 🏔 ${achUt}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
           ${B('Cargar',`loadSlot(${slot})`,true)}${B('Sobreescribir',`saveCurrentToSlot(${slot})`)}${B('Exportar',`exportSlotToClipboard(${slot})`)}${B('Borrar',`confirmDeleteSlot(${slot})`)}
         </div>

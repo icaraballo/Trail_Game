@@ -2492,10 +2492,10 @@ function applyPostRaceTracking(race,res){
     kmAtInjury:G.injuryType?Math.round(race.km*(G.seg/curSegs().length)):null,
     zeroedOut,
   });
-  // Clasificación Zegama por tiempo (corte: 4h20 = 260 min)
+  // Clasificación Harrigorri por tiempo (corte: 4h20 = 260 min)
   if(race.id==='mayo'&&!G.injuryType&&G.time<=260){
     G.zegamaQualNext=true;
-    showToast('¡Bajo el corte de Zegama! Clasificado para el año que viene 🏔️');
+    showToast('¡Bajo el corte de Harrigorri! Clasificado para el año que viene 🏔️');
   }
   G.careerHistory.push({name:race.name,year:G.year,time:G.time,pos,dnf:false,prize,catPos,catTotal,catName:playerCat.label});
   G.money+=prize;

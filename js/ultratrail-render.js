@@ -7,6 +7,9 @@
 //                                   ├─ utPiedras           piedras, índice y sorteo (§ 8)
 //                                   ├─ utMaterial          armario, no tienda (§ 12)
 //                                   ├─ utReco              reconocer sectores de una carrera (§ 5)
+//                                   └─ [backyard en otoño] → byBell … byEnd (backyard-render.js, § 26)
+// Al final (§ 16): utTemporada → utEpilogo → la cuenta pendiente (utPre…), utProyecto o utMontar
+// → utFinal, el resumen de toda la carrera deportiva.
 //                                   ├─ utFinanzas
 //                                   └─ [objetivo] → utPre → utBloque/utBolsa → utFin (ultra-render.js)
 // utTemporada: el cierre de cada año. Maqueta aprobada el 2026-10-30 (TG-Orden § Paso 5).
@@ -47,7 +50,7 @@ function utPerfilCarrera(r){return `${r.km} km · ${fmtMiles(r.dplus)} m+ · ${r
 // ── Partida nueva ──────────────────────
 function renderUtNueva(){
   const el=$main();hideChrome();
-  const sel=G._utNueva||(G._utNueva={perfil:'rodador',edad:30,nombre:''});
+  const sel=G._utNueva||(G._utNueva={perfil:'rodador',edad:30,nombre:'',alucina:'pantalla',tenso:false});
   el.innerHTML=`<div class="pz">
     <div class="pz-franja cierre">
       <div class="pz-franja-sub" style="margin:0 0 4px">🏔 Ultratrail</div>
@@ -61,13 +64,19 @@ function renderUtNueva(){
     <div class="pz-label" style="margin:14px 0 6px">Con cuántos años debutas</div>
     <div class="ut-edades">${UT_EDADES.map(e=>`<button class="pz-opcion sin-check${sel.edad===e?' sel':''}" onclick="G._utNueva.edad=${e};render()"><span class="pz-num">${e}</span></button>`).join('')}</div>
     <p class="pz-efectos">No vienes de nada: vienes de otra vida. Como ultrafondista, lo mejor llega entre los 36 y los 42.</p>
+    <div class="pz-label" style="margin:14px 0 6px">Alucinaciones</div>
+    <div class="ut-vol">${[['diario','En el diario'],['pantalla','En pantalla'],['todas','Todas']].map(([k,l])=>`<button class="pz-opcion sin-check${sel.alucina===k?' sel':''}" onclick="G._utNueva.alucina='${k}';render()"><b>${l}</b></button>`).join('')}</div>
+    <div class="pz-efectos" style="margin-bottom:8px">De noche, con la cabeza ida. ${sel.alucina==='diario'?'Solo líneas que no son verdad en lo que te va pasando.':sel.alucina==='pantalla'?'Bajo 20 de lucidez, además, el margen y el kilómetro mienten.':'Bajo 10, además, el puesto miente, alguien te adelanta sin existir y ves avituallamientos que no están.'} Siempre te lo avisa un 👁.</div>
+    <div class="pz-tarjeta ut-filas">
+      <div class="pz-fila"><span class="pz-fila-txt"><b>Modo tenso en el backyard</b><div class="pz-efectos">El corral corre en tiempo real: un minuto por segundo.</div></span><input type="checkbox" class="pz-interruptor" ${sel.tenso?'checked':''} onchange="G._utNueva.tenso=this.checked"></div>
+    </div>
     <button class="pz-btn" style="margin-top:12px" onclick="utEmpezar()">Empezar la primera temporada →</button>
     <button class="pz-btn sec" onclick="backToMainMenu()">← Menú principal</button>
   </div>`;
 }
 window.utEmpezar=()=>{
   const p=G._utNueva||{};
-  utNueva({nombre:document.getElementById('ut-nombre')?.value??p.nombre,perfil:p.perfil,edad:p.edad});
+  utNueva({nombre:document.getElementById('ut-nombre')?.value??p.nombre,perfil:p.perfil,edad:p.edad,alucina:p.alucina,tenso:p.tenso});
   G._utNueva=null;G.screen='utHub';autoSave();render();window.scrollTo(0,0);
 };
 
@@ -91,6 +100,11 @@ function utTarjetaObjetivo(ci){
       <div class="pz-sub" style="margin-bottom:0">Te ${n===1?'queda una semana':`quedan ${n} semanas`} para estar entero.${ci.obj?` Después, el ciclo hacia ${esc(utDef(ci.obj.id).name)}.`:''}</div>
     </div>`;
   }
+  if(ci.fase==='backyard'){const dif=BY_EVENTOS[utBackyardDif()];return `<div class="pz-tarjeta">
+      <span class="pz-etiqueta acento">Esta semana</span>
+      <div class="pz-titulo">Backyard ${esc(dif.label.toLowerCase())}</div>
+      <div class="pz-sub" style="margin-bottom:0">${dif.n} corredores en ${esc(BY_LUGAR)}. Una vuelta cada hora hasta que quede uno: el examen de todo lo que has entrenado.</div>
+    </div>`;}
   if(ci.fase==='libre')return `<div class="pz-tarjeta">
       <span class="pz-etiqueta acento">Sin objetivo</span>
       <div class="pz-titulo">Elige a qué vas</div>
@@ -107,9 +121,12 @@ function utTarjetaObjetivo(ci){
 function renderUtHub(){
   const el=$main();hideChrome();
   const u=G.ut;if(!u){G.screen='utNueva';render();return;}
+  if(u.retirado){G.screen='utFinal';render();return;}
+  if(u.final&&!u.final.hecho){G.screen='utEpilogo';render();return;}
   if(u.semana>UT_SEMANAS){G.screen='utTemporada';render();return;}
   const ci=utCiclo(),r=G.runner,trabajo=utEscalon();
-  const boton=ci.fase==='carrera'?`A la salida de ${esc(utDef(ci.obj.id).name)} →`
+  const boton=ci.fase==='backyard'?'Al backyard: la primera campana suena a las siete →'
+    :ci.fase==='carrera'?`A la salida de ${esc(utDef(ci.obj.id).name)} →`
     :ci.fase==='recuperacion'?`Cómo recuperar · ${ci.hasta-u.semana} semana${ci.hasta-u.semana===1?'':'s'} →`
     :ci.fase==='libre'?(u.semana+4>UT_SEMANAS?'Cerrar la temporada →':'Pasar cuatro semanas →')
     :`Decidir la fase de ${ci.actual.label.toLowerCase()} · ${ci.actual.hasta-u.semana} semana${ci.actual.hasta-u.semana===1?'':'s'} →`;
@@ -130,6 +147,7 @@ function renderUtHub(){
       <div class="pz-label" style="margin-bottom:8px">${esc(r.name)} · rendimiento</div>
       <div class="ut-stats">${[['velocidad','Velocidad'],['subida','Subida'],['bajada','Bajada'],['resistencia','Resistencia'],['mental','Mental']]
         .map(([k,l])=>`<div><div class="pz-num">${Math.round(r.stats[k])}</div><span>${l}</span></div>`).join('')}</div>
+      <div class="pz-efectos ut-vet">Veteranía <b class="pz-num">${Math.round(u.veterania||0)}</b>${(u.secuelas||[]).length?` · ${u.secuelas.length} secuela${u.secuelas.length===1?'':'s'}`:''}</div>
     </div>
     ${consejoHTML('ut_hub','Aquí el tiempo va por fases.','Cada objetivo abre un ciclo hacia él: base, específico y afinado. El botón de abajo avanza una fase entera; las semanas de en medio corren solas.')}
     ${u.diario.length?`<div class="pz-tarjeta">${u.diario.slice(-3).reverse().map(d=>`<div class="pz-diag">${esc(d.txt)}</div>`).join('')}</div>`:''}
@@ -146,6 +164,7 @@ function renderUtHub(){
 }
 window.utBoton=()=>{
   const ci=utCiclo();
+  if(ci.fase==='backyard'){if(utEmpezarBackyard()){G.screen='byBell';autoSave();render();window.scrollTo(0,0);}return;}
   // Las fases y la recuperación tienen su pantalla de decisión; lo demás avanza directo
   if(['base','especifico','afinado'].includes(ci.fase)){G._utFase={fase:ci.fase,plan:null,vol:'normal'};G.screen='utFase';render();window.scrollTo(0,0);return;}
   if(ci.fase==='recuperacion'){G.screen='utRecup';render();window.scrollTo(0,0);return;}
@@ -154,6 +173,8 @@ window.utBoton=()=>{
   if(r==='carrera')G._utPre=null;
   autoSave();render();window.scrollTo(0,0);
 };
+// Del backyard (byEnd) al plan.
+window.utVolverDeBackyard=()=>{utCerrarBackyard();G.screen='utHub';autoSave();render();window.scrollTo(0,0);};
 // Al acabar una fase o una recuperación: a la carrera, al cierre de año o al hub.
 function utTrasAvanzar(r){
   G._utFase=null;
@@ -239,10 +260,30 @@ function renderUtRecup(){
   </div>`;
 }
 window.utElegirRecup=id=>{utTrasAvanzar(utRecuperar(id));};
-window.utVolverDeCarrera=()=>{utCerrarCarrera();G.screen='utHub';autoSave();render();window.scrollTo(0,0);};
+window.utVolverDeCarrera=()=>{
+  const f=G.ut.final;
+  if(f&&!f.hecho){if(f.tipo==='cuenta')utCerrarCuenta();else utCerrarReferencia();G.screen='utFinal';}
+  else{utCerrarCarrera();G.screen='utHub';}
+  autoSave();render();window.scrollTo(0,0);
+};
 
 // ── Objetivos del año (§ 4 y § 13) ─────
+function utTarjetaBackyard(cal){
+  const u=G.ut,p=utPlan('backyard'),hist=u.historial.find(h=>h.t===u.temporada&&h.id==='backyard'),no=utNoPuedeBackyard();
+  const dif=BY_EVENTOS[utBackyardDif()];
+  return `<div class="pz-tarjeta">
+    <span class="pz-etiqueta acento">Invitación · no ocupa plaza</span>
+    <div class="ut-carr-cab"><div class="pz-titulo">Backyard ${esc(dif.label.toLowerCase())}</div><span class="ut-mes">${utMes(cal.semana)}</span></div>
+    <div class="pz-sub" style="margin:2px 0 6px">${BY_KM_VUELTA.toString().replace('.',',')} km cada hora en punto hasta que quede uno · ${dif.n} corredores · suele llegar a ${dif.suele}</div>
+    <div class="pz-efectos" style="margin-bottom:8px">El examen de las cinco preparaciones a la vez. No da piedras; da veteranía como nada. Una semana de recuperación por cada diez vueltas.</div>
+    ${hist?`<div class="pz-diag ${hist.kind==='gana'?'mas':''}">${hist.kind==='gana'?'Último en pie':'DNF'} · ${hist.laps} vueltas</div>`
+      :p?`<div class="pz-diag ojo">Aceptada: semana ${cal.semana}.</div><button class="pz-btn sec ut-quitar" onclick="utQuitar('backyard')">Ya no voy</button>`
+      :`<button class="pz-btn" ${no?'disabled':'onclick="utBackyardSi()"'}>Aceptar la invitación · viaje ${utEscalon().viajes?'pagado':fmtEur(UT_BACKYARD.viaje)}</button>${no?motivoHTML(esc(no)):''}`}
+  </div>`;
+}
+window.utBackyardSi=()=>{if(utAceptarBackyard()){autoSave();render();}};
 function utTarjetaCarrera(cal){
+  if(cal.backyard)return utTarjetaBackyard(cal);
   const u=G.ut,r=utDef(cal.id),p=utPlan(cal.id),ex=utExigencia(r);
   const hist=u.historial.find(h=>h.t===u.temporada&&h.id===cal.id);
   const pasada=cal.semana<u.semana||(cal.semana===u.semana&&!utObjetivoHoy());
@@ -430,7 +471,7 @@ function renderUtTemporada(){
       <div class="pz-franja-num" style="font-size:52px">Temporada ${u.temporada}</div>
       <div class="pz-franja-sub">${s.corridas?`${s.finisher} de ${s.corridas} terminada${s.corridas===1?'':'s'} · ${s.km} km de carrera`:'Sin dorsal este año'}</div>
     </div>
-    ${s.h.length?`<div class="pz-tarjeta ut-filas">${s.h.map(h=>`<div class="pz-fila"><span class="pz-fila-txt"><b>${esc(h.name)}</b><div class="pz-efectos">${h.kind==='finisher'?`${h.pos}.º de ${h.finishers}`:`km ${h.km} · ${h.motivo==='barrera'?'fuera de barrera':h.motivo==='lesion'?'lesión':'retirada'}`}</div></span><span class="pz-fila-dato">${h.kind==='finisher'?ultraDur(h.tiempo):'—'}</span></div>`).join('')}</div>`
+    ${s.h.length?`<div class="pz-tarjeta ut-filas">${s.h.map(h=>`<div class="pz-fila"><span class="pz-fila-txt"><b>${esc(h.name)}</b><div class="pz-efectos">${h.id==='backyard'?`${h.laps} vueltas${h.kind==='gana'?' · último en pie':''}`:h.kind==='finisher'?`${h.pos}.º de ${h.finishers}${h.variante?' *':''}`:`km ${h.km} · ${h.motivo==='barrera'?'fuera de barrera':h.motivo==='lesion'?'lesión':'retirada'}`}</div></span><span class="pz-fila-dato">${h.kind==='finisher'?ultraDur(h.tiempo):'—'}</span></div>`).join('')}</div>`
       :`<p class="pz-sub">Un año entero sin correr ninguna. Pasa.</p>`}
     <div class="pz-tarjeta">
       <div class="ut-dos">
@@ -438,12 +479,153 @@ function renderUtTemporada(){
         <div><div class="pz-label">Salió</div><div class="pz-num pz-menos ut-grande">${fmtEur(s.gasto)}</div></div>
       </div>
     </div>
+    ${utEpilogoDisparado()?`<div class="pz-franja negativo" style="margin-top:14px">
+      <div class="pz-franja-sub" style="margin:0 0 4px">${utEpilogoDisparado()==='edad'?`${G.runner.age} años`:'El índice no llega y el cuerpo pide meses'}</div>
+      <div class="pz-franja-num" style="font-size:30px">Ya no vas a volver a estar donde estabas.</div>
+      <div class="pz-franja-sub">No es que no puedas correr: es que ya no te dejan entrar. Queda una cosa más.</div>
+    </div>
+    <button class="pz-btn" onclick="G.screen='utEpilogo';render();window.scrollTo(0,0)">Lo que queda →</button>`:`
     <div class="pz-label" style="margin:14px 0 6px">El trabajo el año que viene</div>
     ${utEscalonesPosibles().map(k=>{const e=UT_ESCALONES[k],sel=(G._utEscalon||utEscalonesPosibles()[0])===k;
       return `<button class="pz-opcion${sel?' sel':''}" onclick="G._utEscalon='${k}';render()"><b>${e.label}</b>${k===u.escalon?' <span class="pz-chip">ahora</span>':''}<div class="pz-efectos">${e.desc}</div>
         <div class="pz-efectos">${e.horas} h/sem para entrenar · ${fmtEur(e.sobrante,true)}/mes</div></button>`;}).join('')}
     ${u.escalon!=='completa'&&!utEscalonesPosibles().includes(u.escalon)?`<div class="pz-diag menos">${u.escalon==='reducida'?'Un año en números rojos: vuelves a jornada completa.':'El índice ha caído: la marca no renueva.'}</div>`:''}
-    <button class="pz-btn" style="margin-top:12px" onclick="utSiguienteTemporada()">Empezar la temporada ${u.temporada+1} →</button>
+    <button class="pz-btn" style="margin-top:12px" onclick="utSiguienteTemporada()">Empezar la temporada ${u.temporada+1} →</button>`}
+  </div>`;
+}
+
+// ── El final (§ 16): un solo acto ──────
+function renderUtEpilogo(){
+  const el=$main();hideChrome();
+  const u=G.ut;if(!u){G.screen='utNueva';render();return;}
+  if(u.retirado){G.screen='utFinal';render();return;}
+  const f=u.final;
+  if(f&&!f.hecho){
+    const sig=f.tipo==='cuenta'?['A la salida →',"G._utPre=null;G.screen='utPre';render();window.scrollTo(0,0)"]
+      :f.tipo==='proyecto'&&f.proyecto.id==='referencia'?['A la salida →',"G._utPre=null;G.screen='utPre';render();window.scrollTo(0,0)"]
+      :f.tipo==='proyecto'?['Seguir la travesía →',"G.screen='utProyecto';render();window.scrollTo(0,0)"]
+      :['Seguir montándola →',"G.screen='utMontar';render();window.scrollTo(0,0)"];
+    el.innerHTML=`<div class="pz"><div class="pz-titulo">${f.tipo==='cuenta'?'La cuenta pendiente':f.tipo==='proyecto'?esc(f.proyecto.label):'Tu carrera'}</div>
+      ${f.txt?`<p class="pz-sub">${esc(f.txt)}</p>`:''}<button class="pz-btn" onclick="${sig[1]}">${sig[0]}</button></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja negativo">
+      <div class="pz-franja-sub" style="margin:0 0 4px">${esc(G.runner.name)} · ${G.runner.age} años · ${u.temporada} temporada${u.temporada===1?'':'s'}</div>
+      <div class="pz-franja-num" style="font-size:34px">Una última</div>
+      <div class="pz-franja-sub">Sin entrenador, sin club, sin gestionar a nadie. Elige qué cierra esto.</div>
+    </div>
+    ${utEpilogos().map(e=>`<button class="pz-opcion" onclick="utEpilogoSi('${e.id}')"><b>${e.label}</b><div class="pz-efectos">${esc(e.desc)}</div></button>`).join('')}
+    ${utEpilogos().length<3?`<div class="pz-efectos">${!utCuentaPendiente()?'No hay cuenta pendiente: todo lo que empezaste, lo terminaste. ':''}${!utPuedeMontar()?'Para montar tu propia carrera hacía falta dejarse ver: dos veces de voluntario y seis sectores reconocidos.':''}</div>`:''}
+  </div>`;
+}
+window.utEpilogoSi=id=>{
+  if(!utElegirEpilogo(id))return;
+  G.screen=id==='cuenta'?'utPre':id==='montar'?'utMontar':'utProyectoElegir';
+  G._utPre=null;G._utMontar=null;autoSave();render();window.scrollTo(0,0);
+};
+// El proyecto personal: elegir entre los que propone el juego
+function renderUtProyectoElegir(){
+  const el=$main();hideChrome();
+  const u=G.ut;if(!u||!u.final||u.final.tipo!=='proyecto'){G.screen='utEpilogo';render();return;}
+  if(u.final.proyecto){G.screen=u.final.proyecto.id==='referencia'?'utPre':'utProyecto';render();return;}
+  el.innerHTML=`<div class="pz">
+    <div class="pz-titulo">El proyecto personal</div>
+    <div class="pz-sub">Ni ranking, ni premio, ni puesto. Algo que siempre quisiste hacer.</div>
+    ${utProyectos().map(p=>`<button class="pz-opcion" onclick="utProyectoSi('${p.id}')"><b>${esc(p.label)}</b><div class="pz-efectos">${esc(p.desc)}</div></button>`).join('')}
+  </div>`;
+}
+window.utProyectoSi=id=>{if(!utEmpezarProyecto(id))return;G.screen=id==='referencia'?'utPre':'utProyecto';G._utPre=null;autoSave();render();window.scrollTo(0,0);};
+function renderUtProyecto(){
+  const el=$main();hideChrome();
+  const u=G.ut,pr=u?.final?.proyecto;if(!pr){G.screen='utEpilogo';render();return;}
+  if(u.final.hecho){G.screen='utFinal';render();return;}
+  const sel=G._utEtapa||(G._utEtapa={etapa:'normal',dormir:'refugio'});
+  const pct=Math.round(pr.hechoKm/pr.km*100);
+  el.innerHTML=`<div class="pz">
+    <span class="pz-etiqueta acento">Día ${pr.dia+1} de ${pr.dias} como mucho</span>
+    <div class="pz-titulo">${esc(pr.label)}</div>
+    <div class="pz-barra" style="margin:10px 0 4px"><div class="pz-relleno" style="width:${pct}%"></div></div>
+    <div class="pz-efectos">${Math.round(pr.hechoKm)} de ${pr.km} km</div>
+    <div class="pz-tarjeta" style="margin-top:12px">${utBarra('Piernas',pr.piernas)}${utBarra('Energía',pr.energia)}${utBarra('Ánimo',pr.animo)}</div>
+    ${pr.log.slice(-3).map(x=>`<div class="pz-diag">${esc(x)}</div>`).join('')}
+    <div class="pz-label" style="margin:14px 0 6px">Hoy, hasta dónde</div>
+    <div class="ut-vol">${Object.entries(UT_ETAPA).map(([k,e])=>`<button class="pz-opcion sin-check${sel.etapa===k?' sel':''}" onclick="G._utEtapa.etapa='${k}';render()"><b>${e.label}</b><div class="pz-efectos">~${e.km} km</div></button>`).join('')}</div>
+    <div class="pz-label" style="margin:14px 0 6px">Dónde duermes</div>
+    ${Object.entries(UT_DORMIR).map(([k,d])=>`<button class="pz-opcion${sel.dormir===k?' sel':''}" onclick="G._utEtapa.dormir='${k}';render()"><b>${d.label}</b><div class="pz-efectos">${d.desc}</div></button>`).join('')}
+    <button class="pz-btn" style="margin-top:12px" onclick="utEtapaSi()">Salir →</button>
+    <button class="pz-btn sec" style="font-size:13px;padding:8px" onclick="if(confirm('¿Lo dejas aquí?')){utDejarProyecto();G.screen='utFinal';autoSave();render();}">Dejarlo aquí</button>
+  </div>`;
+}
+window.utEtapaSi=()=>{const s=G._utEtapa||{};const r=utEtapa(s.etapa,s.dormir);G.screen=r==='sigue'?'utProyecto':'utFinal';autoSave();render();window.scrollTo(0,0);};
+// Montar tu propia carrera (§ 16): con los sectores que conoces.
+function renderUtMontar(){
+  const el=$main();hideChrome();
+  const u=G.ut;if(!u||!u.final||u.final.tipo!=='montar'){G.screen='utEpilogo';render();return;}
+  if(u.final.hecho){G.screen='utFinal';render();return;}
+  const secs=utSectoresConocidos();
+  const d=G._utMontar||(G._utMontar={nombre:'',sectores:[],mes:9,barreras:'normales',avitu:'normales',dorsales:400});
+  const r=utCarreraPropia(d);
+  el.innerHTML=`<div class="pz">
+    <div class="pz-titulo">Tu carrera</div>
+    <div class="pz-sub">Quince años de reconocimiento se convierten en materia prima. Elige los sectores, en orden.</div>
+    <div class="pz-label" style="margin:14px 0 6px">Nombre</div>
+    <input type="text" id="ut-montar-nombre" maxlength="40" placeholder="Ultra ${esc(utDe(secs[0]?.sec||'tu valle'))}" value="${esc(d.nombre)}" oninput="G._utMontar.nombre=this.value" style="width:100%">
+    <div class="pz-label" style="margin:14px 0 6px">El recorrido (${d.sectores.length} sectores)</div>
+    <div class="pz-tarjeta ut-filas">${secs.map((x,i)=>{const k=x.id+'|'+x.sec,n=d.sectores.indexOf(k);
+      return `<div class="pz-fila"><span class="pz-fila-txt"><b>${n>=0?`${n+1}. `:''}${esc(x.sec)}</b><div class="pz-efectos">${esc(x.race)} · ${x.bloques.reduce((a,b)=>a+b.km[1]-b.km[0],0)} km · ${fmtMiles(x.bloques.reduce((a,b)=>a+b.dplus,0))} m+</div></span>
+        <input type="checkbox" class="pz-casilla" ${n>=0?'checked':''} onchange="utMontarSector(${i},this.checked)"></div>`;}).join('')}</div>
+    <div class="pz-label" style="margin:14px 0 6px">Mes</div>
+    <div class="ut-vol">${[[5,'Mayo'],[7,'Julio'],[9,'Septiembre']].map(([m,l])=>`<button class="pz-opcion sin-check${d.mes===m?' sel':''}" onclick="G._utMontar.mes=${m};render()"><b>${l}</b></button>`).join('')}</div>
+    <div class="pz-label" style="margin:14px 0 6px">Barreras</div>
+    <div class="ut-vol">${Object.entries(UT_MONTAR.barreras).map(([k,b])=>`<button class="pz-opcion sin-check${d.barreras===k?' sel':''}" onclick="G._utMontar.barreras='${k}';render()"><b>${b.label}</b></button>`).join('')}</div>
+    <div class="pz-efectos">Generosas: acaba todo el mundo, pero no impone respeto. Duras: media inscripción fuera, y mala fama.</div>
+    <div class="pz-label" style="margin:14px 0 6px">Avituallamientos</div>
+    <div class="ut-vol">${Object.entries(UT_MONTAR.avitu).map(([k,a])=>`<button class="pz-opcion sin-check${d.avitu===k?' sel':''}" onclick="G._utMontar.avitu='${k}';render()"><b>${a.label}</b></button>`).join('')}</div>
+    <div class="pz-label" style="margin:14px 0 6px">Dorsales</div>
+    <div class="ut-vol">${UT_MONTAR.dorsales.map(n=>`<button class="pz-opcion sin-check${d.dorsales===n?' sel':''}" onclick="G._utMontar.dorsales=${n};render()"><b class="pz-num">${n}</b></button>`).join('')}</div>
+    <div class="pz-efectos">Pocos, exclusiva; muchos, masificada.</div>
+    ${r?`<div class="pz-tarjeta" style="margin-top:12px"><b>${esc(r.name)}</b><div class="pz-efectos">${r.km} km · ${fmtMiles(r.dplus)} m+ · ${r.noches===2?'dos noches':r.noches?'una noche':'de día'} · cierre ${r.cierre} h · ${utPuntos(r)} puntos de dificultad</div></div>`
+      :'<div class="pz-diag ojo">Elige al menos dos sectores.</div>'}
+    <button class="pz-btn" style="margin-top:12px" ${r?'onclick="utMontarSi()"':'disabled'}>Que se corra →</button>
+  </div>`;
+}
+window.utMontarSector=(i,on)=>{const d=G._utMontar,k=utSectoresConocidos()[i];if(!d||!k)return;const id=k.id+'|'+k.sec;
+  d.sectores=d.sectores.filter(x=>x!==id);if(on)d.sectores.push(id);render();};
+window.utMontarSi=()=>{const d=G._utMontar;if(!d)return;if(utMontarCarrera(d)){G._utMontar=null;G.screen='utFinal';autoSave();render();window.scrollTo(0,0);}};
+// La pantalla final: no dice si ganaste. Dice si lo hiciste.
+function renderUtFinal(){
+  const el=$main();hideChrome();
+  const u=G.ut;if(!u||!u.final||!u.final.hecho){G.screen='utHub';render();return;}
+  const f=u.final,v=utResumenVida(),res=f.resultado||{};
+  let acto='';
+  if(f.tipo==='montar'){
+    acto=`<div class="pz-franja ${res.segunda?'podio':'fuera'}">
+      <div class="pz-franja-sub" style="margin:0 0 4px">${esc(f.carrera.name)} · ${f.carrera.km} km · ${fmtMiles(f.carrera.dplus)} m+</div>
+      <div class="pz-franja-num" style="font-size:36px">${res.segunda?'Habrá segunda edición':'No habrá segunda edición'}</div>
+      <div class="pz-franja-sub">${res.inscritos} inscritos · ${res.finishers} en meta · ${res.puntos} puntos de dificultad</div>
+    </div>
+    <p style="line-height:1.6">Salieron con ${esc(res.tiempo)}. ${res.dicen.map(esc).join(' ')}${res.conocido?' '+esc(res.conocido):''}</p>
+    ${res.segunda?'<div class="pz-diag mas">Tu carrera entra en el calendario: las próximas partidas de Ultratrail la traen.</div>':''}`;
+  }else{
+    acto=`<div class="pz-franja ${res.ok?'podio':'negativo'}">
+      <div class="pz-franja-sub" style="margin:0 0 4px">${f.tipo==='cuenta'?'La cuenta pendiente':esc(f.proyecto?.label||'')}</div>
+      <div class="pz-franja-num" style="font-size:44px">${res.ok?'Lo hiciste.':'No lo hiciste.'}</div>
+      <div class="pz-franja-sub">${esc(res.txt||'')}</div>
+    </div>
+    ${f.proyecto?.log?.length?`<div class="pz-tarjeta">${f.proyecto.log.slice(-4).map(x=>`<div class="pz-efectos" style="margin-bottom:3px">${esc(x)}</div>`).join('')}</div>`:''}`;
+  }
+  el.innerHTML=`<div class="pz">${acto}
+    <div class="pz-label" style="margin:14px 0 6px">${esc(G.runner.name)}, ${v.temporadas} temporada${v.temporadas===1?'':'s'}</div>
+    <div class="pz-tarjeta ut-filas">
+      <div class="pz-fila"><span class="pz-fila-txt">Ultras</span><span class="pz-fila-dato">${v.terminadas} de ${v.ultras} terminadas</span></div>
+      <div class="pz-fila"><span class="pz-fila-txt">Kilómetros de carrera</span><span class="pz-fila-dato">${fmtMiles(v.km)}</span></div>
+      <div class="pz-fila"><span class="pz-fila-txt">${esc(ULTRA_RACES.find(r=>r.major).name)}</span><span class="pz-fila-dato">${v.intentosGrande?`${v.grande} de ${v.intentosGrande}`:'nunca entraste'}</span></div>
+      ${v.backyards?`<div class="pz-fila"><span class="pz-fila-txt">Backyards</span><span class="pz-fila-dato">${v.backyards} · mejor ${v.mejorBackyard} vueltas</span></div>`:''}
+      <div class="pz-fila"><span class="pz-fila-txt">Veteranía</span><span class="pz-fila-dato">${v.veterania}</span></div>
+      ${v.secuelas?`<div class="pz-fila"><span class="pz-fila-txt">Lo que te llevas puesto</span><span class="pz-fila-dato">${v.secuelas} secuela${v.secuelas===1?'':'s'}</span></div>`:''}
+    </div>
+    <button class="pz-btn" onclick="backToMainMenu()">Menú principal</button>
   </div>`;
 }
 window.utSiguienteTemporada=()=>{utNuevaTemporada(G._utEscalon);G._utEscalon=null;G.screen='utHub';autoSave();render();window.scrollTo(0,0);};
@@ -451,4 +633,5 @@ window.utSiguienteTemporada=()=>{utNuevaTemporada(G._utEscalon);G._utEscalon=nul
 MODE_ROUTES.ultratrail={utNueva:renderUtNueva, utHub:renderUtHub, utObjetivos:renderUtObjetivos,
   utFase:renderUtFase, utTirada:renderUtTirada, utRecup:renderUtRecup, utPiedras:renderUtPiedras,
   utMaterial:renderUtMaterial, utReco:renderUtReco,
+  utEpilogo:renderUtEpilogo, utProyectoElegir:renderUtProyectoElegir, utProyecto:renderUtProyecto, utMontar:renderUtMontar, utFinal:renderUtFinal,
   utFinanzas:renderUtFinanzas, utTemporada:renderUtTemporada};

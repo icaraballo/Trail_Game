@@ -111,9 +111,12 @@ function byLog(t){G.by.log.push({lap:G.by.lap,t});if(G.by.log.length>60)G.by.log
 // ── Estado ─────────────────────────────
 MODE_STATE.backyard=()=>({by:null,_byPre:null});   // _byPre: lo elegido en el campamento antes de salir
 
-// Punto de entrada único (§ 26): hoy el reto suelto; mañana, Ultratrail pasará su corredor.
-function byStart({corredor,dificultad}){
-  const c=BY_CORREDORES.find(x=>x.id===corredor)||BY_CORREDORES[0];
+// Punto de entrada único (§ 26): el reto suelto pasa uno de los cuatro corredores; Ultratrail
+// pasa el suyo (ultra: {name, st, base}), arrastrando todo: sus preparaciones son el examen.
+function byStart({corredor,dificultad,ultra,tenso}){
+  const c=ultra?{id:'tu',name:ultra.name,flag:'',st:{...ultra.st},
+      arq:ultra.st.vel>=65?'liebre':ultra.st.res>=72?'veterano':ultra.st.mente>=72?'mental':'metronomo'}
+    :BY_CORREDORES.find(x=>x.id===corredor)||BY_CORREDORES[0];
   const ev=BY_EVENTOS[dificultad]||BY_EVENTOS.local;
   // Varianza (§ 25): el campo, el tiempo, el circuito y tu día.
   const rivals=[];
@@ -147,6 +150,10 @@ function byStart({corredor,dificultad}){
     farol:{tarde:false,fuerte:false,sentado:null},
     rutina:null, aviso:null, bitacora:null,
     log:[], phase:'bell', result:null, solo:false,
+    // Desde Ultratrail: la base aeróbica decide cuántas vueltas antes de que se hunda la energía
+    ut:!!ultra, base:ultra?ultra.base:null,
+    // «Modo tenso» (§ 18): el corral corre en tiempo real. Opcional; por defecto, no.
+    tenso:!!tenso,
   };
   G.by.animo=byClamp(70+G.by.dia*-8);
   byLog(`${BY_ORGANIZADOR} toca el cencerro en ${BY_LUGAR}. ${ev.n} corredores en la línea.`);
@@ -155,7 +162,8 @@ function byStart({corredor,dificultad}){
 }
 
 // ── Guardado propio (§ 18) ─────────────
-function byGuardar(){if(G.by)LS.set('by_run',JSON.stringify(G.by));}
+// Desde Ultratrail, la tirada va dentro de la partida (G.by en la ranura), no en su clave.
+function byGuardar(){if(!G.by)return;if(G.by.ut){if(typeof autoSave==='function')autoSave();return;}LS.set('by_run',JSON.stringify(G.by));}
 function byTiradaGuardada(){try{const s=JSON.parse(LS.get('by_run')||'null');return s&&s.v===1&&s.phase!=='end'?s:null;}catch(e){return null;}}
 function byBorrarTirada(){LS.del('by_run');}
 function byRecords(){try{return JSON.parse(LS.get('by_records')||'{}')||{};}catch(e){return {};}}
@@ -197,7 +205,7 @@ function byCorrerVuelta(esf){
   if(b.pacto)pierna*=0.85;
   if(b.farol.fuerte)pierna+=5;
   b.piernas=byClamp(b.piernas-pierna);
-  b.energia=byClamp(b.energia-e.energia*(1.3-b.st.est/200));
+  b.energia=byClamp(b.energia-e.energia*(1.3-b.st.est/200)*(b.base!=null?1.25-b.base/200:1));
   b.lucidez=byClamp(b.lucidez-(noche?6*(1.3-b.st.mente/100):1.5)-n*0.015);
   if(Math.random()<0.06+(llueve?0.12:0)+n*0.002)b.pies=Math.min(3,b.pies+1);
   // Ánimo: la noche y la lluvia lo bajan; la compañía lo sostiene
@@ -264,14 +272,18 @@ function byMaterializar(){
     const bios=BY_BIO[r.arq];r.bio=bios[Math.floor(Math.random()*bios.length)];
   });
 }
-// Si quedan pocos, algún rival te farolea a ti (§ 23): entra el último y sale entero.
+// Si quedan pocos, algún rival te farolea a ti (§ 23): llega a la línea el último y entero.
+// Se decide al ir a la línea, después de tu corral: si te sentaste a la vista y coló, el rival
+// está convencido de que vas peor y no se molesta; si no coló, te lo devuelve con más ganas.
 function byFarolRival(){
-  const b=G.by,vivos=byVivos();
-  if(vivos.length<1||vivos.length>4||Math.random()>0.15)return;
+  const b=G.by,vivos=byVivos(),s=b.farol.sentado;
+  if(vivos.length<1||vivos.length>4)return;
+  if(s&&s.cuela)return;
+  if(Math.random()>(s?0.3:0.15))return;
   if(b.musicaHasta>=b.lap)return;   // con música no le lees, y tampoco te afecta
-  const r=vivos[Math.floor(Math.random()*vivos.length)];
+  const r=s?vivos.find(x=>x.id===s.id)||vivos[0]:vivos[Math.floor(Math.random()*vivos.length)];
   b.animo=byClamp(b.animo-10);
-  byLog(`${r.name||'Alguien'} entra al corral el último y sale entero. ${vivos.length===1?'Puede estar mintiendo.':''}`.trim());
+  byLog(`${r.name||'Alguien'} llega a la línea el último y entero. ${vivos.length===1?'Puede estar mintiendo.':''}`.trim());
 }
 
 // ── El corral ──────────────────────────
@@ -279,7 +291,6 @@ function byEntrarCorral(){
   const b=G.by;
   b.corral=Math.max(0,Math.floor(60-b.lastLap));
   b.corralUsado=[];
-  byFarolRival();
   b.phase='corral';
   byGuardar();
 }
@@ -305,6 +316,7 @@ function byHacer(id){
     }
     b.piernas=byClamp(b.piernas+1.5);b.energia=byClamp(b.energia+3);b.lucidez=byClamp(b.lucidez+3);b.animo=byClamp(b.animo+3);
   }
+  byGuardar();   // dejarlo a medias en el corral y volver en el mismo minuto
   return true;
 }
 function byPalanca(id){
@@ -314,6 +326,7 @@ function byPalanca(id){
   if(id==='cafeina'){b.lucidez=byClamp(b.lucidez+25);b.cafeDeuda.push({lap:b.lap+4});}
   if(id==='llamada'){b.animo=byClamp(b.animo+35);byLog('Llamas a casa. Dos minutos que valen por diez vueltas.');}
   if(id==='ropa'){b.pies=0;b.animo=byClamp(b.animo+15);byLog('Ropa limpia entera. Como si empezaras otra carrera.');}
+  byGuardar();
   return true;
 }
 // Correr acompañado (§ 19): con nombres en el pelotón, pactas con uno.
@@ -353,7 +366,7 @@ function byFarolSentado(){
   const cuela=Math.random()<0.4+b.lucidez/250;
   b.farol.sentado={id:v[0].id,cuela};
   if(!cuela){b.animo=byClamp(b.animo-6);byLog(`${v[0].name} te ve sentado y sonríe. No cuela.`);}
-  else byLog(`Te dejas caer en la silla, a la vista de ${v[0].name}.`);
+  else{b.farolesColados=(b.farolesColados||0)+1;byLog(`Te dejas caer en la silla, a la vista de ${v[0].name}.`);}
   return true;
 }
 
@@ -363,9 +376,11 @@ function byFarolSentado(){
 function byALaLineaLogica(){
   const b=G.by;
   b.phase='bell';
+  byFarolRival();
   const caen=byCampanaRivales();
   if(caen.length)byLog(caen.length===1?`${caen[0].name||'Un corredor'} no sale.`:`${caen.length} corredores no salen.`);
   if(byVivos().length===0&&!b.solo){b.solo=true;byLog('Ya no sale nadie más.');}
+  byGuardar();   // en la campana: si lo dejas aquí, vuelves aquí
   return caen;
 }
 // Sales. Devuelve 'loop' si completaste la vuelta y 'end' si se acabó.
@@ -395,8 +410,8 @@ function byNoSalgo(){
 }
 function byTerminar(){
   const b=G.by;b.phase='end';
-  b.record=byGuardarRecord();
-  byBorrarTirada();
+  if(!b.ut){b.record=byGuardarRecord();byBorrarTirada();}   // los récords son del reto suelto
+  if(typeof checkAndUnlockAchievements==='function')checkAndUnlockAchievements();
   return 'end';
 }
 
@@ -431,7 +446,7 @@ function byEncadenar(){
     if(b.result){byTerminar();return 'end';}
     if(cruza(antes.p,b.piernas)||cruza(antes.e,b.energia)||cruza(antes.l,b.lucidez)){motivo='Algo ha cruzado un umbral.';break;}
     if(antes.noche!==byEsNoche(b.lap+1)){motivo=byEsNoche(b.lap+1)?'Anochece.':'Amanece.';break;}
-    if(b.log.slice(logAntes).some(x=>/entra al corral|llover|desvío/.test(x.t))){motivo='Ha pasado algo.';break;}
+    if(b.log.slice(logAntes).some(x=>/el último y entero|llover|desvío/.test(x.t))){motivo='Ha pasado algo.';break;}
   }
   const nom=caidos.filter(x=>x.name).map(x=>x.name);
   const caidoTxt=caidos.length?` · cayeron ${nom.length?nom.slice(0,2).join(' y ')+(caidos.length>nom.slice(0,2).length?` y ${caidos.length-nom.slice(0,2).length} más`:''):caidos.length}`:'';

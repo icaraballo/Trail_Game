@@ -114,6 +114,278 @@ const UT_RECUPERACION=[
   {id:'volver', label:'Volver a entrenar ya',desc:'Las preparaciones suben, pero si el cuerpo no estaba, la secuela no se va nunca.',semanas:0,pierdeX:0,carga:0,riesgo:0.35},
 ];
 
+// Los logros del modo (constants.js, mode 'ut') se miran al cerrar cada cosa.
+function utLogros(){if(typeof checkAndUnlockAchievements==='function')checkAndUnlockAchievements();}
+
+// ── Arco de vida (§ 15, paso 7 del diseño) ──
+// «Físicamente estás mejor a los 30. Como ultrafondista estás mejor a los 40.» Con el pico en
+// 36-42: lo físico baja con los cumpleaños y la veteranía, que solo crece corriendo ultras
+// largas, lo compensa con efectos concretos en carrera (ultra.js): la lucidez cae más despacio,
+// menos error de dosificación, mejor absorción y menos pánico (despistes).
+const UT_SECUELAS=['la rodilla de las bajadas','el tendón de Aquiles','la cadera','la espalda baja','el tobillo del esguince viejo','la fascia'];
+function utSumarVeterania(v){const u=G.ut;u.veterania=Math.min(100,(u.veterania||0)+Math.max(0,v)*(1-(u.veterania||0)/120));}
+function utEnvejecer(){
+  const a=G.runner.age,st=G.runner.stats,baja=(k,v)=>{st[k]=Math.max(20,st[k]-v);};
+  if(a>=34)baja('velocidad',1);
+  if(a>=38){baja('subida',1);baja('bajada',1);}
+  if(a>=42){baja('resistencia',1.5);baja('subida',1);baja('velocidad',1);}
+  if(a>=45){baja('velocidad',1.5);baja('bajada',1.5);baja('subida',1.5);baja('resistencia',1);}
+}
+// El detonante del final (§ 16), con doble condición: el índice no llega ni a la grande más pequeña
+// Y el cuerpo pide más de 20 semanas al año de recuperación. Red de seguridad: a los 50, llega igual.
+const UT_INDICE_GRANDE=560,UT_RECUPERA_TOPE=20,UT_EDAD_FINAL=50;
+function utEpilogoDisparado(){
+  const u=G.ut,ix=utIndice(),edad=G.runner.age||30;
+  if(edad>=UT_EDAD_FINAL)return 'edad';
+  const sem=(u.semanasRecupera||{})[u.temporada]||0;
+  if((!ix.valido||ix.valor<UT_INDICE_GRANDE)&&sem>UT_RECUPERA_TOPE&&u.temporada>=5)return 'cuerpo';
+  return null;
+}
+
+// ── Los tres epílogos (§ 16): se desbloquean, no son un menú ──
+// Un solo acto: pantalla que dice que ya no vas a volver → elección → una última carrera → final.
+// La cuenta pendiente: el juego la identifica solo. Una grande que el sorteo te negó tres años,
+// una barrera que te comió y no volviste a pasar, o un abandono.
+function utCuentaPendiente(){
+  const u=G.ut,h=u.historial;
+  const terminadas=new Set(h.filter(x=>x.kind==='finisher').map(x=>x.id));
+  const grande=ULTRA_RACES.find(r=>r.major);
+  const negada=u.sorteos.filter(x=>x.id===grande.id&&!x.entro).length;
+  if(negada>=3&&!terminadas.has(grande.id))return {id:grande.id,txt:`${grande.name}: el sorteo te dijo que no ${negada} años.`};
+  const barrera=h.slice().reverse().find(x=>x.kind==='dnf'&&x.motivo==='barrera'&&!terminadas.has(x.id)&&utDef(x.id)?.bloques);
+  if(barrera)return {id:barrera.id,txt:`${barrera.name}: la barrera del km ${barrera.km} te comió en la temporada ${barrera.t} y no volviste a pasarla.`};
+  const dnf=h.slice().reverse().find(x=>x.kind==='dnf'&&x.id!=='backyard'&&!terminadas.has(x.id)&&utDef(x.id)?.bloques);
+  if(dnf)return {id:dnf.id,txt:`${dnf.name}: te quedaste en el km ${dnf.km} en la temporada ${dnf.t}.`};
+  return null;
+}
+// Montar tu propia carrera: si te has dejado ver por el circuito (voluntariado y reconocimientos).
+function utSectoresConocidos(){
+  const u=G.ut,out=[];
+  Object.entries(u.reco||{}).forEach(([id,m])=>{const r=utDef(id);if(!r||!r.bloques)return;
+    Object.entries(m).forEach(([sec,n])=>{if(n>=2)out.push({id,sec,race:r.name,bloques:r.bloques.filter(b=>b.sector===sec)});});});
+  return out;
+}
+function utPuedeMontar(){return G.ut.visitas.filter(v=>v.tipo==='voluntario').length>=2&&utSectoresConocidos().length>=6;}
+function utEpilogos(){
+  const out=[],cp=utCuentaPendiente();
+  if(cp)out.push({id:'cuenta',label:'La cuenta pendiente',desc:cp.txt+' Una última vez.'});
+  if(utPuedeMontar())out.push({id:'montar',label:'Montar tu propia carrera',desc:'Quince años de reconocimientos se convierten en materia prima: la diseñas tú, con los sectores que conoces.'});
+  out.push({id:'proyecto',label:'El proyecto personal',desc:'Sin rivales, sin puesto, sin sorteo. Algo que siempre quisiste hacer.'});
+  return out;
+}
+function utElegirEpilogo(id){
+  const u=G.ut;if(!utEpilogos().some(e=>e.id===id))return false;
+  u.final={tipo:id,hecho:false,resultado:null};
+  if(id==='cuenta'){const cp=utCuentaPendiente();u.final.id=cp.id;u.final.txt=cp.txt;u.vispera={id:cp.id,t:u.temporada,variante:'completo'};}
+  return true;
+}
+// La cuenta pendiente se corre con ultra.js; al volver, se cierra el acto.
+function utCerrarCuenta(){
+  const u=G.ut,c=u.carrera;if(!u.final||u.final.tipo!=='cuenta'||!c||!c.fin)return false;
+  const ok=c.fin.kind==='finisher';
+  u.final.hecho=true;
+  u.final.resultado={ok,txt:ok?`Meta en ${ultraDur(G.time)}. Esta vez sí.`:`Te quedas en el km ${c.fin.km||0}. Hay cuentas que no se cierran, y también vale.`};
+  u.carrera=null;G.selectedRaces=[];
+  u.retirado=true;utLogros();
+  return true;
+}
+
+// «de» + sector, con la contracción: «del circo», «de la foz».
+function utDe(sec){return /^el /.test(sec)?'del '+sec.slice(3):'de '+sec;}
+// Montar tu propia carrera (§ 16): la diseñas con tus sectores y se corre en un párrafo.
+const UT_MONTAR={
+  barreras:{generosas:{label:'Generosas',f:1.55,fin:0.88,respeto:-1},normales:{label:'Normales',f:1.3,fin:0.68,respeto:0},duras:{label:'Duras',f:1.15,fin:0.45,respeto:1}},
+  avitu:{pocos:{label:'Pocos',fin:-0.08,coste:-1},normales:{label:'Normales',fin:0,coste:0},muchos:{label:'Muchos',fin:0.05,coste:1}},
+  dorsales:[150,400,900],
+};
+function utCarreraPropia({nombre,sectores,mes,barreras,avitu,dorsales}){
+  const sel=utSectoresConocidos().filter(x=>sectores.includes(x.id+'|'+x.sec));
+  if(sel.length<2)return null;
+  let km0=0;const bloques=[];
+  sel.forEach(x=>x.bloques.forEach(b=>{const l=b.km[1]-b.km[0];bloques.push({...b,km:[km0,km0+l],fin:'avituallamiento',barrera:undefined});km0+=l;}));
+  bloques.forEach(b=>{delete b.barrera;});
+  const km=km0,dplus=bloques.reduce((a,b)=>a+b.dplus,0);
+  const base=bloques.reduce((a,b)=>a+(b.km[1]-b.km[0])*390+b.dplus*4.8+b.dminus,0)/3600;
+  const B=UT_MONTAR.barreras[barreras]||UT_MONTAR.barreras.normales;
+  const mid=bloques.findIndex(b=>b.km[1]>=km/2);
+  if(mid>=0&&mid<bloques.length-1){
+    const hasta=bloques.slice(0,mid+1).reduce((a,b)=>a+(b.km[1]-b.km[0])*390+b.dplus*4.8+b.dminus,0)/3600;
+    bloques[mid].barrera={hora:Math.round(hasta*B.f*2)/2};if(km>=80)bloques[mid].fin='bolsa_vida';
+  }
+  bloques[bloques.length-1].fin='meta';
+  const noches=km<60?0:km<130?1:2;
+  const limpio=String(nombre||'').replace(/[<>"'`]/g,'').trim().slice(0,40)||`Ultra ${utDe(sel[0].sec)}`;
+  return {id:'propia_'+Date.now().toString(36),name:limpio,km,dplus,salida:noches?(km<130?22:18):7,dia:noches?0:1,
+    cierre:Math.ceil(base*B.f*1.05),month:mes,tipo:km<60?'preparacion':km<130?'100k':'100m',aparicion:'anual',
+    semana:Math.round((mes-0.5)/12*52),inscripcion:80,viaje:80,noches,propia:true,
+    desc:`La carrera de ${G.runner.name}: ${sel.map(x=>x.sec).join(', ')}.`,bloques,
+    _diseno:{barreras,avitu,dorsales:UT_MONTAR.dorsales.includes(dorsales)?dorsales:400}};
+}
+// Se corre en un párrafo: inscritos, el tiempo que hizo, finishers, qué dijeron y si habrá segunda.
+function utCorrerPropia(r){
+  const u=G.ut,d=r._diseno,B=UT_MONTAR.barreras[d.barreras],A=UT_MONTAR.avitu[d.avitu];
+  const fama=Math.min(1,(utIndice().valor||400)/900*0.5+u.visitas.length/20+(u.veterania||0)/200);
+  const tirón=0.5+utPuntos(r)*0.08+fama*0.4;
+  const inscritos=Math.min(d.dorsales,Math.round(d.dorsales*Math.min(1.3,tirón)*(0.8+Math.random()*0.3)));
+  const tiempo=['un día de sol','niebla toda la noche','tormenta a media tarde','calor de agosto','frío limpio'][Math.floor(Math.random()*5)];
+  const pFin=Math.max(0.15,Math.min(0.95,B.fin+A.fin-utPuntos(r)*0.03+(tiempo.startsWith('tormenta')?-0.1:0)+(Math.random()*0.1-0.05)));
+  const finishers=Math.round(inscritos*pFin);
+  const lleno=inscritos/d.dorsales;
+  const nota=(pFin>=0.5&&pFin<=0.85?1:0)+(lleno>=0.75?1:0)+(A.coste>=0?1:0)+(B.respeto>=0?0.5:0)+(d.dorsales===900&&lleno<0.6?-1:0);
+  const segunda=nota>=2.5;
+  const dicen=[pFin>0.85?'«Bonita, pero cualquiera la termina.»':pFin<0.4?'«Media salida se quedó en tu barrera. Hay quien no vuelve.»':'«Dura y justa. Así tiene que ser.»',
+    A.coste<0?'«Faltaba agua entre el segundo y el tercer avituallamiento.»':'«Los avituallamientos, de diez.»',
+    d.dorsales===150?'«Exclusiva: parecía una carrera entre amigos.»':d.dorsales===900&&lleno>0.8?'«Masificada en los senderos estrechos.»':'«Se notaba que la había corrido alguien antes de montarla.»'];
+  const conocido=BY_NOMBRES[Math.floor(Math.random()*BY_NOMBRES.length)][0];
+  const vol=u.visitas.find(v=>v.tipo==='voluntario');
+  return {inscritos,finishers,tiempo,dicen,segunda,puntos:utPuntos(r),
+    conocido:vol?`${conocido}, a quien conociste sirviendo caldo en ${utDef(vol.id)?.name||'una carrera'}, se inscribe el primer día.`:null};
+}
+// Tu carrera entra en el calendario del juego: las próximas partidas de Ultratrail la traen.
+function utPropias(){try{const a=JSON.parse(LS.get('ut_propias')||'[]');return Array.isArray(a)?a.filter(r=>r&&Array.isArray(r.bloques)&&r.bloques.length).slice(-3):[];}catch(e){return [];}}
+function utMontarCarrera(diseno){
+  const u=G.ut,r=utCarreraPropia(diseno);if(!r)return false;
+  const res=utCorrerPropia(r);
+  if(res.segunda){
+    const guardar={...r};delete guardar._diseno;
+    const lista=utPropias().concat([guardar]).slice(-3);
+    LS.set('ut_propias',JSON.stringify(lista));
+  }
+  u.final={tipo:'montar',hecho:true,carrera:{name:r.name,km:r.km,dplus:r.dplus},resultado:res};
+  u.retirado=true;utLogros();
+  return true;
+}
+
+// El proyecto personal (§ 16): el motor sin rivales, por etapas. Cada día decides hasta dónde
+// llegas y dónde duermes. La pantalla final no dice si ganaste: dice si lo hiciste.
+function utProyectos(){
+  const u=G.ut,out=[
+    {id:'cordillera',label:'La travesía de la cordillera',desc:'De un extremo a otro por las crestas: 190 km y 12.000 m+ en ocho días como mucho.',km:190,dplus:12000,dias:8},
+    {id:'cimas',label:'Las cimas de tu valle',desc:'Encadenar las once cumbres que ves desde casa: 95 km y 8.500 m+ en tres días.',km:95,dplus:8500,dias:3},
+  ];
+  const mejor=u.historial.filter(h=>h.kind==='finisher'&&h.tiempo&&utDef(h.id)?.bloques).sort((a,b)=>b.km-a.km)[0];
+  if(mejor)out.push({id:'referencia',label:`El tiempo de referencia en ${mejor.name}`,desc:`Solo, sin dorsal, por el recorrido que conoces: bajar de ${ultraDur(mejor.tiempo*0.97)}.`,race:mejor.id,objetivo:Math.round(mejor.tiempo*0.97),km:utDef(mejor.id).km,dias:1});
+  if(u.sorteos.some(x=>!x.entro))out.push({id:'grande',label:'La grande, a tu manera',desc:'El recorrido de Las 100 Millas, sin sorteo y sin reloj: en cuatro días como mucho.',km:165,dplus:10000,dias:4});
+  return out;
+}
+const UT_ETAPA={corta:{label:'Corta',km:22,coste:0.8},normal:{label:'Normal',km:36,coste:1},larga:{label:'Larga',km:52,coste:1.35}};
+const UT_DORMIR={refugio:{label:'Refugio',desc:'Cama y comida caliente, pero te desvías tres kilómetros.',rec:1,km:-3},vivac:{label:'Vivac',desc:'Donde caigas. Recuperas menos.',rec:0.6,km:0}};
+function utEmpezarProyecto(id){
+  const u=G.ut,p=utProyectos().find(x=>x.id===id);if(!p)return false;
+  u.final={tipo:'proyecto',hecho:false,proyecto:{...p,hechoKm:0,dia:0,piernas:100,energia:100,animo:85,log:[]}};
+  if(p.id==='referencia'){u.vispera={id:p.race,t:u.temporada,variante:'completo'};}
+  return true;
+}
+// Un día de travesía. Devuelve 'sigue', 'hecho' o 'no'.
+function utEtapa(etapaId,dormirId){
+  const u=G.ut,pr=u.final?.proyecto;if(!pr||u.final.hecho)return 'no';
+  const e=UT_ETAPA[etapaId]||UT_ETAPA.normal,dm=UT_DORMIR[dormirId]||UT_DORMIR.vivac,p=u.prep;
+  pr.dia++;
+  const tiempo=Math.random();
+  const desn=pr.dplus/pr.km/100;   // m+ por km, en centenas
+  let km=e.km;
+  if(tiempo<0.12){km=Math.round(km*0.5);pr.log.push(`Día ${pr.dia}: tormenta en las crestas. Esperas tres horas bajo una roca.`);}
+  const falta=(k)=>Math.max(0,(70-p[k])/100);
+  pr.piernas=Math.max(0,pr.piernas-km*e.coste*(0.9+desn*0.5)*(1+falta('encaje'))*(1+0.04*(u.secuelas||[]).length)*0.9);
+  pr.energia=Math.max(0,pr.energia-km*e.coste*0.8*(1+falta('base'))*(1+falta('estomago')*0.5));
+  pr.animo=Math.max(0,Math.min(100,pr.animo-(e.km>40?6:2)+(u.veterania||0)/25));
+  pr.hechoKm=Math.min(pr.km,pr.hechoKm+km+dm.km);
+  if(pr.piernas<=0||pr.energia<=0){pr.log.push(`Día ${pr.dia}: el cuerpo dice basta en el km ${Math.round(pr.hechoKm)}.`);return utCerrarProyecto(false);}
+  if(pr.hechoKm>=pr.km){pr.log.push(`Día ${pr.dia}: llegas. ${pr.km} km.`);return utCerrarProyecto(true);}
+  // Dormir: recuperas según dónde y según la cabeza
+  const r=dm.rec*(0.7+(u.veterania||0)/300);
+  pr.piernas=Math.min(100,pr.piernas+28*r);pr.energia=Math.min(100,pr.energia+40*r);pr.animo=Math.min(100,pr.animo+8*r);
+  pr.log.push(`Día ${pr.dia}: ${Math.round(km)} km${tiempo<0.12?' (medio día perdido)':''}. Duermes en ${dm.label.toLowerCase()}. Llevas ${Math.round(pr.hechoKm)} de ${pr.km}.`);
+  if(pr.dia>=pr.dias){pr.log.push(`Se acaban los días con ${Math.round(pr.km-pr.hechoKm)} km por delante.`);return utCerrarProyecto(false);}
+  return 'sigue';
+}
+function utDejarProyecto(){return utCerrarProyecto(false,'Lo dejas. No pasa nada: lo intentaste.');}
+function utCerrarProyecto(ok,txt){
+  const u=G.ut;
+  const pr=u.final.proyecto;
+  u.final.hecho=true;u.final.resultado={ok,txt:txt||(ok?`${pr.km} km en ${pr.dia} día${pr.dia===1?'':'s'}.`:`Te quedas a ${Math.round(pr.km-pr.hechoKm)} km.`)};
+  u.retirado=true;utLogros();
+  return ok?'hecho':'no';
+}
+// El tiempo de referencia se corre con ultra.js, solo (sin rivales).
+function utCerrarReferencia(){
+  const u=G.ut,c=u.carrera,pr=u.final?.proyecto;if(!pr||pr.id!=='referencia'||!c||!c.fin)return false;
+  const ok=c.fin.kind==='finisher'&&G.time<=pr.objetivo;
+  u.final.hecho=true;
+  u.final.resultado={ok,txt:c.fin.kind!=='finisher'?`Te quedas en el km ${c.fin.km||0}.`:ok?`${ultraDur(G.time)}. Por debajo de ${ultraDur(pr.objetivo)}.`:`${ultraDur(G.time)}. No bajaste de ${ultraDur(pr.objetivo)}.`};
+  u.carrera=null;G.selectedRaces=[];u.retirado=true;utLogros();
+  return true;
+}
+// Resumen de toda la carrera deportiva para la pantalla final.
+function utResumenVida(){
+  const u=G.ut,h=u.historial.filter(x=>x.id!=='backyard');
+  const grande=ULTRA_RACES.find(r=>r.major);
+  return {temporadas:u.temporada,edad:G.runner.age,ultras:h.length,terminadas:h.filter(x=>x.kind==='finisher').length,
+    km:u.historial.reduce((a,x)=>a+(x.km||0),0),grande:h.filter(x=>x.id===grande.id&&x.kind==='finisher').length,
+    intentosGrande:h.filter(x=>x.id===grande.id).length,backyards:u.historial.filter(x=>x.id==='backyard').length,
+    mejorBackyard:Math.max(0,...u.historial.filter(x=>x.id==='backyard').map(x=>x.laps||0)),
+    veterania:Math.round(u.veterania||0),secuelas:(u.secuelas||[]).length};
+}
+
+// ── El Backyard dentro de Ultratrail (§ 26, paso 6 del diseño) ──
+// Una invitación opcional cada otoño. No ocupa plaza de objetivo ni da piedras; cuesta una semana
+// de recuperación por cada diez vueltas y es lo que más veteranía da (decisión del 2026-10-30).
+// Se corre con backyard.js y tu corredor: el examen de las cinco preparaciones a la vez.
+const UT_BACKYARD={id:'backyard',name:'El Backyard de la borda',tipo:'backyard',semana:44,viaje:60,month:11};
+function utBackyardHoy(){const p=utPlan('backyard');return !!(p&&!p.hecho&&p.tipo==='backyard'&&G.ut.semana===UT_BACKYARD.semana);}
+function utNoPuedeBackyard(){
+  const u=G.ut;
+  if(utPlan('backyard'))return utPlan('backyard').hecho?'Ya lo corriste':'Ya has aceptado';
+  if(u.semana>=UT_BACKYARD.semana)return 'Ya ha pasado';
+  if(!utEscalon().viajes&&u.dinero<UT_BACKYARD.viaje)return `Te faltan ${fmtEur(UT_BACKYARD.viaje-u.dinero)} para el viaje`;
+  return null;
+}
+function utAceptarBackyard(){
+  if(utNoPuedeBackyard())return false;
+  G.ut.planes.push({id:'backyard',tipo:'backyard',hecho:false});
+  utDiario('Aceptas la invitación al backyard de otoño. Una vuelta cada hora hasta que quede uno.');
+  return true;
+}
+// Tus atributos para backyard.js, a partir de tu corredor y tus preparaciones (§ 26): encaje y
+// resistencia → piernas; estómago → lo que absorbes en el corral; nocturna y cabeza → lucidez.
+function utBackyardCorredor(){
+  const st=G.runner.stats,p=G.ut.prep,vet=G.ut.veterania||0;
+  const c=v=>Math.max(20,Math.min(95,Math.round(v)));
+  return {name:G.runner.name,base:p.base,
+    st:{res:c(st.resistencia*0.5+p.encaje*0.5+vet*0.1),vel:c(st.velocidad),est:c(p.estomago+vet*0.05),
+      mente:c(st.mental*0.4+p.nocturna*0.4+vet*0.3)}};
+}
+function utEmpezarBackyard(){
+  if(!utBackyardHoy())return false;
+  byStart({dificultad:utBackyardDif(),ultra:utBackyardCorredor(),tenso:!!G.ut.opciones?.tenso});
+  return true;
+}
+// Al volver del backyard: sin piedras, con recuperación por vueltas y lo que te deja.
+function utCerrarBackyard(){
+  const u=G.ut,b=G.by;if(!b||!b.result||!b.ut)return false;
+  const p=utPlan('backyard');if(p)p.hecho=true;
+  const laps=b.result.laps||0,gana=b.result.kind==='gana';
+  u.historial.push({t:u.temporada,id:'backyard',name:`Backyard ${BY_EVENTOS[b.dif].label.toLowerCase()}`,tipo:'backyard',
+    kind:gana?'gana':'dnf',motivo:null,pos:null,finishers:null,tiempo:null,km:Math.round(laps*BY_KM_VUELTA),laps,dif:b.dif,
+    indice:null,puntos:0,piedras:0,variante:null});
+  if(!utEscalon().viajes)utMov('Viaje al backyard',-UT_BACKYARD.viaje);
+  // Lo que deja: horas = vueltas. Todo a la vez, y la cabeza más que nada
+  const antes={...u.prep},peso={base:0.6,encaje:0.6,estomago:0.6,nocturna:laps>=14?0.6:0.1,termica:0};
+  UT_PREPS.forEach(([k])=>utSubirPrep(k,Math.min(6,laps*0.25*peso[k])));
+  u.carga=Math.min(100,u.carga+Math.round(laps*1.2));
+  const sem=Math.max(1,Math.ceil(laps/10));
+  u.recuperaHasta=Math.max(u.recuperaHasta,u.semana+1+sem);u.cicloDesde=u.recuperaHasta;
+  u.semanasRecupera=u.semanasRecupera||{};u.semanasRecupera[u.temporada]=(u.semanasRecupera[u.temporada]||0)+sem;
+  utSumarVeterania(laps*0.3);
+  const sube=UT_PREPS.map(([k,l])=>[l,Math.round(u.prep[k]-antes[k])]).filter(([,v])=>v>0).map(([l,v])=>`${l.toLowerCase()} +${v}`).join(', ');
+  utDiario(`Backyard: ${gana?`último en pie con ${laps} vueltas`:`${laps} vueltas`} (${Math.round(laps*BY_KM_VUELTA)} km). ${sem} semana${sem===1?'':'s'} para recuperar.${sube?` Te deja: ${sube}.`:''}`);
+  utLogros();
+  G.by=null;
+  return true;
+}
+// A qué backyard te invitan (§ 24, dificultad diegética): según tu índice.
+function utBackyardDif(){const ix=utIndice();const v=ix.valido?ix.valor:0;return v>=720?'internacional':v>=550?'nacional':'local';}
+
 // ── Puntos, índice, piedras y sorteo (§ 8, modelo real) ──
 // Tres sistemas que hacen tres cosas: los puntos dicen lo dura que es una carrera, el índice lo
 // bien que corres, y las piedras son boletos para el sorteo de la grande. Sustituyen a G.ranking.
@@ -133,16 +405,17 @@ const UT_INDICE_CORTESIA=720;   // vía del índice: dorsal de cortesía (§ 8.4
 // _utNueva: borrador de la pantalla de inicio · _utVerPrep: números de las preparaciones a la
 // vista · _utFase: el plan elegido para la fase antes de la tirada larga · _utMatVuelta: a qué
 // pantalla vuelve el material · _utReco: la carrera que reconoces · _utEscalon: trabajo elegido.
-MODE_STATE.ultratrail=()=>({_utNueva:null,_utVerPrep:false,_utFase:null,_utMatVuelta:null,_utReco:null,_utEscalon:null});
+MODE_STATE.ultratrail=()=>({_utNueva:null,_utVerPrep:false,_utFase:null,_utMatVuelta:null,_utReco:null,_utEscalon:null,_utEtapa:null,_utMontar:null});
 
-function utDef(id){return ULTRA_RACES.find(r=>r.id===id)||null;}
+// Las carreras del juego y las que montaron otras partidas (utPropias, epílogo «montar»).
+function utDef(id){return id==='backyard'?UT_BACKYARD:ULTRA_RACES.find(r=>r.id===id)||utPropias().find(r=>r.id===id)||null;}
 function utCal(id){return (G.ut?.calendario||[]).find(x=>x.id===id)||null;}
 function utPlan(id){return (G.ut?.planes||[]).find(x=>x.id===id)||null;}
 function utMov(txt,v){const u=G.ut;u.dinero+=v;u.movimientos.push({t:u.temporada,s:u.semana,txt,v});if(u.movimientos.length>60)u.movimientos.splice(0,u.movimientos.length-60);}
 function utDiario(txt){const u=G.ut;u.diario.push({t:u.temporada,s:u.semana,txt});if(u.diario.length>30)u.diario.splice(0,u.diario.length-30);}
 
 // Una partida nueva: corredor, edad y la primera temporada.
-function utNueva({nombre,perfil,edad}){
+function utNueva({nombre,perfil,edad,alucina,tenso}){
   const p=UT_PERFILES.find(x=>x.id===perfil)||UT_PERFILES[0];
   G.gameMode='ultratrail';
   G.runner={...freshState().runner,name:String(nombre||'').trim().slice(0,30)||'Corredor',age:UT_EDADES.includes(edad)?edad:30,stats:{...p.stats}};
@@ -153,7 +426,10 @@ function utNueva({nombre,perfil,edad}){
     prep:{...(UT_PREP_INICIAL[p.id]||UT_PREP_INICIAL.rodador)},carga:0,secuelas:[],
     piedras:{saldo:0,ultima:null},sorteo:null,sorteos:[],creditoVoluntario:[],
     material:{frontal:false,bastones:false,chaqueta:false,zapatillasKm:250},indices:{},
-    reco:{},recoSuelo:{},vispera:null};
+    reco:{},recoSuelo:{},vispera:null,
+    veterania:0,semanasRecupera:{},final:null,retirado:false,
+    // Opciones de partida, por defecto apagadas: alucinaciones en pantalla (§ 14) y modo tenso (§ 18)
+    opciones:{alucina:ULTRA_ALUCINA[alucina]?alucina:'pantalla',tenso:!!tenso}};
   G.runner.stats.nutricion=G.ut.prep.estomago;
   utDiario('Primera temporada. Tienes trabajo de jornada completa y ganas de saber cuánto aguantas.');
 }
@@ -167,11 +443,12 @@ function utAparece(r,t){
   return true;
 }
 function utCalendario(t){
-  return ULTRA_RACES.filter(r=>r.semana&&utAparece(r,t)).map(r=>{
+  return ULTRA_RACES.concat(utPropias()).filter(r=>r.semana&&utAparece(r,t)).map(r=>{
     const cancelada=!r.major&&Math.random()<UT_PROB_CANCELA;
     return {id:r.id,semana:r.semana,sede:r.aparicion==='rotativa'?r.sedes[(t-1)%r.sedes.length]:null,
       cancelada,motivo:cancelada?UT_MOTIVOS_CANCELA[Math.floor(Math.random()*UT_MOTIVOS_CANCELA.length)]:null};
-  }).sort((a,b)=>a.semana-b.semana);
+  }).concat([{id:'backyard',semana:UT_BACKYARD.semana,sede:null,cancelada:false,motivo:null,backyard:true}])
+    .sort((a,b)=>a.semana-b.semana);
 }
 // Semana del año → «abr», para las tarjetas.
 function utMes(semana){return ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][Math.min(11,Math.floor((semana-1)/52*12))];}
@@ -205,6 +482,7 @@ function utInscribirse(id){
   utMov(`Inscripción: ${d.name}`,-d.inscripcion);
   // Si es el primer objetivo a la vista, el ciclo hacia él empieza ahora (o al acabar la recuperación)
   if(!antes)u.cicloDesde=Math.max(u.semana,u.recuperaHasta);
+  utLogros();
   utDiario(`Te inscribes en ${d.name}. ${UT_TIPO_LABEL[d.tipo]}, semana ${utCal(id).semana}.`);
   return true;
 }
@@ -264,6 +542,7 @@ function utExigencia(r){
 const UT_FASES=[['base','Base',0.5],['especifico','Específico',0.35],['afinado','Afinado',0.15]];
 function utCiclo(){
   const u=G.ut,obj=utObjetivoSiguiente();
+  if(utBackyardHoy())return {fase:'backyard',obj};
   if(u.semana<u.recuperaHasta)return {fase:'recuperacion',hasta:u.recuperaHasta,obj};
   if(!obj)return {fase:'libre',obj:null};
   if(obj.semana===u.semana)return {fase:'carrera',obj};
@@ -286,6 +565,7 @@ function utCiclo(){
 function utAvanzar(){
   const u=G.ut,ci=utCiclo();
   if(ci.fase==='carrera'){utVispera();return 'carrera';}
+  if(ci.fase==='backyard')return 'backyard';
   if(ci.fase==='libre')return utPasarSemanas(u.semana+4,()=>{utSemanaEntreno({},UT_VOLUMEN.suave,0.6,0.5);});
   if(ci.fase==='recuperacion')return utRecuperar('cruzado');
   return utHacerFase(UT_PLANES[ci.fase][0].id,'normal',null);
@@ -388,7 +668,7 @@ function utRecuperar(id){
 // Semanas de recuperación de partida, con edad y secuelas (§ 15, los tres relojes).
 function utSemanasRecupera(tipo,ok){
   const [lo,hi]=UT_RECUPERA[tipo],edad=G.runner.age||30;
-  const extra=(edad>=40?1:0)+(edad>=46?1:0)+Math.floor((G.ut.secuelas||[]).length/2);
+  const extra=(edad>=38?1:0)+(edad>=42?1:0)+(edad>=45?1:0)+Math.floor((G.ut.secuelas||[]).length/2);
   return (ok?lo+Math.floor(Math.random()*(hi-lo+1)):hi)+extra;
 }
 
@@ -415,10 +695,11 @@ function utPasarSemanas(hasta,semana){
     if(u.semana>UT_SEMANAS){res='temporada';break;}
     sueldo+=trabajo.sobrante*12/UT_SEMANAS;
     // Ir a ver o de voluntario: se resuelve al llegar la semana, sin parar
-    u.planes.filter(p=>!p.hecho&&p.tipo!=='correr'&&utCal(p.id)?.semana===u.semana).forEach(p=>utVisita(p));
+    u.planes.filter(p=>!p.hecho&&(p.tipo==='ver'||p.tipo==='voluntario')&&utCal(p.id)?.semana===u.semana).forEach(p=>utVisita(p));
     if(u.sorteo&&u.semana===UT_SORTEO_PLAZO+1&&u.sorteo.estado==='solicitado')utResolverSorteo();
     if(u.sorteo&&u.semana===UT_SORTEO_ESPERA&&u.sorteo.estado==='espera')utListaEspera();
     if(utObjetivoHoy()){utVispera();res='carrera';break;}
+    if(utBackyardHoy()){res='backyard';break;}
   }
   if(sueldo>0)utMov(`Lo que sobra del sueldo (${n} semana${n===1?'':'s'})`,Math.round(sueldo));
   return res;
@@ -434,6 +715,15 @@ function utVisita(p){
   if(p.tipo==='voluntario'&&d.major)u.creditoVoluntario.push({id:p.id,t:u.temporada+1});
   const txt=pool[Math.floor(Math.random()*pool.length)];
   utDiario(`${d.name}: ${txt.charAt(0).toLowerCase()+txt.slice(1)}`);
+  // Evento de contacto (§ 4): hablas con alguien del circuito
+  const x=Math.random();
+  if(x<0.15){
+    const obj=utObjetivoSiguiente(),r=obj?utDef(obj.id):null;
+    const peor=r?utSemaforo(r).sort((a,b)=>a.v/a.pide-b.v/b.pide)[0].k:UT_PREPS[Math.floor(Math.random()*5)][0];
+    utSubirPrep(peor,2);
+    utDiario(`Un corredor de los de siempre te cuenta cómo prepara la ${UT_PREPS.find(p=>p[0]===peor)[1].toLowerCase()}. Lo pruebas: +2.`);
+  }else if(x<0.27){G.runner.stats.mental=Math.min(100,(G.runner.stats.mental||50)+1);utDiario('Ver llegar a la última de la carrera, llorando, te recoloca la cabeza. Mental +1.');}
+  else if(x<0.35&&utIndice().valido&&utIndice().valor>=600){u.contactoSponsor=true;utDiario('Alguien de una marca de material te pide el teléfono. Quizá llamen.');}
 }
 
 // ── La carrera ─────────────────────────
@@ -475,12 +765,23 @@ function utCerrarCarrera(){
   // Recuperación: la de partida si terminas; si no, en proporción a lo que corriste (mínimo una)
   const sem=ok?utSemanasRecupera(d.tipo,true):Math.max(1,Math.round(utSemanasRecupera(d.tipo,false)*(c.fin.km||0)/d.km));
   u.recuperaHasta=u.semana+1+sem;u.cicloDesde=u.recuperaHasta;
+  u.semanasRecupera=u.semanasRecupera||{};u.semanasRecupera[u.temporada]=(u.semanasRecupera[u.temporada]||0)+sem;
+  // Veteranía (§ 15): sale de las horas de ultra, y de un abandono se aprende más
+  utSumarVeterania(horas*(ok?0.08:0.14));
+  // Cada ultra grande deja marca (§ 15, el primer reloj): las 100 millas siempre pueden; los 100 km, desde los 38
+  const pSec=d.tipo==='100m'?0.25:d.tipo==='100k'&&(G.runner.age||30)>=38?0.08:0;
+  if(Math.random()<pSec){
+    const txt=UT_SECUELAS[Math.floor(Math.random()*UT_SECUELAS.length)];
+    u.secuelas.push({t:u.temporada,txt});
+    utDiario(`${d.name} se cobra algo que no vuelve: ${txt}.`);
+  }
   utDiario(ok?`${d.name}: finisher en ${ultraDur(G.time)}, ${c.fin.pos}.º de ${c.fin.finishers}. ${sem} semana${sem===1?'':'s'} para recuperar.`
     :`${d.name}: te quedas en el km ${c.fin.km||0}. ${sem} semana${sem===1?'':'s'} para recuperar.`);
   if(sube)utDiario(`Lo que te deja ${d.name}: ${sube}.`);
   if(ok)utDiario(`${puntos} punto${puntos===1?'':'s'} de dificultad, ${piedras} piedra${piedras===1?'':'s'} y un ${indice} de índice en esta carrera.`);
   u.carrera=null;G.selectedRaces=[];G.seg=0;G.time=0;G.paceLog=[];
   G.runner={...G.runner,energy:100,hydration:100,legs:100};
+  utLogros();
   return true;
 }
 
@@ -493,14 +794,17 @@ function utNuevaTemporada(escalon){
   if(nuevo!==u.escalon)utDiario(`${UT_ESCALONES[nuevo].label}: ${UT_ESCALONES[nuevo].desc.charAt(0).toLowerCase()+UT_ESCALONES[nuevo].desc.slice(1)}`);
   u.escalon=nuevo;
   utRecoDecae();
+  utRecoAvisar();
   // La cuenta pendiente (§ 8.4 y § 16): cada año que pediste la grande y no entraste
   if(u.sorteo&&u.sorteo.estado!=='dentro')u.sorteos.push({t:u.temporada,id:u.sorteo.id,entro:false});
   u.sorteo=null;
   u.temporada++;G.year=u.temporada;
   G.runner={...G.runner,age:(G.runner.age||30)+1};
+  utEnvejecer();
   u.semana=1;u.planes=[];u.calendario=utCalendario(u.temporada);
   u.recuperaHasta=Math.max(1,u.recuperaHasta-UT_SEMANAS);u.cicloDesde=u.recuperaHasta;
   utDiario(`Temporada ${u.temporada}. Cumples ${G.runner.age}.`);
+  utLogros();
 }
 // ── Escalón laboral (§ 9) ──────────────
 function utEscalon(){return UT_ESCALONES[G.ut?.escalon]||UT_ESCALONES.completa;}
@@ -514,7 +818,7 @@ function utEscalonesPosibles(){
   if(u.escalon==='profesional'&&iv>=700)pos.push('profesional');
   if(iv>=780&&ixAnt>=780&&!pos.includes('profesional'))pos.push('profesional');
   if(['material','profesional'].includes(u.escalon)&&iv>=600)pos.push('material');
-  else if(iv>=680&&fin>=2)pos.push('material');
+  else if(iv>=(u.contactoSponsor?640:680)&&fin>=2)pos.push('material');   // el contacto del § 4 ayuda
   // Un año en números rojos devuelve a jornada completa
   if(t+1>=UT_REDUCIDA_DESDE&&!(u.escalon==='reducida'&&u.dinero<0))pos.push('reducida');
   pos.push('completa');
@@ -548,7 +852,9 @@ function utVispera(){
   if(u.vispera&&u.vispera.id===r.id&&u.vispera.t===u.temporada)return;
   const x=Math.random();
   const v=x<0.05&&r.noches?'acortado':x<0.15?'alternativo':'completo';
-  u.vispera={id:r.id,t:u.temporada,variante:v};
+  // El parte, con la variante: la tormenta trae el recorrido alternativo
+  const tiempo=v==='alternativo'?'tormenta':ultraSortearTiempo(r.month);
+  u.vispera={id:r.id,t:u.temporada,variante:v,tiempo};
   if(v!=='completo')utDiario(`${r.name}: ${v==='alternativo'?'el parte da tormenta en las crestas. La organización saca el recorrido alternativo.':'la organización acorta la carrera por el tiempo. Vale menos y quedará con asterisco.'}`);
 }
 // La carrera con su variante: una copia, nunca el dato del calendario.
@@ -587,6 +893,17 @@ function utRecoDecae(){
       const p=[0,0.3,0.3,0.2][m[sec]]*k;
       if(m[sec]>0&&Math.random()<p)m[sec]=Math.max((u.recoSuelo[id]||{})[sec]||0,m[sec]-1);
     });
+  });
+}
+// El sector donde suele romperse la gente (§ 5, nivel 3): el bloque más duro, sin contar el primero.
+function utSectorDuro(r){return r.bloques.slice(1).reduce((m,b)=>b.dplus+b.dminus+(b.barrera?400:0)>m.v?{v:b.dplus+b.dminus+(b.barrera?400:0),s:b.sector}:m,{v:-1,s:null}).s;}
+// Tras años sin ir, el recorrido ya no es el que recuerdas (§ 5): un aviso cada tres temporadas.
+function utRecoAvisar(){
+  const u=G.ut;if(u.temporada%3!==0)return;
+  Object.keys(u.reco||{}).forEach(id=>{
+    const r=utDef(id);if(!r||!r.bloques)return;
+    const ultima=Math.max(0,...u.historial.filter(h=>h.id===id).map(h=>h.t),...u.visitas.filter(v=>v.id===id).map(v=>v.t));
+    if(ultima&&u.temporada-ultima>=3)utDiario(`Hace ${u.temporada-ultima} años que no pisas ${r.name}: ya no es el recorrido que recuerdas. Quizá toque reconocerla.`);
   });
 }
 // Salida de reconocimiento: un día y medio viaje; un sector a nivel 2.
@@ -698,8 +1015,8 @@ function utFraseSorteo(){
 }
 
 function utResumenTemporada(t){
-  const h=(G.ut?.historial||[]).filter(x=>x.t===t);
-  return {corridas:h.length,finisher:h.filter(x=>x.kind==='finisher').length,km:h.reduce((a,x)=>a+(x.km||0),0),
+  const h=(G.ut?.historial||[]).filter(x=>x.t===t),ultras=h.filter(x=>x.id!=='backyard');   // el backyard no «se termina»
+  return {corridas:ultras.length,finisher:ultras.filter(x=>x.kind==='finisher').length,km:h.reduce((a,x)=>a+(x.km||0),0),
     gasto:(G.ut?.movimientos||[]).filter(m=>m.t===t&&m.v<0).reduce((a,m)=>a+m.v,0),
     ingreso:(G.ut?.movimientos||[]).filter(m=>m.t===t&&m.v>0).reduce((a,m)=>a+m.v,0),h};
 }

@@ -33,7 +33,7 @@ window.byContinuar=()=>{const s=byTiradaGuardada();if(!s)return;G.by=s;G.screen=
 // El campamento: a qué backyard te apuntas y con quién (§ 24, § 18).
 function renderByPre(){
   const el=$main();hideChrome();
-  const sel=G._byPre||(G._byPre={dif:'local',corredor:'metronomo'});
+  const sel=G._byPre||(G._byPre={dif:'local',corredor:'metronomo',tenso:false});
   const rec=byRecords();
   el.innerHTML=`<div class="pz">
     <div class="pz-franja" style="background:var(--fill-oscuro)">
@@ -51,11 +51,12 @@ function renderByPre(){
       <b>${c.flag} ${esc(c.name)}</b> <span class="pz-chip" style="margin:0;background:var(--soft)">${BY_ARQ_LABEL[c.arq]}</span>
       <div class="pz-efectos">${c.desc}</div></button>`).join('')}
     <div class="pz-diag" style="margin-top:10px">Récord del formato: <b>${BY_LEYENDAS[0].laps} vueltas</b> (${BY_LEYENDAS[0].name}). Antes, ${BY_LEYENDAS.slice(1).map(l=>`${l.laps} de ${l.name}`).join(' y ')}.</div>
+    <div class="pz-tarjeta" style="margin-top:12px"><div class="pz-fila"><span class="pz-fila-txt"><b>Modo tenso</b><div class="pz-efectos">El corral corre en tiempo real: un minuto por segundo. Sin él, la cuenta atrás va por turnos, como está pensado.</div></span><input type="checkbox" class="pz-interruptor" ${sel.tenso?'checked':''} onchange="G._byPre.tenso=this.checked"></div></div>
     <button class="pz-btn" style="margin-top:12px" onclick="byEmpezar()">Montar el campamento y a la línea →</button>
     <button class="pz-btn sec" onclick="backToMainMenu()">← Menú principal</button>
   </div>`;
 }
-window.byEmpezar=()=>{const p=G._byPre||{};byStart({corredor:p.corredor,dificultad:p.dif});G._byPre=null;G.screen='byBell';render();};
+window.byEmpezar=()=>{const p=G._byPre||{};byStart({corredor:p.corredor,dificultad:p.dif,tenso:p.tenso});G._byPre=null;G.screen='byBell';render();};
 
 // La campana: cada hora te pregunta lo mismo, y esa repetición es el juego (§ 18).
 function renderByBell(){
@@ -110,6 +111,7 @@ function renderByCorral(){
     return`<button class="pz-opcion sin-check${cabe?'':' pz-bloqueado'}" style="padding:10px 14px" ${cabe?`onclick="${onc}"`:''}><span style="float:right" class="pz-num">${a.min}'</span><b>${a.label}</b>${extra?`<div class="pz-efectos">${extra}</div>`:''}</button>`;};
   const usado=id=>b.corralUsado.filter(x=>x===id).length;
   el.innerHTML=`<div class="pz">
+    ${b.tenso?'<div class="pz-diag menos">Modo tenso: el reloj corre.</div>':''}
     <div class="pz-franja ${b.corral<=2?'negativo':''}" style="${b.corral<=2?'':'background:var(--fill-oscuro)'};text-align:center;padding:16px">
       <div class="pz-franja-num" style="font-size:64px"><span id="by-cuenta">${b.corral}</span><span style="font-size:28px"> min</span></div>
       <div class="pz-franja-sub">hasta el cencerro · vuelta ${b.lap} en ${byMinSeg(b.lastLap)}</div>
@@ -137,6 +139,17 @@ function renderByCorral(){
     ${b.rutina?`<div class="pz-efectos" style="text-align:center;margin-top:4px">Rutina actual: ${BY_ESFUERZO[b.rutina.esfuerzo].label.toLowerCase()} + ${byRutinaMin()} min</div>`:''}
   </div>`;
   byAnimarCuenta();
+  if(b.tenso&&!_byTenso&&typeof setInterval==='function')_byTenso=setInterval(byTensoTick,1000);
+}
+// Modo tenso (§ 18, opcional): cada segundo, un minuto menos. A cero, a la línea.
+let _byTenso=null;
+function byTensoTick(){
+  const b=G.by;
+  if(!b||G.screen!=='byCorral'||!b.tenso){clearInterval(_byTenso);_byTenso=null;return;}
+  b.corral=Math.max(0,b.corral-1);_byCuentaAntes=b.corral;
+  const elc=document.getElementById('by-cuenta');if(elc)elc.textContent=String(b.corral);
+  if(b.corral===0){clearInterval(_byTenso);_byTenso=null;byALaLinea();return;}
+  if(b.corral===2)render();
 }
 // La cuenta atrás baja con animación, por turnos (§ 18): una aritmética lenta, no un reloj.
 let _byCuentaAntes=null;
@@ -167,8 +180,9 @@ function renderByEnd(){
     ${b.record?`<div class="pz-diag mas"><b>Nuevo récord personal</b> en un backyard ${BY_EVENTOS[b.dif].label.toLowerCase()}.</div>`:''}
     <div class="pz-label" style="margin:14px 0 6px">Lo último</div>
     <div class="pz-tarjeta">${b.log.slice(-5).map(x=>`<div class="pz-efectos" style="margin-bottom:3px">${esc(x.t)}</div>`).join('')}</div>
-    <button class="pz-btn" onclick="G.by=null;G.screen='byPre';render();window.scrollTo(0,0)">Otra tirada</button>
-    <button class="pz-btn sec" onclick="G.by=null;backToMainMenu()">← Menú principal</button>
+    ${b.ut?`<button class="pz-btn" onclick="utVolverDeBackyard()">Volver al plan →</button>`
+    :`<button class="pz-btn" onclick="G.by=null;G.screen='byPre';render();window.scrollTo(0,0)">Otra tirada</button>
+    <button class="pz-btn sec" onclick="G.by=null;backToMainMenu()">← Menú principal</button>`}
   </div>`;
 }
 

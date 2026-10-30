@@ -159,9 +159,9 @@ function freshState(){
     clubModeData:null,           // objeto completo del club (ver initClubModeData)
     // ── Tienda propia ──
     ownBrand:null,               // null | {launched:year, hasEmployee:bool, employeeYear:null|year}
-    // ── Clasificación Zegama ──
-    zegamaQual:false,            // true = acceso garantizado a Zegama esta temporada (tiempo del año anterior)
-    zegamaQualNext:false,        // true = terminó Zegama bajo el corte este año → pasa a zegamaQual el año siguiente
+    // ── Clasificación Harrigorri ──
+    zegamaQual:false,            // true = acceso garantizado a Harrigorri esta temporada (tiempo del año anterior)
+    zegamaQualNext:false,        // true = terminó Harrigorri bajo el corte este año → pasa a zegamaQual el año siguiente
     // ── Carrera de Vida ──────────────────
     carreraVida:false,           // interruptor maestro del modo Carrera de Vida
     lifecyclePhase:'runner',     // 'runner' → 'overlap' → 'coach' → 'club'

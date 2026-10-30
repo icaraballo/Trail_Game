@@ -22,7 +22,7 @@ const LS={
     localStorage.setItem(LS_PREFIX+'migrated_v41','1');
   }catch(e){}
 })();
-const GAME_BUILD=106; // incrementar con cada versión del juego
+const GAME_BUILD=107; // incrementar con cada versión del juego
 const SAVE_KEY='save_slot_';
 const SAVE_VERSION='TRAIL_SAVE_V2';
 const NUM_SLOTS=5;
@@ -81,7 +81,88 @@ function serializableState(){
 // migraciones nuevas: lo que queda es el merge estructural, que protege la
 // partida guardada ayer cuando hoy se añade un campo a freshState(). Esta regla
 // se invierte con la primera publicación pública.
+// v107 (2026-10-30): fuera los nombres reales de carreras, marcas y lugares que identifican
+// recorridos (PUB-04 de TG-Informe-Publicacion). Las partidas guardadas los llevan en el
+// historial, los récords y los textos: al cargar se traducen aquí, de lo largo a lo corto, en
+// cada texto y cada clave. Es el único sitio del código donde quedan, y no se pinta nunca.
+const SAVE_NOMBRES_VIEJOS=[
+  ['Zegama-Aizkorri Open','Maratón de Harrigorri Open'],
+  ['Zegama-Aizkorri','Maratón de Harrigorri'],
+  ['Zegama Skyrace','Skyrace de Harrigorri'],
+  ['Trail Mágina','Trail de la Sierra Alta'],
+  ['La Pedriza Trail','Trail de los Canchos'],
+  ['Copa Catalana de Trail','Copa Regional de Trail'],
+  ['Maratón de Montaña de Guadarrama','Maratón de Montaña de la Sierra'],
+  ['Buff Epic Trail','Gran Trail de los Lagos'],
+  ['Maratón Alpino Madrileño','Maratón Alpino de la Meseta'],
+  ['KV Canfranc · Vertical','KV de la Canal · Vertical'],
+  ['Ultra Pirineu UP55','Ultra de los Tres Ríos 55'],
+  ['Ultra Sierra Nevada','Ultra de la Sierra Blanca'],
+  ['Monte Perdido Trail 50K','Trail del Monte Olvidado 50K'],
+  ['Transvulcania Ultramarathon','Ultra de los Volcanes'],
+  ['Andalucía Ultra Trail','Ultra Trail del Sur'],
+  ['100 Millas de Aneto','Ultra del Gran Glaciar'],
+  ['Trail dels Bastions','Trail de las Murallas'],
+  ['UTMB OCC','Travesía de los Glaciares 55'],
+  ['Descenso de Jaca','Descenso del Valle'],
+  ['TransValles Cantábrico','TransValles del Norte'],
+  ['TransPirenaica Técnica','Travesía Técnica de la Cordillera'],
+  ['Copa Spain Trail','Copa Nacional de Trail'],
+  ['Ultra Alpujarra Trail','Ultra de las Alquerías'],
+  ['Transandalus Trail','Gran Travesía del Sur'],
+  ['Circuito Vasco Trail','Circuito del Norte de Trail'],
+  ['Vertical del Gorbea','Vertical de la Cruz'],
+  ['Vuelta al Txindoki','Vuelta al Pico Agudo'],
+  ['Copa de Clubes País Vasco','Copa de Clubes del Norte'],
+  ['Ultra Aralar','Ultra de la Sierra Verde'],
+  ['Canicross del Montseny','Canicross del Macizo'],
+  ['Canicross Serra de Tramuntana','Canicross de la Sierra del Norte'],
+  ['Canicross Guadarrama','Canicross de la Sierra Fría'],
+  ['Canicross Volcànic','Canicross de los Volcanes'],
+  ['Canicross Moncayo','Canicross del Monte Cano'],
+  ['Copa de España Canicross','Copa Nacional de Canicross'],
+  ['Canicross Valle de Benasque','Canicross del Valle Alto'],
+  ['Campeonato de España Canicross','Campeonato Nacional de Canicross'],
+  ['Polar Elite System','Pulso Elite System'],
+  ['Garmont Pro GPS','Cumbre Pro GPS'],
+  ['Suunto Club','Brújula Club'],
+  ['Salomon Team','Sendero Team'],
+  ['Clif Bar','Barrita Cima'],
+  ['Suunto','Brújula'],
+  ['Salomon','Sendero'],
+  ['Salida Zumarraga','Salida de la plaza'],
+  ['Subida Usategi','Subida al collado'],
+  ['Cresta Aizkorri','Cresta de Harrigorri'],
+  ['Subida Aratz','Subida a la cumbre norte'],
+  ['Valle de Zegama','Valle de Harrigorri'],
+  ['Meta Zegama','Meta en Harrigorri'],
+  ['Salida Navacerrada','Salida del puerto'],
+  ['Subida Siete Picos','Subida a los Siete Dientes'],
+  ['Valle Lozoya','Valle del río'],
+  ['Subida Peñalara','Subida al pico mayor'],
+  ['Salida Canfranc','Salida del pueblo'],
+  ['Salida Orsières','Salida del valle'],
+  ['Lac de Champex','El lago'],
+  ['Subida Champex','Subida al lago'],
+  ['Bajada Vallorcine','Bajada al pueblo'],
+  ['Subida Tête Vents','Subida de los vientos'],
+  ['Cresta Brévent','Cresta del balcón'],
+  ['Gran Descenso Chamonix','Gran descenso final'],
+  ['Salida Benasque','Salida del valle'],
+  ['Meta Benasque','Meta en el valle'],
+  ['Subida Aneto 1','Subida al glaciar 1'],
+  ['Subida Aneto 2','Subida al glaciar 2'],
+  ['Repecho de la Pedriza','Repecho de los canchos'],
+  ['Zegama','Harrigorri']
+];
+function renombrarNombresViejos(v){
+  if(typeof v==='string'){let t=v;for(const [a,b] of SAVE_NOMBRES_VIEJOS)if(t.includes(a))t=t.split(a).join(b);return t;}
+  if(Array.isArray(v))return v.map(renombrarNombresViejos);
+  if(v&&typeof v==='object'){const o={};for(const k in v)o[renombrarNombresViejos(k)]=renombrarNombresViejos(v[k]);return o;}
+  return v;
+}
 function migrateState(saved){
+  saved=renombrarNombresViejos(saved);
   const base=freshState();
   const merged={...base,...saved};
   // Merge profundo en las estructuras anidadas críticas
@@ -257,6 +338,16 @@ function sanitizeState(raw){
     if(u.vispera!=null&&typeof u.vispera!=='object')u.vispera=null;
     if(u.vispera===undefined)u.vispera=null;
     if(!['completa','reducida','material','profesional'].includes(u.escalon))u.escalon='completa';
+    // Paso 7: veteranía, semanas de recuperación por año, el epílogo y la retirada
+    u.veterania=Math.max(0,Math.min(100,Number(u.veterania)||0));
+    if(!u.semanasRecupera||typeof u.semanasRecupera!=='object'||Array.isArray(u.semanasRecupera))u.semanasRecupera={};
+    if(u.final!=null&&typeof u.final!=='object')u.final=null;
+    if(u.final===undefined)u.final=null;
+    u.retirado=!!u.retirado;
+    u.contactoSponsor=!!u.contactoSponsor;
+    const op=(u.opciones&&typeof u.opciones==='object')?u.opciones:{};
+    // alucina: grado máximo (diario · pantalla · todas); las de antes eran sí/no
+    u.opciones={alucina:['diario','pantalla','todas'].includes(op.alucina)?op.alucina:op.alucina===false?'diario':'pantalla',tenso:!!op.tenso};
   }else if(s.ut!=null)s.ut=null;
   if(Array.isArray(s.coachRoster))s.coachRoster.forEach(sl=>{
     if(sl&&typeof sl==='object'&&sl.coachAthlete&&typeof sl.coachAthlete==='object')
@@ -482,7 +573,8 @@ function slotLabel(data){
   // Fase del arco narrativo
   const phase=s.carreraVida?(PHASE_LABEL[s.lifecyclePhase]||PHASE_LABEL.runner):null;   // T54 (v93)
   // Ultratrail no tiene ranking ni especialidad: su línea es temporada, edad y ultras terminadas
-  const linea=s.gameMode==='ultratrail'&&s.ut?`Temporada ${s.ut.temporada||1} · ${s.runner?.age||'—'} años · ${(s.ut.historial||[]).filter(h=>h&&h.kind==='finisher').length} terminadas`:null;
+  const linea=s.gameMode==='ultratrail'&&s.ut?(s.ut.retirado?`Carrera deportiva cerrada · ${s.ut.temporada||1} temporadas · ${s.runner?.age||'—'} años`
+    :`Temporada ${s.ut.temporada||1} · ${s.runner?.age||'—'} años · ${(s.ut.historial||[]).filter(h=>h&&h.kind==='finisher').length} terminadas`):null;
   return {name,runName,year,ranking,specRanking,spec,mode,totalKm,date,phase,linea,
           ended:s.careerEnded||null};   // T29 (v86)
 }

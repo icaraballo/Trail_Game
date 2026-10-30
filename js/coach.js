@@ -1906,7 +1906,7 @@ function generateCoachSeasonObjective(){
         reward:+14,penalty:-4});
     }
     if(season>=3&&a.personality==='perfeccionista'){
-      historyPool.push({id:'zegama_time',label:`Clasificar para Zegama o carrera nacional`,
+      historyPool.push({id:'zegama_time',label:`Clasificar para Harrigorri o carrera nacional`,
         desc:`"${a.name.split(' ')[0]} ya está listo para dar el salto. Es el momento."`,
         reward:+18,penalty:-10});
     }

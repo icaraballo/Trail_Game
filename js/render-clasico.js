@@ -1771,7 +1771,7 @@ window.handleEv=(evId,choiceIdx)=>{
     // ibas a correr. Resultado: la extra se colaba delante y desplazaba la
     // carrera para la que ya te habías preparado.
     // Ahora: sorteo entre las que aún caben en lo que queda de temporada e
-    // inserción por MES, detrás de la actual. Se excluye la Zegama
+    // inserción por MES, detrás de la actual. Se excluye la Harrigorri
     // (`zegamaSpecial`): tiene su propia vía de clasificación (G.zegamaQual) y
     // regalarla en un evento aleatorio se saltaría ese sistema entero.
     case'add_race':{

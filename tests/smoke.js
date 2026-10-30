@@ -46,7 +46,11 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'utHacerFase','utTocaTirada','utRecuperar','utSemaforo','utDeficit','utAbsorbe','utSemanaEntreno','UT_PLANES','UT_VOLUMEN','UT_PREP_INICIAL',
   'utPuntos','utProbSorteo','utPiedrasActivas','utIndice','utSolicitarSorteo','utNoPuedeSolicitar','utResolverSorteo','utListaEspera','utFraseSorteo','UT_PIEDRAS',
   'utEscalonesPosibles','utEscalon','utComprar','utNoPuedeComprar','utRaceVariante','utVispera','utSectores','utReco','utReconocerSector','utFinDeSemanaReco',
-  'utRecoDecae','utChaquetaObligatoria','UT_ESCALONES','UT_ZAPAS_VIDA','ultraControles','utSimularFase']);
+  'utRecoDecae','utChaquetaObligatoria','UT_ESCALONES','UT_ZAPAS_VIDA','ultraControles','utSimularFase',
+  'utAceptarBackyard','utNoPuedeBackyard','utBackyardHoy','utEmpezarBackyard','utCerrarBackyard','utBackyardCorredor','utBackyardDif','UT_BACKYARD','byNoSalgo','byALaLineaLogica',
+  'utSumarVeterania','utEnvejecer','utEpilogoDisparado','utCuentaPendiente','utPuedeMontar','utEpilogos','utElegirEpilogo','utCerrarCuenta','utCarreraPropia','utCorrerPropia',
+  'utMontarCarrera','utPropias','utProyectos','utEmpezarProyecto','utEtapa','utCerrarReferencia','utResumenVida','UT_EDAD_FINAL',
+  'utCabecera','byFarolRival','byTensoTick','ultraGradoAlucina','utPerfilHTML','utSectorDuro','ultraSortearTiempo','ULTRA_TIEMPO','checkAndUnlockAchievements']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -289,7 +293,7 @@ const todasR=[...T.RACES_DB,...Object.values(T.SPEC_RACES||{}).flat()];
 t('ninguna carrera declara ya el desnivel a mano', todasR.every(r=>r.desnivel===undefined));
 t('raceGainTotal suma solo los tramos de subida',
   todasR.every(r=>T.raceGainTotal(r)===r.segs.reduce((a,x)=>a+Math.max(0,x.gain||0),0)));
-t('y lo que se pinta sale de ahí (Zegama: 2.800m+)',
+t('y lo que se pinta sale de ahí (Harrigorri: 2.800m+)',
   T.raceDesnivel(T.RACES_DB.find(r=>r.id==='mayo'))==='2.800m+', T.raceDesnivel(T.RACES_DB.find(r=>r.id==='mayo')));
 t('pinar ya anuncia sus 600m reales, no los 1.200m+ que decía',
   T.raceDesnivel(T.RACES_DB.find(r=>r.id==='pinar'))==='600m+', T.raceDesnivel(T.RACES_DB.find(r=>r.id==='pinar')));
@@ -310,12 +314,12 @@ console.log('\n── v92 · interfaz que se calculaba y no se pintaba ──');
 const pintar=domStub(ctx);
 
 // 🐛 zegamaBadge: la insignia existía, la mecánica existe (G.zegamaQual se gana
-// terminando Zegama bajo el corte) y la plantilla nunca la interpolaba.
+// terminando Harrigorri bajo el corte) y la plantilla nunca la interpolaba.
 setG({gameMode:'expres',screen:'expresCalendar',year:2,ranking:50,zegamaQual:true,
   selectedRaces:[],expresRaces:[]});
 let html=pintar(()=>T.renderExpresCalendar());
 t('con G.zegamaQual, el calendario exprés dice «Clasificado por tiempo»',
-  html.includes('Clasificado por tiempo'), html.includes('Zegama')?'(Zegama sí sale)':'(Zegama no sale)');
+  html.includes('Clasificado por tiempo'), html.includes('Harrigorri')?'(Harrigorri sí sale)':'(Harrigorri no sale)');
 setG({gameMode:'expres',screen:'expresCalendar',year:2,ranking:5,zegamaQual:false,
   selectedRaces:[],expresRaces:[]});
 html=pintar(()=>T.renderExpresCalendar());
@@ -416,8 +420,8 @@ setG({gameMode:'canicross',canicrossMode:true,cnSeason:5,cnMonthIdx:0});
 t('Canicross: su temporada y su mes', T.seasonMonthLabel()==='A5 · Oct', T.seasonMonthLabel());
 
 console.log('\n── H10 (v95) · abandonar no esconde una lesión ya sufrida ──');
-setG({selectedRaces:[{id:'z',name:'Zegama',km:42}],currentRaceIdx:0,year:2,injuryType:'tendinitis',
-  injuryHistory:[{type:'tendinitis',label:'Tendinitis',race:'Zegama',year:2,km:20}]});
+setG({selectedRaces:[{id:'z',name:'Harrigorri',km:42}],currentRaceIdx:0,year:2,injuryType:'tendinitis',
+  injuryHistory:[{type:'tendinitis',label:'Tendinitis',race:'Harrigorri',year:2,km:20}]});
 t('detecta la lesión sufrida en esta carrera', T.injuryThisRace()?.label==='Tendinitis');
 T.getG().injuryHistory[0].year=1;
 t('y no la confunde con una de otra temporada', T.injuryThisRace()===null);
@@ -1587,6 +1591,137 @@ console.log('\n── Ultratrail · trabajo, material, variantes y reconocimient
   t('se olvida despacio, pero lo corrido de día nunca vuelve a 0', T.utSectores(mac).filter(sec=>(u.recoSuelo.macizo||{})[sec]).every(sec=>T.utReco('macizo',sec)>=1));
   // Zapatillas: se gastan con carreras y tiradas
   t('las zapatillas suman kilómetros', u.material.zapatillasKm>250);
+}
+
+console.log('\n── Ultratrail · el Backyard en el calendario (paso 6) ──');
+{
+  const nueva=()=>{setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});const g=T.getG();g.ut.dinero=9999;g.ut.calendario.forEach(x=>{x.cancelada=false;});return g;};
+  let g=nueva(),u=g.ut;
+  t('cada año hay invitación al backyard en otoño', u.calendario.some(x=>x.backyard&&x.semana===T.UT_BACKYARD.semana));
+  t('aceptarla no ocupa plaza de objetivo', T.utAceptarBackyard()&&T.utNoPuedeBackyard()==='Ya has aceptado'&&!u.planes.some(p=>p.tipo==='correr'));
+  t('el corredor del backyard sale de tus preparaciones', (()=>{const a=T.utBackyardCorredor();u.prep.encaje+=40;const b=T.utBackyardCorredor();return b.st.res>a.st.res&&a.name==='Ane'&&a.base===u.prep.base;})());
+  let n=0,r='';while(r!=='backyard'&&n++<40)r=T.utAvanzar();
+  t('el tiempo se para en la semana del backyard', r==='backyard'&&u.semana===T.UT_BACKYARD.semana&&T.utBackyardHoy()&&T.utCiclo().fase==='backyard');
+  t('se corre con tu corredor, sin tocar la tirada suelta', T.utEmpezarBackyard()&&T.getG().by.ut===true&&T.getG().by.name==='Ane');
+  const b=T.getG().by;for(let i=0;i<12;i++){T.byALaLineaLogica();if(T.bySalir('medio')==='end')break;T.byEntrarCorral();}
+  if(!b.result)T.byNoSalgo();
+  const laps=b.result.laps,sem0=u.semana,vet0=u.veterania||0;
+  T.utCerrarBackyard();
+  t('al volver: sin piedras, recuperación por vueltas y veteranía', u.piedras.saldo===0&&u.recuperaHasta===sem0+1+Math.max(1,Math.ceil(laps/10))&&u.veterania>vet0&&T.getG().by===null);
+  t('queda en el historial como backyard', u.historial.some(h=>h.id==='backyard'&&h.laps===laps));
+}
+
+console.log('\n── Ultratrail · arco de vida y epílogos (paso 7) ──');
+{
+  const nueva=()=>{setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});const g=T.getG();g.ut.dinero=9999;return g;};
+  let g=nueva(),u=g.ut;
+  T.utSumarVeterania(20);const v1=u.veterania;T.utSumarVeterania(20);
+  t('la veteranía crece y cada vez cuesta más', v1>0&&u.veterania-v1<v1&&u.veterania<=100);
+  g.runner.age=40;const vel=g.runner.stats.velocidad,sub=g.runner.stats.subida;T.utEnvejecer();
+  t('con los años baja lo físico', g.runner.stats.velocidad<vel&&g.runner.stats.subida<sub);
+  t('a los 30 no salta el final', T.utEpilogoDisparado()===null);
+  g.runner.age=T.UT_EDAD_FINAL;
+  t('a los 50 llega igual (red de seguridad)', T.utEpilogoDisparado()==='edad');
+  g.runner.age=44;u.temporada=12;u.semanasRecupera={12:24};u.historial=[];
+  t('índice bajo y más de 20 semanas de recuperación al año: final', T.utEpilogoDisparado()==='cuerpo');
+  u.historial=[{t:12,tipo:'100k',indice:700,kind:'finisher',id:'macizo'}];
+  t('con buen índice, todavía no', T.utEpilogoDisparado()===null);
+  // La cuenta pendiente: la identifica el juego
+  u.historial=[{t:3,id:'branas',name:'Travesía de las Brañas',kind:'dnf',motivo:'barrera',km:70}];
+  t('la cuenta pendiente es la barrera que te comió', T.utCuentaPendiente()?.id==='branas');
+  u.historial.push({t:5,id:'branas',kind:'finisher'});
+  t('si luego la terminaste, ya no está pendiente', T.utCuentaPendiente()===null);
+  u.sorteos=[1,2,3].map(t=>({t,id:'millas',entro:false}));
+  t('tres años sin entrar en la grande también es cuenta pendiente', T.utCuentaPendiente()?.id==='millas');
+  t('el proyecto personal siempre está; montar, solo si te has dejado ver', T.utEpilogos().some(e=>e.id==='proyecto')&&!T.utEpilogos().some(e=>e.id==='montar'));
+  // Cuenta pendiente: una última carrera
+  T.utElegirEpilogo('cuenta');T.ultraStart({carrera:u.final.id,repuesto:'bolsa'});const c=T.getG().ut.carrera;
+  let e='',n=0;while(e!=='fin'&&n++<40){T.ultraParar('beber');T.ultraParar('comer');if(c.enBolsa)c.enBolsa=false;if(c.sueno)T.ultraParar('dormir');c.paradaUsada=[];e=T.ultraCorrerBloque('steady');}
+  T.utCerrarCuenta();
+  t('la cuenta pendiente se corre y cierra la carrera deportiva', u.final.hecho&&typeof u.final.resultado.ok==='boolean'&&u.retirado);
+  // Montar tu propia carrera
+  g=nueva();u=g.ut;u.visitas=[{t:1,id:'macizo',tipo:'voluntario'},{t:2,id:'branas',tipo:'voluntario'}];
+  ['el valle','las crestas','el hayedo','el circo','el glaciar','el collado'].forEach(sec=>{(u.reco.macizo=u.reco.macizo||{})[sec]=2;});
+  t('con voluntariado y reconocimientos, se puede montar', T.utPuedeMontar()&&T.utEpilogos().some(e=>e.id==='montar'));
+  const dis={nombre:'Ultra <b>del</b> Circo',sectores:['macizo|el circo','macizo|el glaciar','macizo|el collado'],mes:9,barreras:'normales',avitu:'normales',dorsales:400};
+  const r=T.utCarreraPropia(dis);
+  t('tu carrera se monta con tus sectores (y sin HTML en el nombre)', r&&r.bloques.length>=4&&r.bloques[0].km[0]===0&&r.bloques[r.bloques.length-1].fin==='meta'&&!/[<>]/.test(r.name));
+  T.utElegirEpilogo('montar');T.utMontarCarrera(dis);
+  t('se corre en un párrafo: inscritos, finishers y si habrá segunda', u.final.hecho&&u.final.resultado.inscritos>0&&u.final.resultado.finishers<=u.final.resultado.inscritos&&typeof u.final.resultado.segunda==='boolean');
+  // Proyecto personal por etapas
+  g=nueva();u=g.ut;T.utElegirEpilogo('proyecto');T.utEmpezarProyecto('cimas');
+  let st='sigue';n=0;while(st==='sigue'&&n++<10)st=T.utEtapa('normal','refugio');
+  t('el proyecto por etapas acaba: lo hiciste o no', ['hecho','no'].includes(st)&&u.final.hecho&&u.retirado);
+  t('el resumen de la vida cuenta lo que hiciste', T.utResumenVida().temporadas===1);
+  t('la ranura dice que la carrera deportiva está cerrada', /cerrada/.test(T.slotLabel({ts:Date.now(),state:T.sanitizeState(T.serializableState())}).linea));
+}
+
+console.log('\n── Nombres reales fuera (v107, PUB-04) ──');
+{
+  const vivos=Object.keys(src).filter(f=>f!=='save.js').map(f=>src[f]).join('\n');
+  t('ninguna carrera ni marca real en los datos ni en los textos', !/Zegama|Aizkorri|Transvulcania|UTMB|Buff Epic|Pirineu|Suunto|Salomon|Clif Bar|Polar Elite|Garmont|Canfranc|Aneto|Chamonix/.test(vivos));
+  const viejo={runner:{name:'X',stats:{}},year:2,money:10,careerHistory:[{name:'Zegama-Aizkorri',pos:1,year:1}],personalBests:{'Buff Epic Trail':3600},seasonDiary:['Ganas la Zegama-Aizkorri con Salomon']};
+  const m=T.migrateState(viejo);
+  t('una partida vieja carga con los nombres nuevos (historial, récords y textos)', m.careerHistory[0].name==='Maratón de Harrigorri'&&m.personalBests['Gran Trail de los Lagos']===3600&&m.seasonDiary[0]==='Ganas la Maratón de Harrigorri con Sendero');
+}
+
+console.log('\n── Ultratrail · lo que no entraba (otras carreras, logros, opciones, parte) ──');
+{
+  const R_=id=>T.ULTRA_RACES.find(r=>r.id===id);
+  t('las ocho carreras del calendario existen', ['tresvalles','collado','leire','macizo','branas','hielo','millas','costa'].every(id=>!!R_(id)));
+  const cal=t_=>T.utCalendario(t_).map(x=>x.id);
+  t('Leire, los años pares; la Costa, los impares', cal(2).includes('leire')&&!cal(3).includes('leire')&&cal(3).includes('costa')&&!cal(2).includes('costa'));
+  t('el Hielo aparece en el año 4', !cal(3).includes('hielo')&&cal(4).includes('hielo'));
+  t('la Costa es de 100 millas sin sorteo', R_('costa').tipo==='100m'&&!R_('costa').major&&R_('costa').noches===2);
+  // Logros: los del modo están, ninguno sale al empezar y se ganan jugando
+  const ach=T.ACHIEVEMENTS.filter(a=>a.mode==='ut');
+  t('hay logros de Ultratrail y Backyard', ach.length>=15&&ach.some(a=>a.id.startsWith('by_')));
+  setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});let g=T.getG();
+  t('ninguno sale al empezar una partida', ach.every(a=>!a.check()));
+  g.ut.historial.push({t:1,id:'collado',tipo:'preparacion',kind:'finisher'});
+  T.checkAndUnlockAchievements();
+  t('terminar el primer ultra da «Otra vida»', g.unlockedAchievements.includes('ut_first'));
+  // Alucinaciones en pantalla: solo con la opción, de noche y la cabeza ida; y avisadas
+  setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30,alucina:'diario'});
+  T.ultraStart({carrera:'macizo',repuesto:'bolsa'});g=T.getG();let c=g.ut.carrera;T.ultraCorrerBloque('steady');c.lucidez=5;
+  t('en el grado «diario», la pantalla no miente', !/👁/.test(T.utCabecera()));
+  g.ut.opciones.alucina='pantalla';c.alucina='pantalla';const h1=T.utCabecera(),h2=T.utCabecera();
+  t('con la opción, de noche y sin cabeza: el 👁 avisa', /👁/.test(h1)&&c.noches>0);
+  t('lo que miente no parpadea al redibujar', h1===h2);
+  t('en el grado «pantalla», nada de fantasmas', !T.ultraAvitualla(c).some(a=>a.id==='fantasma'));
+  c.alucina='todas';c.lucidez=5;
+  t('grado 3: un avituallamiento que no está, y cuesta tiempo', T.ultraAvitualla(c).some(a=>a.id==='fantasma')&&(()=>{const t0=g.time;T.ultraParar('fantasma');return g.time===t0+360;})());
+  c.lucidez=50;
+  t('con la cabeza bien, no hay alucinaciones', T.ultraGradoAlucina(c)===0);
+  setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});
+  t('por defecto, en pantalla (decidido el 2026-10-31)', T.getG().ut.opciones.alucina==='pantalla');
+  // Modo tenso: el corral corre solo
+  setG({gameMode:'backyard'});T.byStart({corredor:'metronomo',dificultad:'local',tenso:true});g=T.getG();g.by.corral=5;g.screen='byCorral';
+  T.byTensoTick();
+  t('modo tenso: cada segundo, un minuto menos de corral', g.by.tenso&&g.by.corral===4);
+  setG({gameMode:'backyard'});T.byStart({corredor:'metronomo',dificultad:'local'});
+  t('por defecto, sin modo tenso', T.getG().by.tenso===false);
+  // Faroleo: si te sentaste a la vista y coló, el rival no te farolea
+  g=T.getG();g.by.rivals.forEach((r,i)=>{r.out=i>0;});g.by.farol.sentado={id:g.by.rivals[0].id,cuela:true};
+  const an=g.by.animo;for(let i=0;i<50;i++)T.byFarolRival();
+  t('si tu farol coló, el rival no te lo devuelve', g.by.animo===an);
+  // El parte
+  t('el parte de invierno trae frío; el de verano, calor a veces', ['frio','lluvia','nublado'].includes(T.ultraSortearTiempo(1))&&Array.from({length:60},()=>T.ultraSortearTiempo(7)).includes('calor'));
+  setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});g=T.getG();g.ut.vispera={id:'macizo',t:1,variante:'completo',tiempo:'calor'};
+  T.ultraStart({carrera:'macizo',repuesto:'bolsa'});
+  t('con calor, el motor de race.js gasta más agua (soleado)', g.ut.carrera.tiempo==='calor'&&g.weather==='soleado');
+  g.ut.vispera={id:'macizo',t:1,variante:'alternativo',tiempo:'tormenta'};T.ultraStart({carrera:'macizo',repuesto:'bolsa'});
+  t('la tormenta llega con el recorrido alternativo', g.ut.carrera.tiempo==='tormenta'&&g.ut.carrera.variante==='alternativo');
+  // § 13 y § 14: el perfil antes de salir y los que se retiran, por su nombre
+  setG({gameMode:'ultra'});T.ultraStart({carrera:'macizo',corredor:'rodador',repuesto:'bolsa'});const cr=T.getG().ut.carrera;
+  t('una docena de rivales con nombre inventado', cr.rivales.filter(x=>x.name).length===12);
+  let n=0;while(!cr.fin&&n++<20){T.ultraParar('beber');T.ultraParar('comer');cr.enBolsa=false;cr.paradaUsada=[];T.ultraCorrerBloque('steady');}
+  t('se cuenta por su nombre quién se retira', cr.rivales.filter(x=>x.out&&x.name).length===0||cr.log.some(l=>/se retira en el km|se queda en la barrera/.test(l.t))||cr.log.length>=40);
+  const perfil=T.utPerfilHTML(T.ULTRA_RACES.find(r=>r.id==='macizo'));
+  t('el perfil de salida lleva noche sombreada y barreras con su hora', /<svg/.test(perfil)&&/<rect/.test(perfil)&&/08:00/.test(perfil));
+  t('el sector duro del Macizo es uno de sus bloques', T.ULTRA_RACES.find(r=>r.id==='macizo').bloques.some(b=>b.sector===T.utSectorDuro(T.ULTRA_RACES.find(r=>r.id==='macizo'))));
+  t('Ultratrail guarda la carrera a medias en cada bloque', /utGuardarCarrera\(\);render\(\)/.test(src['ultra-render.js']));
+  t('y en cada parada, al salir de la bolsa y en el corral del backyard', /window\.utParar=id=>\{ultraParar\(id\);utGuardarCarrera\(\)/.test(src['ultra-render.js'])&&/byGuardar\(\);   \/\/ dejarlo a medias/.test(src['backyard.js']));
 }
 
 t.done('TODO OK');
