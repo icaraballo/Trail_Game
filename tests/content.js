@@ -431,8 +431,8 @@ if(!sinDefinir) ok('los '+manejadores.size+' manejadores citados desde el HTML e
 // devmode.js queda fuera a propósito: el panel de desarrollo tiene estilo propio.
 bloque('10 · Dirección visual: hex fuera de los tokens');
 const HEX_TECHO={
-  'index.html':42,'constants.js':71,'state.js':17,'race.js':16,'coach.js':102,'club.js':51,
-  'canicross-render.js':65,'render-core.js':10,'render-clasico.js':38,'render-temporada.js':60,
+  'index.html':42,'constants.js':71,'state.js':17,'race.js':16,'coach.js':102,'club.js':0,
+  'canicross-render.js':65,'render-core.js':10,'render-clasico.js':38,'render-temporada.js':45,
 };
 const HEX_FUERA=new Set(['devmode.js']);
 // `&#127939;` es una entidad HTML, no un color; `#tab-nav` un selector, no un hex.

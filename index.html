@@ -604,8 +604,9 @@ input[type=text]:focus{border-color:var(--ink3)}
 .pz-barra>.pz-relleno.menos{background:var(--neg)}
 .pz-barra>.pz-umbral{position:absolute;top:-3px;bottom:-3px;width:1.5px;background:var(--ink2)}
 /* Diagnóstico: línea con punto de color dentro de la tarjeta, en lugar de una caja de color */
-.pz-diag{display:flex;align-items:baseline;gap:8px;font-size:14px;color:var(--ink2);padding:3px 0}
-.pz-diag::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink3);flex-shrink:0;transform:translateY(-1px)}
+/* Bloque con el punto colgado a la izquierda (no flex: una negrita o una cifra dentro partían el texto en columnas). */
+.pz-diag{display:block;position:relative;font-size:14px;color:var(--ink2);padding:3px 0 3px 16px}
+.pz-diag::before{content:'';position:absolute;left:0;top:calc(3px + .42em);width:8px;height:8px;border-radius:50%;background:var(--ink3)}
 .pz-diag.mas::before{background:var(--pos)}
 .pz-diag.ojo::before{background:var(--avi-bar)}
 .pz-diag.menos::before{background:var(--neg)}

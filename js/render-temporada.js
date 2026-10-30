@@ -734,31 +734,28 @@ function renderClubOffer(){
   const coachSeasons=G.coachSeason||1;
   const rosterCount=(G.coachRoster||[]).filter(s=>s&&s.coachAthlete).length;
 
-  el.innerHTML=`
-    <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Temporada ${coachSeasons} como entrenador · Una llamada inesperada</div>
-
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #1D9E75;padding-left:18px">
-      <p style="font-size:15px;line-height:1.7;color:var(--ink);font-style:italic">"${introText}"</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Momento; llega sin aviso y es decisión
+  // cerrada: franja con el acento del Club (rosa) aunque el chasis siga en Entrenador.
+  const fila=(t,v,cl)=>`<div class="pz-fila"><span class="pz-fila-txt">${t}</span><span class="pz-fila-dato ${cl||''}">${v}</span></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja" style="background:var(--acc-club)">
+      <div class="pz-franja-sub" style="margin:0 0 4px">Temporada ${coachSeasons} como entrenador</div>
+      <div class="pz-franja-num" style="font-size:34px">Una llamada inesperada</div>
     </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">La propuesta</div>
-      <div class="fin-row"><span>Inversión inicial (60% de tus ahorros)</span><span class="minus">-€${cost.toLocaleString('es-ES')}</span></div>
-      <div class="fin-row"><span>Tus ahorros actuales</span><span>€${(G.money||0).toLocaleString('es-ES')}</span></div>
-      <div class="fin-row"><span>Después de la inversión</span><span style="font-weight:600">€${Math.max(0,(G.money||0)-cost).toLocaleString('es-ES')}</span></div>
-      <div class="fin-row" style="border-top:1px solid var(--line);margin-top:6px;padding-top:10px"><span>Reputación como entrenador</span><span style="color:var(--pos);font-weight:600">${G.coachReputation||0}/100</span></div>
-      ${rosterCount>1?`<div class="fin-row"><span>Atletas en cartera</span><span>${rosterCount}</span></div>`:''}
+    <p style="font-style:italic;line-height:1.6">«${introText}»</p>
+    <div class="pz-label" style="margin:14px 0 6px">La propuesta</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${fila('Inversión inicial (60 % de tus ahorros)',`−${fmtEur(cost)}`,'pz-menos')}
+      ${fila('Tus ahorros actuales',fmtEur(G.money||0))}
+      ${fila('Después de la inversión',`<b>${fmtEur(Math.max(0,(G.money||0)-cost))}</b>`)}
+      ${fila('Reputación como entrenador',`${G.coachReputation||0}/100`)}
+      ${rosterCount>1?fila('Atletas en cartera',rosterCount):''}
     </div>
-
-    <div class="card" style="margin-bottom:16px;background:#E1F5EE;border-color:#9FE1CB">
-      <div style="font-size:13px;color:#085041;line-height:1.6">
-        <strong>Lo que ganas:</strong> acceso a instalaciones, plantilla de corredores ya formada, sponsors de club y competición por equipos.<br>
-        <strong>Lo que dejas:</strong> la gestión uno a uno. El club es otra escala.
-      </div>
-    </div>
-
-    <button class="main" style="border-color:#1D9E75;color:#085041" onclick="confirmClubOffer()">Acepto — monto el club →</button>
-    <button class="main" style="margin-top:8px;opacity:0.65" onclick="rejectClubOffer()">Ahora no — sigo solo con mis atletas</button>`;
+    <div class="pz-diag mas"><b>Lo que ganas:</b> acceso a instalaciones, plantilla de corredores ya formada, sponsors de club y competición por equipos.</div>
+    <div class="pz-diag ojo"><b>Lo que dejas:</b> la gestión uno a uno. El club es otra escala.</div>
+    <button class="pz-btn" style="margin-top:12px;background:var(--acc-club);border-color:var(--acc-club)" onclick="confirmClubOffer()">Acepto — monto el club →</button>
+    <button class="pz-btn sec" onclick="rejectClubOffer()">Ahora no — sigo solo con mis atletas</button>
+  </div>`;
 }
 
 // v96 · Aceptar la oferta lleva a la fundación completa —nombre, especialidad, filosofía y
@@ -824,47 +821,26 @@ function renderClubIntro(){
   const specLabel={montanero:'🏔️ Montaña',fondista:'🏃 Fondo',tecnico:'⚡ Técnico',mixto:'🌐 Mixto'}[clubSpec]||clubSpec;
   const filData=d?CLUB_FILOSOFIAS[clubFil]:null;
 
-  el.innerHTML=`
-    <div style="text-align:center;padding:20px 0 10px">
-      <div style="font-size:36px;margin-bottom:8px">🏕️</div>
-      <h1 style="font-size:22px;margin-bottom:4px">Nace un club</h1>
-      <p style="font-size:14px;color:var(--ink3)">Año ${G.year} · Una nueva era empieza</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Momento: franja rosa y dos tarjetas de datos.
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja" style="background:var(--acc-club)">
+      <div class="pz-franja-sub" style="margin:0 0 4px">🏕️ Año ${G.year} · Una nueva era empieza</div>
+      <div class="pz-franja-num" style="font-size:38px">Nace un club</div>
     </div>
-
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #8B6F47;padding-left:18px;background:#F5EFE3">
-      <div style="font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;margin-bottom:12px">Tu historial como entrenador</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:var(--ink3)">Años entrenando</div>
-          <div style="font-size:18px;font-weight:700">${coachingYears}</div>
-        </div>
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:var(--ink3)">Reputación alcanzada</div>
-          <div style="font-size:18px;font-weight:700">${coachRep}/100</div>
-        </div>
-      </div>
+    <div class="pz-label" style="margin:12px 0 6px">Tu historial como entrenador</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center">
+      <div class="pz-tarjeta" style="margin:0"><div class="pz-efectos">Años entrenando</div><div class="pz-num" style="font-size:22px">${coachingYears}</div></div>
+      <div class="pz-tarjeta" style="margin:0"><div class="pz-efectos">Reputación alcanzada</div><div class="pz-num" style="font-size:22px">${coachRep}/100</div></div>
     </div>
-
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #1D9E75;padding-left:18px;background:#E1F5EE">
-      <div style="font-size:11px;font-weight:600;color:#085041;text-transform:uppercase;margin-bottom:12px">Tu club</div>
-      <div style="font-weight:600;font-size:15px;color:#085041;margin-bottom:6px">${esc(clubName)}</div>
-      <div style="font-size:12px;color:#1D9E75;margin-bottom:8px">
-        Especialidad: <strong>${specLabel}</strong><br>
-        ${filData?`Filosofía: <strong>${filData.label}</strong>`:''}
-      </div>
-      <div style="font-size:12px;background:var(--card);border-radius:6px;padding:8px;color:var(--ink2)">
-        ${filData?filData.desc:'Gestión flexible del club.'}
-      </div>
+    <div class="pz-label" style="margin:14px 0 6px">Tu club</div>
+    <div class="pz-tarjeta" style="border-left:3px solid var(--acc-club)">
+      <b>${esc(clubName)}</b>
+      <div class="pz-efectos">Especialidad: <b>${specLabel}</b>${filData?` · Filosofía: <b>${filData.label}</b>`:''}</div>
+      <div style="margin-top:6px">${filData?filData.desc:'Gestión flexible del club.'}</div>
     </div>
-
-    <div class="card" style="margin-bottom:20px;background:var(--soft)">
-      <div style="font-size:14px;line-height:1.7;color:var(--ink)">
-        <p><strong>Tu experiencia como entrenador te ha preparado para esto.</strong> Ahora gestionas un equipo completo. Plantilla, sponsors, instalaciones, objetivos. El monte te enseñó como corredor. Tus atletas te enseñaron como entrenador. Ahora el club es tuyo.</p>
-      </div>
-    </div>
-
-    <button class="main" style="border-color:#1D9E75;color:#085041;width:100%" onclick="G.screen='clubHub';G.activeTab='game';autoSave();render()">Fundar el club →</button>
-  `;
+    <p style="line-height:1.6"><b>Tu experiencia como entrenador te ha preparado para esto.</b> Ahora gestionas un equipo completo. Plantilla, sponsors, instalaciones, objetivos. El monte te enseñó como corredor. Tus atletas te enseñaron como entrenador. Ahora el club es tuyo.</p>
+    <button class="pz-btn" style="background:var(--acc-club);border-color:var(--acc-club)" onclick="G.screen='clubHub';G.activeTab='game';autoSave();render()">Fundar el club →</button>
+  </div>`;
 }
 
 window.rejectClubOffer=()=>{

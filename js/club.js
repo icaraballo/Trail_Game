@@ -209,47 +209,27 @@ function renderClubCreate(){
     {id:'tecnico',   label:'⚡ Técnico',    desc:'Corredores rápidos en terrenos difíciles'},
     {id:'mixto',     label:'🌐 Mixto',      desc:'Sin especialidad — plantilla variada'},
   ];
-  el.innerHTML=`
-    <div style="text-align:center;padding:14px 0 16px">
-      <div style="font-size:32px;margin-bottom:6px">🏕️</div>
-      <h2>Crear tu club</h2>
-      <p class="sub">${G._clubFromLife?'Tu atleta entra como capitán y tu reputación de entrenador te acompaña. Elige cómo quieres que sea el club.':G._clubUnlockedHint?'Con tu experiencia como corredor y entrenador, el club ya nace con algo de credibilidad.':'Define el nombre, especialidad y filosofía del club.'}</p>
-    </div>
-    ${G._clubFromLife?`<div class="note" style="margin-bottom:14px">Inversión inicial: <strong>€${Math.round((G.money||0)*0.6)}</strong> (60 % de tus ahorros).${G.coachAthlete?` ${esc(G.coachAthlete.name)} entra como capitán.`:''}</div>`:''}
-    ${G._clubUnlockedHint&&!G._clubFromLife?`<div class="note" style="margin-bottom:14px;background:#E1F5EE;border-color:#9FE1CB;color:#085041">Tu historial habla por ti. Empiezas con presupuesto un 15% mayor y reputación inicial de 13 en lugar de 10.</div>`:''}
-    <label class="field-label">Nombre del club</label>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Formulario: arquetipo y filosofía como
+  // opciones en tarjeta y el resumen de con qué empiezas. Sin hex.
+  const op=(sel,click,emoji,label,desc)=>`<button class="pz-opcion${sel?' sel':''}" style="display:flex;gap:10px;align-items:flex-start" onclick="${click}">${emoji?`<span style="font-size:18px;line-height:1.2">${emoji}</span>`:''}<span><b>${label}</b><div class="pz-efectos">${desc}</div></span></button>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">🏕️ Club · fundación</div>
+    <div class="pz-titulo">Crear tu club</div>
+    <p class="pz-sub">${G._clubFromLife?'Tu atleta entra como capitán y tu reputación de entrenador te acompaña. Elige cómo quieres que sea el club.':G._clubUnlockedHint?'Con tu experiencia como corredor y entrenador, el club ya nace con algo de credibilidad.':'Define el nombre, especialidad y filosofía del club.'}</p>
+    ${G._clubFromLife?`<div class="pz-diag" style="margin-bottom:12px">Inversión inicial: <span class="pz-num">€${Math.round((G.money||0)*0.6)}</span> (60 % de tus ahorros).${G.coachAthlete?` ${esc(G.coachAthlete.name)} entra como capitán.`:''}</div>`:''}
+    ${G._clubUnlockedHint&&!G._clubFromLife?`<div class="pz-diag mas" style="margin-bottom:12px">Tu historial habla por ti. Empiezas con presupuesto un 15 % mayor y reputación inicial de 13 en lugar de 10.</div>`:''}
+    <label class="pz-label" for="club-name-inp" style="display:block;margin-bottom:6px">Nombre del club</label>
     <input id="club-name-inp" type="text" placeholder="Ej: Gorbea Trail Club, Txindoki Runners..." maxlength="32" value="${esc(name)}" oninput="G._clubNameDraft=this.value;"/>
-    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Especialidad de la plantilla</div>
-    ${specs.map(s=>`
-      <div class="work-card${spec===s.id?' sel':''}" onclick="G._clubSpecDraft='${s.id}';render()" style="margin-bottom:6px${spec===s.id?';border-color:var(--ink);background:var(--soft)':''}">
-        <div style="font-size:14px;font-weight:600">${s.label}</div>
-        <div style="font-size:12px;color:var(--ink3)">${s.desc}</div>
-      </div>`).join('')}
-    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">Filosofía del club (C9)</div>
-    ${Object.entries(CLUB_FILOSOFIAS).map(([id,f])=>`
-      <div class="work-card${fil===id?' sel':''}" onclick="G._clubFilDraft='${id}';render()" style="margin-bottom:6px${fil===id?`;border-color:${f.color};background:${f.color}11`:''};cursor:pointer">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:18px">${f.emoji}</span>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:${fil===id?f.color:'var(--ink)'}">${f.label}</div>
-            <div style="font-size:12px;color:var(--ink3)">${f.desc}</div>
-          </div>
-        </div>
-      </div>`).join('')}
-    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">Arquetipo de plantilla</div>
-    ${Object.entries(CLUB_ARCHETYPES).map(([id,a])=>`
-      <div class="work-card${arq===id?' sel':''}" onclick="G._clubArqDraft='${id}';render()" style="margin-bottom:6px${arq===id?`;border-color:${a.color};background:${a.color}11`:''};cursor:pointer">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:18px">${a.emoji}</span>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:${arq===id?a.color:'var(--ink)'}">${a.label}</div>
-            <div style="font-size:12px;color:var(--ink3)">${a.desc}</div>
-          </div>
-        </div>
-      </div>`).join('')}
-    <div class="hint" style="margin-top:10px;margin-bottom:14px">Empiezas con 3 corredores, ${CLUB_ARCHETYPES[arq].socios} socios, €${CLUB_ARCHETYPES[arq].presupuesto} de presupuesto y cohesión ${CLUB_ARCHETYPES[arq].cohesion}/100.</div>
-    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doClubCreate()">Fundar el club →</button>
-    <button class="main" style="margin-top:6px;opacity:0.5" onclick="G.screen=G._clubFromLife?'clubOffer':'modeSelect';render()">← Volver</button>`;
+    <div class="pz-label" style="margin-bottom:6px">Especialidad de la plantilla</div>
+    ${specs.map(x=>op(spec===x.id,`G._clubSpecDraft='${x.id}';render()`,'',x.label,x.desc)).join('')}
+    <div class="pz-label" style="margin:14px 0 6px">Filosofía del club</div>
+    ${Object.entries(CLUB_FILOSOFIAS).map(([id,f])=>op(fil===id,`G._clubFilDraft='${id}';render()`,f.emoji,f.label,f.desc)).join('')}
+    <div class="pz-label" style="margin:14px 0 6px">Arquetipo de plantilla</div>
+    ${Object.entries(CLUB_ARCHETYPES).map(([id,a])=>op(arq===id,`G._clubArqDraft='${id}';render()`,a.emoji,a.label,a.desc)).join('')}
+    <div class="pz-tarjeta pz-estado" style="margin-top:8px"><div class="pz-linea"><span class="pz-efectos">Empiezas con <b>3</b> corredores, <span class="pz-num">${CLUB_ARCHETYPES[arq].socios}</span> socios, <span class="pz-num">€${CLUB_ARCHETYPES[arq].presupuesto}</span> de presupuesto y cohesión <span class="pz-num">${CLUB_ARCHETYPES[arq].cohesion}/100</span>.</span></div></div>
+    <button class="pz-btn" onclick="doClubCreate()">Fundar el club →</button>
+    <button class="pz-btn sec" onclick="G.screen=G._clubFromLife?'clubOffer':'modeSelect';render()">← Volver</button>
+  </div>`;
 }
 
 window.doClubCreate=()=>{
@@ -309,118 +289,63 @@ function renderClubHub(){
   const annualNet=annualIncome+sponsorIncome-annualWages-staffCost;
   const assigned=Object.values(d.calAssignments||{}).filter(v=>v&&v.length>0).length;
   const allAssigned=d.plantilla.length>0&&assigned>0;
-  const cohColor=d.cohesion>=70?'#2d7a2d':d.cohesion>=40?'#c07a10':'#c0392b';
   const obj=d.seasonObjective;
-
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <div style="font-size:32px">${lvl.icon}</div>
-      <div style="flex:1">
-        <div style="font-size:18px;font-weight:700">${esc(d.name)}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-          <span class="club-level-badge" style="background:${lvl.color}22;color:${lvl.color}">${lvl.label}</span>
-          ${fil?`<span style="background:${fil.color}22;color:${fil.color};font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px">${fil.emoji} ${fil.label}</span>`:''}
-        </div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:11px;color:var(--ink3)">Temporada</div>
-        <div style="font-size:18px;font-weight:700">${d.temporada}</div>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Hub de modo, la referencia del lienzo
+  // («Cerrada»): barra propia del modo, estado clave, el evento pendiente resaltado, la decisión
+  // del periodo y la navegación en lista. Acento rosa por data-modo. Sin hex.
+  const nav=(ico,txt,sub,click,dim)=>`<div class="pz-fila navega" style="${dim?'color:var(--ink3)':''}" onclick="${click}"><span style="font-size:18px">${ico}</span><span class="pz-fila-txt"><b>${txt}</b>${sub?`<div class="pz-efectos">${sub}</div>`:''}</span></div>`;
+  const F=(txt,v)=>`<div class="pz-fila"><span class="pz-fila-txt">${txt}</span><span class="pz-fila-dato ${v>=0?'pz-mas':'pz-menos'}">${fmtEur(v,true)}</span></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-tarjeta" style="background:var(--acc-t);border-color:var(--acc)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:30px">${lvl.icon}</span>
+        <span class="pz-fila-txt"><div class="pz-titulo" style="margin:0;font-size:22px">${esc(d.name)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><span class="pz-chip" style="background:var(--card);margin:0">${lvl.label}</span>${fil?`<span class="pz-chip" style="background:var(--card);margin:0">${fil.emoji} ${fil.label}</span>`:''}</div></span>
+        <span style="text-align:right"><div class="pz-label">Temporada</div><div class="pz-num" style="font-size:24px">${d.temporada}</div></span>
       </div>
     </div>
-
-    ${d._coachingHistory?`
-    <div class="card" style="margin-bottom:12px;background:#F5EFE3;border-left:3px solid #8B6F47">
-      <div style="font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;margin-bottom:8px">Legado previo</div>
-      <div style="font-size:12px;color:var(--ink)">
-        <strong>${d._coachingHistory.years}</strong> años entrenando ·
-        <strong>${d._coachingHistory.coachReputation}/100</strong> reputación acumulada
+    ${d._coachingHistory?`<div class="pz-diag" style="margin-bottom:10px">Legado previo: <b class="pz-num">${d._coachingHistory.years}</b> años entrenando · <b class="pz-num">${d._coachingHistory.coachReputation}/100</b> de reputación acumulada</div>`:''}
+    <div class="pz-tarjeta" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">
+      ${[['Socios',fmtMiles(d.socios)],['Reputación',d.reputacion],['Presupuesto',fmtEur(d.presupuesto)],['Cohesión',d.cohesion+'/100']].map(([l,v])=>`<div><div class="pz-label">${l}</div><div class="pz-num" style="font-size:18px">${v}</div></div>`).join('')}
+      <div style="grid-column:1/-1;margin-top:6px;text-align:left">
+        <div style="display:flex;justify-content:space-between" class="pz-efectos"><span>Cohesión <button class="tip-btn" onclick="showTip('Qué mueve la cohesión',clubCohesionTipHtml())">ⓘ</button></span><span class="pz-num">${d.cohesion}/100</span></div>
+        <div class="pz-barra" style="margin-top:4px"><div class="pz-relleno${d.cohesion<40?' menos':d.cohesion<70?' ojo':''}" style="width:${d.cohesion}%;${d.cohesion>=70?'background:var(--gente)':''}"></div><div class="pz-umbral" style="left:40%"></div><div class="pz-umbral" style="left:70%"></div></div>
       </div>
     </div>
-    `:''}
-
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-      ${[['👥',d.socios,'Socios'],['⭐',`${d.reputacion}`,'Rep.'],['💶',`€${d.presupuesto}`,'Presup.'],['🤝',`${d.cohesion}/100`,'Cohesión']].map(([ic,v,l])=>`
-        <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center">
-          <div style="font-size:14px">${ic}</div>
-          <div style="font-size:13px;font-weight:700">${v}</div>
-          <div style="font-size:10px;color:var(--ink3)">${l}</div>
-        </div>`).join('')}
-    </div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink3);margin-bottom:3px">
-      <span>🤝 Cohesión <button class="tip-btn" onclick="showTip('Qué mueve la cohesión',clubCohesionTipHtml())">ⓘ</button></span><span>${d.cohesion}/100</span>
-    </div>
-    <div style="height:6px;background:var(--trk);border-radius:3px;margin-bottom:12px;overflow:hidden">
-      <div style="width:${d.cohesion}%;height:100%;background:${cohColor};border-radius:3px;transition:width .4s"></div>
-    </div>
-
-    ${obj?`
-    <div class="card" style="margin-bottom:12px;border-color:${d.seasonObjectiveMet===true?'#4a8a2a':d.seasonObjectiveMet===false?'var(--line2)':'#c07a10'};border-width:1.5px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:18px">${d.seasonObjectiveMet===true?'✅':d.seasonObjectiveMet===false?'❌':'🎯'}</span>
-        <div style="flex:1">
-          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px">Objetivo de temporada</div>
-          <div style="font-size:13px;font-weight:600">${obj.label}</div>
-          <div style="font-size:12px;color:var(--ink3);font-style:italic">${obj.desc}</div>
-        </div>
-      </div>
+    ${d.pendingEvent?`<div class="pz-tarjeta fam-gente" style="border-color:var(--fam);border-width:1.5px;cursor:pointer" onclick="G.screen='clubEvent';render()">
+      <div class="pz-etiqueta fam-gente">📣 Evento pendiente</div>
+      <div style="display:flex;align-items:center;gap:8px"><b class="pz-fila-txt">${esc(d.pendingEvent.title)}</b><span>→</span></div>
     </div>`:''}
-
-    ${d.pendingEvent?`
-    <div class="card" style="margin-bottom:12px;border-color:#c07a10;border-width:1.5px;cursor:pointer" onclick="G.screen='clubEvent';render()">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:22px">📣</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:var(--avi)">Evento pendiente</div>
-          <div style="font-size:12px;color:var(--ink2)">${esc(d.pendingEvent.title)}</div>
-        </div>
-        <span style="color:var(--avi)">→</span>
-      </div>
-    </div>`:''}
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title-sm">Economía anual estimada</div>
-      <div class="fin-row"><span>Cuotas de socios</span><span class="plus">+€${annualIncome}</span></div>
-      ${sponsorIncome>0?`<div class="fin-row"><span>Sponsors del club</span><span class="plus">+€${sponsorIncome}</span></div>`:''}
-      <div class="fin-row"><span>Salarios plantilla</span><span class="minus">−€${annualWages}</span></div>
-      ${staffCost>0?`<div class="fin-row"><span>Staff técnico</span><span class="minus">−€${staffCost}</span></div>`:''}
-      <div class="fin-row tot"><span>Balance neto</span><span class="${annualNet>=0?'plus':'minus'}">${annualNet>=0?'+':''}€${annualNet}</span></div>
-      ${(d.redSeasons||0)>0?`<div class="danger" style="margin-top:8px;font-size:13px">Números rojos: ${d.redSeasons} de ${CLUB_RED_SEASONS_MAX} temporadas seguidas. ${d.redSeasons>=CLUB_RED_SEASONS_MAX-1?'Si cierras otra en negativo, el club se disuelve.':'Cada temporada en rojo resta 10 de cohesión; a la 3.ª se despide el staff y a la 4.ª se va el corredor más caro.'}</div>`:''}
+    ${obj?`<div class="pz-tarjeta"><div class="pz-label">Objetivo de temporada</div><b>${obj.label}</b><div class="pz-efectos">${obj.desc}</div>
+      ${d.seasonObjectiveMet===true?'<div class="pz-diag mas">Cumplido</div>':d.seasonObjectiveMet===false?'<div class="pz-diag menos">No cumplido</div>':'<div class="pz-diag">En juego</div>'}</div>`:''}
+    <div class="pz-label" style="margin:14px 0 6px">Economía anual estimada</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${F('Cuotas de socios',annualIncome)}
+      ${sponsorIncome>0?F('Sponsors del club',sponsorIncome):''}
+      ${F('Salarios de la plantilla',-annualWages)}
+      ${staffCost>0?F('Staff técnico',-staffCost):''}
+      <div class="pz-fila" style="font-weight:600"><span class="pz-fila-txt">Balance neto</span><span class="pz-fila-dato ${annualNet>=0?'pz-mas':'pz-menos'}" style="font-size:18px">${fmtEur(annualNet,true)}</span></div>
+      ${(d.redSeasons||0)>0?`<div class="pz-fila"><span class="pz-diag menos">Números rojos: ${d.redSeasons} de ${CLUB_RED_SEASONS_MAX} temporadas seguidas. ${d.redSeasons>=CLUB_RED_SEASONS_MAX-1?'Si cierras otra en negativo, el club se disuelve.':'Cada temporada en rojo resta 10 de cohesión; a la 3.ª se despide el staff y a la 4.ª se va el corredor más caro.'}</span></div>`:''}
     </div>
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title-sm">Estado de la temporada</div>
-      <div style="font-size:13px;color:var(--ink2)">
-        ${d.seasonSimulated
-          ?`✅ Temporada completada — ${(d.seasonResults||[]).length} participaciones`
-          :allAssigned
-            ?`🏁 ${assigned} carrera${assigned!==1?'s':''} con equipo asignado. Listo para simular.`
-            :`📅 Asigna corredores a las carreras para empezar`}
-      </div>
-    </div>
-
+    <div class="pz-diag" style="margin-bottom:10px">${d.seasonSimulated
+      ?`Temporada completada — ${(d.seasonResults||[]).length} participaciones`
+      :allAssigned?`${assigned} carrera${assigned!==1?'s':''} con equipo asignado. Listo para simular.`:'Asigna corredores a las carreras para empezar'}</div>
     ${d.seasonSimulated
-      ?`<button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`
-      :`${!d.monthlyFocus&&!d.seasonSimulated?`
-        <div class="card" style="margin-bottom:10px;border-color:#8e44ad;border-width:1.5px">
-          <div class="sec-title-sm" style="color:#8e44ad">🗓️ Decisión mensual (C16)</div>
-          <p style="font-size:12px;color:var(--ink2);margin-bottom:8px">¿En qué enfoca el club este mes?</p>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            ${[['resultados','🏆','Resultados','Entrenamiento intensivo — rendimiento +5% esta temporada'],['marketing','📣','Marketing','Campaña de visibilidad — +4 socios extra al cerrar temporada'],['formacion','🌱','Formación','Desarrollo de jóvenes — cantera crece un 20% más rápido'],['ahorro','💰','Gestión','Control de costes — ahorro de €200 en gastos de inscripción']].map(([id,emoji,label,desc])=>`
-              <button class="main" style="text-align:left;padding:8px 12px" onclick="doClubMonthlyFocus('${id}')">
-                <strong>${emoji} ${label}</strong><br><span style="font-size:11px;color:var(--ink3)">${desc}</span>
-              </button>`).join('')}
-          </div>
-        </div>`:''}
-       <button class="main" ${!d.monthlyFocus?'style="opacity:0.5"':''} onclick="G.screen='clubCalendar';render()">📅 Asignar equipo a carreras${d.monthlyFocus?` — foco: ${d.monthlyFocus}`:''}</button>
-       ${d.monthlyFocus?`<button class="secondary" style="margin-top:6px;width:100%" onclick="clearClubMonthlyFocus()">Cambiar el foco</button>`:''}
-       ${allAssigned?`<button class="main" style="margin-top:6px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doClubSimulateSeason()">🏁 Simular temporada →</button>`:''}`}
-    <button class="main" style="margin-top:6px" onclick="G.screen='clubPlantilla';render()">👥 Plantilla (${d.plantilla.length}) ${d.cantera&&d.cantera.length>0?`· 🌱 Cantera (${d.cantera.length})`:''}</button>
-    <button class="main" style="margin-top:6px" onclick="G.screen='clubStaff';render()">🧑‍⚕️ Staff técnico (${Object.keys(d.staff||{}).length} contratados)</button>
-    <button class="main" style="margin-top:6px" onclick="G.screen='clubSponsors';render()">🤝 Sponsors del club (${(d.clubSponsors||[]).length})</button>
-    <button class="main" style="margin-top:6px;opacity:0.6" onclick="G.screen='clubRivals';render()">⚔️ Clubes rivales</button>
-    <button class="main" style="margin-top:6px;opacity:0.7" onclick="G.screen='clubMonthly';render()">📅 Decisión mensual del club${d.monthlyDecisionDone?' · ya decidida esta temporada':''}</button>
-    <button class="main" style="margin-top:6px;opacity:0.5" onclick="backToMainMenu()">← Menú principal</button>`;
+      ?`<button class="pz-btn" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`
+      :`${!d.monthlyFocus?`<div class="pz-label" style="margin:14px 0 6px">¿En qué enfoca el club este mes?</div>
+          ${[['resultados','🏆','Resultados','Entrenamiento intensivo — rendimiento +5% esta temporada'],['marketing','📣','Marketing','Campaña de visibilidad — +4 socios extra al cerrar temporada'],['formacion','🌱','Formación','Desarrollo de jóvenes — cantera crece un 20% más rápido'],['ahorro','💰','Gestión','Control de costes — ahorro de €200 en gastos de inscripción']].map(([id,emoji,label,desc])=>`<button class="pz-opcion" onclick="doClubMonthlyFocus('${id}')"><b>${emoji} ${label}</b><div class="pz-efectos">${desc}</div></button>`).join('')}`
+         :`<div class="pz-diag mas" style="margin-bottom:8px">Foco del mes: <b>${d.monthlyFocus}</b> · <button class="pz-consejo-ok" style="margin:0" onclick="clearClubMonthlyFocus()">Cambiar el foco</button></div>`}
+       <button class="pz-btn ${allAssigned?'sec':''}" ${!d.monthlyFocus?'disabled':''} onclick="G.screen='clubCalendar';render()">📅 Asignar equipo a carreras</button>
+       ${allAssigned?`<button class="pz-btn" onclick="doClubSimulateSeason()">🏁 Simular temporada →</button>`:''}`}
+    <div class="pz-tarjeta" style="padding:2px 14px;margin-top:12px">
+      ${nav('👥','Plantilla ('+d.plantilla.length+')',d.cantera&&d.cantera.length>0?'Cantera: '+d.cantera.length:'',"G.screen='clubPlantilla';render()")}
+      ${nav('🧑‍⚕️','Staff técnico',Object.keys(d.staff||{}).length+' contratados',"G.screen='clubStaff';render()")}
+      ${nav('🤝','Sponsors del club',(d.clubSponsors||[]).length+' firmados',"G.screen='clubSponsors';render()")}
+      ${nav('⚔️','Clubes rivales','',"G.screen='clubRivals';render()")}
+      ${nav('📅','Decisión mensual del club',d.monthlyDecisionDone?'Ya decidida esta temporada':'',"G.screen='clubMonthly';render()")}
+      ${nav('←','Menú principal','','backToMainMenu()',true)}
+    </div>
+  </div>`;
 }
 
 
@@ -433,12 +358,14 @@ function renderClubPlantilla(){
   const cantIds=(d.cantera||[]).map(r=>r.id);
   const available=CLUB_RUNNER_POOL.filter(r=>!inIds.includes(r.id)&&!cantIds.includes(r.id));
   const youthAvail=CLUB_YOUTH_POOL.filter(r=>!inIds.includes(r.id)&&!cantIds.includes(r.id));
-  const potColors={alto:'#2d7a2d',medio:'#c07a10',bajo:'#888'};
   const fil=d.filosofia?CLUB_FILOSOFIAS[d.filosofia]:null;
   const hasEntrenador=d.staff&&d.staff.entrenador;
 
+  // Paso 6 de la dirección visual (2026-10-30): tipo Lista: corredores en tarjeta con sus cifras;
+  // potencial, rol y etiquetas como chips neutros (el color de cada rol ya no se usa). Sin hex.
+  const chip=(t,st)=>`<span class="pz-chip" style="margin:0;${st||'background:var(--soft)'}">${t}</span>`;
+  const potSt={alto:'background:var(--tier-nacional);color:var(--card)',medio:'background:var(--tier-regional)',bajo:'border:1px solid var(--line2)'};
   const runnerCard=(r,i,isCantera)=>{
-    const pc=potColors[r.potential]||'#888';
     const role=CLUB_ROLES[r.role||'normal'];
     // La tarjeta anunciaba «+30%» escrito a mano mientras growthBonus valía 1.3
     // y nadie lo leía: cambiar el bonus dejaba la tarjeta mintiendo. Mismo caso
@@ -446,107 +373,56 @@ function renderClubPlantilla(){
     const growthBonus=hasEntrenador?CLUB_STAFF_TYPES.entrenador.growthBonus:1;
     const growthPct=Math.round((growthBonus-1)*100);
     const specMatch=fil&&r.spec===fil.specBonus;
-    return`<div class="club-runner-card" style="${specMatch?'border-color:'+fil.color+';':''};margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:22px">${r.flag}</div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-            <div style="font-size:14px;font-weight:700">${esc(r.name)}</div>
-            <span style="font-size:11px;color:${pc};background:${pc}18;padding:1px 5px;border-radius:3px;font-weight:600">${r.potential}</span>
-            <span style="font-size:11px;background:${role.color}22;color:${role.color};padding:1px 6px;border-radius:3px;font-weight:600">${role.emoji} ${role.label}</span>
-            ${isCantera?`<span style="font-size:10px;background:#e8f4e8;color:var(--pos);padding:1px 5px;border-radius:3px">🌱 Cantera</span>`:''}
+    const tags=[];
+    if((r.seasonsInClub||0)>=3)tags.push('Veterano 🏅');
+    if((r.careerWins||0)>=2)tags.push(`${r.careerWins} victorias ⭐`);
+    else if((r.careerPodiums||0)>=3)tags.push(`${r.careerPodiums} podios`);
+    if(r.age>=35)tags.push('Última etapa');
+    if((r.careerDnfs||0)>=3)tags.push('Propenso a DNF ⚠️');
+    if(r.seasonsInClub===1&&(r.careerPodiums||0)>0)tags.push('Promesa confirmada 🌱');
+    return`<div class="pz-tarjeta" style="${specMatch?'border-color:var(--acc)':''}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:22px">${r.flag}</span>
+        <span class="pz-fila-txt">
+          <span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><b>${esc(r.name)}</b>${chip('Potencial '+r.potential,potSt[r.potential])}${chip(role.emoji+' '+role.label)}${isCantera?chip('🌱 Cantera'):''}${specMatch?chip('Encaja con la filosofía','border:1px solid var(--acc)'):''}</span>
+          <div class="pz-efectos">${r.age} años · ${SPEC_LABEL[r.spec]||r.spec} · <span class="pz-num">€${r.currentSalary||r.salary}/mes</span>${hasEntrenador?` · crecimiento <span class="pz-mas">+${growthPct} %</span>`:''}</div>
+          <div class="pz-efectos" style="margin-top:2px">${['Res','Vel','Sub','Baj'].map((k,ki)=>k+' <span class="pz-num" style="color:var(--ink)">'+r.stats[['resistencia','velocidad','subida','bajada'][ki]]+'</span>').join(' · ')}</div>
+          <div class="pz-efectos" style="font-style:italic;margin-top:2px">${esc(r.bio)}</div>
+          ${tags.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${tags.map(t=>chip(t)).join('')}</div>`:''}
+          <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+            ${Object.entries(CLUB_ROLES).map(([rid,rl])=>`<button class="pz-chip" title="${rl.label}" onclick="doClubSetRole(${isCantera?`'cantera'`:`'plantilla'`},${isCantera?cantIds.indexOf(r.id):i},'${rid}')" style="cursor:pointer;margin:0;${(r.role||'normal')===rid?'border:2px solid var(--acc);background:var(--card)':'border:1px solid var(--line2);background:var(--card)'}">${rl.emoji}</button>`).join('')}
           </div>
-          <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">${r.age} años · ${SPEC_LABEL[r.spec]||r.spec} · €${r.currentSalary||r.salary}/mes${hasEntrenador?` · ↑ +${growthPct}% crecimiento`:''}</div>
-          <div>${['Res','Vel','Sub','Baj'].map((k,ki)=>{
-            const keys=['resistencia','velocidad','subida','bajada'];
-            return`<span class="club-stat-pill">${k} ${r.stats[keys[ki]]}</span>`;
-          }).join('')}</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:3px;font-style:italic">${esc(r.bio)}</div>
-          ${(()=>{
-            // C1: etiquetas dinámicas según historial acumulado
-            const tags=[];
-            if((r.seasonsInClub||0)>=3)tags.push({label:'Veterano 🏅',color:'#c07a10'});
-            if((r.careerWins||0)>=2)tags.push({label:`${r.careerWins} victorias ⭐`,color:'#2d7a2d'});
-            else if((r.careerPodiums||0)>=3)tags.push({label:`${r.careerPodiums} podios`,color:'#4a90d9'});
-            if(r.age>=35)tags.push({label:'Última etapa',color:'#888'});
-            if((r.careerDnfs||0)>=3)tags.push({label:'Propenso a DNF ⚠️',color:'#c0392b'});
-            if(r.seasonsInClub===1&&(r.careerPodiums||0)>0)tags.push({label:'Promesa confirmada 🌱',color:'#2d7a2d'});
-            if(!tags.length)return'';
-            return`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${tags.map(t=>`<span style="font-size:10px;background:${t.color}18;color:${t.color};padding:1px 6px;border-radius:3px;font-weight:600">${t.label}</span>`).join('')}</div>`;
-          })()}
-          <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
-            ${Object.entries(CLUB_ROLES).map(([rid,rl])=>`
-              <button onclick="doClubSetRole(${isCantera?`'cantera'`:`'plantilla'`},${isCantera?cantIds.indexOf(r.id):i},'${rid}')" style="font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid ${(r.role||'normal')===rid?rl.color:'#e0dfd8'};background:${(r.role||'normal')===rid?rl.color+'22':'var(--card)'};color:${(r.role||'normal')===rid?rl.color:'var(--ink3)'};cursor:pointer">${rl.emoji}</button>`).join('')}
-          </div>
-        </div>
-        ${d.plantilla.length>2&&!isCantera?`<button onclick="doClubRelease(${i})" style="border:1px solid var(--line2);border-radius:6px;padding:4px 8px;background:var(--card);color:var(--neg);font-size:11px;cursor:pointer;flex-shrink:0">Liberar</button>`:''}
+        </span>
+        ${d.plantilla.length>2&&!isCantera?`<button class="pz-btn sec" style="width:auto;padding:5px 10px;margin:0;font-size:13px" onclick="doClubRelease(${i})">Liberar</button>`:''}
       </div>
     </div>`;
   };
-
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin-bottom:0">Plantilla</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
+  const fichable=(r,coste,click,etiq)=>{const ok=d.presupuesto>=coste;
+    return `<div class="pz-fila${ok?' navega':''}" style="${ok?'cursor:pointer':'color:var(--ink3)'}" ${ok?`onclick="${click}"`:''}><span style="font-size:20px">${r.flag}</span>
+      <span class="pz-fila-txt"><b>${esc(r.name)}</b> ${etiq}<div class="pz-efectos">${r.age} años · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>${r.bio&&etiq.includes('Joven')?`<div class="pz-efectos" style="font-style:italic">${esc(r.bio)}</div>`:''}${ok?'':motivoHTML('Sin fondos')}</span></div>`;};
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="pz-titulo" style="margin:0">Plantilla</div>
+      <button class="pz-btn sec" style="width:auto;padding:6px 12px;margin:0" onclick="G.screen='clubHub';render()">← Hub</button>
     </div>
-    <div class="hint" style="margin-bottom:10px">€${wages}/mes · €${wages*12}/año · Presupuesto: €${d.presupuesto}</div>
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title-sm">Infraestructura (C15)</div>
+    <p class="pz-sub">Salarios <span class="pz-num">€${wages}/mes</span> · €${wages*12}/año · presupuesto <span class="pz-num">€${d.presupuesto}</span></p>
+    <div class="pz-label" style="margin:6px 0">Infraestructura</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
       ${[['gimnasio','🏋️','Gimnasio',500,'Todos los corredores +2 rendimiento'],['clinica','🏥','Clínica',800,'Reduce lesiones -30%'],['residencia','🏠','Residencia',1200,'Permite plantilla de hasta 8 corredores'],['marketingHQ','📣','Marketing HQ',600,'+5 socios automáticos al mes']].map(([id,emoji,label,cost,desc])=>{
         const owned=d.instalaciones&&d.instalaciones[id];
-        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
-          <span style="font-size:16px">${emoji}</span>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600">${label}</div>
-            <div style="font-size:11px;color:var(--ink3)">${desc}</div>
-          </div>
-          ${owned
-            ?`<span style="font-size:11px;color:var(--pos);font-weight:600">✓ Activo</span>`
-            :`<button onclick="doClubBuyInstalacion('${id}',${cost})" style="font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);background:var(--card);cursor:pointer;flex-shrink:0">€${cost}</button>`}
-        </div>`;
+        return`<div class="pz-fila"><span style="font-size:16px">${emoji}</span><span class="pz-fila-txt"><b>${label}</b><div class="pz-efectos">${desc}</div></span>
+          ${owned?'<span class="pz-diag mas">Activo</span>':`<button class="pz-btn sec" style="width:auto;padding:5px 10px;margin:0" onclick="doClubBuyInstalacion('${id}',${cost})">€${cost}</button>`}</div>`;
       }).join('')}
     </div>
-
-    <div class="sec-title-sm" style="margin-bottom:8px">Plantilla principal (${d.plantilla.length})</div>
+    <div class="pz-label" style="margin:14px 0 6px">Plantilla principal (${d.plantilla.length})</div>
     ${d.plantilla.map((r,i)=>runnerCard(r,i,false)).join('')}
-
-    ${(d.cantera||[]).length>0?`
-    <div class="sec-title-sm" style="margin:12px 0 8px">Cantera (${d.cantera.length})</div>
-    ${d.cantera.map((r,i)=>runnerCard(r,i,true)).join('')}`:''}
-
-    ${available.length>0&&d.plantilla.length<(d.instalaciones&&d.instalaciones.residencia?8:6)?`
-    <div class="sec-title-sm" style="margin:12px 0 8px">Fichar corredor</div>
-    ${available.slice(0,4).map(r=>{
-      const pc=potColors[r.potential]||'#888';
-      const canAfford=d.presupuesto>=r.salary*3;
-      return`<div class="club-runner-card" style="${!canAfford?'opacity:0.45':''};margin-bottom:6px" ${canAfford?`onclick="doClubSign('${r.id}')"`:''}><div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:20px">${r.flag}</div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:5px"><div style="font-size:13px;font-weight:700">${esc(r.name)}</div><span style="font-size:11px;color:${pc};background:${pc}18;padding:1px 5px;border-radius:3px">${r.potential}</span></div>
-          <div style="font-size:12px;color:var(--ink3)">${r.age}a · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>
-        </div>
-        <div style="font-size:11px;color:${canAfford?'var(--pos)':'var(--neg)'};flex-shrink:0">${canAfford?'+ Fichar':'Sin fondos'}</div>
-      </div></div>`;
-    }).join('')}`:''
-
-    }
-
-    ${youthAvail.length>0?`
-    <div class="sec-title-sm" style="margin:12px 0 8px">🌱 Cantera disponible</div>
-    <p style="font-size:12px;color:var(--ink3);margin-bottom:8px">Jóvenes con potencial alto. Crecen un 50% más rápido pero rinden menos al inicio.</p>
-    ${youthAvail.slice(0,3).map(r=>{
-      const canAfford=d.presupuesto>=r.salary*2;
-      return`<div class="club-runner-card" style="${!canAfford?'opacity:0.45':''};margin-bottom:6px" ${canAfford?`onclick="doClubSignYouth('${r.id}')"`:''}><div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:20px">${r.flag}</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">${esc(r.name)} <span style="font-size:11px;color:var(--pos)">🌱 Joven</span></div>
-          <div style="font-size:12px;color:var(--ink3)">${r.age}a · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>
-          <div style="font-size:11px;color:var(--ink3);font-style:italic">${esc(r.bio)}</div>
-        </div>
-        <div style="font-size:11px;color:${canAfford?'var(--pos)':'var(--neg)'};flex-shrink:0">${canAfford?'+ Cantera':'Sin fondos'}</div>
-      </div></div>`;
-    }).join('')}`:''}`;
+    ${(d.cantera||[]).length>0?`<div class="pz-label" style="margin:14px 0 6px">Cantera (${d.cantera.length})</div>${d.cantera.map((r,i)=>runnerCard(r,i,true)).join('')}`:''}
+    ${available.length>0&&d.plantilla.length<(d.instalaciones&&d.instalaciones.residencia?8:6)?`<div class="pz-label" style="margin:14px 0 6px">Fichar corredor</div>
+      <div class="pz-tarjeta" style="padding:2px 14px">${available.slice(0,4).map(r=>fichable(r,r.salary*3,`doClubSign('${r.id}')`,chip('Potencial '+r.potential,potSt[r.potential]))).join('')}</div>`:''}
+    ${youthAvail.length>0?`<div class="pz-label" style="margin:14px 0 6px">🌱 Cantera disponible</div>
+      <p class="pz-efectos" style="margin-bottom:6px">Jóvenes con potencial alto. Crecen un 50 % más rápido pero rinden menos al inicio.</p>
+      <div class="pz-tarjeta" style="padding:2px 14px">${youthAvail.slice(0,3).map(r=>fichable(r,r.salary*2,`doClubSignYouth('${r.id}')`,chip('🌱 Joven'))).join('')}</div>`:''}
+  </div>`;
 }
 
 window.doClubSetRole=(pool,idx,role)=>{
@@ -608,66 +484,38 @@ window.doClubRelease=idx=>{
   showToast(`${r.name} liberado`);
   autoSave();render();
 };
+// Paso 6 de la dirección visual (2026-10-30): tipo Lista: una tarjeta por carrera con su nivel
+// en grises y los corredores como chips que se marcan con el acento; bloqueadas con motivo.
 function renderClubCalendar(){
   const el=$main();
   const d=G.clubModeData;if(!d){G.screen='clubHub';render();return;}
   const assignments=d.calAssignments||{};
-  const tierColors={local:'#888',regional:'#4a90d9',nacional:'#2d7a2d',elite:'#c0392b'};
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin-bottom:0">Calendario</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
-    </div>
-    <p class="sub">Asigna 1–4 corredores por carrera. Toca su nombre para añadir o quitar.</p>
-    ${(()=>{
-      const clubRep=d.reputacion||0;
-      const clubSocios=d.socios||8;
-      const unlocked=CLUB_RACES.filter(r=>(r.repReq||0)<=clubRep&&(r.sociosReq||0)<=clubSocios);
-      const locked=CLUB_RACES.filter(r=>(r.repReq||0)>clubRep||(r.sociosReq||0)>clubSocios);
-      return`
-      ${unlocked.map(race=>{
-        const assigned=assignments[race.id]||[];
-        const tc=tierColors[race.tier]||'#888';
-        return`<div class="club-race-row" style="margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <div style="flex:1">
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:13px;font-weight:700">${esc(race.name)}</span>
-                <span style="font-size:10px;background:${tc}18;color:${tc};padding:1px 5px;border-radius:3px;font-weight:600;text-transform:uppercase">${race.tier}</span>
-              </div>
-              <div style="font-size:12px;color:var(--ink3)">${race.km}km · ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][race.month-1]} · ${race.cost>0?`€${race.cost} inscripción`:'Gratuita'} · Premio €${race.prize}</div>
-            </div>
-            <span style="font-size:12px;color:${assigned.length>0?'var(--pos)':'var(--ink3)'}">${assigned.length}/4</span>
-          </div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px">
-            ${d.plantilla.concat(d.cantera||[]).map(r=>{
-              const isSel=assigned.includes(r.id);
-              const role=CLUB_ROLES[r.role||'normal'];
-              return`<div onclick="doClubToggleAssign('${race.id}','${r.id}')" style="cursor:pointer;padding:4px 9px;border-radius:6px;font-size:12px;border:1px solid ${isSel?'#2d7a2d':'#e0dfd8'};background:${isSel?'var(--soft)':'var(--soft)'};color:${isSel?'var(--pos)':'var(--ink2)'}">${role.emoji} ${esc(r.name.split(' ')[0])}</div>`;
-            }).join('')}
-          </div>
-        </div>`;
-      }).join('')}
-      ${locked.length>0?`
-      <div style="margin-top:14px;margin-bottom:6px">
-        <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">🔒 Carreras bloqueadas</div>
-        ${locked.map(race=>{
-          const tc=tierColors[race.tier]||'#888';
-          const needRep=race.repReq>clubRep;
-          const needSocios=race.sociosReq>clubSocios;
-          return`<div style="opacity:0.5;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;margin-bottom:6px">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:13px;font-weight:600">${esc(race.name)}</span>
-              <span style="font-size:10px;background:${tc}18;color:${tc};padding:1px 5px;border-radius:3px;text-transform:uppercase">${race.tier}</span>
-            </div>
-            <div style="font-size:11px;color:var(--ink3);margin-top:3px">
-              ${needRep?`Rep. ≥${race.repReq} (actual: ${clubRep}) `:''}${needSocios?`· Socios ≥${race.sociosReq} (actual: ${clubSocios})`:''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`:''}`;
-    })()}
-    <button class="main" style="margin-top:10px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='clubHub';render()">← Volver al hub</button>`;
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const clubRep=d.reputacion||0;
+  const clubSocios=d.socios||8;
+  const unlocked=CLUB_RACES.filter(r=>(r.repReq||0)<=clubRep&&(r.sociosReq||0)<=clubSocios);
+  const locked=CLUB_RACES.filter(r=>(r.repReq||0)>clubRep||(r.sociosReq||0)>clubSocios);
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between"><div class="pz-titulo" style="margin:0">Calendario</div><button class="pz-btn sec" style="width:auto;padding:6px 12px;margin:0" onclick="G.screen='clubHub';render()">← Hub</button></div>
+    <p class="pz-sub">Asigna de 1 a 4 corredores por carrera. Toca su nombre para añadirlo o quitarlo.</p>
+    ${unlocked.map(race=>{
+      const assigned=assignments[race.id]||[];
+      return`<div class="pz-tarjeta" style="${assigned.length?'border-color:var(--acc)':''}">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+          <span class="pz-fila-txt"><span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${esc(race.name)}</b>${nivelTag(race.tier)}</span>
+            <div class="pz-efectos">${race.km} km · ${M[race.month-1]} · ${race.cost>0?`€${race.cost} inscripción`:'Gratuita'} · premio <span class="pz-num">€${race.prize}</span></div></span>
+          <span class="pz-num">${assigned.length}/4</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          ${d.plantilla.concat(d.cantera||[]).map(r=>{const isSel=assigned.includes(r.id);const role=CLUB_ROLES[r.role||'normal'];
+            return`<button class="pz-chip" onclick="doClubToggleAssign('${race.id}','${r.id}')" style="cursor:pointer;margin:0;${isSel?'border:2px solid var(--acc);background:var(--card);color:var(--ink)':'border:1px solid var(--line2);background:var(--card);color:var(--ink2)'}">${role.emoji} ${esc(r.name.split(' ')[0])}</button>`;}).join('')}
+        </div>
+      </div>`;}).join('')}
+    ${locked.length>0?`<div class="pz-label" style="margin:14px 0 6px">Carreras bloqueadas</div>
+      ${locked.map(race=>{const needRep=race.repReq>clubRep;const needSocios=race.sociosReq>clubSocios;
+        return`<div class="pz-opcion pz-bloqueado"><b>${esc(race.name)}</b> ${nivelTag(race.tier)}${motivoHTML([needRep?`Reputación ${race.repReq} (tienes ${clubRep})`:'',needSocios?`${race.sociosReq} socios (tienes ${clubSocios})`:''].filter(Boolean).join(' · '))}</div>`;}).join('')}`:''}
+    <button class="pz-btn" style="margin-top:10px" onclick="G.screen='clubHub';render()">← Volver al hub</button>
+  </div>`;
 }
 
 window.doClubToggleAssign=(raceId,runnerId)=>{
@@ -774,6 +622,8 @@ window.doClubSimulateSeason=()=>{
   render();
 };
 
+// Paso 6 de la dirección visual (2026-10-30): tipo En directo para el Club: los resultados van
+// entrando uno a uno, con el puesto en grande y franja según el puesto. Sin hex.
 function renderClubSimulate(){
   const el=$main();
   const d=G.clubModeData;if(!d){G.screen='clubHub';render();return;}
@@ -781,77 +631,47 @@ function renderClubSimulate(){
   const results=d.seasonResults||[];
   const idx=G._clubSimIdx||0;
   const isDone=idx>=results.length;
-
   if(isDone){
-    el.innerHTML=`
-      <div style="text-align:center;padding:20px 0 16px">
-        <div style="font-size:36px;margin-bottom:8px">🏕️</div>
-        <h2>Temporada completa</h2>
-        <p class="sub">Todos los resultados registrados</p>
-      </div>
-      <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`;
+    el.innerHTML=`<div class="pz"><div class="pz-franja transicion"><div class="pz-franja-num" style="font-size:40px">Temporada completa</div><div class="pz-franja-sub">Todos los resultados registrados</div></div>
+      <button class="pz-btn" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button></div>`;
     return;
   }
-
   const r=results[idx];
-  const posColor=r.pos===1?'#c07a10':r.pos<=3?'#2d7a2d':r.pos<=10?'#4a90d9':'#1a1a1a';
   const posIcon=r.pos===1?'🥇':r.pos===2?'🥈':r.pos===3?'🥉':r.pos<=10?'🎯':'🏃';
-
-  el.innerHTML=`
-    <div style="font-size:12px;color:var(--ink3);margin-bottom:12px;text-align:center">Resultado ${idx+1} de ${results.length}</div>
-    <div style="height:3px;background:var(--trk);border-radius:2px;overflow:hidden;margin-bottom:16px">
-      <div style="width:${Math.round((idx/results.length)*100)}%;height:100%;background:#4a90d9;border-radius:2px"></div>
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;justify-content:space-between" class="pz-efectos"><span>Resultado ${idx+1} de ${results.length}</span><span>${esc(d.name)}</span></div>
+    <div class="pz-barra" style="margin:6px 0 14px"><div class="pz-relleno" style="width:${Math.round((idx/results.length)*100)}%;background:var(--acc)"></div></div>
+    <div class="pz-franja ${r.pos<=3?'podio':'fuera'}">
+      <div class="pz-franja-sub" style="margin:0 0 4px">${posIcon} ${esc(r.race.name)} · ${clubRaceKm(r.race)} km</div>
+      <div class="pz-franja-num">${r.pos}.º</div>
+      <div class="pz-franja-sub">de ${r.rivals} · ${esc(r.runner.flag)} ${esc(r.runner.name)}</div>
     </div>
-    <div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
-      <div style="font-size:40px;margin-bottom:8px">${posIcon}</div>
-      <div style="font-size:24px;font-weight:700;color:${posColor};margin-bottom:4px">#${r.pos} de ${r.rivals}</div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(r.runner.flag)} ${esc(r.runner.name)}</div>
-      <div style="font-size:13px;color:var(--ink3)">${esc(r.race.name)} · ${clubRaceKm(r.race)}km</div>
-      ${r.prize>0?`<div style="font-size:13px;color:var(--pos);font-weight:600;margin-top:8px">+€${r.prize} premio</div>`:''}
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      <div class="pz-fila"><span class="pz-fila-txt">Rendimiento</span><span class="pz-fila-dato">${r.perf}/100</span></div>
+      ${r.prize>0?`<div class="pz-fila"><span class="pz-fila-txt">Premio</span><span class="pz-fila-dato pz-mas">+€${r.prize}</span></div>`:''}
     </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="sec-title-sm">Detalles</div>
-      <div class="fin-row"><span>Carrera</span><span>${esc(r.race.name)}</span></div>
-      <div class="fin-row"><span>Corredor</span><span>${esc(r.runner.name)}</span></div>
-      <div class="fin-row"><span>Posición</span><span style="font-weight:700;color:${posColor}">#${r.pos} / ${r.rivals}</span></div>
-      <div class="fin-row"><span>Rendimiento</span><span>${r.perf}/100</span></div>
-      ${r.prize>0?`<div class="fin-row"><span>Premio</span><span class="plus">+€${r.prize}</span></div>`:''}
-    </div>
-    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G._clubSimIdx=${idx+1};render()">
-      ${idx+1<results.length?'Siguiente resultado →':'Ver balance final →'}
-    </button>`;
+    <button class="pz-btn" onclick="G._clubSimIdx=${idx+1};render()">${idx+1<results.length?'Siguiente resultado →':'Ver balance final →'}</button>
+  </div>`;
 }
 
 // ── STAFF TÉCNICO (C11) ────────────────────────────────────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión: el staff como opciones con su coste.
 function renderClubStaff(){
   const el=$main();
   const d=G.clubModeData;if(!d){G.screen='clubHub';render();return;}
   hideChrome();
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin-bottom:0">Staff Técnico</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
-    </div>
-    <p class="sub">Contrata personal de apoyo. Cada miembro del staff tiene un coste mensual y mejora un aspecto del club.</p>
-    ${Object.entries(CLUB_STAFF_TYPES).map(([id,s])=>{
-      const hired=d.staff&&d.staff[id];
-      return`<div class="card" style="margin-bottom:10px;${hired?'border-color:#2d7a2d;':''}">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-          <span style="font-size:22px">${s.emoji}</span>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:700">${s.label}</div>
-            <div style="font-size:12px;color:var(--ink3)">${s.desc}</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:13px;font-weight:700;color:var(--avi)">€${s.costMonth}/mes</div>
-            ${hired?`<div style="font-size:11px;color:var(--pos)">✓ Contratado</div>`:''}
-          </div>
-        </div>
-        ${hired
-          ?`<button class="main" style="margin-top:4px;border-color:#c0392b;color:var(--neg);font-size:12px" onclick="doClubFireStaff('${id}')">Despedir</button>`
-          :`<button class="main" style="margin-top:4px;font-size:12px" onclick="doClubHireStaff('${id}',${s.costMonth})">Contratar — €${s.costMonth}/mes</button>`}
-      </div>`;
-    }).join('')}`;
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between"><div class="pz-titulo" style="margin:0">Staff técnico</div><button class="pz-btn sec" style="width:auto;padding:6px 12px;margin:0" onclick="G.screen='clubHub';render()">← Hub</button></div>
+    <p class="pz-sub">Contrata personal de apoyo. Cada miembro del staff tiene un coste mensual y mejora un aspecto del club.</p>
+    ${Object.entries(CLUB_STAFF_TYPES).map(([id,st])=>{const hired=d.staff&&d.staff[id];
+      return`<div class="pz-tarjeta" style="${hired?'border-color:var(--acc);border-width:1.5px':''}">
+        <div style="display:flex;align-items:flex-start;gap:10px"><span style="font-size:22px">${st.emoji}</span>
+          <span class="pz-fila-txt"><b>${st.label}</b>${hired?' <span class="pz-chip mas" style="margin:0">Contratado</span>':''}<div class="pz-efectos">${st.desc}</div></span>
+          <span class="pz-num">€${st.costMonth}/mes</span></div>
+        ${hired?`<button class="pz-btn sec" style="margin-top:8px" onclick="doClubFireStaff('${id}')">Despedir</button>`
+          :`<button class="pz-btn sec" style="margin-top:8px" onclick="doClubHireStaff('${id}',${st.costMonth})">Contratar — €${st.costMonth}/mes</button>`}
+      </div>`;}).join('')}
+  </div>`;
 }
 window.doClubHireStaff=(id,cost)=>{
   const d=G.clubModeData;if(!d)return;
@@ -869,46 +689,32 @@ window.doClubFireStaff=(id)=>{
 };
 
 // ── PATROCINIO DE CLUB (C13) ───────────────────────────────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión; el objetivo del sponsor como efecto en línea.
 function renderClubSponsors(){
   const el=$main();
   const d=G.clubModeData;if(!d){G.screen='clubHub';render();return;}
   hideChrome();
-  const activeIds=(d.clubSponsors||[]).map(s=>s.id);
+  const activeIds=(d.clubSponsors||[]).map(x=>x.id);
   const fil=d.filosofia?CLUB_FILOSOFIAS[d.filosofia]:null;
   // Más sponsors disponibles según filosofía comercial
-  const available=CLUB_SPONSORS_POOL.filter(s=>
-    d.reputacion>=(s.tier===2?40:0)&&
-    (fil&&fil.sponsorBonus===s.cat?true:s.tier<=1||(d.clubSponsors||[]).length<2)
+  const available=CLUB_SPONSORS_POOL.filter(x=>
+    d.reputacion>=(x.tier===2?40:0)&&
+    (fil&&fil.sponsorBonus===x.cat?true:x.tier<=1||(d.clubSponsors||[]).length<2)
   );
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin-bottom:0">Sponsors del Club</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
-    </div>
-    <p class="sub">Cada sponsor paga el 60 % de su contrato al simular la temporada y el 40 % restante solo si se cumple su objetivo. Si no se cumple, rescinde.</p>
-    ${(d.clubSponsors||[]).length>0?`
-    <div class="sec-title-sm" style="margin-bottom:8px">Sponsors activos</div>
-    ${(d.clubSponsors||[]).map(sp=>`
-      <div class="card" style="margin-bottom:8px;border-color:#2d7a2d">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-size:13px;font-weight:700">${esc(sp.name)}</div>
-            <div style="font-size:12px;color:var(--ink3)">${sp.objective} · ${sp.seasonsLeft||1} temporada${(sp.seasonsLeft||1)!==1?'s':''} de contrato</div>
-          </div>
-          <span style="font-size:14px;font-weight:700;color:var(--pos)">+€${sp.monthlyIncome}/mes</span>
-        </div>
-        <button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg);font-size:12px" onclick="doClubRemoveSponsor('${sp.id}')">Rescindir contrato</button>
+  const libres=available.filter(x=>!activeIds.includes(x.id));
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between"><div class="pz-titulo" style="margin:0">Sponsors del club</div><button class="pz-btn sec" style="width:auto;padding:6px 12px;margin:0" onclick="G.screen='clubHub';render()">← Hub</button></div>
+    <p class="pz-sub">Cada sponsor paga el 60 % de su contrato al simular la temporada y el 40 % restante solo si se cumple su objetivo. Si no se cumple, rescinde.</p>
+    ${(d.clubSponsors||[]).length>0?`<div class="pz-label" style="margin:6px 0">Activos</div>
+      ${(d.clubSponsors||[]).map(sp=>`<div class="pz-tarjeta" style="border-color:var(--acc);border-width:1.5px">
+        <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(sp.name)}</b><span class="pz-num">€${sp.monthlyIncome}/mes</span></div>
+        <div class="pz-efectos">Objetivo: ${sp.objective} · ${sp.seasonsLeft||1} temporada${(sp.seasonsLeft||1)!==1?'s':''} de contrato</div>
+        <button class="pz-btn sec" style="margin-top:8px" onclick="doClubRemoveSponsor('${sp.id}')">Rescindir contrato</button>
       </div>`).join('')}`:''}
-    <div class="sec-title-sm" style="margin-bottom:8px;margin-top:${(d.clubSponsors||[]).length?'14px':'0'}">Disponibles</div>
-    ${available.filter(s=>!activeIds.includes(s.id)).map(sp=>`
-      <div class="card" style="margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <div style="font-size:13px;font-weight:700">${esc(sp.name)}</div>
-          <span style="font-size:14px;font-weight:700;color:var(--avi)">+€${sp.monthlyIncome}/mes</span>
-        </div>
-        <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">Objetivo: ${sp.objective} · ${sp.duration||1} temporada${(sp.duration||1)!==1?'s':''}</div>
-        <button class="main" style="font-size:12px" onclick="doClubAddSponsor('${sp.id}')">Firmar contrato</button>
-      </div>`).join('')||'<div class="hint">Sin sponsors disponibles aún. Sube tu reputación para desbloquear más.</div>'}`;
+    <div class="pz-label" style="margin:14px 0 6px">Disponibles</div>
+    ${libres.map(sp=>`<button class="pz-opcion" onclick="doClubAddSponsor('${sp.id}')"><span style="float:right" class="pz-num">€${sp.monthlyIncome}/mes</span><b>${esc(sp.name)}</b><div class="pz-efectos">Objetivo: ${sp.objective} · ${sp.duration||1} temporada${(sp.duration||1)!==1?'s':''} · firmar</div></button>`).join('')
+      ||'<div class="pz-diag">Sin sponsors disponibles aún. Sube tu reputación para desbloquear más.</div>'}
+  </div>`;
 }
 window.doClubAddSponsor=(id)=>{
   const d=G.clubModeData;if(!d)return;
@@ -937,30 +743,22 @@ function renderClubRivals(){
     rep:Math.min(100,(r.rep||20)+(d.temporada||1)*3),
     socios:Math.min(500,(r.socios||10)+(d.temporada||1)*5),
   }));
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin-bottom:0">Clubes Rivales</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Lista; tu club con el acento, y quién va por
+  // delante como diagnóstico (punto ámbar), no como color de borde.
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between"><div class="pz-titulo" style="margin:0">Clubes rivales</div><button class="pz-btn sec" style="width:auto;padding:6px 12px;margin:0" onclick="G.screen='clubHub';render()">← Hub</button></div>
+    <div class="pz-tarjeta" style="border-color:var(--acc);border-width:1.5px;margin-top:12px">
+      <div class="pz-label">Tu club</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(d.name)}</b><span class="pz-chip" style="margin:0;background:var(--acc-t)">${lvl.label}</span></div>
+      <div class="pz-efectos">Rep. ${d.reputacion}/100 · ${d.socios} socios · cohesión ${d.cohesion}/100</div>
     </div>
-    <div class="card" style="margin-bottom:12px;border-color:#4a90d9">
-      <div style="font-size:11px;color:var(--ink3);margin-bottom:4px">TU CLUB</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:14px;font-weight:700">${esc(d.name)}</div>
-        <span style="font-size:12px;background:${lvl.color}22;color:${lvl.color};padding:2px 8px;border-radius:4px">${lvl.label}</span>
-      </div>
-      <div style="font-size:12px;color:var(--ink3);margin-top:4px">Rep: ${d.reputacion}/100 · Socios: ${d.socios} · Cohesión: ${d.cohesion}/100</div>
-    </div>
-    ${rivals.map(r=>{
-      const isAhead=r.rep>d.reputacion;
-      return`<div class="card" style="margin-bottom:8px;${isAhead?'border-color:#c07a10':''}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <div style="font-size:13px;font-weight:700">${esc(r.name)}</div>
-          <span style="font-size:11px;color:${isAhead?'var(--avi)':'var(--pos)'}">${isAhead?'▲ Por delante':'▼ Por detrás'}</span>
-        </div>
-        <div style="font-size:12px;color:var(--ink3)">Rep: ${r.rep}/100 · Socios: ${r.socios} · Nivel: ${r.level}</div>
-      </div>`;
-    }).join('')}
-    <div class="hint" style="margin-top:10px">Los rivales crecen cada temporada. Si un rival supera tu reputación puede intentar ficharte corredores.</div>`;
+    ${rivals.map(r=>{const isAhead=r.rep>d.reputacion;
+      return`<div class="pz-tarjeta">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(r.name)}</b><span class="pz-diag ${isAhead?'ojo':'mas'}" style="margin:0">${isAhead?'Por delante':'Por detrás'}</span></div>
+        <div class="pz-efectos">Rep. ${r.rep}/100 · ${r.socios} socios · nivel ${r.level}</div>
+      </div>`;}).join('')}
+    ${consejoHTML('club_rivales','Los rivales crecen cada temporada.','Si uno supera tu reputación puede intentar ficharte corredores.')}
+  </div>`;
 }
 
 // ── DECISIONES MENSUALES COMPLETAS (C16) ──────────────────────────────────
@@ -987,29 +785,22 @@ function renderClubMonthly(){
     ]},
   ];
   const allChosen=decDefs.every(d=>sel[d.id]);
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="margin-bottom:0">Decisión mensual</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
-    </div>
-    <p class="sub">Elige una opción en cada área y confirma. Nada se aplica hasta confirmar; toca una opción elegida para desmarcarla.${d.monthlyDecisionDone?'<br><strong>Ya has decidido esta temporada.</strong> La siguiente decisión llega con la próxima temporada.':' Una decisión por temporada.'}</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Decisión, una pz-opcion por opción; sin
+  // fondos = bloqueada con su motivo.
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between"><div class="pz-titulo" style="margin:0">Decisión mensual</div><button class="pz-btn sec" style="width:auto;padding:6px 12px;margin:0" onclick="G.screen='clubHub';render()">← Hub</button></div>
+    <p class="pz-sub">Elige una opción en cada área y confirma. Nada se aplica hasta confirmar; toca una opción elegida para desmarcarla.${d.monthlyDecisionDone?'<br><b>Ya has decidido esta temporada.</b> La siguiente decisión llega con la próxima temporada.':' Una decisión por temporada.'}</p>
     ${decDefs.map(dec=>`
-      <div style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">${dec.icon} ${dec.label}</div>
-        ${dec.options.map(opt=>{
-          const isSel=sel[dec.id]===opt.id;
-          const sinFondos=!isSel&&(opt.cost||0)>(d.presupuesto||0);   // BUG-15 (v96)
-          return`<div ${sinFondos?'':`onclick="clubToggleMonthlySel('${dec.id}','${opt.id}')"`} style="cursor:${sinFondos?'default':'pointer'};${sinFondos?'opacity:0.45;':''}padding:10px 12px;border-radius:8px;border:1px solid ${isSel?'#4a90d9':'#e0dfd8'};background:${isSel?'var(--soft)':'var(--soft)'};margin-bottom:6px;display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">${opt.emoji}</span>
-            <div style="flex:1">
-              <div style="font-size:13px;font-weight:${isSel?'700':'500'};color:${isSel?'var(--cuerpo)':'var(--ink)'}">${opt.text}</div>
-              <div style="font-size:12px;color:var(--ink3)">${opt.desc}${opt.cost?` · −€${opt.cost}`:''}${sinFondos?' · <strong>Sin fondos</strong>':''}</div>
-            </div>
-            ${isSel?`<span style="font-size:16px;color:var(--cuerpo)">✓</span>`:''}
-          </div>`;
-        }).join('')}
-      </div>`).join('')}
-    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)${(!allChosen||d.monthlyDecisionDone)?';opacity:0.4;pointer-events:none':''}" onclick="doClubApplyMonthlyFull()">Confirmar decisiones →</button>`;
+      <div class="pz-label" style="margin:12px 0 6px">${dec.icon} ${dec.label}</div>
+      ${dec.options.map(opt=>{
+        const isSel=sel[dec.id]===opt.id;
+        const sinFondos=!isSel&&(opt.cost||0)>(d.presupuesto||0);   // BUG-15 (v96)
+        return`<button class="pz-opcion${isSel?' sel':''}${sinFondos?' pz-bloqueado':''}" ${sinFondos?'':`onclick="clubToggleMonthlySel('${dec.id}','${opt.id}')"`}>
+          <b>${opt.emoji} ${opt.text}</b><div class="pz-efectos">${opt.desc}${opt.cost?` · −€${opt.cost}`:''}</div>${sinFondos?motivoHTML('Sin fondos'):''}
+        </button>`;
+      }).join('')}`).join('')}
+    <button class="pz-btn" style="margin-top:12px${(!allChosen||d.monthlyDecisionDone)?';opacity:0.4;pointer-events:none':''}" onclick="doClubApplyMonthlyFull()">Confirmar decisiones →</button>
+  </div>`;
 }
 
 window.doClubApplyMonthlyFull=()=>{
@@ -1116,87 +907,63 @@ function renderClubSeasonEnd(){
   else if(d.cohesion<35) narrative=`El grupo está fragmentado. Sin cohesión interna, los resultados difícilmente pueden mejorar.`;
   else narrative=`Una temporada de transición. Se siembra ahora para recoger en los próximos años.`;
 
-  el.innerHTML=`
-    <div style="background:linear-gradient(135deg,#fefcf8,#f5f3ef);border:1px solid var(--line);border-radius:14px;padding:20px 16px;margin-bottom:14px;text-align:center">
-      <div style="font-size:40px;margin-bottom:8px">${wins>0?'🏆':podiums>0?'🎯':d.cohesion>=70?'🤝':'📋'}</div>
-      <h2 style="margin-bottom:4px">Temporada ${d.temporada} — ${esc(d.name)}</h2>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Resumen: franja de cierre, la crónica, el
+  // objetivo como diagnóstico, cifras y filas de economía. Temporadas en rojo: punto rojo.
+  const fila=(t,v,cl)=>`<div class="pz-fila"><span class="pz-fila-txt">${t}</span><span class="pz-fila-dato ${cl||''}">${v}</span></div>`;
+  const repFinal=Math.max(0,Math.min(100,(d.reputacion||0)+objRepDelta));
+  const presFinal=d.presupuesto+closing;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja cierre">
+      <div class="pz-franja-sub" style="margin:0 0 4px">${wins>0?'🏆':podiums>0?'🎯':d.cohesion>=70?'🤝':'📋'} ${esc(d.name)}</div>
+      <div class="pz-franja-num" style="font-size:40px">Temporada ${d.temporada}</div>
     </div>
-
-    <div class="card" style="margin-bottom:12px;border-left:3px solid #4a90d9">
-      <div style="font-size:13px;color:var(--ink2);font-style:italic;margin-bottom:8px">"${narrative}"</div>
-      <div style="display:flex;gap:12px;font-size:12px;color:var(--ink3);flex-wrap:wrap">
-        ${correvelacion?`<span>⭐ Revelación: <strong>${esc(correvelacion.runner.name.split(' ')[0])}</strong> (#${correvelacion.pos})</span>`:''}
-        ${corrdecepcion?`<span>😞 Decepción: <strong>${esc(corrdecepcion.runner.name.split(' ')[0])}</strong> (DNF)</span>`:''}
-        <span>🤝 Cohesión final: <strong>${d.cohesion}/100</strong></span>
-      </div>
+    <div class="pz-tarjeta">
+      <p style="margin:0 0 6px;font-style:italic">«${narrative}»</p>
+      <div class="pz-efectos">${[correvelacion?`⭐ Revelación: <b>${esc(correvelacion.runner.name.split(' ')[0])}</b> (#${correvelacion.pos})`:'',corrdecepcion?`😞 Decepción: <b>${esc(corrdecepcion.runner.name.split(' ')[0])}</b> (DNF)`:'',`🤝 Cohesión final: <b>${d.cohesion}/100</b>`].filter(Boolean).join(' · ')}</div>
     </div>
-
-    ${obj?`
-    <div class="card" style="margin-bottom:12px;border-color:${objMet?'#4a8a2a':'var(--line2)'};border-width:1.5px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:20px">${objMet?'✅':'❌'}</span>
-        <div style="flex:1">
-          <div style="font-size:12px;color:var(--ink3)">Objetivo de temporada</div>
-          <div style="font-size:13px;font-weight:600">${obj.label}</div>
-        </div>
-        <div style="text-align:right;font-size:12px">
-          ${objRepDelta?`<div style="color:${objRepDelta>0?'var(--pos)':'var(--neg)'};font-weight:700">${objRepDelta>0?'+':''}${objRepDelta} rep</div>`:''}
-          ${objSociosDelta?`<div style="color:${objSociosDelta>0?'var(--pos)':'var(--neg)'};font-weight:700">${objSociosDelta>0?'+':''}${objSociosDelta} socios</div>`:''}
-        </div>
-      </div>
-    </div>`:''}
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title-sm">Resultados</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
-        ${[['Carreras',results.length],['Victorias',wins],['Podios',podiums],['DNF',dnfs]].map(([l,v])=>`
-          <div style="background:var(--soft);border-radius:8px;padding:8px">
-            <div style="font-size:11px;color:var(--ink3)">${l}</div>
-            <div style="font-size:18px;font-weight:700">${v}</div>
-          </div>`).join('')}
-      </div>
+    ${obj?`<div class="pz-diag ${objMet?'mas':'menos'}"><b>Objetivo de temporada${objMet?' cumplido':' no cumplido'}:</b> ${obj.label}${objRepDelta?` · <span class="${objRepDelta>0?'pz-mas':'pz-menos'}">${objRepDelta>0?'+':''}${objRepDelta} rep</span>`:''}${objSociosDelta?` · <span class="${objSociosDelta>0?'pz-mas':'pz-menos'}">${objSociosDelta>0?'+':''}${objSociosDelta} socios</span>`:''}</div>`:''}
+    <div class="pz-label" style="margin:14px 0 6px">Resultados</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">
+      ${[['Carreras',results.length],['Victorias',wins],['Podios',podiums],['DNF',dnfs]].map(([l,v])=>`<div class="pz-tarjeta" style="margin:0;padding:8px 4px"><div class="pz-efectos">${l}</div><div class="pz-num" style="font-size:20px">${v}</div></div>`).join('')}
     </div>
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title-sm">Economía</div>
-      <div class="fin-row"><span>Cuotas de socios</span><span class="plus">+€${socioIncome}</span></div>
-      <div class="fin-row"><span>Premios en carrera</span><span class="plus">+€${totalPrize}</span></div>
-      ${sponsorOutcomes.map(o=>`<div class="fin-row"><span>${esc(o.name)} · ${esc(o.objective||'')} ${o.met?'✅':'❌ rescinde'}</span><span class="plus">+€${(o.base||0)+(o.bonus||0)}</span></div>`).join('')}
-      ${raceCosts>0?`<div class="fin-row"><span>Inscripciones</span><span class="minus">−€${raceCosts}</span></div>`:''}
-      <div class="fin-row"><span>Salarios plantilla</span><span class="minus">−€${wages}</span></div>
-      ${staffCost>0?`<div class="fin-row"><span>Staff técnico</span><span class="minus">−€${staffCost}</span></div>`:''}
-      <div class="fin-row tot"><span>Balance neto</span><span class="${netBalance>=0?'plus':'minus'}">${netBalance>=0?'+':''}€${netBalance}</span></div>
+    <div class="pz-label" style="margin:14px 0 6px">Economía</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${fila('Cuotas de socios',fmtEur(socioIncome,true),'pz-mas')}
+      ${fila('Premios en carrera',fmtEur(totalPrize,true),'pz-mas')}
+      ${sponsorOutcomes.map(o=>fila(`${esc(o.name)} · ${esc(o.objective||'')} ${o.met?'✅':'❌ rescinde'}`,fmtEur((o.base||0)+(o.bonus||0),true),'pz-mas')).join('')}
+      ${raceCosts>0?fila('Inscripciones',fmtEur(-raceCosts),'pz-menos'):''}
+      ${fila('Salarios plantilla',fmtEur(-wages),'pz-menos')}
+      ${staffCost>0?fila('Staff técnico',fmtEur(-staffCost),'pz-menos'):''}
+      ${fila('<b>Balance neto</b>',`<b>${fmtEur(netBalance,true)}</b>`,netBalance>=0?'pz-mas':'pz-menos')}
     </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="sec-title-sm">Evolución del club</div>
-      <div class="fin-row"><span>Socios</span><span>${d.socios} → <strong>${newSocios}</strong> ${socioGain>0?`<span class="plus">(+${socioGain})</span>`:''}</span></div>
-      <div class="fin-row"><span>Reputación</span><span><strong>${Math.max(0,Math.min(100,(d.reputacion||0)+objRepDelta))}/100</strong>${objRepDelta?` <span class="${objRepDelta>0?'plus':'minus'}">${objRepDelta>0?'+':''}${objRepDelta}</span>`:''}</span></div>
-      <div class="fin-row"><span>Presupuesto final</span><span class="${d.presupuesto+closing<0?'minus':''}"><strong>€${d.presupuesto+closing}</strong></span></div>
-      ${d.presupuesto+closing<0?`<div class="danger" style="margin-top:8px;font-size:13px">Cierras en números rojos: ${(d.redSeasons||0)+1} de ${CLUB_RED_SEASONS_MAX} temporadas seguidas.</div>`:''}
-      <div class="fin-row"><span>Cohesión</span><span style="color:${d.cohesion>=70?'var(--pos)':d.cohesion>=40?'var(--avi)':'var(--neg)'}"><strong>${d.cohesion}/100</strong></span></div>
+    <div class="pz-label" style="margin:14px 0 6px">Evolución del club</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${fila('Socios',`${d.socios} → <b>${newSocios}</b>${socioGain>0?` <span class="pz-mas">(+${socioGain})</span>`:''}`)}
+      ${fila('Reputación',`<b>${repFinal}/100</b>${objRepDelta?` <span class="${objRepDelta>0?'pz-mas':'pz-menos'}">${objRepDelta>0?'+':''}${objRepDelta}</span>`:''}`)}
+      ${fila('Presupuesto final',`<b>${fmtEur(presFinal)}</b>`,presFinal<0?'pz-menos':'')}
+      ${fila('Cohesión',`<b>${d.cohesion}/100</b>`)}
     </div>
-
-    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doClubNextSeason(${socioGain},${socioLoss},${closing})">Temporada ${d.temporada+1} →</button>
-    <button class="main" style="margin-top:6px;opacity:0.5" onclick="backToMainMenu()">← Menú principal</button>`;
+    ${presFinal<0?`<div class="pz-diag menos"><b>Cierras en números rojos:</b> ${(d.redSeasons||0)+1} de ${CLUB_RED_SEASONS_MAX} temporadas seguidas.</div>`:''}
+    <button class="pz-btn" style="margin-top:12px" onclick="doClubNextSeason(${socioGain},${socioLoss},${closing})">Temporada ${d.temporada+1} →</button>
+    <button class="pz-btn sec" onclick="backToMainMenu()">← Menú principal</button>
+  </div>`;
 }
 
 // v96 · Fin del Modo Club por quiebra: cinco temporadas seguidas cerrando en rojo.
+// Paso 6 de la dirección visual (2026-10-30): tipo Momento negativo.
 function renderClubDissolved(){
   const el=$main();
   hideChrome();
   const d=G.clubModeData;
-  el.innerHTML=`
-    <div style="text-align:center;padding:18px 0 14px">
-      <div style="font-size:32px;margin-bottom:6px">🏚️</div>
-      <h2>El club se disuelve</h2>
-      <p class="sub">${esc(d?.name||'Tu club')}${d?` · ${(d.historial||[]).length} temporadas`:''}</p>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja negativo">
+      <div class="pz-franja-sub" style="margin:0 0 4px">🏚️ ${esc(d?.name||'Tu club')}${d?` · ${(d.historial||[]).length} temporadas`:''}</div>
+      <div class="pz-franja-num" style="font-size:36px">El club se disuelve</div>
     </div>
-    <div class="danger" style="margin-bottom:14px">
-      ${CLUB_RED_SEASONS_MAX} temporadas seguidas en números rojos. La junta no encuentra más
-      dinero y el club cierra${d?` con una deuda de <strong>€${Math.abs(Math.min(0,d.presupuesto))}</strong>`:''}.
-    </div>
-    <button class="main" onclick="backToMainMenu()">← Menú principal</button>`;
+    <div class="pz-diag menos">${CLUB_RED_SEASONS_MAX} temporadas seguidas en números rojos. La junta no encuentra más
+      dinero y el club cierra${d?` con una deuda de <b>€${Math.abs(Math.min(0,d.presupuesto))}</b>`:''}.</div>
+    <button class="pz-btn" style="margin-top:12px" onclick="backToMainMenu()">← Menú principal</button>
+  </div>`;
 }
 
 window.doClubNextSeason=(socioGain,socioLoss,netBalance)=>{
@@ -1342,28 +1109,22 @@ window.doClubNextSeason=(socioGain,socioLoss,netBalance)=>{
   G.screen='clubHub';autoSave();render();
 };
 
+// Paso 6 de la dirección visual (2026-10-30): tipo Evento, familia gente; cada opción con sus
+// efectos en línea (+ verde, − rojo).
 function renderClubEvent(){
   const el=$main();
   const d=G.clubModeData;if(!d||!d.pendingEvent){G.screen='clubHub';render();return;}
   const ev=d.pendingEvent;
-  el.innerHTML=`
-    <div style="text-align:center;padding:14px 0 10px">
-      <div style="font-size:28px;margin-bottom:6px">📣</div>
-      <h2 style="margin-bottom:4px">Evento del club</h2>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-size:15px;font-weight:700;margin-bottom:10px">${esc(ev.title)}</div>
-      ${ev.body?`<div style="font-size:13px;color:var(--ink2);margin-bottom:12px;line-height:1.55">${esc(ev.body)}</div>`:''}
-      ${ev.options.map((opt,i)=>`
-        <button class="main" style="margin-top:${i===0?'0':'8px'};text-align:left" onclick="doClubEvent(${i})">
-          <div style="font-weight:500">${esc(opt.text)}</div>
-          <div style="font-size:12px;color:var(--ink3);margin-top:2px">
-            ${opt.repDelta>0?`+${opt.repDelta} rep `:opt.repDelta<0?`${opt.repDelta} rep `:''}
-            ${opt.sociosDelta>0?`+${opt.sociosDelta} socios `:opt.sociosDelta<0?`${opt.sociosDelta} socios `:''}
-            ${opt.cost?`−€${opt.cost} `:''}${opt.income?`+€${opt.income} `:''}
-          </div>
-        </button>`).join('')}
-    </div>`;
+  const ef=(v,txt)=>v>0?`<span class="pz-mas">+${v} ${txt}</span>`:v<0?`<span class="pz-menos">${v} ${txt}</span>`:'';
+  el.innerHTML=`<div class="pz">
+    <span class="pz-etiqueta fam-gente">📣 Evento del club</span>
+    <div class="pz-titulo">${esc(ev.title)}</div>
+    ${ev.body?`<p class="pz-sub">${esc(ev.body)}</p>`:''}
+    ${ev.options.map((opt,i)=>`<button class="pz-opcion sin-check" onclick="doClubEvent(${i})">
+      <b>${esc(opt.text)}</b>
+      <div class="pz-efectos">${[ef(opt.repDelta,'rep'),ef(opt.sociosDelta,'socios'),opt.cost?`<span class="pz-menos">−€${opt.cost}</span>`:'',opt.income?`<span class="pz-mas">+€${opt.income}</span>`:''].filter(Boolean).join(' · ')}</div>
+    </button>`).join('')}
+  </div>`;
 }
 
 window.doClubEvent=idx=>{
