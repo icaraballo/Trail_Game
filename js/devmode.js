@@ -285,6 +285,14 @@ window.devJumpToCanicross=()=>{
   showToast('DEV: saltado a Canicross');
   render();
 };
+// La carrera ultra suelta salió del menú con la carcasa de Ultratrail (paso 5a): queda aquí para
+// probar el motor de ultra.js sin partida. No usa ranura.
+window.devJumpToUltraSuelta=()=>{
+  G.gameMode='ultra';G._saveSlot=null;G.ut=null;G._utPre=null;
+  G.screen='utPre';G.activeTab='game';
+  showToast('DEV: carrera ultra suelta');
+  render();
+};
 window.devJumpToClassic=()=>{
   G.gameMode='medio';
   G.screen='workSetup';G.activeTab='game';
@@ -1551,6 +1559,7 @@ function devJumpBody(){
       ${devBtn('📋 Entrenador',()=>devJumpToCoach(),{when:'ya'})}
       ${devBtn('🏕 Club',()=>devJumpToClub(),{when:'ya'})}
       ${devBtn('🐕 Canicross',()=>devJumpToCanicross(),{when:'ya'})}
+      ${devBtn('🏔 Ultra suelta',()=>devJumpToUltraSuelta(),{when:'ya'})}
     </div>
     <div class="dev-note">Entrenador pasa por el flujo real de transición (bonus de fama y pantalla coachIntro). Club crea el club de pruebas con evento y objetivo, como doClubCreate().</div>
     <div class="dev-row">${sel}${devBtn('Ir →',()=>{const s=devVal('dev-screen');if(!s)throw new Error('Elige una pantalla');G.screen=s;G.activeTab='game';},{when:'ya'})}</div>

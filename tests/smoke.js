@@ -39,7 +39,14 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnApplyMonthHours','cnHoursUsed','cnSponsorIncome','CN_EQUIP','CN_CMD_LEVEL_HOURS','cnEquipSeg',
   'ultraStart','ultraTramos','ultraCorrerBloque','ultraParar','ultraMargen','ultraCarrera','ultraRetirarse','ULTRA_RACES','ULTRA_CORREDORES','byStart','bySalir','byEntrarCorral','byHacer','byPalanca','byALaLineaLogica','byVivos','byTiempoPrevisto','byCorrerVuelta','byCampanaRivales','byEncadenar','byFijarRutina','byNoSalgo','byNocheAhora','BY_EVENTOS','BY_CORREDORES','BY_NOMBRES','BY_LEYENDAS','BY_ORGANIZADOR','BY_LUGAR',
   'cnDestiny','cnRetireDogAs','cnCircuitStanding','cnHomeDogs','cnCompanionStrip','cnSyncGraph','renderCnNotebook','renderCnEpilogo','cnCalibrate',
-  'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
+  'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface',
+  'ultraBateriaEnBolsa','ultraAvitualla','utNueva','utCalendario','utAparece','utInscribirse','utNoPuedeInscribirse','utApuntarse',
+  'utAvanzar','utCiclo','utObjetivoHoy','utObjetivoSiguiente','utCerrarCarrera','utNuevaTemporada','utExigencia','utSolape','utQuitarPlan',
+  'UT_PERFILES','UT_SEMANAS','UT_RECUPERA','slotLabel',
+  'utHacerFase','utTocaTirada','utRecuperar','utSemaforo','utDeficit','utAbsorbe','utSemanaEntreno','UT_PLANES','UT_VOLUMEN','UT_PREP_INICIAL',
+  'utPuntos','utProbSorteo','utPiedrasActivas','utIndice','utSolicitarSorteo','utNoPuedeSolicitar','utResolverSorteo','utListaEspera','utFraseSorteo','UT_PIEDRAS',
+  'utEscalonesPosibles','utEscalon','utComprar','utNoPuedeComprar','utRaceVariante','utVispera','utSectores','utReco','utReconocerSector','utFinDeSemanaReco',
+  'utRecoDecae','utChaquetaObligatoria','UT_ESCALONES','UT_ZAPAS_VIDA','ultraControles','utSimularFase']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -1357,6 +1364,229 @@ console.log('\n── Ultra (paso 5 del orden, capas ultra sobre race.js) ──
   let e='',n=0;while(e!=='fin'&&n++<30){if(c.enBolsa){c.enBolsa=false;}T.ultraParar('beber');T.ultraParar('comer');e=T.ultraCorrerBloque('steady');}
   t('la carrera acaba (meta o DNF) y nunca se queda a medias', !!c.fin&&n<30);
   t('nombres inventados en las carreras ultra', !T.ULTRA_RACES.some(x=>/Aneto|Transvulcania|Pirineu|UTMB/i.test(x.name)));
+}
+
+console.log('\n── Ultratrail · la carcasa del modo (paso 5a) ──');
+{
+  // Las cinco carreras iniciales: bloques seguidos que suman su km y su desnivel
+  const ini=['tresvalles','collado','macizo','branas','millas'];
+  t('las cinco carreras con las que empieza el modo existen', ini.every(id=>T.ULTRA_RACES.some(r=>r.id===id)));
+  t('los bloques de cada carrera van seguidos y acaban en su km', T.ULTRA_RACES.every(r=>r.bloques.every((b,i)=>i===0?b.km[0]===0:b.km[0]===r.bloques[i-1].km[1])&&r.bloques[r.bloques.length-1].km[1]===r.km&&r.bloques[r.bloques.length-1].fin==='meta'));
+  t('el desnivel declarado cuadra con los bloques (salvo redondeo)', T.ULTRA_RACES.every(r=>Math.abs(r.bloques.reduce((a,b)=>a+b.dplus,0)-r.dplus)<=60));
+  t('las de día no tienen bolsa de vida; las de noche sí', T.ULTRA_RACES.every(r=>r.noches?r.bloques.some(b=>b.fin==='bolsa_vida'):!r.bloques.some(b=>b.fin==='bolsa_vida')));
+  // Reglas de aparición (§ 3)
+  t('bienal: un año sí y otro no', T.utAparece({aparicion:'bienal',paridad:0},2)&&!T.utAparece({aparicion:'bienal',paridad:0},3));
+  t('emergente: aparece a partir de su año', !T.utAparece({aparicion:'emergente',desde:4},3)&&T.utAparece({aparicion:'emergente',desde:4},4));
+  setG({});T.utNueva({nombre:'Ane',perfil:'montanero',edad:29});let g=T.getG(),u=g.ut;
+  t('partida nueva: modo, corredor y edad', g.gameMode==='ultratrail'&&g.runner.name==='Ane'&&g.runner.age===29&&u.temporada===1&&u.semana===1);
+  t('el corredor debuta por debajo del de la carrera suelta', g.runner.stats.subida===T.ULTRA_CORREDORES.find(c=>c.id==='montanero').stats.subida-6);
+  t('rotativa: la sede cambia de un año a otro', T.utCalendario(1).find(x=>x.id==='branas').sede!==T.utCalendario(2).find(x=>x.id==='branas').sede);
+  t('la grande no se cancela nunca', Array.from({length:60},(_,i)=>T.utCalendario(i+1)).every(c=>!c.find(x=>x.id==='millas').cancelada));
+  u.calendario.forEach(x=>{x.cancelada=false;});
+  // Inscribirse cuesta la inscripción; sin dinero para inscripción y viaje, no se puede
+  const d0=u.dinero;
+  t('inscribirse descuenta la inscripción', T.utInscribirse('macizo')&&u.dinero===d0-T.ULTRA_RACES.find(r=>r.id==='macizo').inscripcion);
+  t('no se inscribe dos veces', T.utInscribirse('macizo')===false);
+  const din=u.dinero;u.dinero=10;
+  t('sin dinero, no te puedes inscribir (y dice por qué)', /Te faltan/.test(T.utNoPuedeInscribirse('branas')||''));
+  u.dinero=din;
+  t('ir a verla no cobra nada hasta que llega la semana', T.utApuntarse('collado','ver')&&u.dinero===din);
+  // El ciclo: tres fases hasta el objetivo, y el botón avanza una fase entera
+  let ci=T.utCiclo();
+  t('el ciclo hacia el Macizo tiene base, específico y afinado', ci.fase==='base'&&ci.fases.map(f=>f.id).join()==='base,especifico,afinado'&&ci.fases[2].hasta===29);
+  const finBase=ci.fases[0].hasta;
+  let r=T.utAvanzar();
+  t('el botón avanza la fase entera', r==='ok'&&u.semana===finBase);
+  r=T.utAvanzar();   // la fase específica pasa por la semana 17, la del Collado
+  t('ir a verla se resuelve de paso (se para en la fase, no en la visita)', r==='ok'&&u.semana===ci.fases[1].hasta&&u.planes.find(p=>p.id==='collado').hecho&&u.visitas.length===1);
+  t('el sueldo entra y el viaje se paga', u.movimientos.some(m=>m.v>0)&&u.movimientos.some(m=>/Viaje a Maratón del Collado/.test(m.txt)));
+  let vueltas=0;while(r!=='carrera'&&vueltas++<10)r=T.utAvanzar();
+  t('se llega a la semana del objetivo y toca correr', r==='carrera'&&u.semana===29&&T.utObjetivoHoy()?.id==='macizo');
+  // La carrera, con tu corredor (no con uno de los de la suelta)
+  T.ultraStart({carrera:'macizo',repuesto:'bolsa'});g=T.getG();
+  t('en el modo corre tu corredor y la carcasa sigue ahí', g.runner.name==='Ane'&&g.ut.temporada===1&&!!g.ut.carrera&&g.ut.planes.length>0);
+  const c=g.ut.carrera;let e='',n=0;
+  while(e!=='fin'&&n++<40){T.ultraParar('beber');T.ultraParar('comer');if(c.enBolsa){if(T.ultraBateriaEnBolsa(c))T.ultraParar('bateria');c.enBolsa=false;}c.paradaUsada=[];e=T.ultraCorrerBloque('steady');}
+  t('la carrera del modo acaba', !!c.fin);
+  T.utCerrarCarrera();u=T.getG().ut;
+  t('al volver: resultado apuntado, recuperación y la carrera fuera', u.historial.length===1&&u.recuperaHasta>u.semana+1&&u.carrera===null&&T.utCiclo().fase==='recuperacion');
+  t('la recuperación de un 100K terminado es de 3-4 semanas', u.historial[0].kind!=='finisher'||[3,4].includes(u.recuperaHasta-u.semana-1));
+  // Hasta el final del año
+  n=0;r='';while(r!=='temporada'&&n++<40)r=T.utAvanzar();
+  t('el año se cierra en la semana 52', r==='temporada'&&u.semana===T.UT_SEMANAS+1);
+  T.utNuevaTemporada();g=T.getG();
+  t('temporada nueva: un año más, calendario nuevo y planes a cero', g.ut.temporada===2&&g.year===2&&g.runner.age===30&&g.ut.semana===1&&g.ut.planes.length===0&&g.ut.historial.length===1);
+  // Grandes por año (§ 15)
+  g.ut.dinero=99999;g.ut.calendario.forEach(x=>{x.cancelada=false;});
+  T.utInscribirse('macizo');T.utInscribirse('branas');
+  t('la grande no se inscribe directamente: va por sorteo', T.utInscribirse('millas')===false&&/sorteo/.test(T.utNoPuedeInscribirse('millas')));
+  g.ut.planes.push({id:'millas',tipo:'correr',hecho:false});   // como si hubiera salido en el sorteo
+  t('el solape avisa (no impide) si una cae en la recuperación de otra', !!T.utSolape('branas'));
+  t('la exigencia de las 100 Millas es mayor que la del Collado en todo menos la térmica', ['base','encaje','estomago','nocturna'].every(k=>T.utExigencia(T.ULTRA_RACES.find(r=>r.id==='millas'))[k]>T.utExigencia(T.ULTRA_RACES.find(r=>r.id==='collado'))[k]));
+  // Guardar y cargar: el saneado conserva la carcasa
+  const sano=T.sanitizeState(T.serializableState());
+  t('el saneado del guardado conserva G.ut', sano.ut.temporada===2&&sano.ut.planes.length===3&&Array.isArray(sano.ut.historial));
+  t('la ranura enseña temporada y edad, no un ranking', /Temporada 2 · 30 años/.test(T.slotLabel({ts:Date.now(),state:sano}).linea||''));
+  t('Ultratrail guarda en ranura (la suelta no)', /G\.gameMode==='ultratrail'\)\{G\.screen=G\.ut\?'utHub':'utNueva'/.test(src['render-core.js']));
+  // El sueño obligatorio de las 100 Millas
+  setG({gameMode:'ultra'});T.ultraStart({carrera:'millas',corredor:'rodador',repuesto:'bolsa'});const cm=T.getG().ut.carrera;
+  t('en las de dos noches se puede dormir en el avituallamiento; en las de una, no', T.ultraAvitualla(cm).some(a=>a.id==='dormir')&&!T.ultraAvitualla({noches:1}).some(a=>a.id==='dormir'));
+  cm.lucidez=5;cm.bloque=8;T.getG().seg=T.getG().selectedRaces[0].segs.findIndex(s=>s.bloque===8);T.getG().time=26*3600;
+  T.ultraCorrerBloque('steady');
+  t('con la lucidez hundida no se sigue sin dormir', cm.sueno===true||!!cm.fin);
+  if(cm.sueno){T.ultraParar('dormir');t('dormir te deja seguir', cm.sueno===false&&cm.lucidez>=30);}
+}
+
+console.log('\n── Ultratrail · preparaciones, fases y recuperación (paso 5b) ──');
+{
+  const nueva=()=>{setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});const g=T.getG();g.ut.dinero=9999;g.ut.calendario.forEach(x=>{x.cancelada=false;});return g;};
+  let g=nueva(),u=g.ut;
+  t('la partida empieza con las preparaciones de su perfil y sin carga', u.prep.base===T.UT_PREP_INICIAL.veterano.base&&u.carga===0&&Array.isArray(u.secuelas));
+  t('la nutrición de Clásico se disuelve en Estómago', g.runner.stats.nutricion===u.prep.estomago);
+  T.utInscribirse('macizo');
+  t('el semáforo compara con lo que pide la carrera', T.utSemaforo(T.ULTRA_RACES.find(r=>r.id==='macizo')).every(x=>['mas','ojo','menos'].includes(x.color)&&x.pide>0));
+  // Una fase de base: el plan elegido sube lo suyo y carga
+  let b0=u.prep.base,n0=u.prep.nocturna;
+  T.utHacerFase('tranquilo','normal',null);
+  t('la fase de base sube la base y la carga', u.prep.base>b0+3&&u.carga>0&&u.semana>1);
+  t('lo que no entrenas baja un poco', u.prep.nocturna<n0);
+  // Volumen alto carga más que suave
+  g=nueva();T.utInscribirse('macizo');T.utHacerFase('cuestas','alto',null);const cAlto=T.getG().ut.carga;
+  g=nueva();T.utInscribirse('macizo');T.utHacerFase('cuestas','suave',null);const cSuave=T.getG().ut.carga;
+  t('volumen alto carga más que suave', cAlto>cSuave);
+  // Con la carga por encima de 70 el cuerpo absorbe menos
+  u=T.getG().ut;u.carga=90;
+  t('con carga alta se absorbe menos', T.utAbsorbe()<1&&(u.carga=50,T.utAbsorbe()===1));
+  // El plan que cuesta dinero no se hace sin dinero
+  g=nueva();u=g.ut;T.utInscribirse('macizo');T.utHacerFase('tranquilo','normal',null);u.dinero=10;
+  t('la concentración en altura no se hace sin dinero', T.utHacerFase('calor','normal',null)==='sin_dinero');
+  // Lo que enseña el planificador es lo que pasa (sin tirada ni lesión)
+  {const ci=T.utCiclo(),n=ci.actual.hasta-u.semana,sim=T.utSimularFase(ci.fase,'mixto','normal',n),e0=u.prep.encaje;
+   u.carga=0;const sim0=T.utSimularFase(ci.fase,'mixto','normal',n);T.utHacerFase('mixto','normal',null);
+   t('la previsión del plan coincide con la fase hecha', Math.abs((u.prep.encaje-e0)-sim0.prep.encaje)<0.01&&Math.abs(u.carga-sim0.carga)<0.01&&!!sim);}
+  // Afinar baja la carga
+  u.dinero=9999;u.carga=50;const cAntes=u.carga;
+  T.utHacerFase('afinar','normal',null);
+  t('afinar baja la carga antes de la carrera', u.carga<cAntes&&T.utCiclo().fase==='carrera');
+  // La tirada larga suma (o da un mal paso, con carga)
+  g=nueva();u=g.ut;T.utInscribirse('macizo');
+  t('toca tirada larga en una fase de base larga', T.utTocaTirada());
+  const e0=u.prep.estomago,c0=u.carga;T.utHacerFase('tranquilo','suave','nutricion');
+  const ultima=u.diario[u.diario.length-1].txt;
+  t('la tirada larga deja huella (estómago o un mal paso), y lo cuenta', /Tirada larga probando la comida/.test(ultima)?u.prep.estomago>e0:/mal paso/.test(ultima)&&c0>=0);
+  // El déficit va al motor: corto de preparación, positivo; sobrado, negativo
+  const mac=T.ULTRA_RACES.find(r=>r.id==='macizo');
+  u.prep={base:10,encaje:10,estomago:10,nocturna:10,termica:10};const dCorto=T.utDeficit(mac);
+  u.prep={base:100,encaje:100,estomago:100,nocturna:100,termica:100};const dSobra=T.utDeficit(mac);
+  t('el déficit dice lo que falta (y se acota)', dCorto.base>0&&dSobra.base<0&&dSobra.base>=-0.15&&dCorto.encaje<=0.6);
+  // Recuperación: tres salidas
+  g=nueva();u=g.ut;u.recuperaHasta=9;
+  T.utRecuperar('reposo');
+  t('reposo total recupera antes que lo que tocaba', u.semana<9&&u.semana>=6);
+  g=nueva();u=g.ut;u.recuperaHasta=9;const pb=u.prep.encaje;T.utRecuperar('cruzado');
+  t('el cruzado mantiene las preparaciones', u.semana===9&&Math.abs(u.prep.encaje-pb)<0.01);
+  let secuela=0,ya=0;
+  for(let i=0;i<80;i++){g=nueva();u=g.ut;u.recuperaHasta=5;T.utRecuperar('volver');if(u.secuelas.length)secuela++;else if(u.semana===1&&u.recuperaHasta===1)ya++;}
+  t('volver antes a veces deja secuela permanente y a veces sale bien', secuela>0&&ya>0);
+  // Lo que deja la carrera (§ 11): sube con las horas, termines o no
+  g=nueva();u=g.ut;T.utInscribirse('collado');
+  while(T.utCiclo().fase!=='carrera'){const ci=T.utCiclo();if(ci.fase==='libre')break;T.utHacerFase(T.UT_PLANES[ci.fase][0].id,'normal',null);}
+  T.ultraStart({carrera:'collado',repuesto:'sin'});const cc=T.getG().ut.carrera;
+  let e='',n=0;while(e!=='fin'&&n++<20){T.ultraParar('beber');T.ultraParar('comer');cc.paradaUsada=[];e=T.ultraCorrerBloque('steady');}
+  const enc0=u.prep.encaje,carga0=u.carga;T.utCerrarCarrera();u=T.getG().ut;
+  t('la carrera sube preparaciones y deja carga', u.prep.encaje>enc0&&u.carga>carga0);
+}
+
+console.log('\n── Ultratrail · puntos, índice, piedras y sorteo (paso 5c) ──');
+{
+  const R_=id=>T.ULTRA_RACES.find(r=>r.id===id);
+  t('puntos de dificultad como ITRA: km + D+/100, de 2 a 6', T.utPuntos(R_('tresvalles'))===2&&T.utPuntos(R_('macizo'))===5&&T.utPuntos(R_('millas'))===6);
+  t('la curva del sorteo: 25 piedras ≈ 50 %, nunca el 100 %', Math.abs(T.utProbSorteo(25)-0.5)<0.01&&T.utProbSorteo(500)<1&&T.utProbSorteo(0)===0);
+  const nueva=()=>{setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});const g=T.getG();g.ut.dinero=9999;g.ut.calendario.forEach(x=>{x.cancelada=false;});return g;};
+  let g=nueva(),u=g.ut;
+  u.piedras={saldo:7,ultima:1};
+  t('las piedras están activas dos años y luego se duermen', T.utPiedrasActivas()===7&&(u.temporada=3,T.utPiedrasActivas()===0)&&/dormidas/.test(T.utFraseSorteo()));
+  u.temporada=1;
+  t('la frase del sorteo enseña lo que falta, no solo el número', /Terminar un 100 km te daría 2 más/.test(T.utFraseSorteo()));
+  // Índice: mejores de los últimos 36 meses; caduca sin nada en 24
+  u.historial=[{t:1,tipo:'100k',indice:600},{t:1,tipo:'preparacion',indice:700}];
+  t('el índice combina los mejores resultados', T.utIndice().valido&&T.utIndice().valor>600&&T.utIndice().valor<700&&T.utIndice('100k').valor===600);
+  u.temporada=4;
+  t('sin resultados en dos años, el índice no vale', !T.utIndice().valido);
+  // Sorteo: solicitar en enero; con suerte, dentro y las piedras a cero; inscrito
+  g=nueva();u=g.ut;u.piedras={saldo:999,ultima:1};
+  t('se solicita en enero', T.utSolicitarSorteo()&&u.sorteo.estado==='solicitado'&&!!T.utNoPuedeSolicitar());
+  T.utResolverSorteo();
+  t('si te toca: dentro, piedras a cero e inscrito', u.sorteo.estado==='dentro'&&u.piedras.saldo===0&&u.planes.some(p=>p.id==='millas'&&p.tipo==='correr'));
+  // Sin piedras: lista de espera y fuera; las piedras no se pierden
+  g=nueva();u=g.ut;u.piedras={saldo:0,ultima:null};T.utSolicitarSorteo();T.utResolverSorteo();
+  t('sin suerte, a la lista de espera', u.sorteo.estado==='espera');
+  T.utListaEspera();
+  t('la lista de espera tampoco llega: fuera', u.sorteo.estado==='fuera');
+  // Puertas laterales: índice y voluntariado no gastan piedras
+  g=nueva();u=g.ut;u.piedras={saldo:5,ultima:1};u.historial=[{t:1,tipo:'100k',indice:850}];T.utSolicitarSorteo();T.utResolverSorteo();
+  t('vía del índice: dorsal de cortesía sin gastar piedras', u.sorteo.estado==='dentro'&&u.sorteo.via==='indice'&&u.piedras.saldo===5);
+  g=nueva();u=g.ut;u.creditoVoluntario=[{id:'millas',t:1}];T.utSolicitarSorteo();T.utResolverSorteo();
+  t('de voluntario el año antes: dorsal reservado', u.sorteo.estado==='dentro'&&u.sorteo.via==='voluntario'&&u.creditoVoluntario.length===0);
+  // Si te toca y no puedes pagar, pierdes la mitad
+  g=nueva();u=g.ut;u.piedras={saldo:999,ultima:1};u.dinero=0;T.utSolicitarSorteo();T.utResolverSorteo();
+  t('si te toca y no confirmas, pierdes la mitad de las piedras', u.sorteo.estado==='fuera'&&u.piedras.saldo===499);
+  // Al pasar la semana 4, el sorteo se resuelve solo
+  g=nueva();u=g.ut;u.piedras={saldo:999,ultima:1};T.utSolicitarSorteo();T.utAvanzar();
+  t('el sorteo se resuelve al pasar enero', u.sorteo.estado!=='solicitado');
+  // La cuenta pendiente: al cerrar el año sin entrar, queda apuntado
+  g=nueva();u=g.ut;T.utSolicitarSorteo();u.sorteo.estado='fuera';T.utNuevaTemporada();
+  t('cada año sin entrar queda en la cuenta pendiente', u.sorteos.length===1&&u.sorteos[0].entro===false&&u.sorteo===null);
+}
+
+console.log('\n── Ultratrail · trabajo, material, variantes y reconocimiento (paso 5d) ──');
+{
+  const R_=id=>T.ULTRA_RACES.find(r=>r.id===id);
+  const nueva=()=>{setG({});T.utNueva({nombre:'Ane',perfil:'veterano',edad:30});const g=T.getG();g.ut.dinero=9999;g.ut.calendario.forEach(x=>{x.cancelada=false;});return g;};
+  let g=nueva(),u=g.ut;
+  t('se empieza en jornada completa y la reducida no llega hasta el año 4', u.escalon==='completa'&&!T.utEscalonesPosibles().includes('reducida'));
+  u.temporada=3;
+  t('al cerrar el año 3, ya se puede pedir la reducida', T.utEscalonesPosibles().includes('reducida'));
+  T.utNuevaTemporada('reducida');
+  t('la reducida da más horas', u.escalon==='reducida'&&T.utEscalon().horas>T.UT_ESCALONES.completa.horas);
+  u.dinero=-50;
+  t('un año en números rojos te devuelve a jornada completa', !T.utEscalonesPosibles().includes('reducida'));
+  u.dinero=9999;u.historial=[{t:u.temporada,tipo:'100k',indice:700,kind:'finisher'},{t:u.temporada,tipo:'100k',indice:700,kind:'finisher'}];
+  t('con índice y dos terminadas en el año, sale el sponsor de material', T.utEscalonesPosibles().includes('material'));
+  // Material: comprar, gratis con sponsor; zapatillas que se gastan
+  g=nueva();u=g.ut;const d0=u.dinero;
+  t('comprar el frontal bueno cuesta y ya lo tienes', T.utComprar('frontal')&&u.material.frontal&&u.dinero===d0-160&&T.utNoPuedeComprar('frontal')==='Ya lo tienes');
+  u.escalon='material';const d1=u.dinero;T.utComprar('bastones');
+  t('con sponsor de material, gratis', u.material.bastones&&u.dinero===d1);
+  u.escalon='completa';
+  t('las de noche piden chaqueta; las de día no', T.utChaquetaObligatoria(R_('macizo'))&&!T.utChaquetaObligatoria(R_('collado')));
+  T.ultraStart({carrera:'macizo',repuesto:'bolsa',bastones:true,chaqueta:false});let c=T.getG().ut.carrera;
+  t('en carrera: frontal bueno de 12 h y bastones; sin chaqueta, controles al azar', c.frontal.horas===12&&c.material.bastones&&!c.material.chaqueta&&c.controles.length>=1);
+  t('los controles caen en avituallamientos, nunca en meta', T.ultraControles(R_('macizo')).every(i=>R_('macizo').bloques[i].fin!=='meta'));
+  // Variantes de recorrido
+  const alt=T.utRaceVariante(R_('macizo'),'alternativo'),cor=T.utRaceVariante(R_('macizo'),'acortado');
+  t('el recorrido alternativo quita desnivel (y no toca el dato del calendario)', alt.dplus<R_('macizo').bloques.reduce((a,b)=>a+b.dplus,0)&&R_('macizo').bloques[1].dplus===800);
+  t('el acortado termina antes, en meta, y vale menos puntos', cor.km<105&&cor.bloques[cor.bloques.length-1].fin==='meta'&&T.utPuntos(cor)<T.utPuntos(R_('macizo')));
+  // La víspera decide una vez
+  g=nueva();u=g.ut;T.utInscribirse('collado');u.semana=17;T.utVispera();const v=u.vispera;T.utVispera();
+  t('la variante se decide una vez, la víspera', !!v&&u.vispera===v&&['completo','alternativo'].includes(v.variante));
+  // Reconocimiento por sectores
+  g=nueva();u=g.ut;const mac=R_('macizo');
+  t('se empieza sin conocer nada', T.utSectores(mac).every(sec=>T.utReco('macizo',sec)===0));
+  T.utReconocerSector('macizo','el circo');
+  t('una salida de reconocimiento: el sector a nivel 2', T.utReco('macizo','el circo')===2&&u.dinero<9999);
+  T.utFinDeSemanaReco('macizo',1);
+  t('un fin de semana: media carrera reconocida y carga', T.utReco('macizo','el collado')===2&&u.carga>=15);
+  Object.keys(u.prep).forEach(k=>{u.prep[k]=90;});u.carga=0;   // que llegue de día al final
+  T.ultraStart({carrera:'macizo',repuesto:'bolsa'});c=T.getG().ut.carrera;
+  t('la carrera lleva lo que conoces de cada sector', c.reco['el circo']===2&&c.reco['las crestas']===undefined);
+  let e='',n=0;while(e!=='fin'&&n++<30){T.ultraParar('beber');T.ultraParar('comer');if(c.enBolsa){c.enBolsa=false;}c.paradaUsada=[];e=T.ultraCorrerBloque('steady');}
+  T.utCerrarCarrera();
+  t('lo corrido de día se conoce (3); lo de noche, al menos visto', (T.utSectores(mac).some(sec=>T.utReco('macizo',sec)===3)||(c.fin.km||0)<=42)&&T.utReco('macizo','el valle')>=1);
+  for(let i=0;i<40;i++)T.utRecoDecae();
+  t('se olvida despacio, pero lo corrido de día nunca vuelve a 0', T.utSectores(mac).filter(sec=>(u.recoSuelo.macizo||{})[sec]).every(sec=>T.utReco('macizo',sec)>=1));
+  // Zapatillas: se gastan con carreras y tiradas
+  t('las zapatillas suman kilómetros', u.material.zapatillasKm>250);
 }
 
 t.done('TODO OK');

@@ -22,7 +22,7 @@ const LS={
     localStorage.setItem(LS_PREFIX+'migrated_v41','1');
   }catch(e){}
 })();
-const GAME_BUILD=105; // incrementar con cada versión del juego
+const GAME_BUILD=106; // incrementar con cada versión del juego
 const SAVE_KEY='save_slot_';
 const SAVE_VERSION='TRAIL_SAVE_V2';
 const NUM_SLOTS=5;
@@ -229,6 +229,35 @@ function sanitizeState(raw){
   if(Array.isArray(s.dogs))s.dogs.forEach(d=>{if(d&&typeof d==='object')d.name=cut(d.name,30);});
   if(s.lifeAthlete&&typeof s.lifeAthlete==='object')s.lifeAthlete.name=cut(s.lifeAthlete.name,30);
   if(Array.isArray(s.rivals))s.rivals.forEach(r=>{if(r&&typeof r==='object')r.name=cut(r.name,40);});
+  // Ultratrail (§ 31 del diseño): una sola entrada, G.ut. Números acotados y listas como listas.
+  if(s.ut&&typeof s.ut==='object'){
+    const u=s.ut;
+    u.temporada=clampI(u.temporada,1,50,1);
+    u.semana=clampI(u.semana,1,53,1);
+    u.dinero=clampI(u.dinero,-9999999,9999999,0);
+    u.cicloDesde=clampI(u.cicloDesde,-60,60,1);
+    u.recuperaHasta=clampI(u.recuperaHasta,-60,120,1);
+    ['calendario','planes','historial','movimientos','diario','visitas'].forEach(k=>{if(!Array.isArray(u[k]))u[k]=[];});
+    if(u.carrera!=null&&typeof u.carrera!=='object')u.carrera=null;
+    // 5b: preparaciones (0-100), carga y secuelas
+    const pr=(u.prep&&typeof u.prep==='object')?u.prep:{};
+    u.prep={};['base','encaje','estomago','nocturna','termica'].forEach(k=>{u.prep[k]=Math.max(0,Math.min(100,Number(pr[k])||0));});
+    u.carga=Math.max(0,Math.min(100,Number(u.carga)||0));
+    if(!Array.isArray(u.secuelas))u.secuelas=[];
+    // 5c: piedras, sorteo y créditos de voluntario
+    const pi=(u.piedras&&typeof u.piedras==='object')?u.piedras:{};
+    u.piedras={saldo:Math.max(0,Math.min(999,Math.round(Number(pi.saldo)||0))),ultima:Number.isFinite(Number(pi.ultima))&&pi.ultima!=null?Number(pi.ultima):null};
+    if(u.sorteo!=null&&typeof u.sorteo!=='object')u.sorteo=null;
+    if(u.sorteo===undefined)u.sorteo=null;
+    ['sorteos','creditoVoluntario'].forEach(k=>{if(!Array.isArray(u[k]))u[k]=[];});
+    // 5d: material, índice por temporada, reconocimiento por sectores y la víspera
+    const ma=(u.material&&typeof u.material==='object')?u.material:{};
+    u.material={frontal:!!ma.frontal,bastones:!!ma.bastones,chaqueta:!!ma.chaqueta,zapatillasKm:Math.max(0,Math.min(99999,Math.round(Number(ma.zapatillasKm)||0)))};
+    ['indices','reco','recoSuelo'].forEach(k=>{if(!u[k]||typeof u[k]!=='object'||Array.isArray(u[k]))u[k]={};});
+    if(u.vispera!=null&&typeof u.vispera!=='object')u.vispera=null;
+    if(u.vispera===undefined)u.vispera=null;
+    if(!['completa','reducida','material','profesional'].includes(u.escalon))u.escalon='completa';
+  }else if(s.ut!=null)s.ut=null;
   if(Array.isArray(s.coachRoster))s.coachRoster.forEach(sl=>{
     if(sl&&typeof sl==='object'&&sl.coachAthlete&&typeof sl.coachAthlete==='object')
       sl.coachAthlete.name=cut(sl.coachAthlete.name,30);
@@ -452,6 +481,8 @@ function slotLabel(data){
   const date=new Date(data.ts).toLocaleDateString('es-ES',{day:'2-digit',month:'short'});
   // Fase del arco narrativo
   const phase=s.carreraVida?(PHASE_LABEL[s.lifecyclePhase]||PHASE_LABEL.runner):null;   // T54 (v93)
-  return {name,runName,year,ranking,specRanking,spec,mode,totalKm,date,phase,
+  // Ultratrail no tiene ranking ni especialidad: su línea es temporada, edad y ultras terminadas
+  const linea=s.gameMode==='ultratrail'&&s.ut?`Temporada ${s.ut.temporada||1} · ${s.runner?.age||'—'} años · ${(s.ut.historial||[]).filter(h=>h&&h.kind==='finisher').length} terminadas`:null;
+  return {name,runName,year,ranking,specRanking,spec,mode,totalKm,date,phase,linea,
           ended:s.careerEnded||null};   // T29 (v86)
 }

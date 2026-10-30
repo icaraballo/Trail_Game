@@ -824,6 +824,7 @@ const MODE_LABELS={
   canicross:{label:'Canicross', emoji:'🐕'},
   backyard: {label:'Backyard',  emoji:'🔔'},
   ultra:    {label:'Ultra',     emoji:'🏔'},
+  ultratrail:{label:'Ultratrail',emoji:'🏔'},
 };
 const modeInfo     =m=>MODE_LABELS[m]||MODE_LABELS.medio;
 const modeEmoji    =m=>modeInfo(m).emoji;

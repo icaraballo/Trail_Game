@@ -69,7 +69,7 @@ addEventListener('keydown',e=>{
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<title>Trail Game · v105</title>
+<title>Trail Game · v106</title>
 <style>
 /* ══ DIRECCIÓN VISUAL (v102) · TOKENS ══════════════════════════════════════════
    Vault: Diseño/TG-Direccion-Visual § 2. ÚNICO sitio con hex permitido: los renders
@@ -702,6 +702,56 @@ input[type=text]:focus{border-color:var(--ink3)}
 .pz-cab-carrera .pz-cab-pos{font-family:var(--f-num);font-size:34px;font-weight:600;line-height:1}
 .pz-cab-carrera .pz-cab-dato{font-family:var(--f-num);font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .pz-cab-carrera .pz-cab-nombre{font-size:12.5px;color:var(--ink3)}
+/* ══ ULTRATRAIL (paso 5a, 2026-10-30) · la carcasa del modo: línea de tiempo y tarjetas ══ */
+.ut-top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--ink3);margin-bottom:10px}
+.ut-top b{color:var(--ink);font-weight:600}
+.ut-recursos{display:grid;grid-template-columns:1fr 1.6fr;gap:14px;margin-bottom:14px;align-items:end}
+.ut-dinero{font-size:22px}
+.ut-linea{position:relative;display:flex;height:26px;border-radius:7px;overflow:hidden;margin:14px 0 6px}
+.ut-linea>div{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:var(--on-fill);min-width:0;overflow:hidden;white-space:nowrap}
+.ut-linea>.ut-f-base{background:var(--cuerpo)}
+.ut-linea>.ut-f-especifico{background:var(--carrera)}
+.ut-linea>.ut-f-afinado{background:var(--fill-medio)}
+.ut-linea>.ut-hoy{position:absolute;top:0;bottom:0;width:3px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 2px var(--card)}
+.ut-sem{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3)}
+.ut-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center}
+.ut-stats .pz-num{font-size:22px}
+.ut-stats span{display:block;font-size:11px;color:var(--ink3)}
+.ut-filas{padding:2px 14px}
+.ut-carr-cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ut-carr-cab .pz-titulo{font-size:20px;margin:0}
+.ut-mes{font-family:var(--f-num);font-weight:600;color:var(--ink3);font-size:14px;text-transform:uppercase}
+.ut-exig{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0 12px}
+.ut-exig .pz-barra{height:6px}
+.ut-exig span{display:block;font-size:10.5px;color:var(--ink3);margin-top:4px;text-align:center}
+.ut-3btn{display:flex;gap:6px}
+.ut-3btn .pz-btn{padding:9px 6px;font-size:13.5px;margin:0}
+.ut-3btn .pz-btn+.pz-btn{margin:0}
+.ut-quitar{font-size:13px;padding:8px}
+.ut-pasada{opacity:.6}
+.ut-edades{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ut-edades .pz-opcion{text-align:center;padding:10px 0;margin:0}
+.ut-edades .pz-opcion.sel{padding:9px 0}
+.ut-edades .pz-num{font-size:20px}
+.ut-dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ut-grande{font-size:26px}
+.ut-carga-l{display:flex;justify-content:space-between;margin-bottom:5px}
+.ut-trabajo{font-size:12px;margin-top:5px}
+.ut-preps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center}
+.ut-prep .circ{width:40px;height:40px;margin:0 auto 4px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--line2);color:var(--ink3)}
+.ut-prep .circ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ut-prep.mas .circ{border-color:var(--pos);color:var(--pos);background:var(--pos-t)}
+.ut-prep.ojo .circ{border-color:var(--avi-bar);color:var(--avi);background:var(--avi-t)}
+.ut-prep.menos .circ{border-color:var(--neg);color:var(--neg);background:var(--neg-t)}
+.ut-prep .nom{font-size:11px;color:var(--ink2);line-height:1.2}
+.ut-prep-n{font-size:14px;margin-top:2px}
+.ut-tocar{text-align:center;margin-top:8px;font-size:12px;color:var(--ink3)}
+.ut-vol{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.ut-vol .pz-opcion{text-align:center;margin:0;padding:10px 0}
+.ut-vol .pz-opcion.sel{padding:9px 0}
+.ut-difuso .pz-fila-txt{color:var(--ink3);filter:blur(.4px)}
+.ut-reco{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.ut-reco .pz-btn{width:auto;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -793,24 +843,26 @@ input[type=text]:focus{border-color:var(--ink3)}
 </nav>
 
 
-<script src="js/constants.js?v=105"></script>
-<script src="js/state.js?v=105"></script>
-<script src="js/save.js?v=105"></script>
-<script src="js/race.js?v=105"></script>
-<script src="js/coach.js?v=105"></script>
-<script src="js/club.js?v=105"></script>
-<script src="js/canicross.js?v=105"></script>
-<script src="js/canicross-render.js?v=105"></script>
-<script src="js/backyard.js?v=105"></script>
-<script src="js/backyard-render.js?v=105"></script>
-<script src="js/ultra.js?v=105"></script>
-<script src="js/ultra-render.js?v=105"></script>
+<script src="js/constants.js?v=106"></script>
+<script src="js/state.js?v=106"></script>
+<script src="js/save.js?v=106"></script>
+<script src="js/race.js?v=106"></script>
+<script src="js/coach.js?v=106"></script>
+<script src="js/club.js?v=106"></script>
+<script src="js/canicross.js?v=106"></script>
+<script src="js/canicross-render.js?v=106"></script>
+<script src="js/backyard.js?v=106"></script>
+<script src="js/backyard-render.js?v=106"></script>
+<script src="js/ultra.js?v=106"></script>
+<script src="js/ultra-render.js?v=106"></script>
+<script src="js/ultratrail.js?v=106"></script>
+<script src="js/ultratrail-render.js?v=106"></script>
 <!-- T53 (v92): render.js partido en tres. El orden importa solo para las
      sentencias de nivel raíz, y entre estos tres no hay ninguna que dependa
      de otra — pero se mantiene el orden temático por legibilidad. -->
-<script src="js/render-core.js?v=105"></script>
-<script src="js/render-clasico.js?v=105"></script>
-<script src="js/render-temporada.js?v=105"></script>
+<script src="js/render-core.js?v=106"></script>
+<script src="js/render-clasico.js?v=106"></script>
+<script src="js/render-temporada.js?v=106"></script>
 <script>
 // T70 (v90): devmode.js solo sirve con ?dev=1. Se carga a
 // demanda; render() espera a que esté dentro para que renderDevOverlay()
@@ -822,7 +874,7 @@ input[type=text]:focus{border-color:var(--ink3)}
 G=freshState();
 if(window.DEV_ON){
   const s=document.createElement('script');
-  s.src='js/devmode.js?v=105';
+  s.src='js/devmode.js?v=106';
   s.onload=()=>render();
   s.onerror=()=>{console.warn('devmode.js no se pudo cargar; se arranca sin panel');window.DEV_ON=false;render();};
   document.body.appendChild(s);

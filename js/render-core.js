@@ -162,8 +162,8 @@ function fmtEur(n,signo){return (n<0?'−':signo&&n>0?'+':'')+'€'+fmtMiles(n);
 // Solo lee G: pintar no cambia la partida.
 function chasisModo(){
   if(G.canicrossMode||G.gameMode==='canicross')return 'canicross';
-  // Backyard y Ultra comparten acento: serán el mismo modo cuando llegue la carcasa
-  if(G.gameMode==='backyard'||G.gameMode==='ultra'||(typeof G.screen==='string'&&/^(by|ut)[A-Z]/.test(G.screen)))return 'backyard';
+  // Backyard, la ultra suelta y Ultratrail comparten acento (el Backyard entra en Ultratrail, paso 6)
+  if(G.gameMode==='backyard'||G.gameMode==='ultra'||G.gameMode==='ultratrail'||(typeof G.screen==='string'&&/^(by|ut)[A-Z]/.test(G.screen)))return 'backyard';
   if(G.carreraVida&&G.lifecyclePhase==='club')return 'club';
   if(typeof G.screen==='string'&&G.screen.startsWith('club')&&G.screen!=='clubSetup')return 'club';
   if(coachViewActive())return 'entrenador';
@@ -185,8 +185,9 @@ function updateFinBar(){
   if(!bar)return;
   // paso 6: en carrera la sustituye la cabecera de carrera (TG-Direccion-Visual § 4)
   const screens=['intro','workSetup','canicrossAntigua','modeSelect','saveScreen','segment','aid','midRaceEvent',
-    'byMenu','byPre','byBell','byLoop','byCorral','byEnd','utPre','utBloque','utBolsa','utFin'];   // Backyard y Ultra no tienen dinero   // la mañana de carrera sí lleva la barra (el dinero importa)
-  bar.style.display=screens.includes(G.screen)?'none':'block';
+    'byMenu','byPre','byBell','byLoop','byCorral','byEnd'];   // Backyard no tiene dinero   // la mañana de carrera sí lleva la barra (el dinero importa)
+  // Ultra y Ultratrail (ut*): la carrera no lleva barra y la carcasa pinta su dinero en el hub
+  bar.style.display=screens.includes(G.screen)||(typeof G.screen==='string'&&/^ut[A-Z]/.test(G.screen))?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
   // monthlyNet(), que calcula sobre la economía de Clásico. En Canicross el único
@@ -544,7 +545,7 @@ function renderSaveScreen(){
       return `<div class="pz-tarjeta">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:16px">${lbl.runName?`«${esc(lbl.runName)}»`:lbl.name}</b><span class="pz-efectos">Ranura ${slot+1}</span></div>
         ${lbl.ended?`<div class="pz-diag menos">📉 Carrera terminada</div>`:''}
-        <div class="pz-efectos">${lbl.runName?esc(lbl.name)+' · ':''}Año ${lbl.year} · Global ${lbl.ranking} · ${lbl.spec} ${lbl.specRanking}</div>
+        <div class="pz-efectos">${lbl.runName?esc(lbl.name)+' · ':''}${lbl.linea||`Año ${lbl.year} · Global ${lbl.ranking} · ${lbl.spec} ${lbl.specRanking}`}</div>
         <div class="pz-efectos">${lbl.mode}${lbl.phase?' · '+lbl.phase:''}${lbl.totalKm?' · '+lbl.totalKm+' km':''} · ${lbl.date}</div>
         <div class="pz-efectos">🏆 ${achNormal} · 🐕 ${achCn} · ⚡ ${achExpres}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
@@ -651,7 +652,7 @@ function renderModeSelect(){
     {id:'club',          icon:'🏕️', label:'Club',            desc:'Gestiona un club · plantilla · presupuesto',          available:true,  lockable:true},
     {id:'canicross',     icon:'🐕',  label:'Canicross',       desc:'Corres con tu perro · el perro no tiene barra, tiene gestos', available:true, lockable:false},
     {id:'backyard',      icon:'🔔',  label:'Backyard',        desc:'Una vuelta cada hora en punto · gana el último en pie · reto suelto', available:true, lockable:false},
-    {id:'ultra',         icon:'🏔',  label:'Ultra',           desc:'Una carrera de 105 km con noche y barreras · carrera suelta, en pruebas', available:true, lockable:false},
+    {id:'ultratrail',    icon:'🏔',  label:'Ultratrail',      desc:'Quince temporadas de ultras con trabajo · objetivos, noches y barreras · en pruebas', available:true, lockable:false},
   ];
   // Leer desbloqueos del localStorage
   let unlocked={coach:false,club:false};
@@ -747,8 +748,10 @@ window.confirmMode=()=>{
   if(G.gameMode==='canicross'){G.screen='intro';render();return;}
   // El Backyard guarda su tirada en su propia clave, no en una ranura de partida (§ 18)
   if(G.gameMode==='backyard'){G._saveSlot=null;G.screen=byTiradaGuardada()?'byMenu':'byPre';render();return;}
-  // La carrera ultra suelta tampoco usa ranura (hasta que exista la carcasa del modo)
+  // La carrera ultra suelta (solo desde el panel de desarrollo) no usa ranura
   if(G.gameMode==='ultra'){G._saveSlot=null;G.screen='utPre';render();return;}
+  // Ultratrail sí: es una carrera deportiva entera, con su ranura como Clásico
+  if(G.gameMode==='ultratrail'){G.screen=G.ut?'utHub':'utNueva';render();return;}
   if(G.gameMode==='club'){
     // Guiño narrativo si el modo está desbloqueado vía arco narrativo
     let unlocked={};try{unlocked=JSON.parse(LS.get('unlocked')||'{}');}catch(e){}
