@@ -822,6 +822,7 @@ const MODE_LABELS={
   coach:    {label:'Entrenador',emoji:'📋'},
   club:     {label:'Club',      emoji:'🏕'},
   canicross:{label:'Canicross', emoji:'🐕'},
+  backyard: {label:'Backyard',  emoji:'🔔'},
 };
 const modeInfo     =m=>MODE_LABELS[m]||MODE_LABELS.medio;
 const modeEmoji    =m=>modeInfo(m).emoji;

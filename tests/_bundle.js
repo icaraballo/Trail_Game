@@ -1,6 +1,6 @@
 // Banco de pruebas compartido por smoke.js y content.js.
 //
-// Concatena los doce .js en UN solo ámbito, igual que hace el navegador (son
+// Concatena los catorce .js en UN solo ámbito, igual que hace el navegador (son
 // scripts clásicos, no módulos), con stubs de DOM. Ojo: los `const`/`let` de
 // nivel raíz NO se cuelgan del objeto global en un contexto `vm`, así que hay
 // que pedir explícitamente los nombres que se quieren usar — el footer los
@@ -11,7 +11,7 @@ const fs=require('fs'), vm=require('vm'), path=require('path');
 // El MISMO orden que index.html. Antes no lo era —render.js iba aquí antes que
 // coach/club/canicross y en el navegador después— y eso es justo lo que hace
 // que un test pase y el navegador reviente. Corregido con T53 (v92).
-const FILES=['constants.js','state.js','save.js','race.js','coach.js','club.js','canicross.js','canicross-render.js',
+const FILES=['constants.js','state.js','save.js','race.js','coach.js','club.js','canicross.js','canicross-render.js','backyard.js','backyard-render.js',
   'render-core.js','render-clasico.js','render-temporada.js','devmode.js'];
 const JS_DIR=path.join(__dirname,'..','js');
 

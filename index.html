@@ -95,6 +95,7 @@ addEventListener('keydown',e=>{
   --acc-canicross:#4A7A2E;--acc-canicross-t:#E5EFDC; /* verde: decidido el 2026-10-27 (el azul frío chocaba con Cuerpo) */
   --acc-entrenador:#3B5B82;--acc-entrenador-t:#E2E9F2;
   --acc-club:#A63D63;--acc-club-t:#F6E1E9;
+  --acc-backyard:#2F6F6A;--acc-backyard-t:#DDEEEC;   /* Backyard: verde azulado de frontal de noche */
   --acc:var(--acc-clasico);--acc-t:var(--acc-clasico-t);
   /* Dificultad: etiqueta de la barra de arriba. No tiñe la selección */
   --dif-facil:#2B7238;--dif-facil-t:#E3F0E2;--dif-facil-b:#8DBF8F;
@@ -135,6 +136,7 @@ addEventListener('keydown',e=>{
   --acc-canicross:#5E9A3B;--acc-canicross-t:#1F2D17;
   --acc-entrenador:#5F83B0;--acc-entrenador-t:#1C2633;
   --acc-club:#C4577F;--acc-club-t:#3A1C28;
+  --acc-backyard:#5BA39C;--acc-backyard-t:#18302D;
   --dif-facil:#6DBE78;--dif-facil-t:#1A2E1D;--dif-facil-b:#3F7A45;
   --dif-medio:#E0B04A;--dif-medio-t:#33290F;--dif-medio-b:#8A6A1E;
   --dif-dificil:#E7735F;--dif-dificil-t:#3A1C17;--dif-dificil-b:#8A3A2E;
@@ -149,10 +151,41 @@ addEventListener('keydown',e=>{
   color-scheme:dark;
 }
 }
+/* La noche del Backyard: el mismo tema oscuro, encendido por data-noche (lo pone aplicarModoChasis). */
+:root[data-noche="1"]{
+  --ground:#161814;--card:#1F221D;--soft:#252821;--line:#33372F;--line2:#474B42;--trk:#2E312A;
+  --ink:#ECEAE3;--ink2:#BDBAB1;--ink3:#9A978E;
+  --carrera:#C9673C;--carrera-t:#3D2418;--carrera-i:#F2C2A8;
+  --cuerpo:#6AA6D3;--cuerpo-t:#182A38;--cuerpo-i:#BBD8EE;
+  --dinero:#A98BC4;--dinero-t:#2A2135;--dinero-i:#D8C8E8;
+  --gente:#D77598;--gente-t:#3A1C28;--gente-i:#F2C1D3;
+  --pos:#6DBE78;--pos-t:#1A2E1D;--pos-i:#B9E3BD;
+  --neg:#E7735F;--neg-t:#3A1C17;--neg-i:#F5BDB2;
+  --avi:#E0B04A;--avi-t:#33290F;--avi-bar:#C08A12;
+  --acc-clasico:#C9673C;--acc-clasico-t:#3D2418;
+  --acc-expres:#C29A2E;--acc-expres-t:#332A10;
+  --acc-canicross:#5E9A3B;--acc-canicross-t:#1F2D17;
+  --acc-entrenador:#5F83B0;--acc-entrenador-t:#1C2633;
+  --acc-club:#C4577F;--acc-club-t:#3A1C28;
+  --acc-backyard:#5BA39C;--acc-backyard-t:#18302D;
+  --dif-facil:#6DBE78;--dif-facil-t:#1A2E1D;--dif-facil-b:#3F7A45;
+  --dif-medio:#E0B04A;--dif-medio-t:#33290F;--dif-medio-b:#8A6A1E;
+  --dif-dificil:#E7735F;--dif-dificil-t:#3A1C17;--dif-dificil-b:#8A3A2E;
+  --dif-hardcore:#BDBAB1;--dif-hardcore-t:#2E312A;--dif-hardcore-b:#5A5D55;
+  --ter-subida:#8F4A2C;--ter-subida-l:#E2A585;
+  --ter-bajada:#3D2A20;--ter-bajada-l:#D98C66;
+  --ter-llano:#2E312A;--ter-llano-l:#6E7068;
+  --ter-pend:#6E7068;--ter-avi:#6AA6D3;
+  --tier-regional:#3A3D35;--tier-nacional:#BDBAB1;--tier-elite:#ECEAE3;
+  --momento-neg:#3A2C29;
+  --fill-oscuro:#33362F;--fill-medio:#4A4D45;
+  color-scheme:dark;
+}
 :root[data-modo="expres"]{--acc:var(--acc-expres);--acc-t:var(--acc-expres-t)}
 :root[data-modo="canicross"]{--acc:var(--acc-canicross);--acc-t:var(--acc-canicross-t)}
 :root[data-modo="entrenador"]{--acc:var(--acc-entrenador);--acc-t:var(--acc-entrenador-t)}
 :root[data-modo="club"]{--acc:var(--acc-club);--acc-t:var(--acc-club-t)}
+:root[data-modo="backyard"]{--acc:var(--acc-backyard);--acc-t:var(--acc-backyard-t)}
 /* Barlow servida desde el repo (la CSP tiene font-src 'self'). Licencia: fonts/OFL.txt */
 @font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/barlow-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Barlow';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/barlow-latin-500-normal.woff2) format('woff2')}
@@ -768,6 +801,8 @@ input[type=text]:focus{border-color:var(--ink3)}
 <script src="js/club.js?v=103"></script>
 <script src="js/canicross.js?v=103"></script>
 <script src="js/canicross-render.js?v=103"></script>
+<script src="js/backyard.js?v=103"></script>
+<script src="js/backyard-render.js?v=103"></script>
 <!-- T53 (v92): render.js partido en tres. El orden importa solo para las
      sentencias de nivel raíz, y entre estos tres no hay ninguna que dependa
      de otra — pero se mantiene el orden temático por legibilidad. -->

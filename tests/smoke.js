@@ -37,6 +37,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
   'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
   'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnApplyMonthHours','cnHoursUsed','cnSponsorIncome','CN_EQUIP','CN_CMD_LEVEL_HOURS','cnEquipSeg',
+  'byStart','bySalir','byEntrarCorral','byHacer','byPalanca','byALaLineaLogica','byVivos','byTiempoPrevisto','byCorrerVuelta','byCampanaRivales','byEncadenar','byFijarRutina','byNoSalgo','byNocheAhora','BY_EVENTOS','BY_CORREDORES','BY_NOMBRES','BY_LEYENDAS','BY_ORGANIZADOR','BY_LUGAR',
   'cnDestiny','cnRetireDogAs','cnCircuitStanding','cnHomeDogs','cnCompanionStrip','cnSyncGraph','renderCnNotebook','renderCnEpilogo','cnCalibrate',
   'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
 const t=scorer();
@@ -1278,6 +1279,51 @@ console.log('\n── Canicross, rediseño paso 8 · calibración ──');
   t('da los cuatro tiers con porcentajes', [1,2,3,4].every(k=>c40[k]&&c40[k].win>=0&&c40[k].win<=100&&c40[k].campo>0));
   t('más nivel, mejor puesto medio en cada tier', [1,2,3,4].every(k=>c80[k].media<=c40[k].media));
   t('con el mismo nivel el tier 4 es más duro que el 1', c40[4].media/c40[4].campo>c40[1].media/c40[1].campo);
+}
+
+console.log('\n── Backyard (paso 5 del orden, reto suelto) ──');
+{
+  setG({gameMode:'backyard'});
+  T.byStart({corredor:'veterano',dificultad:'nacional'});
+  let b=T.getG().by;
+  t('la tirada nace en la campana, con el campo del evento', b.phase==='bell'&&b.rivals.length===T.BY_EVENTOS.nacional.n-1&&b.lap===0);
+  t('los cuatro corredores pregenerados, uno por arquetipo', new Set(T.BY_CORREDORES.map(c=>c.arq)).size===4);
+  T.bySalir('medio');T.byEntrarCorral();
+  t('descanso = 60 minutos menos la vuelta', b.corral===Math.floor(60-b.lastLap)&&b.lap===1);
+  const antes=b.corral;T.byHacer('gel');
+  t('cada acción descuenta su tiempo de la cuenta atrás', b.corral===antes-1);
+  b.corral=4;
+  t('una acción que no cabe no se hace', T.byHacer('pies')===false&&b.corral===4);
+  b.inv.llamada=1;b.corral=10;T.byPalanca('llamada');
+  t('llamar a casa se gasta', b.inv.llamada===0&&T.byPalanca('llamada')===false);
+  // Al bajar de 20 se materializan los nombres, inventados y de la tabla
+  b.rivals.forEach((r,i)=>{if(i>=15)r.out=true;});
+  b.cap=0;b.rivals.forEach(r=>{if(!r.out)r.cap=999;});
+  T.byCampanaRivales();
+  t('con 20 o menos, el pelotón tiene nombre', T.byVivos().every(r=>r.name&&T.BY_NOMBRES.some(([n])=>n===r.name)));
+  // No llegar a la campana
+  b.piernas=0;b.energia=0;b.lucidez=0;b.pies=3;
+  t('sin cuerpo, la vuelta no entra en la hora', T.byTiempoPrevisto('vivo')>=60);
+  const r=T.bySalir('suave');
+  t('no llegar a la campana es DNF', r==='end'&&b.result.kind==='dnf'&&/campana/.test(b.result.why));
+  // La vuelta en solitario: cae el último rival y el juego no te da la victoria
+  setG({gameMode:'backyard'});T.byStart({corredor:'liebre',dificultad:'local'});b=T.getG().by;
+  b.rivals.forEach(r=>{r.out=true;});b.lap=10;
+  T.byALaLineaLogica();
+  t('cuando no sale nadie más, la campana te pregunta igual', T.byVivos().length===0&&b.solo===true&&b.phase==='bell'&&!b.result);
+  T.bySalir('medio');
+  t('completar la vuelta en solitario es ganar', b.result&&b.result.kind==='gana'&&b.result.laps===11);
+  // La rutina se para cuando ya no cabe
+  setG({gameMode:'backyard'});T.byStart({corredor:'metronomo',dificultad:'local'});b=T.getG().by;
+  b.rivals.forEach(r=>{r.cap=999;r.terq=1;});
+  T.bySalir('medio');T.byEntrarCorral();T.byHacer('siesta');T.byHacer('pies');T.byFijarRutina();
+  b.piernas=30;b.energia=30;b.phase='bell';
+  const fin=T.byEncadenar();
+  t('la rutina se para y dice por qué', (fin==='corral'||fin==='bell'||fin==='end')&&(b.aviso||b.result));
+  t('nombres solo en constantes: las figuras del formato no van en los textos',
+    !/Txomin|Arrizabal|Marangoni/.test(src['backyard.js'].split('// ── Utilidades')[1])&&!/Txomin|Arrizabal|Marangoni/.test(src['backyard-render.js']));
+  t('el Backyard no guarda en una ranura de partida', /G\.gameMode==='backyard'\)\{G\._saveSlot=null;/.test(src['render-core.js']));
+  t('la noche del Backyard solo existe en sus pantallas', (setG({screen:'workSetup',by:b}),T.byNocheAhora()===false));
 }
 
 t.done('TODO OK');
