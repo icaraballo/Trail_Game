@@ -364,6 +364,7 @@ const objG=T.getG().coachSeasonObjective;
 t('el objetivo es solo datos: no lleva funciones', !!objG&&Object.values(objG).every(v=>typeof v!=='function'));
 const objJ=JSON.parse(JSON.stringify(T.serializableState().coachSeasonObjective));
 t('tras guardar conserva el id y se puede evaluar', objJ.id===objG.id&&typeof T.coachObjectiveMet(objJ,[])==='boolean');
+t('el balance de Entrenador aplica la confianza del objetivo una sola vez',/if\(!obj\.trustApplied\)G\.coachTrust=/.test(src['coach.js'])&&/trustApplied:true\}/.test(src['coach.js']));
 t('«primer podio» se cumple con un 3.º', T.coachObjectiveMet({id:'first_podio'},[{pos:3,dnf:false}])===true);
 t('«superar tu mejor puesto» usa el prevBest guardado',
   T.coachObjectiveMet({id:'beat_pb',prevBest:8},[{pos:6,dnf:false}])===true&&T.coachObjectiveMet({id:'beat_pb',prevBest:8},[{pos:9,dnf:false}])===false);

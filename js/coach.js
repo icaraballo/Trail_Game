@@ -1227,9 +1227,12 @@ function renderCoachSeasonEnd(){
   let objMet=false,objTrustDelta=0;
   if(obj){
     try{objMet=coachObjectiveMet(obj,results);}catch(e){objMet=false;}   // DS05 (v95)
-    G.coachSeasonObjective={...obj,met:objMet};
     objTrustDelta=objMet?(obj.reward||8):(obj.penalty||-5);
-    G.coachTrust=Math.max(0,Math.min(100,G.coachTrust+objTrustDelta));
+    // v103: la confianza del objetivo se sumaba en cada redibujo de esta pantalla (cambiar de
+    // pestaña y volver la volvía a aplicar). Ahora una sola vez: queda marcado en el objetivo,
+    // que se guarda con la partida y se renueva con la temporada siguiente.
+    if(!obj.trustApplied)G.coachTrust=Math.max(0,Math.min(100,G.coachTrust+objTrustDelta));
+    G.coachSeasonObjective={...obj,met:objMet,trustApplied:true};
   }
 
   const sponsorResults=(G.coachSponsors||[]).map(sp=>{
