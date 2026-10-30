@@ -65,32 +65,32 @@ function renderAchievements(){
     if(f.status==='pending'&&isUnlocked)return false;
     return true;
   });
-  const chip=(label,field,val)=>`<button onclick="G._achF.${field}='${val}';render()" style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid ${f[field]===val?'#c07a10':'#ddd'};background:${f[field]===val?'#fdf0e0':'#fff'};color:${f[field]===val?'#c07a10':'#888'};cursor:pointer;font-weight:${f[field]===val?'700':'400'}">${label}</button>`;
-  const tabBtn=(label,val)=>{const active=f.tab===val;return`<button onclick="G._achF.tab='${val}';render()" style="flex:1;padding:10px 8px;border:none;border-bottom:${active?'2px solid #c07a10':'2px solid transparent'};background:transparent;color:${active?'#c07a10':'#888'};font-size:13px;font-weight:${active?'700':'400'};cursor:pointer">${label}</button>`;};
+  const chip=(label,field,val)=>`<button onclick="G._achF.${field}='${val}';render()" style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid ${f[field]===val?'#c07a10':'#ddd'};background:${f[field]===val?'var(--soft)':'var(--card)'};color:${f[field]===val?'var(--avi)':'var(--ink3)'};cursor:pointer;font-weight:${f[field]===val?'700':'400'}">${label}</button>`;
+  const tabBtn=(label,val)=>{const active=f.tab===val;return`<button onclick="G._achF.tab='${val}';render()" style="flex:1;padding:10px 8px;border:none;border-bottom:${active?'2px solid #c07a10':'2px solid transparent'};background:transparent;color:${active?'var(--avi)':'var(--ink3)'};font-size:13px;font-weight:${active?'700':'400'};cursor:pointer">${label}</button>`;};
   el.innerHTML=`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <button class="secondary" onclick="G.screen=G._achPrev||'modeSelect';if(G._achPrevTab)G.activeTab=G._achPrevTab;render()" style="font-size:13px;padding:6px 12px">← Volver</button>
       <div>
         <h2 style="margin:0;font-size:20px">🏅 Logros</h2>
-        <div style="font-size:12px;color:#888">${totalUnlocked} de ${ACHIEVEMENTS.length} conseguidos</div>
+        <div style="font-size:12px;color:var(--ink3)">${totalUnlocked} de ${ACHIEVEMENTS.length} conseguidos</div>
       </div>
     </div>
-    <div style="display:flex;gap:0;border-bottom:2px solid #e8e6e0;margin-bottom:12px">
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:12px">
       ${tabBtn('Todos','all')}${tabBtn('Carrera','normal')}${tabBtn('Exprés','expres')}${tabBtn('Canicross','cn')}
     </div>
-    <div style="background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Rareza</div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Rareza</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         ${chip('Todos','rarity','all')}${chip('Fácil','rarity','easy')}${chip('Medio','rarity','medium')}${chip('Difícil','rarity','hard')}${chip('Legendario','rarity','legendary')}${chip('😄 Secreto','rarity','joke')}
       </div>
-      <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Estado</div>
+      <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Estado</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${chip('Todos','status','all')}${chip('Conseguidos','status','unlocked')}${chip('Pendientes','status','pending')}
       </div>
     </div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:8px">${list.length} logro${list.length!==1?'s':''} encontrado${list.length!==1?'s':''}</div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">${list.length} logro${list.length!==1?'s':''} encontrado${list.length!==1?'s':''}</div>
     <div class="card" style="padding:0">
-      ${list.length===0?`<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Sin logros con estos filtros</div>`:
+      ${list.length===0?`<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px">Sin logros con estos filtros</div>`:
       list.map((ach,i)=>{
         const meta=globalAchs[ach.id];
         const unlocked=!!meta;
@@ -98,16 +98,16 @@ function renderAchievements(){
         const isHardDiff=unlocked&&(meta.difficulty==='dificil'||meta.difficulty==='hardcore');
         const modeIcon=f.tab==='all'?(ach.mode==='cn'?'🐕 ':ach.mode==='expres'?'⚡ ':'🏃 '):'';
         const borderStyle=isHardDiff?'border:2px solid #c07a10;border-radius:6px;':'';
-        return`<div style="padding:10px 14px;${i<list.length-1?'border-bottom:1px solid #f0ede8;':''}display:flex;align-items:flex-start;gap:10px;${!unlocked?'opacity:0.55':''}${borderStyle}">
+        return`<div style="padding:10px 14px;${i<list.length-1?'border-bottom:1px solid var(--line);':''}display:flex;align-items:flex-start;gap:10px;${!unlocked?'opacity:0.55':''}${borderStyle}">
           <span style="font-size:18px;margin-top:1px">${unlocked?'🏆':'🔒'}</span>
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
-              <span style="font-size:13px;font-weight:600;color:#1a1a1a">${modeIcon}${unlocked||!isJoke?esc(ach.label):'???'}</span>
+              <span style="font-size:13px;font-weight:600;color:var(--ink)">${modeIcon}${unlocked||!isJoke?esc(ach.label):'???'}</span>
               ${rb(ach)}
               ${ach.excl?`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:#f0e8f8;color:#6b3fa0">Exclusivo</span>`:''}
             </div>
-            <div style="font-size:12px;color:#888">${unlocked||!isJoke?esc(ach.desc):'???'}</div>
-            ${meta?`<div style="font-size:12px;color:#888;margin-top:2px">Conseguido en ${MODE_LABELS[meta.difficulty]?modeLabelFull(meta.difficulty):meta.difficulty} · Año ${meta.year}</div>`:''}
+            <div style="font-size:12px;color:var(--ink3)">${unlocked||!isJoke?esc(ach.desc):'???'}</div>
+            ${meta?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">Conseguido en ${MODE_LABELS[meta.difficulty]?modeLabelFull(meta.difficulty):meta.difficulty} · Año ${meta.year}</div>`:''}
           </div>
         </div>`;
       }).join('')}
@@ -248,7 +248,7 @@ function rbar(v){const p=Math.max(0,Math.min(100,Math.round(v)));const c=p>50?'v
 function srow(label,val){const p=Math.max(0,Math.min(100,Math.round(val)));const c=p>=70?'var(--pos)':p>=50?'var(--cuerpo)':p>=35?'var(--avi-bar)':'var(--neg)';return `<div class="bar-row"><span class="bar-label">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c}"></div></div><span class="bar-pct">${Math.round(val)}</span></div>`;}
 function raceStats(){const r=G.runner;return `<div class="card">${[['Energía',r.energy],['Hidratación',r.hydration],['Piernas',r.legs]].map(([l,v])=>`<div class="bar-row"><span class="bar-label" style="color:${v<25?'var(--neg)':'var(--ink2)'}">${l}${v<25?' ⚠':''}</span>${rbar(v)}<span class="bar-pct" style="color:${v<25?'var(--neg)':'var(--ink)'}">${Math.round(v)}%</span></div>`).join('')}</div>`;}
 function progBar(){const segs=curSegs();const done=segs.slice(0,G.seg).reduce((a,s)=>a+s.km,0);const total=segs.reduce((a,s)=>a+s.km,0);const pct=total>0?Math.round(done/total*100):0;return `<div class="prog-wrap"><div class="prog-meta"><span>${done}km hechos</span><span>${total-done}km restantes</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;}
-function topBar(){const race=G.selectedRaces[G.currentRaceIdx];return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:12px;color:#999">${race?.name||''} · ${G.seg+1}/${curSegs().length}</span><span style="font-size:13px;font-weight:600">${fmt(G.time)}</span></div>`;}
+function topBar(){const race=G.selectedRaces[G.currentRaceIdx];return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:12px;color:var(--ink3)">${race?.name||''} · ${G.seg+1}/${curSegs().length}</span><span style="font-size:13px;font-weight:600">${fmt(G.time)}</span></div>`;}
 // T102 (v88): sin optional chaining sobre statBonus, un sponsor o club sin ese
 // campo lanzaba TypeError en una función que corre en cada tramo de carrera.
 function getEffStat(k){let b=0;Object.values(G.sponsors||{}).forEach(sp=>{if(sp?.statBonus?.[k])b+=sp.statBonus[k];});if(G.club?.statBonus?.[k])b+=G.club.statBonus[k];if(G.spending?.suplementos&&k==='nutricion')b+=3;
@@ -498,12 +498,12 @@ function renderSaveScreen(){
   }catch(e){}
   el.innerHTML=`
     <h1>Trail Game</h1>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span>
       <button class="opinar-btn" onclick="abrirOpinion()"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17.5H4A1.5 1.5 0 0 1 2.5 16V7A1.5 1.5 0 0 1 4 5.5z"/></svg>Opinar</button></div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <p class="sub" style="margin-bottom:0;flex:1">Partidas guardadas</p>
-      <button onclick="G._achPrev='saveScreen';G.screen='achievements';render()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">🏅 Logros</button>
-      <button onclick="showTutorial()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">📖 Tutorial</button>
+      <button onclick="G._achPrev='saveScreen';G.screen='achievements';render()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:var(--card);font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">🏅 Logros</button>
+      <button onclick="showTutorial()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:var(--card);font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">📖 Tutorial</button>
     </div>
 
     ${slots.map(({slot,data,info})=>{
@@ -523,7 +523,7 @@ function renderSaveScreen(){
       if(!lbl) return `<div class="save-slot empty">
         <div class="flex-between-center">
           <div>
-            <div class="save-slot-name" style="color:#aaa">Ranura ${slot+1} — vacía</div>
+            <div class="save-slot-name" style="color:var(--ink3)">Ranura ${slot+1} — vacía</div>
           </div>
           <button class="save-btn primary" onclick="startNewInSlot(${slot})">Nueva partida</button>
         </div>
@@ -531,7 +531,7 @@ function renderSaveScreen(){
       return `<div class="save-slot">
         <div class="flex-between">
           <div class="save-slot-info">
-            <div class="save-slot-name">${lbl.runName?`"${esc(lbl.runName)}"`:lbl.name}${lbl.ended?` <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:#fef0f0;color:#7a1010;font-weight:600">📉 Carrera terminada</span>`:''}</div>
+            <div class="save-slot-name">${lbl.runName?`"${esc(lbl.runName)}"`:lbl.name}${lbl.ended?` <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:var(--soft);color:var(--neg-i);font-weight:600">📉 Carrera terminada</span>`:''}</div>
             <div class="save-slot-meta">${lbl.runName?esc(lbl.name)+' · ':''}Año ${lbl.year} · Global ${lbl.ranking} · ${lbl.spec} ${lbl.specRanking}</div>
             <div class="save-slot-meta" style="margin-top:2px">${lbl.mode}${lbl.phase?` · <span style="color:#534AB7;font-weight:500">${lbl.phase}</span>`:''}${lbl.totalKm?' · '+lbl.totalKm+'km':''} · ${lbl.date}</div>
             <div class="save-slot-meta" style="margin-top:2px">🏆 ${achNormal} · 🐕 ${achCn} · ⚡ ${achExpres}</div>
@@ -546,9 +546,9 @@ function renderSaveScreen(){
       </div>`;
     }).join('')}
 
-    <div style="border-top:1px solid #e8e6e0;margin-top:16px;padding-top:16px">
-      <div style="font-size:13px;font-weight:600;color:#888;margin-bottom:8px">Importar partida</div>
-      <div style="font-size:12px;color:#aaa;margin-bottom:8px">Pega aquí el texto exportado y elige en qué ranura guardarla</div>
+    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">
+      <div style="font-size:13px;font-weight:600;color:var(--ink3);margin-bottom:8px">Importar partida</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">Pega aquí el texto exportado y elige en qué ranura guardarla</div>
       <div style="font-size:11px;color:#b8a88a;background:#fdf8f2;
   border:1px solid #e8dfc8;border-radius:6px;padding:8px 10px;
   margin-bottom:10px">
@@ -735,13 +735,13 @@ function renderModeSelect(){
         }
         // Normal (expres)
         const isSel=sel===m.id;
-        return `<div class="carrera-group-header" onclick="selectMode('${m.id}')" style="${isSel?'background:#fef9ec;border-bottom:1px solid #e8e6e0':''}">
-          <div style="width:36px;height:36px;border-radius:8px;background:${isSel?'#fef9ec':'var(--color-background-secondary)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${m.icon}</div>
+        return `<div class="carrera-group-header" onclick="selectMode('${m.id}')" style="${isSel?'background:var(--soft);border-bottom:1px solid var(--line)':''}">
+          <div style="width:36px;height:36px;border-radius:8px;background:${isSel?'var(--soft)':'var(--color-background-secondary)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${m.icon}</div>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:${isSel?'600':'500'};color:${isSel?'#c07a10':'var(--color-text-primary)'}">${m.label}</div>
+            <div style="font-size:14px;font-weight:${isSel?'600':'500'};color:${isSel?'var(--avi)':'var(--color-text-primary)'}">${m.label}</div>
             <div style="font-size:12px;color:var(--color-text-secondary)">${m.desc}</div>
           </div>
-          <span style="font-size:12px;color:#c07a10;font-weight:600">${isSel?'✓':''}</span>
+          <span style="font-size:12px;color:var(--avi);font-weight:600">${isSel?'✓':''}</span>
         </div>`;
       }).join('')}
     </div>
@@ -852,7 +852,7 @@ function renderIntro(){
   el.innerHTML=`
     <h1>Trail Game</h1>
     <p class="sub">Crea tu corredor y empieza tu carrera deportiva</p>
-    <div style="display:inline-block;font-size:11px;font-weight:700;color:#aaa;letter-spacing:.5px;margin-bottom:8px">v${GAME_BUILD}</div>
+    <div style="display:inline-block;font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px;margin-bottom:8px">v${GAME_BUILD}</div>
     ${G.gameMode==='expres'?`<div class="warn" style="margin-bottom:14px">⚡ <strong>Carrera Exprés</strong> — 3 temporadas · sin gestión de jornada · ganancias de entrenamiento ×1.5</div>`:''}
     <label class="field-label">Nombre de la partida</label>
     <input id="runname" type="text" placeholder="Ej: Temporada del reto, Sin trabajo año 1..." value="${esc(G.runName||'')}" maxlength="30" style="margin-bottom:14px"/>
@@ -860,7 +860,7 @@ function renderIntro(){
     <input id="rname" type="text" placeholder="Nombre del corredor" value="${esc(r.name)}" maxlength="22"/>
     <label class="field-label">Edad inicial</label>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">
-      ${[18,22,25,28,30,35].map(a=>`<div onclick="G.runner.age=${a};G.runner.stats=applyAgeToStats({...SPEC_STATS[G.runner.specialty]},${a});render()" style="padding:7px 14px;border-radius:8px;border:1px solid ${(r.age||25)===a?'#1a1a1a':'#ddd'};background:${(r.age||25)===a?'#f0ede8':'#fff'};cursor:pointer;font-size:14px;font-weight:${(r.age||25)===a?'600':'400'}">${a}</div>`).join('')}
+      ${[18,22,25,28,30,35].map(a=>`<div onclick="G.runner.age=${a};G.runner.stats=applyAgeToStats({...SPEC_STATS[G.runner.specialty]},${a});render()" style="padding:7px 14px;border-radius:8px;border:1px solid ${(r.age||25)===a?'#1a1a1a':'#ddd'};background:${(r.age||25)===a?'var(--soft)':'var(--card)'};cursor:pointer;font-size:14px;font-weight:${(r.age||25)===a?'600':'400'}">${a}</div>`).join('')}
     </div>
     <label class="field-label">Especialidad</label>
     <div class="grid2" style="margin-bottom:20px">
@@ -873,14 +873,14 @@ function renderIntro(){
     <div class="card" style="margin-bottom:18px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
         <div class="sec-title-sm" style="margin-bottom:0">Stats iniciales</div>
-        ${(r.age||25)!==25?`<div style="font-size:11px;color:#888">vs. base edad 25</div>`:''}
+        ${(r.age||25)!==25?`<div style="font-size:11px;color:var(--ink3)">vs. base edad 25</div>`:''}
       </div>
       ${(()=>{
         const _adj=applyAgeToStats(SPEC_STATS[r.specialty],r.age||25);
         const _base=SPEC_STATS[r.specialty];
         return Object.entries(_adj).map(([k,v])=>{
           const d=v-_base[k];
-          const dHtml=d>0?`<span style="color:#4a8a2a;font-size:11px;font-weight:700;margin-left:3px">+${d}</span>`:d<0?`<span style="color:#c0392b;font-size:11px;font-weight:700;margin-left:3px">${d}</span>`:'';
+          const dHtml=d>0?`<span style="color:var(--pos);font-size:11px;font-weight:700;margin-left:3px">+${d}</span>`:d<0?`<span style="color:var(--neg);font-size:11px;font-weight:700;margin-left:3px">${d}</span>`:'';
           return `<div class="bar-row"><span class="bar-label">${k.charAt(0).toUpperCase()+k.slice(1)}${dHtml}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${v}%;background:${v>=62?'#4a8a2a':v>=45?'#4a90d9':'#c07a10'}"></div></div><span class="bar-pct">${v}</span></div>`;
         }).join('');
       })()}
@@ -1111,7 +1111,7 @@ const TUTORIAL_CARDS=[
     icon:'🔄',
     title:'El bucle del año',
     text:`<div style="text-align:left;line-height:2">
-      <div style="font-size:13px;color:#888;margin-bottom:10px">Cada temporada repites este ciclo:</div>
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:10px">Cada temporada repites este ciclo:</div>
       <div>📋 <strong>Planificar</strong> — elige carreras, sponsors y jornada laboral</div>
       <div>💪 <strong>Entrenar</strong> — un bloque antes de cada carrera</div>
       <div>🏃 <strong>Correr</strong> — da lo mejor en cada tramo</div>
@@ -1156,7 +1156,7 @@ const TUTORIAL_CARDS=[
     icon:'⭐',
     title:'La pestaña Reputación',
     text:`<div style="text-align:left;line-height:1.9">
-      <div style="font-size:13px;color:#888;margin-bottom:10px">Tu presencia en redes te abre puertas:</div>
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:10px">Tu presencia en redes te abre puertas:</div>
       <div>📱 Publica posts, da charlas o aparece en medios para ganar <strong>seguidores</strong></div>
       <div>🏆 Más seguidores = mejor salario de <strong>sponsors</strong> e invitaciones a carreras</div>
       <div>⏱ Cada acción cuesta <strong>horas</strong> que no dedicarás a entrenar — elige bien</div>
@@ -1167,13 +1167,13 @@ const TUTORIAL_CARDS=[
     icon:'⚖️',
     title:'Entrenamiento vs Reputación',
     text:`<div style="text-align:left;line-height:1.9">
-      <div style="font-size:13px;color:#888;margin-bottom:10px">
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:10px">
         Cada trimestre tienes horas limitadas. Las que dedicas a entrenar no puedes dedicarlas a las redes — y viceversa.
       </div>
       <div>🏃 <strong>Atleta puro</strong> — entrena a tope, vive de resultados y sponsors deportivos</div>
       <div>📱 <strong>Atleta mediático</strong> — menos entreno, más presencia, mejores contratos comerciales</div>
       <div>⚖️ <strong>Equilibrado</strong> — tú decides cada trimestre según cómo va la temporada</div>
-      <div style="margin-top:10px;font-size:12px;color:#aaa">No hay una estrategia correcta. Depende de tus objetivos del año.</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--ink3)">No hay una estrategia correcta. Depende de tus objetivos del año.</div>
     </div>`
   }
 ];
@@ -1189,19 +1189,19 @@ function _renderTutCard(){
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:44px;margin-bottom:10px">${c.icon}</div>
       <div style="font-size:17px;font-weight:700;margin-bottom:10px">${c.title}</div>
-      <div style="font-size:14px;color:#555;line-height:1.65">${c.text}</div>
+      <div style="font-size:14px;color:var(--ink2);line-height:1.65">${c.text}</div>
     </div>
     <div style="display:flex;justify-content:center;gap:7px;margin-bottom:20px">
-      ${TUTORIAL_CARDS.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===_tutPage?'#1a1a1a':'#ddd'};transition:background .2s"></div>`).join('')}
+      ${TUTORIAL_CARDS.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===_tutPage?'var(--ink)':'#ddd'};transition:background .2s"></div>`).join('')}
     </div>
     <div class="grid-2">
       <button class="main" style="margin-top:0;${_tutPage===0?'visibility:hidden':''}" onclick="tutNav(-1)">← Anterior</button>
       ${isLast
-        ?`<button class="main" style="margin-top:0;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="closeTutorial()">¡Empezar! →</button>`
+        ?`<button class="main" style="margin-top:0;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="closeTutorial()">¡Empezar! →</button>`
         :`<button class="main" style="margin-top:0" onclick="tutNav(1)">Siguiente →</button>`
       }
     </div>
     <div style="text-align:center;margin-top:12px">
-      <span style="font-size:12px;color:#bbb">${_tutPage+1} / ${n}</span>
+      <span style="font-size:12px;color:var(--ink3)">${_tutPage+1} / ${n}</span>
     </div>`;
 }

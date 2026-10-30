@@ -29,20 +29,20 @@ function renderClubSetup(){
 
     ${currentClub.id!=='none'?`
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Club actual — ${esc(currentClub.name)}</div>
-      ${companion?`<div style="font-size:13px;color:#555;margin-bottom:8px">Tu compañero: <strong>${esc(companion)}</strong></div>`:''}
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Club actual — ${esc(currentClub.name)}</div>
+      ${companion?`<div style="font-size:13px;color:var(--ink2);margin-bottom:8px">Tu compañero: <strong>${esc(companion)}</strong></div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:12px;color:#888">Reputación</span>
+        <span style="font-size:12px;color:var(--ink3)">Reputación</span>
         <span style="font-size:13px;font-weight:700;color:${repInfo.color}">${repInfo.text}</span>
       </div>
       <div class="load-bar-track"><div class="bar-fill" style="width:${rep}%;background:${rep>=60?'#c07a10':rep>=30?'#4a90d9':'#bbb'}"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#bbb;margin-top:3px">
-        <span>0</span><span style="color:#4a8a2a">75 → Copa de Clubes</span><span>100</span>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:3px">
+        <span>0</span><span style="color:var(--pos)">75 → Copa de Clubes</span><span>100</span>
       </div>
-      ${rep>=75?`<div style="font-size:12px;color:#4a8a2a;margin-top:6px">✓ Reputación suficiente para la Copa de Clubes</div>`:''}
+      ${rep>=75?`<div style="font-size:12px;color:var(--pos);margin-top:6px">✓ Reputación suficiente para la Copa de Clubes</div>`:''}
     </div>`:''}
 
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Opciones disponibles</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Opciones disponibles</div>
     ${CLUBS.filter(c=>c.id==='none'||(c.minYear||1)<=G.year).map(c=>{
       const isActive=currentClub.id===c.id;
       const monthCost=c.cost;
@@ -58,13 +58,13 @@ function renderClubSetup(){
             ${isActive?`<span style="font-size:11px;background:#e8eef8;color:#2d4fa0;border-radius:4px;padding:1px 6px;font-weight:600">Actual</span>`:''}
           </div>
           <div class="card-sub">${c.desc}</div>
-          ${bonuses?`<div style="font-size:12px;color:#4a8a2a;margin-top:4px">${bonuses}</div>`:''}
-          ${perks.length?`<div style="font-size:12px;color:#4a90d9;margin-top:2px">${perks.join(' · ')}</div>`:''}
+          ${bonuses?`<div style="font-size:12px;color:var(--pos);margin-top:4px">${bonuses}</div>`:''}
+          ${perks.length?`<div style="font-size:12px;color:var(--cuerpo);margin-top:2px">${perks.join(' · ')}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          ${monthCost>0?`<div style="font-size:14px;font-weight:700;color:#c0392b">-€${monthCost}/mes</div>
-          <div style="font-size:11px;color:#aaa">€${annualCost}/año</div>`
-          :`<div style="font-size:13px;font-weight:600;color:#888">Gratis</div>`}
+          ${monthCost>0?`<div style="font-size:14px;font-weight:700;color:var(--neg)">-€${monthCost}/mes</div>
+          <div style="font-size:11px;color:var(--ink3)">€${annualCost}/año</div>`
+          :`<div style="font-size:13px;font-weight:600;color:var(--ink3)">Gratis</div>`}
         </div>
       </div>`;
     }).join('')}
@@ -117,7 +117,7 @@ function renderCalendarTab(){
       const c=CIRCUITS_DB.find(x=>x.id===cid);
       if(c&&c.raceIds.includes(raceId)){
         const estPts=circuitPoints(3,15);
-        return `<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#c07a1022;color:#c07a10">Liga · ~${estPts}pts</span>`;
+        return `<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#c07a1022;color:var(--avi)">Liga · ~${estPts}pts</span>`;
       }
     }
     return '';
@@ -133,15 +133,15 @@ function renderCalendarTab(){
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:1px">
           <span class="cal-race-name">${r.name}</span>
-          <span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'#888'}">${tierLabel[r.tier]||''}</span>
+          <span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
           ${badge}
-          ${r.spec?`<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#4a8a2a22;color:#4a8a2a">★ ${r.spec}</span>`:''}
+          ${r.spec?`<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#4a8a2a22;color:var(--pos)">★ ${r.spec}</span>`:''}
           ${inviteBadge(r)}
         </div>
         <div class="cal-race-meta">${r.monthName} · ${r.type} · ${raceDesnivel(r)}${isInvited?' · <span style="color:#2d7a2a">ranking no requerido</span>':''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-        ${isSel?`<span style="font-size:12px;color:#4a8a2a;font-weight:600">✓</span>`:isLocked?`<span style="font-size:12px;color:#ccc">🔒</span>`:''}
+        ${isSel?`<span style="font-size:12px;color:var(--pos);font-weight:600">✓</span>`:isLocked?`<span style="font-size:12px;color:var(--ink3)">🔒</span>`:''}
         <div class="cal-dot" style="background:${isSel?'#4a8a2a':'#ddd'}"></div>
       </div>
     </div>`;
@@ -150,7 +150,7 @@ function renderCalendarTab(){
   el.innerHTML=`
     <h2>Calendario ${G.year}</h2>
     <p class="sub">Tu temporada de un vistazo</p>
-    ${G.joinedCircuits.length>0?`<div style="font-size:12px;color:#c07a10;background:#c07a1010;border-radius:8px;padding:8px 12px;margin-bottom:12px">
+    ${G.joinedCircuits.length>0?`<div style="font-size:12px;color:var(--avi);background:#c07a1010;border-radius:8px;padding:8px 12px;margin-bottom:12px">
       🏆 Liga activa — las carreras marcadas con <strong>Liga · ~Xpts</strong> suman puntos al circuito
     </div>`:''}
     ${QUARTERS.map(q=>{
@@ -164,26 +164,26 @@ function renderCalendarTab(){
         <div class="quarter-wrap">
           <div class="quarter-toggle ${qSel>0?'has-sel':''}" onclick="toggleQTab(${q.n})">
             <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]}
-              <span style="font-size:12px;font-weight:400;color:#aaa"> · ${q.months}</span>
+              <span style="font-size:12px;font-weight:400;color:var(--ink3)"> · ${q.months}</span>
             </span>
-            ${hasLeague?`<span style="font-size:12px;color:#c07a10;margin-right:6px">🏆</span>`:''}
-            ${qSel>0?`<span style="font-size:12px;color:#4a8a2a;font-weight:600;margin-right:6px">${qSel} ✓</span>`:''}
-            <span style="font-size:12px;color:#aaa;display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
+            ${hasLeague?`<span style="font-size:12px;color:var(--avi);margin-right:6px">🏆</span>`:''}
+            ${qSel>0?`<span style="font-size:12px;color:var(--pos);font-weight:600;margin-right:6px">${qSel} ✓</span>`:''}
+            <span style="font-size:12px;color:var(--ink3);display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
           </div>
           <div class="quarter-content ${isOpen?'open':''}" onclick="event.stopPropagation()">
             ${common.map(r=>calRaceRow(r)).join('')}
             ${spec.length>0?`
-              <div style="font-size:12px;color:#4a8a2a;font-weight:600;padding:6px 2px 4px">★ Específicas de tu especialidad</div>
+              <div style="font-size:12px;color:var(--pos);font-weight:600;padding:6px 2px 4px">★ Específicas de tu especialidad</div>
               ${spec.map(r=>calRaceRow(r)).join('')}
             `:''}
           </div>
         </div>`;}).join('')}
     ${G.trainingBlock?`<div class="card" style="margin-top:8px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bloque de entrenamiento</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bloque de entrenamiento</div>
       <div class="card-title">${G.trainingBlock.name}</div>
       <div class="card-sub">${G.trainingBlock.desc}</div>
     </div>`:
-    `<div style="font-size:13px;color:#aaa;text-align:center;padding:12px 0">Bloque de entrenamiento por elegir</div>`}`;
+    `<div style="font-size:13px;color:var(--ink3);text-align:center;padding:12px 0">Bloque de entrenamiento por elegir</div>`}`;
 }
 
 window.toggleQTab=q=>{
@@ -224,29 +224,29 @@ function renderFinancesTab(){
     const yearsActive=G.year-G.ownBrand.launched;
     brandSection=`
     <div class="fin-section" style="border-color:#c07a10">
-      <div class="fin-title" style="color:#c07a10">👟 Tu Marca — ${G.ownBrand.hasEmployee?'Consolidada':'Activa'}</div>
+      <div class="fin-title" style="color:var(--avi)">👟 Tu Marca — ${G.ownBrand.hasEmployee?'Consolidada':'Activa'}</div>
       ${G.ownBrand.hasEmployee
         ? `<div class="fin-row"><span>Ingresos brutos marca</span><span class="plus">+€1.300/mes</span></div>
            <div class="fin-row"><span>Coste empleado</span><span class="minus">-€700/mes</span></div>
            <div class="fin-row"><span>Neto marca</span><span class="plus">+€600/mes</span></div>
-           <div style="font-size:12px;color:#4a8a2a;margin-top:8px">✓ Empleado contratado — sin coste de horas de entrenamiento</div>`
+           <div style="font-size:12px;color:var(--pos);margin-top:8px">✓ Empleado contratado — sin coste de horas de entrenamiento</div>`
         : `<div class="fin-row"><span>Ingresos marca</span><span class="plus">+€300/mes</span></div>
-           <div style="font-size:12px;color:#c07a10;margin-top:8px">⏱ Consume 6h/semana de tu tiempo de entrenamiento</div>
+           <div style="font-size:12px;color:var(--avi);margin-top:8px">⏱ Consume 6h/semana de tu tiempo de entrenamiento</div>
            ${canHireEmployee
-             ? `<button class="main" style="margin-top:10px;border-color:#4a8a2a;color:#4a8a2a" onclick="doHireEmployee()">Contratar empleado — €700/mes · recuperas 6h entrenamiento</button>`
-             : `<div style="font-size:12px;color:#aaa;margin-top:6px">Podrás contratar empleado a partir del año ${(G.ownBrand.launched+2)}</div>`
+             ? `<button class="main" style="margin-top:10px;border-color:#4a8a2a;color:var(--pos)" onclick="doHireEmployee()">Contratar empleado — €700/mes · recuperas 6h entrenamiento</button>`
+             : `<div style="font-size:12px;color:var(--ink3);margin-top:6px">Podrás contratar empleado a partir del año ${(G.ownBrand.launched+2)}</div>`
            }`
       }
-      <div style="font-size:11px;color:#aaa;margin-top:6px">Marca lanzada en Año ${G.ownBrand.launched} · ${yearsActive} temporada${yearsActive!==1?'s':''} activa${yearsActive!==1?'s':''}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px">Marca lanzada en Año ${G.ownBrand.launched} · ${yearsActive} temporada${yearsActive!==1?'s':''} activa${yearsActive!==1?'s':''}</div>
     </div>`;
   } else if(brandEligible){
     brandSection=`
-    <div class="fin-section" style="border-color:#e0dfd8;border-style:dashed">
+    <div class="fin-section" style="border-color:var(--line);border-style:dashed">
       <div class="fin-title">👟 Tu Propia Marca</div>
-      <div style="font-size:13px;color:#555;margin-bottom:10px">Desbloqueable ahora que tienes nombre en el circuito. Inversión inicial de €2.500 — genera €300/mes aunque consume 6h/semana de entrenamiento.</div>
-      <div style="font-size:12px;color:#888;margin-bottom:10px">A los 2 años puedes contratar un empleado (€700/mes) y recuperar las horas de entrenamiento. La marca seguirá generando sin esfuerzo.</div>
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:10px">Desbloqueable ahora que tienes nombre en el circuito. Inversión inicial de €2.500 — genera €300/mes aunque consume 6h/semana de entrenamiento.</div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">A los 2 años puedes contratar un empleado (€700/mes) y recuperar las horas de entrenamiento. La marca seguirá generando sin esfuerzo.</div>
       ${G.money>=2500
-        ? `<button class="main" style="border-color:#c07a10;color:#c07a10" onclick="doLaunchBrand()">Lanzar mi marca — −€2.500 · +€300/mes</button>`
+        ? `<button class="main" style="border-color:#c07a10;color:var(--avi)" onclick="doLaunchBrand()">Lanzar mi marca — −€2.500 · +€300/mes</button>`
         : `<button class="main" disabled>Lanzar mi marca (necesitas €${2500-G.money} más)</button>`
       }
     </div>`;
@@ -282,20 +282,20 @@ function renderFinancesTab(){
     <div class="fin-section">
       <div class="fin-title">Ahorros</div>
       <div class="fin-row"><span>Ahorros actuales</span><span style="font-weight:600">€${G.money}</span></div>
-      <div class="fin-row"><span>Previsión fin de temporada</span><span style="font-weight:600;color:${savingsEnd>=G.money?'#2d7a2d':'#c0392b'}">€${Math.max(0,G.money+netAfterRaces)}</span></div>
+      <div class="fin-row"><span>Previsión fin de temporada</span><span style="font-weight:600;color:${savingsEnd>=G.money?'var(--pos)':'var(--neg)'}">€${Math.max(0,G.money+netAfterRaces)}</span></div>
       <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
           <span>€0</span><span>Previsión: €${Math.max(0,G.money+netAfterRaces)}</span>
         </div>
-        <div style="height:6px;background:#e5e4de;border-radius:3px;overflow:hidden">
+        <div style="height:6px;background:var(--trk);border-radius:3px;overflow:hidden">
           <div style="height:100%;width:${Math.min(100,Math.round(G.money/(G.money+Math.abs(netAfterRaces)+1)*100))}%;background:#4a90d9;border-radius:3px"></div>
         </div>
         <div style="height:6px;background:transparent;border-radius:3px;margin-top:2px;overflow:hidden">
           <div style="height:100%;width:${Math.min(100,savingsPct)}%;background:${netAfterRaces>=0?'#4a8a2a':'#c0392b'};border-radius:3px"></div>
         </div>
-        <div style="font-size:12px;color:#aaa;margin-top:4px">
-          <span style="color:#4a90d9">■</span> Actuales &nbsp;
-          <span style="color:${netAfterRaces>=0?'#4a8a2a':'#c0392b'}">■</span> ${netAfterRaces>=0?'Proyectado':'Riesgo'}
+        <div style="font-size:12px;color:var(--ink3);margin-top:4px">
+          <span style="color:var(--cuerpo)">■</span> Actuales &nbsp;
+          <span style="color:${netAfterRaces>=0?'var(--pos)':'var(--neg)'}">■</span> ${netAfterRaces>=0?'Proyectado':'Riesgo'}
         </div>
       </div>
     </div>
@@ -322,11 +322,11 @@ function renderRunnerTab(){
       <div class="runner-avatar">🏃</div>
       <div>
         <h2 style="margin-bottom:4px">${esc(r.name||'Corredor')}</h2>
-        <div style="font-size:13px;color:#888;margin-bottom:6px">${specLabel[r.specialty]} · Año ${G.year}${r.age?' · '+r.age+' años':''}</div>
+        <div style="font-size:13px;color:var(--ink3);margin-bottom:6px">${specLabel[r.specialty]} · Año ${G.year}${r.age?' · '+r.age+' años':''}</div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="rank-badge rank-global">Global #${G.ranking<900?G.ranking:'—'}</span>
           <span class="rank-badge rank-spec">${specLabel[r.specialty]} #${G.specRanking<900?G.specRanking:'—'}</span>
-          <button onclick="G._achPrev=G.screen;G._achPrevTab=G.activeTab;G.screen='achievements';render()" style="padding:2px 8px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;cursor:pointer;color:#888;line-height:1.6" title="Ver logros">🏅</button>
+          <button onclick="G._achPrev=G.screen;G._achPrevTab=G.activeTab;G.screen='achievements';render()" style="padding:2px 8px;border-radius:20px;border:1px solid var(--line);background:var(--card);font-size:12px;cursor:pointer;color:var(--ink3);line-height:1.6" title="Ver logros">🏅</button>
         </div>
       </div>
     </div>
@@ -334,20 +334,20 @@ function renderRunnerTab(){
 
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">Carga corporal</span>
-        <span style="font-size:14px;font-weight:700;color:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a8a2a'}">${load}%</span>
+        <span style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px">Carga corporal</span>
+        <span style="font-size:14px;font-weight:700;color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--pos)'}">${load}%</span>
       </div>
       <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9'}"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#bbb;margin-top:4px">
-        <span>0%</span><span style="color:#c07a10">${lt.warningLevel1}% riesgo</span><span style="color:#c0392b">100% lesión</span>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:4px">
+        <span>0%</span><span style="color:var(--avi)">${lt.warningLevel1}% riesgo</span><span style="color:var(--neg)">100% lesión</span>
       </div>
-      ${(()=>{const w=getLoadWarningMsg(load);return w.msg?`<div style="font-size:12px;color:${w.color};margin-top:6px">${w.msg}</div>`:`<div style="font-size:12px;color:#4a8a2a;margin-top:6px">✓ Carga bajo control</div>`;})()}
+      ${(()=>{const w=getLoadWarningMsg(load);return w.msg?`<div style="font-size:12px;color:${w.color};margin-top:6px">${w.msg}</div>`:`<div style="font-size:12px;color:var(--pos);margin-top:6px">✓ Carga bajo control</div>`;})()}
     </div>
 
     <div class="card">
       <div class="sec-title">Stats actuales</div>
       ${G.lastRaceGains&&G.lastRaceGains.length>0?`
-        <div style="background:#eaf4ea;border-radius:var(--border-radius-md);padding:9px 12px;margin-bottom:12px">
+        <div style="background:var(--soft);border-radius:var(--border-radius-md);padding:9px 12px;margin-bottom:12px">
           <div style="font-size:12px;font-weight:600;color:#3B6D11;margin-bottom:5px">Ganado en la última carrera</div>
           <div style="font-size:13px;color:#27500A">${G.lastRaceGains.map(({k,v})=>'+'+v+' '+k.charAt(0).toUpperCase()+k.slice(1)).join(' &nbsp;·&nbsp; ')}</div>
         </div>`:''}
@@ -360,17 +360,17 @@ function renderRunnerTab(){
           <div class="bar-track" style="flex:1">
             <div class="bar-fill" style="width:${Math.min(100,eff)}%;background:${eff>=70?'#4a8a2a':eff>=50?'#4a90d9':eff>=35?'#c07a10':'#c0392b'}"></div>
           </div>
-          <span class="bar-pct">${Math.round(v)}${bonus>0?'<span style="font-size:12px;color:#4a8a2a"> +'+Math.round(bonus)+'</span>':''}</span>
+          <span class="bar-pct">${Math.round(v)}${bonus>0?'<span style="font-size:12px;color:var(--pos)"> +'+Math.round(bonus)+'</span>':''}</span>
         </div>`;}).join('')}
-      <div style="font-size:12px;color:#aaa;margin-top:8px">El número en verde es el bonus de sponsors y club activos.</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:8px">El número en verde es el bonus de sponsors y club activos.</div>
     </div>
 
     <div class="card">
       <div class="sec-title">Resumen de carrera</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
-        <div><div style="font-size:22px;font-weight:700">${totalRaces}</div><div style="font-size:12px;color:#aaa">Carreras</div></div>
-        <div><div style="font-size:22px;font-weight:700;color:#c07a10">${wins}</div><div style="font-size:12px;color:#aaa">Victorias</div></div>
-        <div><div style="font-size:22px;font-weight:700;color:#4a8a2a">${podiums}</div><div style="font-size:12px;color:#aaa">Podios</div></div>
+        <div><div style="font-size:22px;font-weight:700">${totalRaces}</div><div style="font-size:12px;color:var(--ink3)">Carreras</div></div>
+        <div><div style="font-size:22px;font-weight:700;color:var(--avi)">${wins}</div><div style="font-size:12px;color:var(--ink3)">Victorias</div></div>
+        <div><div style="font-size:22px;font-weight:700;color:var(--pos)">${podiums}</div><div style="font-size:12px;color:var(--ink3)">Podios</div></div>
       </div>
     </div>
 
@@ -384,12 +384,12 @@ function renderRunnerTab(){
         return `<div style="margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <span style="font-size:13px;font-weight:600">${obj.label}</span>
-            <span style="font-size:12px;color:#aaa">${obj.actual}/${obj.target}</span>
+            <span style="font-size:12px;color:var(--ink3)">${obj.actual}/${obj.target}</span>
           </div>
-          <div style="height:6px;background:#e5e4de;border-radius:3px;overflow:hidden">
+          <div style="height:6px;background:var(--trk);border-radius:3px;overflow:hidden">
             <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .3s"></div>
           </div>
-          ${obj.met?`<div style="font-size:12px;color:#4a8a2a;font-weight:600;margin-top:6px">✓ Cumplido · +€${obj.reward}</div>`:`<div style="font-size:12px;color:#c07a10;margin-top:6px">En progreso...</div>`}
+          ${obj.met?`<div style="font-size:12px;color:var(--pos);font-weight:600;margin-top:6px">✓ Cumplido · +€${obj.reward}</div>`:`<div style="font-size:12px;color:var(--avi);margin-top:6px">En progreso...</div>`}
         </div>`;
       })()}
     </div>`:''}
@@ -420,63 +420,63 @@ function renderRunnerTab(){
         <div class="sec-title" style="margin-bottom:0">Logros (${unlockedNormal.length}/${normalAchs.length})</div>
         <button class="secondary" style="font-size:11px;padding:3px 10px" onclick="G.screen='achievements';render()">Ver todos →</button>
       </div>
-      ${recent.map(ach=>`<div style="padding:7px 0;border-bottom:1px solid #f0ede8;display:flex;align-items:center;gap:8px">
+      ${recent.map(ach=>`<div style="padding:7px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px">
         <span style="font-size:15px">🏆</span>
         <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:1px"><span style="font-size:13px;font-weight:600">${esc(ach.label)}</span>${rb(ach)}${meta[ach.id]?`<span style="font-size:11px;color:#aaa">${MODE_LABELS[meta[ach.id].difficulty]?modeEmoji(meta[ach.id].difficulty):''}</span>`:''}</div>
-          <div style="font-size:12px;color:#888">${esc(ach.desc)}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:1px"><span style="font-size:13px;font-weight:600">${esc(ach.label)}</span>${rb(ach)}${meta[ach.id]?`<span style="font-size:11px;color:var(--ink3)">${MODE_LABELS[meta[ach.id].difficulty]?modeEmoji(meta[ach.id].difficulty):''}</span>`:''}</div>
+          <div style="font-size:12px;color:var(--ink3)">${esc(ach.desc)}</div>
         </div>
       </div>`).join('')}
       ${pendingNormal.length>0?`<div style="padding:7px 0;opacity:0.5;display:flex;align-items:center;gap:8px">
         <span style="font-size:15px;opacity:0.4">🔒</span>
-        <div style="font-size:12px;color:#aaa">Siguiente: <strong>${esc(pendingNormal[0].label)}</strong> — ${esc(pendingNormal[0].desc)}</div>
+        <div style="font-size:12px;color:var(--ink3)">Siguiente: <strong>${esc(pendingNormal[0].label)}</strong> — ${esc(pendingNormal[0].desc)}</div>
       </div>`:''}
     </div>`;
     })()}
 
     ${activeSponsorList.length>0?`<div class="card">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Contratos activos</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Contratos activos</div>
       ${activeSponsorList.map(([cat,sp])=>{
         const met=checkSponsorObjective(sp);
         const penalty=Math.round(sp.salary*(sp.penaltyPct||0.15));
         const tierColor=TIER_COLOR_SPONSOR;
         const tierLabel=TIER_LABEL_SPONSOR;
-        return `<div style="padding:10px 0;border-bottom:1px solid #f0ede8">
+        return `<div style="padding:10px 0;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
             <div style="flex:1">
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
                 <span style="font-weight:600;font-size:14px">${sp.name}</span>
-                <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[sp.tier]||'#888'}22;color:${tierColor[sp.tier]||'#888'}">${tierLabel[sp.tier]||''}</span>
+                <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[sp.tier]||'#888'}22;color:${tierColor[sp.tier]||'var(--ink3)'}">${tierLabel[sp.tier]||''}</span>
               </div>
-              <div style="font-size:12px;color:#888">${sp.bonus}</div>
+              <div style="font-size:12px;color:var(--ink3)">${sp.bonus}</div>
             </div>
             <div class="right-col">
-              <div style="font-size:13px;font-weight:600;color:#2d7a2d">+€${sp.salary}/año</div>
-              <div style="font-size:12px;color:#aaa">${sp.duration} temp. restante${sp.duration!==1?'s':''}</div>
+              <div style="font-size:13px;font-weight:600;color:var(--pos)">+€${sp.salary}/año</div>
+              <div style="font-size:12px;color:var(--ink3)">${sp.duration} temp. restante${sp.duration!==1?'s':''}</div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;background:${met?'#eaf4ea':'#fff8f0'}">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;background:${met?'var(--soft)':'#fff8f0'}">
             <div style="flex:1">
-              <div style="font-size:12px;font-weight:600;color:${met?'#2d5a2d':'#7a3a10'}">${met?'✓ Objetivo cumplido':'⚠ Objetivo pendiente'}</div>
-              <div style="font-size:12px;color:${met?'#4a8a2a':'#888'};margin-top:1px">${sp.objective}</div>
+              <div style="font-size:12px;font-weight:600;color:${met?'var(--pos-i)':'#7a3a10'}">${met?'✓ Objetivo cumplido':'⚠ Objetivo pendiente'}</div>
+              <div style="font-size:12px;color:${met?'var(--pos)':'var(--ink3)'};margin-top:1px">${sp.objective}</div>
             </div>
-            ${!met?`<div style="font-size:12px;color:#c0392b;font-weight:600;flex-shrink:0;margin-left:8px;margin-right:8px">-€${penalty} si falla</div>`:''}
-            <button class="secondary" style="font-size:11px;padding:3px 8px;flex-shrink:0;color:#c0392b;border-color:#c0392b;background:#fff8f0" onclick="breakSponsorContract('${cat}')">Romper</button>
+            ${!met?`<div style="font-size:12px;color:var(--neg);font-weight:600;flex-shrink:0;margin-left:8px;margin-right:8px">-€${penalty} si falla</div>`:''}
+            <button class="secondary" style="font-size:11px;padding:3px 8px;flex-shrink:0;color:var(--neg);border-color:#c0392b;background:#fff8f0" onclick="breakSponsorContract('${cat}')">Romper</button>
           </div>
         </div>`;}).join('')}
     </div>`:''}
 
-    ${G.sponsorPenalties&&G.sponsorPenalties.length>0?`<div class="card" style="border-color:#f5b8b8">
-      <div style="font-size:12px;font-weight:700;color:#c0392b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Penalizaciones pendientes</div>
+    ${G.sponsorPenalties&&G.sponsorPenalties.length>0?`<div class="card" style="border-color:var(--line2)">
+      <div style="font-size:12px;font-weight:700;color:var(--neg);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Penalizaciones pendientes</div>
       ${G.sponsorPenalties.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #fef0f0">
         <div style="font-size:13px;color:var(--color-text-primary)">${p.name}</div>
         <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:13px;font-weight:600;color:#c0392b">-€${p.amount}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--neg)">-€${p.amount}</span>
           <button class="secondary" style="font-size:12px;padding:3px 10px" onclick="payPenalty('${p.id}')">Pagar</button>
-          <button class="secondary" style="font-size:12px;padding:3px 10px;border-color:#c07a10;color:#c07a10" onclick="negotiatePenalty('${p.id}')">Negociar</button>
+          <button class="secondary" style="font-size:12px;padding:3px 10px;border-color:#c07a10;color:var(--avi)" onclick="negotiatePenalty('${p.id}')">Negociar</button>
         </div>
       </div>`).join('')}
-      <div style="font-size:12px;color:#888;margin-top:8px">Negociar deja la sanción en el 40% si el sponsor acepta — ${Math.round(penaltyNegotiationChance()*100)}% de probabilidad con tu reputación actual. Si se niega, pagas el total y pierdes seguidores. Lo que no resuelvas se cobra solo al cerrar la temporada que viene.</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:8px">Negociar deja la sanción en el 40% si el sponsor acepta — ${Math.round(penaltyNegotiationChance()*100)}% de probabilidad con tu reputación actual. Si se niega, pagas el total y pierdes seguidores. Lo que no resuelvas se cobra solo al cerrar la temporada que viene.</div>
     </div>`:''}
 
     ${G.club&&G.club.id!=='none'?(()=>{
@@ -486,51 +486,51 @@ function renderRunnerTab(){
       const bonuses=Object.entries(G.club.statBonus).map(([k,v])=>`+${v} ${k.charAt(0).toUpperCase()+k.slice(1)}`).join(', ');
       return `<div class="card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">Tu club</div>
-          <span style="font-size:12px;color:#4a90d9;cursor:pointer" onclick="G._clubFromBetween=false;G.screen='clubSetup';render()">Cambiar →</span>
+          <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px">Tu club</div>
+          <span style="font-size:12px;color:var(--cuerpo);cursor:pointer" onclick="G._clubFromBetween=false;G.screen='clubSetup';render()">Cambiar →</span>
         </div>
         <div class="card-title">${G.club.name}</div>
         <div class="card-sub">${G.club.desc}</div>
-        ${bonuses?`<div style="font-size:12px;color:#4a8a2a;margin-top:4px">${bonuses}</div>`:''}
-        ${companion?`<div style="font-size:12px;color:#888;margin-top:4px">Compañero: <strong>${companion}</strong></div>`:''}
+        ${bonuses?`<div style="font-size:12px;color:var(--pos);margin-top:4px">${bonuses}</div>`:''}
+        ${companion?`<div style="font-size:12px;color:var(--ink3);margin-top:4px">Compañero: <strong>${companion}</strong></div>`:''}
         <div style="margin-top:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:12px;color:#888">Reputación en el club</span>
+            <span style="font-size:12px;color:var(--ink3)">Reputación en el club</span>
             <span style="font-size:13px;font-weight:700;color:${repInfo.color}">${repInfo.text}</span>
           </div>
           <div class="load-bar-track"><div class="bar-fill" style="width:${rep}%;background:${rep>=60?'#c07a10':rep>=30?'#4a90d9':'#bbb'}"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:#bbb;margin-top:3px">
-            <span>0</span><span style="color:#4a8a2a">75 → Copa Clubes 🏆</span><span>100</span>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:3px">
+            <span>0</span><span style="color:var(--pos)">75 → Copa Clubes 🏆</span><span>100</span>
           </div>
         </div>
       </div>`;
     })():`<div class="card" style="text-align:center;padding:16px">
-      <div style="font-size:13px;color:#aaa;margin-bottom:8px">Sin club — corriendo como independiente</div>
-      <span style="font-size:13px;color:#4a90d9;cursor:pointer" onclick="G._clubFromBetween=false;G.screen='clubSetup';render()">Unirse a un club →</span>
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:8px">Sin club — corriendo como independiente</div>
+      <span style="font-size:13px;color:var(--cuerpo);cursor:pointer" onclick="G._clubFromBetween=false;G.screen='clubSetup';render()">Unirse a un club →</span>
     </div>`}
 
     ${G.careerHistory.length>0?`<div class="card">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Historial de carreras</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Historial de carreras</div>
       ${G.careerHistory.slice().reverse().slice(0,10).map(h=>`<div class="history-row">
         <div>
           <div style="font-weight:500">${h.name}</div>
-          <div style="font-size:12px;color:#aaa;margin-top:1px">Año ${h.year} · ${h.dnf?dnfLabel(h):fmt(h.time)}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:1px">Año ${h.year} · ${h.dnf?dnfLabel(h):fmt(h.time)}</div>
           ${h.catPos&&h.catTotal>1?`<div style="margin-top:3px"><span style="font-size:11px;background:#e8eef8;color:#2d4fa0;border-radius:4px;padding:1px 6px;font-weight:600">${h.catName} ${h.catPos}º</span></div>`:''}
         </div>
         <div style="text-align:right">
-          ${h.dnf?`<div style="font-size:14px;font-weight:700;color:#c0392b">DNF</div>`:`<div style="font-size:14px;font-weight:700;color:${h.pos===1?'#c07a10':h.pos<=3?'#4a8a2a':'#888'}">${h.pos}º</div>`}
-          ${h.prize>0?`<div style="font-size:12px;color:#2d7a2d">+€${h.prize}</div>`:''}
+          ${h.dnf?`<div style="font-size:14px;font-weight:700;color:var(--neg)">DNF</div>`:`<div style="font-size:14px;font-weight:700;color:${h.pos===1?'var(--avi)':h.pos<=3?'var(--pos)':'var(--ink3)'}">${h.pos}º</div>`}
+          ${h.prize>0?`<div style="font-size:12px;color:var(--pos)">+€${h.prize}</div>`:''}
         </div>
       </div>`).join('')}
-    </div>`:`<div style="text-align:center;font-size:13px;color:#aaa;padding:20px 0">Sin carreras completadas todavía.</div>`}
+    </div>`:`<div style="text-align:center;font-size:13px;color:var(--ink3);padding:20px 0">Sin carreras completadas todavía.</div>`}
     ${(G.seasonDiary||[]).length>0?`<div class="card" style="margin-top:4px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📓 Diario del corredor</div>
-      ${G.seasonDiary.slice().reverse().slice(0,5).map(e=>`<div style="padding:9px 0;border-bottom:1px solid #f0ede8">
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📓 Diario del corredor</div>
+      ${G.seasonDiary.slice().reverse().slice(0,5).map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          <span style="font-size:12px;font-weight:600;color:#888">Año ${e.year} · ${e.age} años</span>
-          <span style="font-size:12px;color:#c07a10;font-weight:600">${e.highlight}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--ink3)">Año ${e.year} · ${e.age} años</span>
+          <span style="font-size:12px;color:var(--avi);font-weight:600">${e.highlight}</span>
         </div>
-        <div style="font-size:13px;color:#555;line-height:1.6">${esc(e.text||'')}</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${esc(e.text||'')}</div>
       </div>`).join('')}
     </div>`:''}`;
 }
@@ -544,10 +544,10 @@ function renderExpresSeasonStart(){
   const load=getBodyLoad();const lt=getLoadThresholdsByMode();
   const showObjectives=!G.yearObjective||G._yearObjectiveRewardPaid;
   el.innerHTML=`
-    <div style="background:#fef9ec;border:1.5px solid #f0d98a;border-radius:14px;padding:14px 16px;margin-bottom:16px">
+    <div style="background:var(--soft);border:1.5px solid var(--line2);border-radius:14px;padding:14px 16px;margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <span style="font-size:13px;font-weight:700;color:#8a4a00">⚡ CARRERA EXPRÉS</span>
-        <span style="font-size:13px;font-weight:700;color:#c07a10">Temporada ${G.year}/3</span>
+        <span style="font-size:13px;font-weight:700;color:var(--avi)">Temporada ${G.year}/3</span>
       </div>
       <div style="display:flex;gap:4px;margin-top:6px">
         ${[1,2,3].map(y=>`<div style="flex:1;height:5px;border-radius:3px;background:${G.year>y?'#c07a10':G.year===y?'#f0d98a':'#e0dfd8'}"></div>`).join('')}
@@ -557,7 +557,7 @@ function renderExpresSeasonStart(){
     <p class="sub">${G.runner.specialty} · ${G.runner.age||25} años · ${G.ranking<900?'Ranking #'+G.ranking:'Sin ranking'}</p>
     <div class="stat-grid" style="margin-bottom:14px">
       <div class="stat"><div class="stat-label">Ahorros</div><div class="stat-val">€${G.money}</div></div>
-      <div class="stat"><div class="stat-label">Carga corporal</div><div class="stat-val" style="color:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#2d7a2d'}">${load}%</div></div>
+      <div class="stat"><div class="stat-label">Carga corporal</div><div class="stat-val" style="color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--pos)'}">${load}%</div></div>
       <div class="stat"><div class="stat-label">Carreras</div><div class="stat-val">${G.raceResults?.length||0} hechas</div></div>
     </div>
     <div class="card" style="margin-bottom:14px">
@@ -565,10 +565,10 @@ function renderExpresSeasonStart(){
       ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}
     </div>
     ${showObjectives?`
-    <div style="font-size:13px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Objetivo de temporada</div>
+    <div style="font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Objetivo de temporada</div>
     ${SEASON_OBJECTIVES.map(obj=>`<div class="work-card" style="margin-bottom:8px" onclick="selectYearObjective('${obj.id}')">
       <div style="flex:1"><div class="card-title">${obj.label}</div><div class="card-sub">${obj.desc}</div></div>
-      <div style="font-size:12px;color:#4a8a2a;font-weight:600;margin-left:10px">+€${obj.reward}</div>
+      <div style="font-size:12px;color:var(--pos);font-weight:600;margin-left:10px">+€${obj.reward}</div>
     </div>`).join('')}
     `:G.yearObjective?`<div class="note">🎯 Objetivo: ${SEASON_OBJECTIVES.find(o=>o.id===G.yearObjective)?.label||'—'}</div>`:''}
     <button class="main" onclick="G.screen='expresCalendar';render()">Elegir carreras →</button>`;
@@ -585,7 +585,7 @@ function renderExpresCalendar(){
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
       <h2>Elige 5 carreras</h2>
-      <span style="font-size:13px;font-weight:700;color:${selIds.length>=MAX?'#2d7a2d':'#c07a10'}">${selIds.length}/${MAX}</span>
+      <span style="font-size:13px;font-weight:700;color:${selIds.length>=MAX?'var(--pos)':'var(--avi)'}">${selIds.length}/${MAX}</span>
     </div>
     <p class="sub">Temporada ${G.year}/3 · elige 5 carreras · sin coste de inscripción</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
@@ -593,13 +593,13 @@ function renderExpresCalendar(){
         const sel=selIds.includes(r.id);
         const locked=!canAccess(r);
         const full=!sel&&selIds.length>=MAX;
-        const zegamaBadge=r.zegamaSpecial&&!locked&&G.zegamaQual?'<div style="font-size:10px;color:#4a8a2a;margin-top:2px">✓ Clasificado por tiempo</div>':r.zegamaSpecial&&!locked&&G.ranking<=20?'<div style="font-size:10px;color:#c07a10;margin-top:2px">✓ Invitación por ranking</div>':'';
+        const zegamaBadge=r.zegamaSpecial&&!locked&&G.zegamaQual?'<div style="font-size:10px;color:var(--pos);margin-top:2px">✓ Clasificado por tiempo</div>':r.zegamaSpecial&&!locked&&G.ranking<=20?'<div style="font-size:10px;color:var(--avi);margin-top:2px">✓ Invitación por ranking</div>':'';
 
-        return `<div style="background:#fff;border:1.5px solid ${sel?'#4a8a2a':locked?'#eee':'#e0dfd8'};border-radius:10px;padding:10px 12px;cursor:${locked||full?'default':'pointer'};opacity:${locked||(!sel&&full)?0.45:1};transition:background .15s" onclick="${locked||full?'':'window.toggleExpresRace(\''+r.id+'\')'}" >
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.3">${sel?'✓ ':''}<span style="color:${tierColor[r.tier]||'#888'}">${r.name}</span></div>
-          <div style="font-size:12px;color:#888">${r.km}km · ${r.type}</div>
-          <div style="font-size:11px;color:#aaa;margin-top:2px">${r.monthName}</div>
-          ${locked?(r.zegamaSpecial?`<div style="font-size:11px;color:#c07a10;margin-top:3px">🏔️ Invitación — Top 20 o clasificado por tiempo</div>`:`<div style="font-size:11px;color:#ccc;margin-top:3px">🔒 Ranking #${r.reqRanking}</div>`):zegamaBadge}
+        return `<div style="background:var(--card);border:1.5px solid ${sel?'#4a8a2a':locked?'#eee':'#e0dfd8'};border-radius:10px;padding:10px 12px;cursor:${locked||full?'default':'pointer'};opacity:${locked||(!sel&&full)?0.45:1};transition:background .15s" onclick="${locked||full?'':'window.toggleExpresRace(\''+r.id+'\')'}" >
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.3">${sel?'✓ ':''}<span style="color:${tierColor[r.tier]||'var(--ink3)'}">${r.name}</span></div>
+          <div style="font-size:12px;color:var(--ink3)">${r.km}km · ${r.type}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px">${r.monthName}</div>
+          ${locked?(r.zegamaSpecial?`<div style="font-size:11px;color:var(--avi);margin-top:3px">🏔️ Invitación — Top 20 o clasificado por tiempo</div>`:`<div style="font-size:11px;color:var(--ink3);margin-top:3px">🔒 Ranking #${r.reqRanking}</div>`):zegamaBadge}
         </div>`;
       }).join('')}
     </div>
@@ -633,18 +633,18 @@ function renderExpresSponsors(){
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
             <div style="flex:1">
               <div style="font-size:15px;font-weight:700;margin-bottom:2px">${sp.name}${isCur?' ✓':''}</div>
-              <div style="font-size:12px;color:#888;margin-bottom:6px">${sp.bonus}</div>
-              <div style="font-size:12px;color:#4a8a2a">+${Object.entries(sp.statBonus).map(([k,v])=>v+' '+k.charAt(0).toUpperCase()+k.slice(1)).join(', ')}</div>
-              <div style="font-size:12px;color:#555;margin-top:3px">🎯 ${sp.objective}</div>
+              <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">${sp.bonus}</div>
+              <div style="font-size:12px;color:var(--pos)">+${Object.entries(sp.statBonus).map(([k,v])=>v+' '+k.charAt(0).toUpperCase()+k.slice(1)).join(', ')}</div>
+              <div style="font-size:12px;color:var(--ink2);margin-top:3px">🎯 ${sp.objective}</div>
             </div>
             <div style="text-align:right;flex-shrink:0;margin-left:12px">
-              <div style="font-size:16px;font-weight:700;color:#2d7a2d">+€${sp.salary}</div>
-              <div style="font-size:11px;color:#aaa">/año</div>
+              <div style="font-size:16px;font-weight:700;color:var(--pos)">+€${sp.salary}</div>
+              <div style="font-size:11px;color:var(--ink3)">/año</div>
             </div>
           </div>
         </div>`;
       }).join('')}
-      <div class="sponsor-card" onclick="G._expressSponsorPool=null;G.screen='expresPrep';render()" style="text-align:center;color:#888">
+      <div class="sponsor-card" onclick="G._expressSponsorPool=null;G.screen='expresPrep';render()" style="text-align:center;color:var(--ink3)">
         <div style="font-size:14px">Sin patrocinador esta temporada</div>
       </div>
     </div>`;
@@ -672,25 +672,25 @@ function renderExpresPrep(){
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
       <h2>Preparación</h2>
-      <span style="font-size:12px;color:#aaa">${racesLeft} carrera${racesLeft!==1?'s':''} restante${racesLeft!==1?'s':''}</span>
+      <span style="font-size:12px;color:var(--ink3)">${racesLeft} carrera${racesLeft!==1?'s':''} restante${racesLeft!==1?'s':''}</span>
     </div>
     <p class="sub">${nextRace?'Próxima: <strong>'+nextRace.name+'</strong> · '+nextRace.km+'km':'Última carrera de la temporada'}</p>
     ${hint?`<div class="${hint.type}">${hint.msg}</div>`:''}
     <div style="margin-bottom:6px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
-        <span>Carga corporal</span><span style="font-weight:600;color:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#2d7a2d'}">${load}%</span>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
+        <span>Carga corporal</span><span style="font-weight:600;color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--pos)'}">${load}%</span>
       </div>
       ${hbar(load,100,load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9')}
     </div>
-    <div style="font-size:12px;color:#888;margin:14px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">¿Cómo preparas la carrera?</div>
+    <div style="font-size:12px;color:var(--ink3);margin:14px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">¿Cómo preparas la carrera?</div>
     <div style="display:grid;gap:8px;margin-bottom:16px">
       <div class="work-card" onclick="doExpresPrep('train')">
         <div style="font-size:24px;margin-bottom:4px">🏃</div>
         <div class="card-title">Entrenamiento intenso</div>
         <div class="card-sub">Subes el bloque al máximo. El cuerpo lo nota pero llegas más fuerte.</div>
         <div style="display:flex;gap:12px;font-size:12px;margin-top:6px">
-          <span style="color:#4a8a2a">+6 stat principal</span>
-          <span style="color:#c0392b">Carga +${load>=lt.warningLevel2?'12 ⚠':'12'}</span>
+          <span style="color:var(--pos)">+6 stat principal</span>
+          <span style="color:var(--neg)">Carga +${load>=lt.warningLevel2?'12 ⚠':'12'}</span>
         </div>
       </div>
       <div class="work-card" onclick="doExpresPrep('rest')">
@@ -698,7 +698,7 @@ function renderExpresPrep(){
         <div class="card-title">Descanso activo</div>
         <div class="card-sub">Rodaje suave, estiramientos, recuperación completa.</div>
         <div style="display:flex;gap:12px;font-size:12px;margin-top:6px">
-          <span style="color:#4a8a2a">+3 Mental · Carga -14</span>
+          <span style="color:var(--pos)">+3 Mental · Carga -14</span>
         </div>
       </div>
       <div class="work-card" onclick="doExpresPrep('focus')">
@@ -706,7 +706,7 @@ function renderExpresPrep(){
         <div class="card-title">Foco mental</div>
         <div class="card-sub">Visualización de ruta, trabajo táctico, análisis de rivales.</div>
         <div style="display:flex;gap:12px;font-size:12px;margin-top:6px">
-          <span style="color:#4a8a2a">+5 Mental · Carga -4</span>
+          <span style="color:var(--pos)">+5 Mental · Carga -4</span>
         </div>
       </div>
     </div>`;
@@ -743,7 +743,7 @@ function renderExpresPreRacePrep(){
   const sel=G.preRaceNutrition||'pasta';
 
   el.innerHTML=`
-    <div style="font-size:12px;font-weight:700;color:#c07a10;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">⚡ EXPRÉS · Carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</div>
+    <div style="font-size:12px;font-weight:700;color:var(--avi);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">⚡ EXPRÉS · Carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</div>
     <h2>${race.name}</h2>
     <p class="sub">${race.km}km · ${race.type} · ${race.monthName}</p>
     ${altPenalty>0?`<div class="warn">⚠ Alta altitud — irás un ${Math.round(altPenalty*100)}% más lento en subidas sin preparación específica.</div>`:''}
@@ -753,10 +753,10 @@ function renderExpresPreRacePrep(){
       ${PRE_RACE_NUTRITION.slice(0,2).map(n=>{
         const isSel=sel===n.id;
         const cost=getNutritionCost(n.id);
-        return `<div style="background:#fff;border:1.5px solid ${isSel?'#4a8a2a':'#e0dfd8'};border-radius:10px;padding:12px;cursor:pointer;transition:background .15s" onclick="G.preRaceNutrition='${n.id}';render()">
+        return `<div style="background:var(--card);border:1.5px solid ${isSel?'#4a8a2a':'#e0dfd8'};border-radius:10px;padding:12px;cursor:pointer;transition:background .15s" onclick="G.preRaceNutrition='${n.id}';render()">
           <div style="font-size:13px;font-weight:600;margin-bottom:3px">${isSel?'✓ ':''} ${n.label}</div>
-          <div style="font-size:12px;color:#888">${n.desc}</div>
-          <div style="font-size:12px;color:${n.energyBonus>0?'#4a8a2a':'#c07a10'};margin-top:4px">${n.energyBonus>0?'+'+n.energyBonus+' energía':n.energyBonus+' energía'}${cost>0?' · -€'+cost:''}</div>
+          <div style="font-size:12px;color:var(--ink3)">${n.desc}</div>
+          <div style="font-size:12px;color:${n.energyBonus>0?'var(--pos)':'var(--avi)'};margin-top:4px">${n.energyBonus>0?'+'+n.energyBonus+' energía':n.energyBonus+' energía'}${cost>0?' · -€'+cost:''}</div>
         </div>`;
       }).join('')}
     </div>
@@ -768,8 +768,8 @@ function renderExpresPreRacePrep(){
         {id:'a_tope',label:'A tope 🔥',desc:'Máxima velocidad desde el km 1 — riesgo real',energyMod:-8,legsMod:-6,timeMod:0.94},
       ].map(s=>{
         const isSel=(G.startStrategy||'equilibrado')===s.id;
-        return `<div style="background:#fff;border:1.5px solid ${isSel?'#4a8a2a':'#e0dfd8'};border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="G.startStrategy='${s.id}';render()">
-          <div><div style="font-size:13px;font-weight:600">${isSel?'✓ ':''} ${s.label}</div><div style="font-size:12px;color:#888">${s.desc}</div></div>
+        return `<div style="background:var(--card);border:1.5px solid ${isSel?'#4a8a2a':'#e0dfd8'};border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="G.startStrategy='${s.id}';render()">
+          <div><div style="font-size:13px;font-weight:600">${isSel?'✓ ':''} ${s.label}</div><div style="font-size:12px;color:var(--ink3)">${s.desc}</div></div>
         </div>`;
       }).join('')}
     </div>
@@ -783,21 +783,21 @@ function renderExpresSeasonBalance(){
   const yearNet=sponsorIncome+raceIncome;
 
   el.innerHTML=`
-    <div style="background:#fef9ec;border:1.5px solid #f0d98a;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+    <div style="background:var(--soft);border:1.5px solid var(--line2);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:13px;font-weight:700;color:#8a4a00">⚡ Temporada ${G.year}/${modeCfg().maxYears} completada</span>
-      ${G.year>=modeCfg().maxYears?'<span style="font-size:12px;color:#c07a10;font-weight:600">Última temporada 🏁</span>':''}
+      ${G.year>=modeCfg().maxYears?'<span style="font-size:12px;color:var(--avi);font-weight:600">Última temporada 🏁</span>':''}
     </div>
     <h2>Balance de temporada</h2>
     <p class="sub">${esc(G.runner.name||'Corredor')} · Ranking #${G.ranking<900?G.ranking:'—'}</p>
     <div style="margin-bottom:16px">
-      ${G.raceResults.length===0?'<p style="font-size:13px;color:#aaa">Sin carreras completadas.</p>':
+      ${G.raceResults.length===0?'<p style="font-size:13px;color:var(--ink3)">Sin carreras completadas.</p>':
         G.raceResults.map(r=>{
-          if(isDNF(r))return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0ede8;font-size:14px">
-            <div><span style="color:#c0392b;margin-right:8px">❌</span>${r.name}</div>
-            <span style="font-size:12px;color:#c0392b">${dnfLabel(r)}</span></div>`;
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0ede8;font-size:14px">
-            <div><span style="font-weight:700;color:${r.pos===1?'#c07a10':r.pos<=3?'#4a8a2a':'#888'};margin-right:8px">${r.pos}º</span>${r.name}</div>
-            <span style="font-size:13px;color:#2d7a2d">+€${r.prize}</span></div>`;
+          if(isDNF(r))return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px">
+            <div><span style="color:var(--neg);margin-right:8px">❌</span>${r.name}</div>
+            <span style="font-size:12px;color:var(--neg)">${dnfLabel(r)}</span></div>`;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px">
+            <div><span style="font-weight:700;color:${r.pos===1?'var(--avi)':r.pos<=3?'var(--pos)':'var(--ink3)'};margin-right:8px">${r.pos}º</span>${r.name}</div>
+            <span style="font-size:13px;color:var(--pos)">+€${r.prize}</span></div>`;
         }).join('')}
     </div>
     <div class="card" style="margin-bottom:14px">
@@ -813,7 +813,7 @@ function renderExpresSeasonBalance(){
       ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}
     </div>
     <button class="main" onclick="doNextYear(${yearNet})">${G.year>=modeCfg().maxYears?'Ver resumen de carrera →':'Temporada '+(G.year+1)+' →'}</button>
-    ${G.year>=2?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:#c0392b" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}`;
+    ${G.year>=2?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}`;
 }
 
 // ── WORK SETUP (TRIMESTRAL) ────────────
@@ -839,7 +839,7 @@ function renderWorkSetup(){
     ${qRaces.length>0?`<div class="note">Este trimestre tienes ${qRaces.length} carrera${qRaces.length>1?'s':''}: ${qRaces.map(r=>r.name).join(', ')}. Valora bajar jornada o usar vacaciones.</div>`:''}
     ${G.workChangePenalties?.[q]?`<div class="warn">⚠ Cambio brusco de jornada${G.workChangePenalties[q]?.amount>0?' — pierdes €'+G.workChangePenalties[q].amount:''} · eficiencia entrenamiento ${Math.round((G.workChangePenalties[q]?.trainingEff||1)*100)}% este trimestre.</div>`:''}
     <div class="card" style="margin-bottom:14px">
-      <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px">Gastos fijos mensuales</div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px">Gastos fijos mensuales</div>
       <table class="eco-table">
         <tr><td>Alquiler + comida + transporte</td><td class="right minus">-€${FIXED_COSTS.total}/mes</td></tr>
       </table>
@@ -858,19 +858,19 @@ function renderWorkSetup(){
             <div class="card-title">${wo2.label}</div>
             <div class="card-sub">${wo2.desc}</div>
           </div>
-          ${debtLocked?`<span style="font-size:12px;color:#c0392b;flex-shrink:0;margin-left:8px">Bloqueado hasta saldar la deuda (€${G.debt||0})</span>`
-            :isLocked?`<span style="font-size:12px;color:#c0392b;flex-shrink:0;margin-left:8px">Necesitas €${FIXED_COSTS.total+(G.club?.cost||0)}/mes en sponsors (tienes €${sponsorM})</span>`:''}
+          ${debtLocked?`<span style="font-size:12px;color:var(--neg);flex-shrink:0;margin-left:8px">Bloqueado hasta saldar la deuda (€${G.debt||0})</span>`
+            :isLocked?`<span style="font-size:12px;color:var(--neg);flex-shrink:0;margin-left:8px">Necesitas €${FIXED_COSTS.total+(G.club?.cost||0)}/mes en sponsors (tienes €${sponsorM})</span>`:''}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:12px">
-          <div><div style="color:#aaa;margin-bottom:2px">Trabajo</div>
-            <div style="font-weight:600;color:${wo2.income>0?'#2d7a2d':'#aaa'}">${wo2.income>0?'+€'+wo2.income:'-'}/mes</div></div>
-          <div><div style="color:#aaa;margin-bottom:2px">Neto</div>
-            <div style="font-weight:600;color:${net>=0?'#2d7a2d':'#c0392b'}">${net>=0?'+':''}€${net}/mes</div></div>
-          <div><div style="color:#aaa;margin-bottom:2px">Entreno base</div>
-            <div style="font-weight:600;color:#4a90d9">${wo2.trainingH}h/sem</div></div>
+          <div><div style="color:var(--ink3);margin-bottom:2px">Trabajo</div>
+            <div style="font-weight:600;color:${wo2.income>0?'var(--pos)':'var(--ink3)'}">${wo2.income>0?'+€'+wo2.income:'-'}/mes</div></div>
+          <div><div style="color:var(--ink3);margin-bottom:2px">Neto</div>
+            <div style="font-weight:600;color:${net>=0?'var(--pos)':'var(--neg)'}">${net>=0?'+':''}€${net}/mes</div></div>
+          <div><div style="color:var(--ink3);margin-bottom:2px">Entreno base</div>
+            <div style="font-weight:600;color:var(--cuerpo)">${wo2.trainingH}h/sem</div></div>
         </div>
         <div style="margin-top:8px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-bottom:3px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:3px">
             <span>Eficiencia</span><span>${eff}%</span>
           </div>
           ${hbar(eff,100,'#4a90d9')}
@@ -880,13 +880,13 @@ function renderWorkSetup(){
     <div class="card" style="margin-top:8px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div class="card-title">Vacaciones este trimestre</div>
-        <div style="font-size:12px;color:#888">${vacDaysUsed()} / ${G.vacDaysTotal||15} días usados este año</div>
+        <div style="font-size:12px;color:var(--ink3)">${vacDaysUsed()} / ${G.vacDaysTotal||15} días usados este año</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
         <button class="secondary" onclick="setVacQ(${q},${Math.max(0,vacQ-1)})" ${vacQ<=0?'disabled':''} style="padding:6px 12px;font-size:16px">−</button>
         <div style="flex:1;text-align:center">
-          <div style="font-size:24px;font-weight:700;color:#c07a10">${vacQ}</div>
-          <div style="font-size:12px;color:#aaa">días este trimestre</div>
+          <div style="font-size:24px;font-weight:700;color:var(--avi)">${vacQ}</div>
+          <div style="font-size:12px;color:var(--ink3)">días este trimestre</div>
         </div>
         <button class="secondary" onclick="setVacQ(${q},${Math.min(vacLeft+vacQ,vacQ+1)})" ${vacLeft<=0?'disabled':''} style="padding:6px 12px;font-size:16px">+</button>
       </div>
@@ -895,7 +895,7 @@ function renderWorkSetup(){
         · Entreno total: <strong>${totalTrainingH}h/sem</strong>
         · ${vacLeft} días restantes en el año
       </div>`:
-      `<div style="font-size:12px;color:#aaa">Cada día de vacaciones añade 1.5h/sem de entrenamiento extra este trimestre. Te quedan ${vacLeft} días este año.</div>`}
+      `<div style="font-size:12px;color:var(--ink3)">Cada día de vacaciones añade 1.5h/sem de entrenamiento extra este trimestre. Te quedan ${vacLeft} días este año.</div>`}
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
@@ -903,13 +903,13 @@ function renderWorkSetup(){
       <button class="main" onclick="G.screen='calendar';autoSave();render()">Confirmar →</button>
     </div>
     ${[2,3,4].includes(q)?`<div style="margin-top:12px">
-      <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Otros trimestres</div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Otros trimestres</div>
       ${[1,2,3,4].filter(n=>n!==q).map(n=>{
         const wo2=WORK_OPTIONS.find(o=>o.pct===G.workByQuarter[n]);
         const vac2=G.vacByQuarter?.[n]||0;
         return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
           <span style="color:var(--color-text-secondary)">${{1:'Q1',2:'Q2',3:'Q3',4:'Q4'}[n]}</span>
-          <span style="cursor:pointer;color:#4a90d9" onclick="G.currentQuarter=${n};render()">
+          <span style="cursor:pointer;color:var(--cuerpo)" onclick="G.currentQuarter=${n};render()">
             ${wo2?.label||'—'} · ${wo2?.trainingH||5}h/sem${vac2>0?' + '+vac2+'d vac':''} ✎
           </span>
         </div>`;}).join('')}
@@ -933,19 +933,19 @@ function renderSeasonStart(){
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
       <h2>Temporada ${G.year}</h2>
-      <span style="font-size:12px;color:#999;padding-top:5px">${G.ranking<900?'Ranking #'+G.ranking:'Sin ranking'}</span>
+      <span style="font-size:12px;color:var(--ink3);padding-top:5px">${G.ranking<900?'Ranking #'+G.ranking:'Sin ranking'}</span>
     </div>
-    <p class="sub">${esc(G.runner.name||'Corredor')} · ${G.runner.specialty} · ${G.runner.age?G.runner.age+' años · ':''}<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:${modeInfo(G.gameMode).bg};color:${modeInfo(G.gameMode).fg}">${modeLabelOf(G.gameMode)}</span>${G.gameMode==='expres'?` <span style="font-size:12px;color:#c07a10;font-weight:600">Año ${G.year}/3</span>`:''}${G.carreraVida?` <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:#EEEDFE;color:#534AB7;font-weight:600">${PHASE_LABEL[G.lifecyclePhase]||PHASE_LABEL.runner}</span>`:''}</p>
+    <p class="sub">${esc(G.runner.name||'Corredor')} · ${G.runner.specialty} · ${G.runner.age?G.runner.age+' años · ':''}<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:${modeInfo(G.gameMode).bg};color:${modeInfo(G.gameMode).fg}">${modeLabelOf(G.gameMode)}</span>${G.gameMode==='expres'?` <span style="font-size:12px;color:var(--avi);font-weight:600">Año ${G.year}/3</span>`:''}${G.carreraVida?` <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:#EEEDFE;color:#534AB7;font-weight:600">${PHASE_LABEL[G.lifecyclePhase]||PHASE_LABEL.runner}</span>`:''}</p>
     
     ${showObjectives?`
-    <div style="background:#f5f4f0;border:1.5px solid #1a1a1a;border-radius:12px;padding:14px 16px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Elige tu objetivo de temporada</div>
+    <div style="background:var(--soft);border:1.5px solid var(--ink);border-radius:12px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Elige tu objetivo de temporada</div>
       ${SEASON_OBJECTIVES.map(obj=>`<div class="work-card" style="margin-bottom:8px" onclick="selectYearObjective('${obj.id}')">
         <div style="flex:1">
           <div class="card-title">${obj.label}</div>
           <div class="card-sub">${obj.desc}</div>
         </div>
-        <div style="font-size:12px;color:#4a8a2a;font-weight:600;flex-shrink:0;margin-left:10px">+€${obj.reward}</div>
+        <div style="font-size:12px;color:var(--pos);font-weight:600;flex-shrink:0;margin-left:10px">+€${obj.reward}</div>
       </div>`).join('')}
     </div>
     `:''}
@@ -954,7 +954,7 @@ function renderSeasonStart(){
     
     <div class="stat-grid">
       <div class="stat"><div class="stat-label">Ahorros</div><div class="stat-val">€${G.money}</div></div>
-      <div class="stat"><div class="stat-label">Neto mensual</div><div class="stat-val" style="color:${net>=0?'#2d7a2d':'#c0392b'}">${net>=0?'+':''}€${net}</div></div>
+      <div class="stat"><div class="stat-label">Neto mensual</div><div class="stat-val" style="color:${net>=0?'var(--pos)':'var(--neg)'}">${net>=0?'+':''}€${net}</div></div>
       <div class="stat"><div class="stat-label">Entreno</div><div class="stat-val">${wo?.trainingH||5}h/sem</div></div>
     </div>
     ${currentWorkPct()===100?`<div class="warn">Jornada completa — solo ${wo?.trainingH}h/sem de entrenamiento. Los bloques solo serán un ${Math.round(effForWork()*100)}% efectivos.</div>`:
@@ -969,11 +969,11 @@ function renderSeasonStart(){
           <div>
             <span style="font-size:13px;font-weight:600">${{1:'Q1',2:'Q2',3:'Q3',4:'Q4'}[q]}</span>
             <span style="font-size:12px;color:var(--color-text-secondary);margin-left:8px">${wo2?.label||'—'}</span>
-            ${qRaces.length>0?`<span style="font-size:12px;color:#4a8a2a;margin-left:6px">${qRaces.length} carrera${qRaces.length>1?'s':''}</span>`:''}
+            ${qRaces.length>0?`<span style="font-size:12px;color:var(--pos);margin-left:6px">${qRaces.length} carrera${qRaces.length>1?'s':''}</span>`:''}
           </div>
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:12px;color:#4a90d9">${wo2?.trainingH||5}h/sem</span>
-            <span style="font-size:12px;cursor:pointer;color:#aaa" onclick="G.currentQuarter=${q};G.screen='workSetup';render()">✎</span>
+            <span style="font-size:12px;color:var(--cuerpo)">${wo2?.trainingH||5}h/sem</span>
+            <span style="font-size:12px;cursor:pointer;color:var(--ink3)" onclick="G.currentQuarter=${q};G.screen='workSetup';render()">✎</span>
           </div>
         </div>`;}).join('')}
     </div>
@@ -1014,20 +1014,20 @@ function renderCalendar(){
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">
             <span class="card-title">${esc(r.name)}</span>
-            <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'#888'}">${tierLabel[r.tier]||''}</span>
+            <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
             ${inviteBadge(r)}
             ${isSpec?`<span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${myColor}22;color:${myColor}">${myLabel}</span>`:''}
-            ${inCirc?`<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:4px;background:#c07a1022;color:#c07a10">Liga · ~${circPts}pts</span>`:''}
+            ${inCirc?`<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:4px;background:#c07a1022;color:var(--avi)">Liga · ~${circPts}pts</span>`:''}
           </div>
-          <div style="font-size:12px;color:#888">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
-          ${locked?(r.zegamaSpecial?`<div style="font-size:12px;color:#c07a10;margin-top:2px">🏔️ Invitación Top 20 o clasificación por tiempo (corte 4h20)</div>`:`<div style="font-size:12px;color:#ccc;margin-top:2px">🔒 Ranking #${r.reqRanking} requerido</div>`):''}
+          <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
+          ${locked?(r.zegamaSpecial?`<div style="font-size:12px;color:var(--avi);margin-top:2px">🏔️ Invitación Top 20 o clasificación por tiempo (corte 4h20)</div>`:`<div style="font-size:12px;color:var(--ink3);margin-top:2px">🔒 Ranking #${r.reqRanking} requerido</div>`):''}
           ${noMoney&&!sel?`<div class="text-warn">Sin presupuesto</div>`:''}
           ${isSpec?`<div style="font-size:12px;color:${myColor};margin-top:2px">+15% rendimiento para ${myLabel}</div>`:''}
         </div>
         <div class="right-col">
-          <div style="font-size:13px;font-weight:600;color:#4a8a2a">€${r.prize}</div>
-          <div style="font-size:12px;color:#aaa">€${r.cost} inscr.</div>
-          ${sel?`<div style="font-size:12px;color:#4a8a2a;font-weight:600;margin-top:2px">✓</div>`:''}
+          <div style="font-size:13px;font-weight:600;color:var(--pos)">€${r.prize}</div>
+          <div style="font-size:12px;color:var(--ink3)">€${r.cost} inscr.</div>
+          ${sel?`<div style="font-size:12px;color:var(--pos);font-weight:600;margin-top:2px">✓</div>`:''}
         </div>
       </div>
     </div>`;
@@ -1037,25 +1037,25 @@ function renderCalendar(){
     <h2>Calendario anual</h2>
     <p class="sub">Comunes + específicas de ${myLabel} · €${spent} de €${budget} gastados</p>
     <div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
         <span>Presupuesto de inscripciones <button class="tip-btn" onclick="showTip('Barra de presupuesto','Esta barra muestra qué porcentaje de tus ahorros llevas gastado en inscripciones de carrera. No es la carga corporal — eso lo puedes ver en la pestaña Corredor.<br><br>Si llega al 85% se vuelve roja: ojo con dejar reservas para imprevistos.')">ⓘ</button></span>
-        <span style="font-weight:600;color:${pct>85?'#c0392b':pct>50?'#c07a10':'#888'}">${pct}% (€${spent} / €${budget})</span>
+        <span style="font-weight:600;color:${pct>85?'var(--neg)':pct>50?'var(--avi)':'var(--ink3)'}">${pct}% (€${spent} / €${budget})</span>
       </div>
-      <div style="height:4px;background:#e8e6e0;border-radius:2px;overflow:hidden">
+      <div style="height:4px;background:var(--trk);border-radius:2px;overflow:hidden">
         <div style="height:100%;width:${pct}%;background:${pct>85?'#c0392b':'#4a90d9'};border-radius:2px;transition:width .3s"></div>
       </div>
     </div>
     ${G.joinedCircuits.length>0?`<div class="note" style="margin-bottom:12px">
       <span style="font-weight:600">Circuito${G.joinedCircuits.length>1?'s':''} activo${G.joinedCircuits.length>1?'s':''}:</span>
       ${G.joinedCircuits.map(cid=>CIRCUITS_DB.find(c=>c.id===cid)?.name||cid).join(', ')}
-      — las carreras de liga están marcadas con <span style="color:#c07a10;font-weight:600">Liga</span>
+      — las carreras de liga están marcadas con <span style="color:var(--avi);font-weight:600">Liga</span>
     </div>`:
-    `<div onclick="G.screen='circuits';render()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fff;border:1.5px dashed #e0dfd8;border-radius:10px;cursor:pointer;margin-bottom:12px">
+    `<div onclick="G.screen='circuits';render()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--card);border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;margin-bottom:12px">
       <div>
         <div class="card-title">🏆 Ligas y circuitos</div>
         <div class="card-sub">Únete para ganar puntos y premios extra este año</div>
       </div>
-      <span style="color:#aaa;font-size:14px">→</span>
+      <span style="color:var(--ink3);font-size:14px">→</span>
     </div>`}
     ${QUARTERS.map(q=>{
       const common=RACES_DB.filter(r=>r.quarter===q.n);
@@ -1066,9 +1066,9 @@ function renderCalendar(){
       return `
         <div class="quarter-wrap">
           <div class="quarter-toggle ${qSel>0?'has-sel':''}" onclick="toggleQ(${q.n})">
-            <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]} <span style="font-size:12px;font-weight:400;color:#aaa">· ${q.months}</span></span>
-            ${qSel>0?`<span style="font-size:12px;color:#4a8a2a;font-weight:600">${qSel} ✓</span>`:''}
-            <span style="font-size:12px;color:#aaa;display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
+            <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]} <span style="font-size:12px;font-weight:400;color:var(--ink3)">· ${q.months}</span></span>
+            ${qSel>0?`<span style="font-size:12px;color:var(--pos);font-weight:600">${qSel} ✓</span>`:''}
+            <span style="font-size:12px;color:var(--ink3);display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
           </div>
           <div class="quarter-content ${isOpen?'open':''}" onclick="event.stopPropagation()">
             ${common.map(r=>raceCard(r,false)).join('')}
@@ -1083,7 +1083,7 @@ function renderCalendar(){
               </div>`:''}
           </div>
         </div>`;}).join('')}
-    <div style="font-size:13px;color:#888;margin:8px 0 12px">
+    <div style="font-size:13px;color:var(--ink3);margin:8px 0 12px">
       ${G.selectedRaces.length===0?'Sin carreras — puedes continuar igualmente.':G.selectedRaces.length+' carrera'+(G.selectedRaces.length>1?'s':'')+' seleccionada'+(G.selectedRaces.length>1?'s':'')+'.'}
     </div>
     <div class="grid-2">
@@ -1123,7 +1123,7 @@ function renderSponsors(){
 
   el.innerHTML=`
     <h2>Patrocinios <button class="tip-btn" onclick="showTip('Patrocinios','Cada sponsor tiene un <strong>objetivo</strong> que cumplir al final del contrato (victorias, ranking, carreras completadas). Si no lo cumples pagas una <strong>penalización</strong> del porcentaje indicado sobre tu salario anual.<br><br>Romper el contrato antes de tiempo cuesta el <strong>40% del valor restante</strong>. Los contratos de varios años pagan más pero el compromiso es mayor.')">ⓘ</button></h2>
-    <p class="sub">Año ${G.year} · Ingresos actuales: <strong style="color:#2d7a2d">+€${sponsorAnnual()}/año</strong></p>
+    <p class="sub">Año ${G.year} · Ingresos actuales: <strong style="color:var(--pos)">+€${sponsorAnnual()}/año</strong></p>
 
     ${G.sponsorPenalties&&G.sponsorPenalties.length>0?`
     <div class="danger" style="margin-bottom:14px">
@@ -1132,10 +1132,10 @@ function renderSponsors(){
         <span>${p.name}</span>
         <span style="font-weight:600">-€${p.amount}
           <button class="secondary" style="font-size:12px;padding:2px 8px;margin-left:8px" onclick="payPenalty('${p.id}')">Pagar</button>
-          <button class="secondary" style="font-size:12px;padding:2px 8px;margin-left:4px;border-color:#c07a10;color:#c07a10" onclick="negotiatePenalty('${p.id}')">Negociar</button>
+          <button class="secondary" style="font-size:12px;padding:2px 8px;margin-left:4px;border-color:#c07a10;color:var(--avi)" onclick="negotiatePenalty('${p.id}')">Negociar</button>
         </span>
       </div>`).join('')}
-      <div style="font-size:12px;color:#7a5a10;margin-top:6px">Negociar rebaja la sanción al 40% si aceptan (${Math.round(penaltyNegotiationChance()*100)}% de éxito con tu reputación actual). Si se niegan, pagas el total y pierdes seguidores. Sin resolver, se te cobra de oficio al cerrar la temporada que viene.</div>
+      <div style="font-size:12px;color:var(--avi);margin-top:6px">Negociar rebaja la sanción al 40% si aceptan (${Math.round(penaltyNegotiationChance()*100)}% de éxito con tu reputación actual). Si se niegan, pagas el total y pierdes seguidores. Sin resolver, se te cobra de oficio al cerrar la temporada que viene.</div>
     </div>`:''}
 
     ${cats.map(cat=>{
@@ -1145,52 +1145,52 @@ function renderSponsors(){
       const objMet=cur?checkSponsorObjective(cur):null;
 
       return `<div style="margin-bottom:20px">
-        <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${catLabel[cat]}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${catLabel[cat]}</div>
 
-        ${cur?`<div style="padding:10px 12px;background:#f0f6ff;border-radius:8px;border:1px solid #4a90d9;margin-bottom:10px;font-size:12px">
+        ${cur?`<div style="padding:10px 12px;background:var(--soft);border-radius:8px;border:1px solid #4a90d9;margin-bottom:10px;font-size:12px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
             <div style="flex:1">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
-                <span style="font-weight:700;color:#4a90d9">${esc(cur.name)}</span>
-                <span style="font-size:11px;padding:1px 5px;border-radius:4px;background:${tierColor[cur.tier]||'#888'}22;color:${tierColor[cur.tier]||'#888'}">${tierLabel[cur.tier]||'?'}</span>
-                <span style="color:${objMet?'#4a8a2a':'#c0392b'};font-weight:600;font-size:11px">${objMet?'✓ Objetivo cumplido':'⚠ Pendiente'}</span>
+                <span style="font-weight:700;color:var(--cuerpo)">${esc(cur.name)}</span>
+                <span style="font-size:11px;padding:1px 5px;border-radius:4px;background:${tierColor[cur.tier]||'#888'}22;color:${tierColor[cur.tier]||'var(--ink3)'}">${tierLabel[cur.tier]||'?'}</span>
+                <span style="color:${objMet?'var(--pos)':'var(--neg)'};font-weight:600;font-size:11px">${objMet?'✓ Objetivo cumplido':'⚠ Pendiente'}</span>
               </div>
-              <div style="color:#888">Obj: ${cur.objective} · <strong>${cur.duration}</strong> temp. restante${cur.duration!==1?'s':''}</div>
-              ${!objMet?`<div style="color:#c0392b;margin-top:2px">Penalización si no cumples: €${Math.round(cur.salary*cur.penaltyPct)}</div>`:''}
-              ${followersSponsorMult()>1?`<div style="font-size:12px;color:#4a90d9;margin-top:2px">📱 +${Math.round((followersSponsorMult()-1)*100)}% por reputación</div>`:''}
+              <div style="color:var(--ink3)">Obj: ${cur.objective} · <strong>${cur.duration}</strong> temp. restante${cur.duration!==1?'s':''}</div>
+              ${!objMet?`<div style="color:var(--neg);margin-top:2px">Penalización si no cumples: €${Math.round(cur.salary*cur.penaltyPct)}</div>`:''}
+              ${followersSponsorMult()>1?`<div style="font-size:12px;color:var(--cuerpo);margin-top:2px">📱 +${Math.round((followersSponsorMult()-1)*100)}% por reputación</div>`:''}
             </div>
-            <button class="secondary" onclick="breakSponsorContract('${cat}')" style="font-size:11px;padding:5px 9px;flex-shrink:0;color:#c0392b;border-color:#c0392b;background:#fff8f0;text-align:center;line-height:1.3">Romper<br><span style="font-size:10px">-€${Math.round(cur.salary*cur.duration*0.4)}</span></button>
+            <button class="secondary" onclick="breakSponsorContract('${cat}')" style="font-size:11px;padding:5px 9px;flex-shrink:0;color:var(--neg);border-color:#c0392b;background:#fff8f0;text-align:center;line-height:1.3">Romper<br><span style="font-size:10px">-€${Math.round(cur.salary*cur.duration*0.4)}</span></button>
           </div>
         </div>
-        ${offers.filter(sp=>sp.id!==cur.id).length>0?`<div style="font-size:12px;color:#aaa;font-style:italic;margin-bottom:6px">Otras ofertas (rompe el contrato para cambiar):</div>
-        ${offers.filter(sp=>sp.id!==cur.id).map(sp=>`<div style="background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px 14px;margin-bottom:6px;opacity:0.5">
+        ${offers.filter(sp=>sp.id!==cur.id).length>0?`<div style="font-size:12px;color:var(--ink3);font-style:italic;margin-bottom:6px">Otras ofertas (rompe el contrato para cambiar):</div>
+        ${offers.filter(sp=>sp.id!==cur.id).map(sp=>`<div style="background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:6px;opacity:0.5">
           <div class="flex-between-center">
             <div>
-              <span style="font-size:13px;font-weight:600;color:#aaa">${sp.name}</span>
+              <span style="font-size:13px;font-weight:600;color:var(--ink3)">${sp.name}</span>
               <span style="font-size:11px;font-weight:600;padding:1px 5px;border-radius:4px;background:${tierColor[sp.tier]}22;color:${tierColor[sp.tier]};margin-left:5px">${tierLabel[sp.tier]}</span>
-              ${sp.tier>cur.tier?`<span style="font-size:11px;color:#c07a10;font-weight:700;margin-left:4px">⬆ Upgrade</span>`:''}
+              ${sp.tier>cur.tier?`<span style="font-size:11px;color:var(--avi);font-weight:700;margin-left:4px">⬆ Upgrade</span>`:''}
             </div>
-            <span style="font-size:13px;font-weight:600;color:#aaa">+€${sp.salary}/año</span>
+            <span style="font-size:13px;font-weight:600;color:var(--ink3)">+€${sp.salary}/año</span>
           </div>
         </div>`).join('')}`:''}`:''
         }
         ${!cur?offers.map(sp=>{
           const isPending=G._pendingSponsors?.[cat]?.id===sp.id;
-          return `<div class="sponsor-card ${isPending?'sel-aid':''}" onclick="selectSponsor('${cat}','${sp.id}')" style="${isPending?'border:2px solid #4a90d9;background:#f0f6ff;':''}">
+          return `<div class="sponsor-card ${isPending?'sel-aid':''}" onclick="selectSponsor('${cat}','${sp.id}')" style="${isPending?'border:2px solid #4a90d9;background:var(--soft);':''}">
             <div class="flex-between">
               <div style="flex:1">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
                   <span class="card-title">${sp.name}</span>
                   <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[sp.tier]}22;color:${tierColor[sp.tier]}">${tierLabel[sp.tier]}</span>
-                  ${isPending?`<span style="font-size:11px;font-weight:700;color:#4a90d9">● Seleccionado</span>`:''}
+                  ${isPending?`<span style="font-size:11px;font-weight:700;color:var(--cuerpo)">● Seleccionado</span>`:''}
                 </div>
-                <div style="font-size:12px;color:#888">${sp.bonus}</div>
-                <div style="font-size:12px;color:#aaa;margin-top:2px">Obj: ${sp.objective}</div>
-                ${sp.duration>1?`<div style="font-size:12px;color:#4a90d9;margin-top:1px">Contrato ${sp.duration} temporadas</div>`:''}
+                <div style="font-size:12px;color:var(--ink3)">${sp.bonus}</div>
+                <div style="font-size:12px;color:var(--ink3);margin-top:2px">Obj: ${sp.objective}</div>
+                ${sp.duration>1?`<div style="font-size:12px;color:var(--cuerpo);margin-top:1px">Contrato ${sp.duration} temporadas</div>`:''}
               </div>
               <div class="right-col">
-                <div style="font-size:14px;font-weight:600;color:#2d7a2d">+€${sp.salary}</div>
-                <div style="font-size:12px;color:#aaa">/año</div>
+                <div style="font-size:14px;font-weight:600;color:var(--pos)">+€${sp.salary}</div>
+                <div style="font-size:12px;color:var(--ink3)">/año</div>
                 <div class="text-warn">Penaliz. ${Math.round(sp.penaltyPct*100)}%</div>
               </div>
             </div>
@@ -1198,19 +1198,19 @@ function renderSponsors(){
 
         ${lockedOffers.length>0?`
           <div style="margin-top:6px">
-            ${lockedOffers.slice(0,1).map(sp=>`<div style="padding:8px 12px;background:#fafafa;border-radius:8px;border:0.5px dashed #ddd;font-size:12px;color:#bbb;display:flex;justify-content:space-between">
+            ${lockedOffers.slice(0,1).map(sp=>`<div style="padding:8px 12px;background:var(--soft);border-radius:8px;border:0.5px dashed var(--line);font-size:12px;color:var(--ink3);display:flex;justify-content:space-between">
               <span>🔒 ${sp.name} · ${tierLabel[sp.tier]}</span>
               <span>${sp.reqYear?`Año ${sp.reqYear}`:''} ${sp.reqRanking?`· Ranking #${sp.reqRanking}`:''}</span>
             </div>`).join('')}
           </div>`:''}
 
-        ${offers.length===0&&lockedOffers.length===0?`<div style="font-size:13px;color:#ccc;padding:6px 0">Sin ofertas esta temporada.</div>`:''}
+        ${offers.length===0&&lockedOffers.length===0?`<div style="font-size:13px;color:var(--ink3);padding:6px 0">Sin ofertas esta temporada.</div>`:''}
       </div>`;}).join('')}
     ${Object.keys(G._pendingSponsors||{}).length>0?`
     <div class="warn" style="margin-bottom:10px">
       <strong>Tienes selecciones sin confirmar.</strong> Haz clic en un sponsor seleccionado para quitarlo, o confirma para firmar los contratos.
     </div>
-    <button class="main" onclick="confirmSponsors()" style="background:#2d7a2d;border-color:#2d7a2d;color:#fff;margin-bottom:8px">✓ Confirmar patrocinios seleccionados</button>`:''}
+    <button class="main" onclick="confirmSponsors()" style="background:#2d7a2d;border-color:#2d7a2d;color:var(--card);margin-bottom:8px">✓ Confirmar patrocinios seleccionados</button>`:''}
     <button class="main" onclick="G._pendingSponsors={};G.screen='training';autoSave();render()">Bloque de entrenamiento →</button>`;
 }
 
@@ -1278,9 +1278,9 @@ function renderTraining(){
     ${hint?`<div class="${hint.type}">${hint.msg}</div>`:''}
     ${se.trainingMod!==0?`<div class="hint">${se.note}</div>`:''}
     <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
         <span>Carga corporal acumulada <button class="tip-btn" onclick="showTip('Carga corporal','Refleja el desgaste acumulado de entrenar. Por encima del <strong>70%</strong> empieza la bajada de rendimiento. Al <strong>100%</strong> aparece una lesión.<br><br>La degradación es exponencial: cuanta más carga tienes, más difícil bajarla. Se reduce parcialmente entre temporadas, pero nunca vuelve a cero sola. Nunca vayas a tope todo el rato.')">ⓘ</button></span>
-        <span style="color:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#888'}">${load}%</span>
+        <span style="color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--ink3)'}">${load}%</span>
       </div>
       <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9'}"></div></div>
     </div>
@@ -1288,7 +1288,7 @@ function renderTraining(){
       <button class="secondary" id="btn-nr" onclick="toggleNR()">Ver próxima carrera ↓</button>
     </div>
     <div id="nr-panel" style="display:none;margin-bottom:12px">
-      ${nextRace?racePreviewCard(nextRace,'preview',0):'<p style="font-size:13px;color:#aaa">Sin carrera seleccionada.</p>'}
+      ${nextRace?racePreviewCard(nextRace,'preview',0):'<p style="font-size:13px;color:var(--ink3)">Sin carrera seleccionada.</p>'}
     </div>
     <div style="margin-bottom:16px">
       ${TRAINING_BLOCKS.map(b=>{
@@ -1299,16 +1299,16 @@ function renderTraining(){
         // Taper: contextual hint
         const hasFutureRace=nextRace!==null&&nextRace!==undefined;
         const taperHint=b.taperBlock&&hasFutureRace?`<div class="text-ok">✓ Tienes carrera próxima — buen momento. +6 Energía y Piernas al salir.</div>`:
-                        b.taperBlock&&!hasFutureRace?`<div style="font-size:12px;color:#aaa;margin-top:4px">Sin carrera próxima — poco beneficio ahora.</div>`:'';
+                        b.taperBlock&&!hasFutureRace?`<div style="font-size:12px;color:var(--ink3);margin-top:4px">Sin carrera próxima — poco beneficio ahora.</div>`:'';
         // Momentum warning
         const mom=G.trainingMomentum;
         const momWarn=mom&&mom.blockId===b.id&&mom.count>=2?
-          `<div style="font-size:12px;color:#c07a10;margin-top:4px">⚠ ${mom.count}º trimestre seguido — riesgo de estancamiento o revelación.</div>`:'';
+          `<div style="font-size:12px;color:var(--avi);margin-top:4px">⚠ ${mom.count}º trimestre seguido — riesgo de estancamiento o revelación.</div>`:'';
         // Flavor text when selected
         const flavor=sel&&b.flavor&&b.flavor.length?
-          `<div style="font-size:12px;color:#555;font-style:italic;margin-top:5px;padding:5px 8px;background:#f5f4f0;border-radius:5px">"${b.flavor[0]}"</div>`:'';
+          `<div style="font-size:12px;color:var(--ink2);font-style:italic;margin-top:5px;padding:5px 8px;background:var(--soft);border-radius:5px">"${b.flavor[0]}"</div>`:'';
         const effs=b.taperBlock?
-          `<span style="font-size:12px;color:#4a8a2a">+2 Mental · Carga −18%</span>`:
+          `<span style="font-size:12px;color:var(--pos)">+2 Mental · Carga −18%</span>`:
           Object.entries(b.effects).filter(([,v])=>v!==0).map(([k,v])=>{
             const r=Math.round(v*eff*legsTrainingMult(k));const col=r>0?'#4a8a2a':'#c0392b';
             return `<span style="font-size:12px;color:${col}">${k.charAt(0).toUpperCase()+k.slice(1)} ${r>0?'+':''}${r}</span>`;
@@ -1317,15 +1317,15 @@ function renderTraining(){
         return `<div class="train-card ${sel?'sel':''}" onclick="selectTraining('${b.id}')">
           <div class="flex-between">
             <div style="flex:1">
-              <div class="card-title">${b.name} <span style="font-size:11px;color:#888;font-weight:400">· ${bkH}h/sem · quedan ${bkRepH}h reputación</span></div>
-              <div style="font-size:12px;color:#888;margin:2px 0 6px">${b.desc} ${b.detail}</div>
+              <div class="card-title">${b.name} <span style="font-size:11px;color:var(--ink3);font-weight:400">· ${bkH}h/sem · quedan ${bkRepH}h reputación</span></div>
+              <div style="font-size:12px;color:var(--ink3);margin:2px 0 6px">${b.desc} ${b.detail}</div>
               <div class="flex-between-center">
                 <div>${effs}</div>
                 <span style="font-size:12px;color:${loadCol};flex-shrink:0;margin-left:8px">carga → ${loadAfter}%</span>
               </div>
               ${taperHint}${momWarn}${flavor}
             </div>
-            ${sel?`<span style="color:#4a90d9;font-size:16px;margin-left:10px">✓</span>`:''}
+            ${sel?`<span style="color:var(--cuerpo);font-size:16px;margin-left:10px">✓</span>`:''}
           </div>
         </div>`;}).join('')}
     </div>
@@ -1350,16 +1350,16 @@ function renderAthleteHoursBlock(){
   const effPct=Math.round(lifeAthleteEffMult(h)*100);
   const opts=[0,2,5,10];
   return `
-    <div style="border-top:1px solid #e8e6e0;margin:16px 0 14px;padding-top:14px">
-      <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:8px">Horas para ${first} esta semana</div>
+    <div style="border-top:1px solid var(--line);margin:16px 0 14px;padding-top:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px">Horas para ${first} esta semana</div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
         ${opts.map(v=>{
           const sel=h===v;
-          return `<div onclick="setAthleteHours(${v})" style="flex:1;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid ${sel?'#534AB7':'#e0dfd8'};background:${sel?'#EEEDFE':'#fff'};cursor:pointer;font-size:13px;font-weight:${sel?'600':'400'};color:${sel?'#534AB7':'#555'};transition:all .15s">${v}h</div>`;
+          return `<div onclick="setAthleteHours(${v})" style="flex:1;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid ${sel?'#534AB7':'#e0dfd8'};background:${sel?'#EEEDFE':'var(--card)'};cursor:pointer;font-size:13px;font-weight:${sel?'600':'400'};color:${sel?'#534AB7':'var(--ink2)'};transition:all .15s">${v}h</div>`;
         }).join('')}
       </div>
-      ${h>0?`<div style="font-size:12px;color:#c07a10">–${h}h para ti · +${h}h para ${first} · tu entrenamiento al <strong>${effPct}%</strong> · al cerrar la temporada, ${first} +1 en ${lifeAthleteSeasonGain(h)} stat${lifeAthleteSeasonGain(h)>1?'s':''}</div>`
-           :`<div style="font-size:12px;color:#aaa">Sin horas asignadas — entrenas al 100%</div>`}
+      ${h>0?`<div style="font-size:12px;color:var(--avi)">–${h}h para ti · +${h}h para ${first} · tu entrenamiento al <strong>${effPct}%</strong> · al cerrar la temporada, ${first} +1 en ${lifeAthleteSeasonGain(h)} stat${lifeAthleteSeasonGain(h)>1?'s':''}</div>`
+           :`<div style="font-size:12px;color:var(--ink3)">Sin horas asignadas — entrenas al 100%</div>`}
     </div>`;
 }
 // Mejora del atleta al cerrar la temporada según las horas semanales: +1 en 1, 2 o 3 stats.
@@ -1406,12 +1406,12 @@ function renderPreRacePrep(){
     ${altPenalty>0?`<div class="warn">⚠ Carrera de alta altitud — sin entrenamiento específico irás un ${Math.round(altPenalty*100)}% más lento en subidas. Club de Alta Montaña o entrenador lo reducen.</div>`:''}
     ${G.injuryType?`<div class="injury-card">
       <div class="injury-type" style="font-size:14px">${INJURY_TYPES[G.injuryType]?.label||'Lesión'} — llegas tocado <button class="tip-btn" onclick="showTip('Tipos de lesión','${['tendinitis','rotura','fractura'].map(k=>`<strong>${INJURY_TYPES[k].label}</strong> — ${injuryBlockText(k)}.`).join('<br>')}<br><br>Los stats perdidos se recuperan poco a poco. El <strong>fisioterapeuta</strong> acorta las bajas y acelera esa recuperación. La carga corporal alta es la principal causa.')">ⓘ</button></div>
-      <div style="font-size:12px;color:#555;margin-top:4px">
+      <div style="font-size:12px;color:var(--ink2);margin-top:4px">
         Energía inicial: <strong>${INJURY_TYPES[G.injuryType]?.nextRaceStats?.energy||80}%</strong> ·
         Piernas: <strong>${INJURY_TYPES[G.injuryType]?.nextRaceStats?.legs||70}%</strong> ·
         Hidratación: <strong>${INJURY_TYPES[G.injuryType]?.nextRaceStats?.hydration||80}%</strong>
       </div>
-      ${hasFisio()?`<div class="text-ok">El fisio reduce el impacto.</div>`:'<div style="font-size:12px;color:#c0392b;margin-top:4px">Sin fisio el impacto es máximo. Considera ir conservador.</div>'}
+      ${hasFisio()?`<div class="text-ok">El fisio reduce el impacto.</div>`:'<div style="font-size:12px;color:var(--neg);margin-top:4px">Sin fisio el impacto es máximo. Considera ir conservador.</div>'}
     </div>`:''}
 
     <div class="section-label">Nutrición la noche antes <button class="tip-btn" onclick="showTip('Nutrición pre-carrera','Lo que comes la noche antes afecta tu <strong>energía inicial</strong> en carrera. Las opciones básicas están siempre disponibles. Las avanzadas (ayuno glucémico, protocolo pro) se desbloquean con años de experiencia.<br><br>Algunas opciones tienen <strong>coste económico</strong>. Si tienes una lesión activa, la energía inicial parte ya penalizada independientemente de la nutrición.')">ⓘ</button></div>
@@ -1424,50 +1424,50 @@ function renderPreRacePrep(){
           <div style="flex:1">
             <div class="card-title">${n.label}</div>
             <div class="card-sub">${n.desc}</div>
-            ${!avail.ok?`<div style="font-size:12px;color:#aaa;margin-top:2px">🔒 ${avail.reason}</div>`:''}
+            ${!avail.ok?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">🔒 ${avail.reason}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0;margin-left:10px;font-size:12px">
-            ${n.energyBonus>0?`<div style="color:#4a8a2a">+${n.energyBonus} energía</div>`:
-              n.energyBonus<0?`<div style="color:#c07a10">${n.energyBonus} energía</div>`:
-              `<div style="color:#aaa">sin bonus</div>`}
-            ${cost>0?`<div style="color:#c0392b;margin-top:2px">€${cost}</div>`:''}
+            ${n.energyBonus>0?`<div style="color:var(--pos)">+${n.energyBonus} energía</div>`:
+              n.energyBonus<0?`<div style="color:var(--avi)">${n.energyBonus} energía</div>`:
+              `<div style="color:var(--ink3)">sin bonus</div>`}
+            ${cost>0?`<div style="color:var(--neg);margin-top:2px">€${cost}</div>`:''}
           </div>
         </div>
       </div>`;}).join('')}
 
     ${isUltra?`
     <div class="section-label">Dropbag (máx. 2 items) <button class="tip-btn" onclick="showTip('Dropbag','Disponible en ultras de 40km+. Dejas hasta <strong>2 items</strong> en el avituallamiento central antes de salir.<br><br>Puedes usarlos <strong>una sola vez</strong> al pasar por ese avituallamiento en carrera. Elige según tus puntos débiles: energía, hidratación o recuperación de piernas.<br><br>Si no ves la opción de usar la dropbag en el avituallamiento, es que todavía no has llegado al punto donde la dejaste.')">ⓘ</button></div>
-    <div style="font-size:12px;color:#888;margin-bottom:10px">Deja una bolsa en el avituallamiento central con material extra</div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">Deja una bolsa en el avituallamiento central con material extra</div>
     ${DROPBAG_OPTIONS.map(d=>{
       const isSel=bag.includes(d.id);
       const maxed=!isSel&&bag.length>=2;
       return `<div class="dropbag-item ${isSel?'sel-bag':''} ${maxed?'disabled':''}" onclick="${maxed?'':'toggleDropbag(\''+d.id+'\')'}">
         <div style="flex:1">
           <div style="font-size:13px;font-weight:600">${d.label}${isSel?' ✓':''}</div>
-          <div style="font-size:12px;color:#888">${d.desc}</div>
+          <div style="font-size:12px;color:var(--ink3)">${d.desc}</div>
         </div>
       </div>`;}).join('')}`:''}
 
     <div class="section-label">🧃 Geles en el bolsillo <button class="tip-btn" onclick="showTip('Geles en carrera','Lleva geles en el bolsillo para usarlos en cualquier tramo, sin esperar al avituallamiento.<br><br>Cada gel da <strong>+18 energía</strong> (o +22 con sponsor nutrición) y cuesta <strong>€2</strong>. Máximo 5 geles.<br><br>En carreras cortas (−20km) llevar muchos no tiene sentido. Para ultras, pueden ser decisivos en el último tercio.')">ⓘ</button></div>
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;padding:10px 14px;background:#fff;border:1px solid #e0dfd8;border-radius:10px">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px">
       <button class="secondary" onclick="G.gelsCarried=Math.max(0,(G.gelsCarried||0)-1);render()" style="padding:6px 14px;font-size:16px" ${!(G.gelsCarried>0)?'disabled':''}>−</button>
       <div style="flex:1;text-align:center">
-        <div style="font-size:22px;font-weight:700;color:#4a8a2a">${G.gelsCarried||0}</div>
-        <div style="font-size:12px;color:#aaa">geles · €${(G.gelsCarried||0)*2} · +${(G.gelsCarried||0)*18} energía potencial</div>
+        <div style="font-size:22px;font-weight:700;color:var(--pos)">${G.gelsCarried||0}</div>
+        <div style="font-size:12px;color:var(--ink3)">geles · €${(G.gelsCarried||0)*2} · +${(G.gelsCarried||0)*18} energía potencial</div>
       </div>
       <button class="secondary" onclick="G.gelsCarried=Math.min(5,(G.gelsCarried||0)+1);render()" style="padding:6px 14px;font-size:16px" ${G.gelsCarried>=5?'disabled':''}>+</button>
     </div>
     ${(G.gelsCarried||0)>0?`<div class="note" style="margin-bottom:12px">Llevas ${G.gelsCarried} gel${G.gelsCarried>1?'es':''} (€${G.gelsCarried*2}). Úsalos en cualquier tramo pulsando el botón que aparecerá en carrera.</div>`:''}
 
     <div class="section-label">🏃 Calentamiento <button class="tip-btn" onclick="showTip('Calentamiento','20 minutos de calentamiento antes de la salida.<br><br><strong>Coste:</strong> −5 Energía inicial.<br><strong>Beneficio:</strong> +4 Velocidad y +3 Subida durante toda la carrera.<br><br>Vale la pena en carreras cortas (−25km) donde la velocidad importa desde el primer tramo. Para ultras, el coste de energía no compensa.')">ⓘ</button></div>
-    <div class="work-card ${G.warmedUp?'sel':''}" onclick="G.warmedUp=!G.warmedUp;render()" style="${G.warmedUp?'border-color:#4a8a2a;background:#f2faf0;':''}">
+    <div class="work-card ${G.warmedUp?'sel':''}" onclick="G.warmedUp=!G.warmedUp;render()" style="${G.warmedUp?'border-color:#4a8a2a;background:var(--soft);':''}">
       <div class="flex-between-center">
         <div>
           <div class="card-title">Calentar 20 minutos</div>
           <div class="card-sub">−5 energía · +4 Velocidad · +3 Subida durante la carrera</div>
-          ${race.km>25?`<div style="font-size:12px;color:#c07a10;margin-top:2px">En ultras el coste de energía puede no compensar</div>`:`<div style="font-size:12px;color:#4a8a2a;margin-top:2px">Para esta distancia es una buena decisión</div>`}
+          ${race.km>25?`<div style="font-size:12px;color:var(--avi);margin-top:2px">En ultras el coste de energía puede no compensar</div>`:`<div style="font-size:12px;color:var(--pos);margin-top:2px">Para esta distancia es una buena decisión</div>`}
         </div>
-        <span style="font-size:18px;color:${G.warmedUp?'#4a8a2a':'#ddd'}">${G.warmedUp?'✓':'○'}</span>
+        <span style="font-size:18px;color:${G.warmedUp?'var(--pos)':'#ddd'}">${G.warmedUp?'✓':'○'}</span>
       </div>
     </div>
 
@@ -1504,9 +1504,9 @@ function renderMidSeasonCalendar(){
     if(isDone){
       return `<div class="race-card" style="opacity:0.45;cursor:default">
         <div class="flex-between-center">
-          <div><div style="font-size:14px;font-weight:600;color:#888">${r.name}</div>
-          <div style="font-size:12px;color:#bbb">${r.monthName} · ya corrida</div></div>
-          <span style="font-size:12px;color:#4a8a2a;font-weight:600">✓ hecha</span>
+          <div><div style="font-size:14px;font-weight:600;color:var(--ink3)">${r.name}</div>
+          <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ya corrida</div></div>
+          <span style="font-size:12px;color:var(--pos);font-weight:600">✓ hecha</span>
         </div>
       </div>`;
     }
@@ -1515,17 +1515,17 @@ function renderMidSeasonCalendar(){
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">
             <span class="card-title">${esc(r.name)}</span>
-            <span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'#888'}">${tierLabel[r.tier]||''}</span>
+            <span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
             ${inviteBadge(r)}
           </div>
-          <div style="font-size:12px;color:#888">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
-          ${locked?(r.zegamaSpecial?`<div style="font-size:12px;color:#c07a10;margin-top:2px">🏔️ Invitación Top 20 o clasificación por tiempo (corte 4h20)</div>`:`<div style="font-size:12px;color:#ccc;margin-top:2px">🔒 Ranking #${r.reqRanking} requerido</div>`):''}
+          <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
+          ${locked?(r.zegamaSpecial?`<div style="font-size:12px;color:var(--avi);margin-top:2px">🏔️ Invitación Top 20 o clasificación por tiempo (corte 4h20)</div>`:`<div style="font-size:12px;color:var(--ink3);margin-top:2px">🔒 Ranking #${r.reqRanking} requerido</div>`):''}
           ${noMoney&&!isSel?`<div class="text-warn">Sin presupuesto</div>`:''}
         </div>
         <div class="right-col">
-          <div style="font-size:13px;font-weight:600;color:#4a8a2a">€${r.prize}</div>
-          <div style="font-size:12px;color:#aaa">€${r.cost} inscr.</div>
-          ${isSel?`<div style="font-size:12px;color:#4a8a2a;font-weight:600;margin-top:2px">✓</div>`:''}
+          <div style="font-size:13px;font-weight:600;color:var(--pos)">€${r.prize}</div>
+          <div style="font-size:12px;color:var(--ink3)">€${r.cost} inscr.</div>
+          ${isSel?`<div style="font-size:12px;color:var(--pos);font-weight:600;margin-top:2px">✓</div>`:''}
         </div>
       </div>
     </div>`;
@@ -1545,16 +1545,16 @@ function renderMidSeasonCalendar(){
         <div class="quarter-wrap">
           <div class="quarter-toggle ${qSel>0?'has-sel':''}" onclick="toggleQMid(${q.n})">
             <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]}
-              <span style="font-size:12px;font-weight:400;color:#aaa"> · ${q.months}</span>
+              <span style="font-size:12px;font-weight:400;color:var(--ink3)"> · ${q.months}</span>
             </span>
-            ${qDone>0?`<span style="font-size:12px;color:#4a8a2a;margin-right:6px">${qDone} ✓ hecha${qDone>1?'s':''}</span>`:''}
-            ${qSel>qDone?`<span style="font-size:12px;color:#4a90d9;margin-right:6px">${qSel-qDone} pendiente${qSel-qDone>1?'s':''}</span>`:''}
-            <span style="font-size:12px;color:#aaa;display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
+            ${qDone>0?`<span style="font-size:12px;color:var(--pos);margin-right:6px">${qDone} ✓ hecha${qDone>1?'s':''}</span>`:''}
+            ${qSel>qDone?`<span style="font-size:12px;color:var(--cuerpo);margin-right:6px">${qSel-qDone} pendiente${qSel-qDone>1?'s':''}</span>`:''}
+            <span style="font-size:12px;color:var(--ink3);display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
           </div>
           <div class="quarter-content ${isOpen?'open':''}" onclick="event.stopPropagation()">
             ${races.map(r=>raceRow(r)).join('')}
             ${specRaces.length>0?`
-              <div style="font-size:12px;color:#4a8a2a;font-weight:600;padding:6px 2px 4px">★ Específicas de tu especialidad</div>
+              <div style="font-size:12px;color:var(--pos);font-weight:600;padding:6px 2px 4px">★ Específicas de tu especialidad</div>
               ${specRaces.map(r=>raceRow(r)).join('')}
             `:''}
           </div>
@@ -1609,16 +1609,16 @@ function renderCircuits(){
             <div style="font-size:15px;font-weight:600;color:${c.color}">${c.name}</div>
             <div class="card-sub">${c.desc}</div>
           </div>
-          ${joined?`<span style="font-size:12px;color:#c07a10;font-weight:600;flex-shrink:0;margin-left:10px">✓ Unido</span>`:''}
-          ${locked?`<span style="font-size:12px;color:#ccc;flex-shrink:0;margin-left:10px">🔒</span>`:''}
+          ${joined?`<span style="font-size:12px;color:var(--avi);font-weight:600;flex-shrink:0;margin-left:10px">✓ Unido</span>`:''}
+          ${locked?`<span style="font-size:12px;color:var(--ink3);flex-shrink:0;margin-left:10px">🔒</span>`:''}
         </div>
-        <div style="font-size:12px;color:#aaa;margin-bottom:8px">Carreras: ${raceNames.join(' · ')}</div>
-        <div style="font-size:12px;color:#4a8a2a;margin-bottom:6px">Premio: ${c.prize}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">Carreras: ${raceNames.join(' · ')}</div>
+        <div style="font-size:12px;color:var(--pos);margin-bottom:6px">Premio: ${c.prize}</div>
         ${joined?`<div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px">
-          <span style="color:#888">Puntos acumulados</span>
-          <span style="font-weight:600;color:#c07a10">${pts} / ${c.pointsForPrize}</span>
+          <span style="color:var(--ink3)">Puntos acumulados</span>
+          <span style="font-weight:600;color:var(--avi)">${pts} / ${c.pointsForPrize}</span>
         </div>
-        <div style="height:4px;background:#e8e6e0;border-radius:2px;margin-top:4px;overflow:hidden">
+        <div style="height:4px;background:var(--trk);border-radius:2px;margin-top:4px;overflow:hidden">
           <div style="height:100%;width:${Math.min(100,Math.round(pts/c.pointsForPrize*100))}%;background:#c07a10;border-radius:2px"></div>
         </div>`:''}
       </div>`;}).join('')}
@@ -1645,29 +1645,29 @@ function renderFameTab(){
     <p class="sub">${esc(G.runner.name||'Corredor')} · ${f.toLocaleString()} seguidores</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="fame-stat">
-        <div style="font-size:12px;color:#aaa;margin-bottom:4px">Seguidores</div>
-        <div style="font-size:18px;font-weight:700;color:#c07a10">${f>=1000?(f/1000).toFixed(1)+'K':f}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Seguidores</div>
+        <div style="font-size:18px;font-weight:700;color:var(--avi)">${f>=1000?(f/1000).toFixed(1)+'K':f}</div>
         <div class="followers-bar"><div class="followers-fill" style="width:${nextLevel?Math.min(100,Math.round(f/nextLevel.followers*100)):100}%"></div></div>
       </div>
       <div class="fame-stat">
-        <div style="font-size:12px;color:#aaa;margin-bottom:4px">Nivel</div>
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Nivel</div>
         <div style="font-size:13px;font-weight:700">${level?level.label:'Desconocido'}</div>
-        <div style="font-size:12px;color:#aaa;margin-top:3px">${level?level.benefit:nextLevel?'→ '+nextLevel.followers.toLocaleString()+' seg':''}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:3px">${level?level.benefit:nextLevel?'→ '+nextLevel.followers.toLocaleString()+' seg':''}</div>
       </div>
     </div>
-    ${nextLevel?`<div style="font-size:12px;color:#888;margin-bottom:14px">Próximo nivel: <strong>${nextLevel.label}</strong> a ${(nextLevel.followers-f).toLocaleString()} seguidores</div>`:''}
-    ${(()=>{const wo=curWorkOpt();const blockH=G.trainingBlockHours||8;const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);const repH=Math.max(0,totalH-blockH);return `<div style="display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:4px">
+    ${nextLevel?`<div style="font-size:12px;color:var(--ink3);margin-bottom:14px">Próximo nivel: <strong>${nextLevel.label}</strong> a ${(nextLevel.followers-f).toLocaleString()} seguidores</div>`:''}
+    ${(()=>{const wo=curWorkOpt();const blockH=G.trainingBlockHours||8;const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);const repH=Math.max(0,totalH-blockH);return `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);margin-bottom:4px">
       <span>Horas disponibles</span>
-      <span style="font-weight:600;color:${availH<=2?'#c0392b':availH<=5?'#c07a10':'#1a1a1a'}">${availH}h</span>
+      <span style="font-weight:600;color:${availH<=2?'var(--neg)':availH<=5?'var(--avi)':'var(--ink)'}">${availH}h</span>
     </div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:8px">${totalH}h trabajo − ${blockH}h bloque = ${repH}h reputación · usadas: ${G.fameHoursUsed||0}h</div>`;})()}
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">${totalH}h trabajo − ${blockH}h bloque = ${repH}h reputación · usadas: ${G.fameHoursUsed||0}h</div>`;})()}
     ${availH<=2?`<div class="warn">Pocas horas disponibles — más actividad en redes reducirá tu tiempo de entrenamiento.</div>`:''}
     ${(G.repInvitations||[]).length>0?`<div class="card" style="margin-bottom:14px;border-color:#2d7a2d">
-      <div style="font-size:13px;font-weight:700;color:#2d7a2d;margin-bottom:8px">📩 Invitaciones disponibles esta temporada</div>
-      ${G.repInvitations.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #e8e6e0">
+      <div style="font-size:13px;font-weight:700;color:var(--pos);margin-bottom:8px">📩 Invitaciones disponibles esta temporada</div>
+      ${G.repInvitations.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--line)">
         <div>
           <div style="font-size:13px;font-weight:600">${esc(r.name)}</div>
-          <div style="font-size:12px;color:#888">${r.tier} · ${r.monthName||''}</div>
+          <div style="font-size:12px;color:var(--ink3)">${r.tier} · ${r.monthName||''}</div>
         </div>
         <button class="secondary" onclick="addRepInvitation('${r.id}')" style="font-size:12px;padding:4px 10px">Añadir →</button>
       </div>`).join('')}
@@ -1693,10 +1693,10 @@ function renderFameTab(){
             ${reason?`<div class="text-warn">${reason}</div>`:''}
           </div>
           <div class="right-col">
-            <div style="font-size:12px;color:#888">-${a.hours}h</div>
-            <div style="font-size:12px;color:#c07a10;font-weight:600">+${a.followers} seg.</div>
-            ${a.income?`<div style="font-size:12px;color:#4a8a2a">+€${a.income}</div>`:''}
-            <div style="font-size:12px;color:#ccc">${done}/${a.cooldown} usado</div>
+            <div style="font-size:12px;color:var(--ink3)">-${a.hours}h</div>
+            <div style="font-size:12px;color:var(--avi);font-weight:600">+${a.followers} seg.</div>
+            ${a.income?`<div style="font-size:12px;color:var(--pos)">+€${a.income}</div>`:''}
+            <div style="font-size:12px;color:var(--ink3)">${done}/${a.cooldown} usado</div>
           </div>
         </div>
       </div>`;}).join('')}`;
@@ -1738,20 +1738,20 @@ function renderBetweenManage(){
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
       <h2>Entre carreras</h2>
-      <span style="font-size:12px;color:#999;padding-top:5px">${G.currentRaceIdx}/${G.selectedRaces.length} corridas</span>
+      <span style="font-size:12px;color:var(--ink3);padding-top:5px">${G.currentRaceIdx}/${G.selectedRaces.length} corridas</span>
     </div>
     <p class="sub">${nextRace?'Próxima: '+nextRace.name:'Fin de temporada'}</p>
     <div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
         <span>Carga corporal</span>
-        <span style="color:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#888'}">${load}%</span>
+        <span style="color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--ink3)'}">${load}%</span>
       </div>
       <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9'}"></div></div>
-      ${load>=lt.warningLevel2?`<div style="font-size:12px;color:#c0392b;margin-top:4px">Carga alta — considera recuperar antes de la próxima.</div>`:
-        load>=lt.warningLevel1?`<div style="font-size:12px;color:#c07a10;margin-top:4px">Carga moderada. Una sesión te vendrá bien.</div>`:''}
+      ${load>=lt.warningLevel2?`<div style="font-size:12px;color:var(--neg);margin-top:4px">Carga alta — considera recuperar antes de la próxima.</div>`:
+        load>=lt.warningLevel1?`<div style="font-size:12px;color:var(--avi);margin-top:4px">Carga moderada. Una sesión te vendrá bien.</div>`:''}
     </div>
     ${debtPanel()}
-    <div class="section-label">Recuperación${G._recoveryUsed?' <span style="font-size:12px;color:#aaa;font-weight:400">(1 acción usada)</span>':''}</div>
+    <div class="section-label">Recuperación${G._recoveryUsed?' <span style="font-size:12px;color:var(--ink3);font-weight:400">(1 acción usada)</span>':''}</div>
     ${FISIO_OPTIONS.map(o=>{
       const cantAfford=o.cost>0&&o.cost>G.money;
       const alreadyUsed=!!G._recoveryUsed;
@@ -1767,8 +1767,8 @@ function renderBetweenManage(){
             ${reason?`<div class="text-warn">${reason}</div>`:''}
           </div>
           <div class="right-col">
-            ${o.cost>0?`<div style="font-size:13px;font-weight:600;color:#c0392b">-€${o.cost}</div>`:`<div style="font-size:13px;font-weight:600;color:#888">Gratis</div>`}
-            <div style="font-size:12px;color:#4a8a2a">carga -${o.loadRedux}%</div>
+            ${o.cost>0?`<div style="font-size:13px;font-weight:600;color:var(--neg)">-€${o.cost}</div>`:`<div style="font-size:13px;font-weight:600;color:var(--ink3)">Gratis</div>`}
+            <div style="font-size:12px;color:var(--pos)">carga -${o.loadRedux}%</div>
           </div>
         </div>
       </div>`;}).join('')}
@@ -1790,7 +1790,7 @@ function renderBetweenManage(){
       <div class="card-sub">${G.club&&G.club.id!=='none'?'Ver reputación o cambiar de club':'Sin club actualmente — explorar opciones'}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      ${G._raceResultHTML?`<button class="main" onclick="G.screen='raceResult';render()" style="margin-top:0;background:#f5f4f0;color:#1a1a1a;border-color:#ccc">← Ver resumen</button>`:'<div></div>'}
+      ${G._raceResultHTML?`<button class="main" onclick="G.screen='raceResult';render()" style="margin-top:0;background:var(--soft);color:var(--ink);border-color:var(--line2)">← Ver resumen</button>`:'<div></div>'}
       <button class="main" onclick="afterRace()" style="margin-top:0">Siguiente carrera →</button>
     </div>`;
 }
@@ -1810,9 +1810,9 @@ function renderBetweenRace(){
   const el=$main();const ev=G.pendingEvent;
   if(!ev){goNextRace();return;}
   el.innerHTML=`
-    <div style="font-size:12px;font-weight:600;color:#aaa;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Entre carreras</div>
+    <div style="font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Entre carreras</div>
     <h2>${ev.title}</h2>
-    <p style="font-size:14px;color:#555;margin:6px 0 20px;line-height:1.65">${ev.desc}</p>
+    <p style="font-size:14px;color:var(--ink2);margin:6px 0 20px;line-height:1.65">${ev.desc}</p>
     <div style="display:grid;gap:8px">
       ${ev.choices.map((c,i)=>`<div class="pace" onclick="handleEv('${ev.id}',${i})"><div class="pace-label" style="font-size:14px;margin-bottom:0">${c.text}</div></div>`).join('')}
     </div>`;
@@ -1925,16 +1925,16 @@ window.breakSponsorContract=(cat)=>{
   overlay.id='break-confirm-overlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1400;display:flex;align-items:flex-end;justify-content:center;padding-bottom:0';
   overlay.innerHTML=`
-    <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 20px 36px;width:100%;max-width:560px;animation:slideUp 200ms ease-out both">
+    <div style="background:var(--card);border-radius:16px 16px 0 0;padding:24px 20px 36px;width:100%;max-width:560px;animation:slideUp 200ms ease-out both">
       <div style="font-size:16px;font-weight:700;margin-bottom:6px">¿Romper contrato con ${sp.name}?</div>
-      <div style="font-size:13px;color:#555;line-height:1.65;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--ink2);line-height:1.65;margin-bottom:16px">
         Duración restante: <strong>${sp.duration} temporada${sp.duration!==1?'s':''}</strong><br>
         Valor total restante: <strong>€${totalValue}</strong><br>
-        Penalización (40%): <strong style="color:#c0392b">−€${penaltyAmount}</strong>
+        Penalización (40%): <strong style="color:var(--neg)">−€${penaltyAmount}</strong>
       </div>
       <div class="danger" style="margin-bottom:16px;font-size:13px">Una vez roto, perderás el bono <strong>${sp.bonus}</strong> y el objetivo de sponsor quedará sin cumplir este año.</div>
       <div class="grid-2">
-        <button class="main" style="margin-top:0;border-color:#c0392b;color:#c0392b" onclick="confirmBreakSponsor('${cat}')">Romper — €${penaltyAmount}</button>
+        <button class="main" style="margin-top:0;border-color:#c0392b;color:var(--neg)" onclick="confirmBreakSponsor('${cat}')">Romper — €${penaltyAmount}</button>
         <button class="main" style="margin-top:0" onclick="document.getElementById('break-confirm-overlay').remove()">Cancelar</button>
       </div>
     </div>`;

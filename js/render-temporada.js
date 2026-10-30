@@ -27,13 +27,13 @@ function renderSeasonBalance(){
     <h2>Balance Temporada ${G.year}</h2>
     <p class="sub">${esc(G.runner.name)} · Año ${G.year} completado</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Km temporada</div>
-        <div style="font-size:20px;font-weight:700;color:#4a90d9">${G.seasonKm||0} km</div>
+      <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Km temporada</div>
+        <div style="font-size:20px;font-weight:700;color:var(--cuerpo)">${G.seasonKm||0} km</div>
       </div>
-      <div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Km carrera total</div>
-        <div style="font-size:20px;font-weight:700;color:#4a8a2a">${G.totalCareerKm||0} km</div>
+      <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Km carrera total</div>
+        <div style="font-size:20px;font-weight:700;color:var(--pos)">${G.totalCareerKm||0} km</div>
       </div>
     </div>
     ${G.joinedCircuits.length>0?`<div style="margin-bottom:14px">
@@ -45,34 +45,34 @@ function renderSeasonBalance(){
         return `<div class="card">
           <div style="font-size:14px;font-weight:600;color:${c.color}">${c.name}</div>
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px">
-            <span style="color:#888">Puntos acumulados</span>
-            <span style="font-weight:600;color:${completed?'#4a8a2a':'#c07a10'}">${pts} / ${c.pointsForPrize}</span>
+            <span style="color:var(--ink3)">Puntos acumulados</span>
+            <span style="font-weight:600;color:${completed?'var(--pos)':'var(--avi)'}">${pts} / ${c.pointsForPrize}</span>
           </div>
           ${completed?`<div class="note" style="margin-top:8px;margin-bottom:0">🏆 Circuito completado — Premio: +€${c.reward.money}</div>`:
-            `<div style="font-size:12px;color:#aaa;margin-top:6px">Faltan ${c.pointsForPrize-pts} puntos para el premio</div>`}
+            `<div style="font-size:12px;color:var(--ink3);margin-top:6px">Faltan ${c.pointsForPrize-pts} puntos para el premio</div>`}
         </div>`;}).join('')}
     </div>`:''}
 
     <div class="section-label">Carreras</div>
-    ${G.raceResults.length===0?'<p style="font-size:13px;color:#aaa;margin-bottom:14px">Sin carreras completadas.</p>':
+    ${G.raceResults.length===0?'<p style="font-size:13px;color:var(--ink3);margin-bottom:14px">Sin carreras completadas.</p>':
       `<div style="margin-bottom:14px">${G.raceResults.map(r=>{
-        if(isDNF(r)) return `<div style="padding:9px 0;border-bottom:1px solid #eee">
+        if(isDNF(r)) return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
-            <div><span style="font-size:13px;color:#c0392b;margin-right:8px;font-weight:600">❌</span>${r.name}</div>
-            <span style="font-size:12px;color:#c0392b;font-weight:600">${r.dnfReason==='lesion'?'No participó':'No clasificado'}</span>
+            <div><span style="font-size:13px;color:var(--neg);margin-right:8px;font-weight:600">❌</span>${r.name}</div>
+            <span style="font-size:12px;color:var(--neg);font-weight:600">${r.dnfReason==='lesion'?'No participó':'No clasificado'}</span>
           </div>
-          <div style="font-size:12px;color:#c0392b;margin-top:3px">${r.dnfReason==='lesion'?(r.injuryLabel||'Lesión')+' — baja forzada':dnfLabel(r)+' — sin clasificación'} · €0 premio</div>
+          <div style="font-size:12px;color:var(--neg);margin-top:3px">${r.dnfReason==='lesion'?(r.injuryLabel||'Lesión')+' — baja forzada':dnfLabel(r)+' — sin clasificación'} · €0 premio</div>
         </div>`;
-        return `<div style="padding:9px 0;border-bottom:1px solid #eee">
+        return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
             <div>
-              <span style="font-size:13px;color:${r.pos===1?'#c07a10':r.pos<=3?'#4a8a2a':'#888'};margin-right:8px;font-weight:600">${r.pos}º</span>
+              <span style="font-size:13px;color:${r.pos===1?'var(--avi)':r.pos<=3?'var(--pos)':'var(--ink3)'};margin-right:8px;font-weight:600">${r.pos}º</span>
               ${r.name}
             </div>
-            <span style="font-size:13px;color:#888">${fmt(r.time)} · <span style="color:#2d7a2d">+€${r.prize}</span></span>
+            <span style="font-size:13px;color:var(--ink3)">${fmt(r.time)} · <span style="color:var(--pos)">+€${r.prize}</span></span>
           </div>
           ${r.catPos&&r.catTotal>1?`<div style="margin-top:4px"><span style="font-size:12px;background:#e8eef8;color:#2d4fa0;border-radius:4px;padding:1px 7px;font-weight:600">${r.catName} ${r.catPos}º / ${r.catTotal}</span></div>`:''}
-          ${r.injuryType?`<div style="font-size:12px;color:#c0392b;margin-top:4px">
+          ${r.injuryType?`<div style="font-size:12px;color:var(--neg);margin-top:4px">
             ⚠ ${r.injuryLabel||r.injuryType}${r.kmAtInjury?' (km '+r.kmAtInjury+')':''} · stats: ${Object.entries(INJURY_TYPES[r.injuryType]?.statPenalty||{}).map(([k,v])=>v+' '+k).join(', ')}
           </div>`:''}
         </div>`;}).join('')}</div>`}
@@ -100,18 +100,18 @@ function renderSeasonBalance(){
     </div>
 
     <div class="section-label">¿En qué inviertes para la próxima temporada?</div>
-    <p style="font-size:13px;color:#aaa;margin-bottom:10px">Ahorros tras el cierre: €${Math.max(0,G.money+yearNet)} · el staff se paga ahora, por la temporada que empieza</p>
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:10px">Ahorros tras el cierre: €${Math.max(0,G.money+yearNet)} · el staff se paga ahora, por la temporada que empieza</p>
     ${[['fisio','Fisioterapeuta','Reduce riesgo de lesión. Recuperación más rápida.'],['entrenador','Entrenador personal','Bloques de entrenamiento +20% efectivos.'],['suplementos','Suplementos y nutrición','Avituallamientos más eficaces. +3 Nutrición.']].map(([id,l,d])=>`
       <div class="aid-row ${G.spending[id]?'sel-aid':''}" onclick="toggleSpend('${id}')">
-        <div><div class="aid-name">${l}${G.spending[id]?` <span style="font-size:12px;color:#4a90d9;font-weight:400">· contratado</span>`:''}</div><div class="aid-effect">${d}</div></div>
+        <div><div class="aid-name">${l}${G.spending[id]?` <span style="font-size:12px;color:var(--cuerpo);font-weight:400">· contratado</span>`:''}</div><div class="aid-effect">${d}</div></div>
         <span class="aid-time" style="font-size:13px;font-weight:600">€${STAFF_COSTS[id]}/mes</span>
       </div>`).join('')}
 
     ${G.monthlyEvents&&G.monthlyEvents.length>0&&!G.monthlyEvents[0].resolved?`
     <div style="margin-top:18px;border-top:1px solid var(--color-border-tertiary);padding-top:16px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Evento del mes</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Evento del mes</div>
       <p style="font-size:14px;font-weight:600;margin-bottom:4px">${G.monthlyEvents[0].title}</p>
-      <p style="font-size:12px;color:#888;margin-bottom:14px">Puedes dejarlo para la temporada que viene.</p>
+      <p style="font-size:12px;color:var(--ink3);margin-bottom:14px">Puedes dejarlo para la temporada que viene.</p>
       <div style="display:grid;gap:8px">
         ${G.monthlyEvents[0].options.map((o,i)=>`<div class="pace" onclick="resolveMonthlyEvent(0,${i})">
           <div class="pace-label" style="font-size:13px;margin-bottom:2px">${o.text}</div>
@@ -120,9 +120,9 @@ function renderSeasonBalance(){
       </div>
     </div>`:''}
     <button class="main" style="margin-top:14px" onclick="doNextYear(${yearNet})">${G.gameMode==='expres'&&G.year>=modeCfg().maxYears?'Ver resumen final →':`Temporada ${G.year+1} →`}</button>
-    ${(G.runner.age||25)>=42&&G.gameMode!=='expres'?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:#c0392b" onclick="doRetire()">Retirarse — ver resumen de carrera</button>`:''}
+    ${(G.runner.age||25)>=42&&G.gameMode!=='expres'?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doRetire()">Retirarse — ver resumen de carrera</button>`:''}
     ${G.carreraVida&&G.lifecyclePhase==='overlap'&&(G.runner.age||25)<42?`<button class="main" style="margin-top:6px;border-color:#534AB7;color:#3C3489" onclick="doRetire()">Dejar la competición — pasar a entrenador</button>`:''}
-    ${G.gameMode==='expres'&&G.year>=2?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:#c0392b" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}`;
+    ${G.gameMode==='expres'&&G.year>=2?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}`;
 }
 
 function renderRankingChart(){
@@ -469,29 +469,29 @@ function renderLifeAthleteOffer(){
   const intro=introTexts[a.id]||`Alguien busca un entrenador. Alguien que sepa lo que es correr de verdad.`;
 
   el.innerHTML=`
-    <div style="font-size:11px;font-weight:600;color:#aaa;letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px">Año ${G.year} · Un momento inesperado</div>
+    <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px">Año ${G.year} · Un momento inesperado</div>
     ${isUrgent?`<div class="warn" style="margin-bottom:16px">⚠ Llevas tiempo rechazando a gente. Este puede ser distinto.</div>`:''}
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #e0dfd8;padding-left:18px">
-      <p style="font-size:15px;line-height:1.7;color:#1a1a1a;font-style:italic">"${intro}"</p>
+    <div class="card" style="margin-bottom:16px;border-left:3px solid var(--line);padding-left:18px">
+      <p style="font-size:15px;line-height:1.7;color:var(--ink);font-style:italic">"${intro}"</p>
     </div>
 
     <div class="card" style="margin-bottom:16px">
       <div style="display:flex;align-items:flex-start;gap:14px">
-        <div style="width:48px;height:48px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
         <div style="flex:1">
           <div style="font-size:17px;font-weight:700;margin-bottom:2px">${esc(a.name)}</div>
-          <div style="font-size:13px;color:#888;margin-bottom:8px">${a.age} años · ${specLabel}</div>
-          <p style="font-size:13px;color:#555;line-height:1.6;margin-bottom:10px">${esc(a.bio)}</p>
+          <div style="font-size:13px;color:var(--ink3);margin-bottom:8px">${a.age} años · ${specLabel}</div>
+          <p style="font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:10px">${esc(a.bio)}</p>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <span style="font-size:12px;padding:2px 10px;border-radius:20px;background:#f5f4f0;color:${potData.color};font-weight:600">${potData.label}</span>
-            <span style="font-size:12px;padding:2px 10px;border-radius:20px;background:#f5f4f0;color:#555">${persData.emoji} ${persData.label}</span>
+            <span style="font-size:12px;padding:2px 10px;border-radius:20px;background:var(--soft);color:${potData.color};font-weight:600">${potData.label}</span>
+            <span style="font-size:12px;padding:2px 10px;border-radius:20px;background:var(--soft);color:var(--ink2)">${persData.emoji} ${persData.label}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px;background:#fafaf8">
-      <div style="font-size:12px;font-weight:600;color:#888;margin-bottom:10px">Stats iniciales</div>
+    <div class="card" style="margin-bottom:20px;background:var(--soft)">
+      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:10px">Stats iniciales</div>
       ${['resistencia','velocidad','subida','bajada','nutricion','mental'].map(s=>`
         <div class="bar-row">
           <div class="bar-label">${s.charAt(0).toUpperCase()+s.slice(1)}</div>
@@ -500,7 +500,7 @@ function renderLifeAthleteOffer(){
         </div>`).join('')}
     </div>
 
-    <div style="font-size:13px;color:#888;margin-bottom:16px;line-height:1.6">
+    <div style="font-size:13px;color:var(--ink3);margin-bottom:16px;line-height:1.6">
       ${enCoach?(slotLibre>=0?`Entraría en tu hueco ${slotLibre+1} de entrenamiento, junto a los atletas que ya llevas.`:'No tienes hueco libre: el 2.º se abre con reputación 40 y el 3.º con 70. Puedes decir que no; quizá vuelva a cruzarse contigo.'):'Aceptar implica dedicar horas a esta persona durante tus propias temporadas. No es gratis. Pero puede que merezca la pena.'}
     </div>
 
@@ -558,20 +558,20 @@ function renderOverlapHub(){
   const athleteName=a?esc(a.name):'tu atleta';
   const athleteFirst=a?esc(a.name.split(' ')[0]):'el atleta';
   el.innerHTML=`
-    <div style="font-size:11px;font-weight:600;color:#aaa;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Año ${G.year} · Solapamiento</div>
+    <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Año ${G.year} · Solapamiento</div>
     <h2 style="margin-bottom:6px">¿Qué haces hoy?</h2>
     <p class="sub" style="margin-bottom:24px">Puedes seguir con tu carrera o gestionar a ${athleteFirst}. Tú decides.</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
-      <div onclick="goToRunnerFromOverlap()" style="background:#fff;border:1.5px solid #e0dfd8;border-radius:12px;padding:20px 16px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background='#fff'">
+      <div onclick="goToRunnerFromOverlap()" style="background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:20px 16px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background='#fff'">
         <div style="font-size:28px;margin-bottom:10px">🏃</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:4px">Seguir corriendo</div>
-        <div style="font-size:12px;color:#888;line-height:1.5">Temporada ${G.year} · ${esc(G.runner?.specialty||'')}<br>${G.selectedRaces?.length?G.selectedRaces.length+' carrera'+(G.selectedRaces.length!==1?'s':'')+' en calendario':'Sin carreras aún'}</div>
+        <div style="font-size:12px;color:var(--ink3);line-height:1.5">Temporada ${G.year} · ${esc(G.runner?.specialty||'')}<br>${G.selectedRaces?.length?G.selectedRaces.length+' carrera'+(G.selectedRaces.length!==1?'s':'')+' en calendario':'Sin carreras aún'}</div>
       </div>
-      <div onclick="goToCoachFromOverlap()" style="background:#fff;border:1.5px solid #e0dfd8;border-radius:12px;padding:20px 16px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background='#fff'">
+      <div onclick="goToCoachFromOverlap()" style="background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:20px 16px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background='#fff'">
         <div style="font-size:28px;margin-bottom:10px">📋</div>
         <div style="font-size:15px;font-weight:600;margin-bottom:4px">Entrenador</div>
-        <div style="font-size:12px;color:#888;line-height:1.5">${athleteName}<br>${a?`${a.age} años · ${esc(a.spec)}`:'Pendiente de asignar'}</div>
+        <div style="font-size:12px;color:var(--ink3);line-height:1.5">${athleteName}<br>${a?`${a.age} años · ${esc(a.spec)}`:'Pendiente de asignar'}</div>
       </div>
     </div>
 
@@ -764,18 +764,18 @@ function renderClubOffer(){
   const rosterCount=(G.coachRoster||[]).filter(s=>s&&s.coachAthlete).length;
 
   el.innerHTML=`
-    <div style="font-size:11px;font-weight:600;color:#aaa;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Temporada ${coachSeasons} como entrenador · Una llamada inesperada</div>
+    <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Temporada ${coachSeasons} como entrenador · Una llamada inesperada</div>
 
     <div class="card" style="margin-bottom:16px;border-left:3px solid #1D9E75;padding-left:18px">
-      <p style="font-size:15px;line-height:1.7;color:#1a1a1a;font-style:italic">"${introText}"</p>
+      <p style="font-size:15px;line-height:1.7;color:var(--ink);font-style:italic">"${introText}"</p>
     </div>
 
     <div class="card" style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">La propuesta</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">La propuesta</div>
       <div class="fin-row"><span>Inversión inicial (60% de tus ahorros)</span><span class="minus">-€${cost.toLocaleString('es-ES')}</span></div>
       <div class="fin-row"><span>Tus ahorros actuales</span><span>€${(G.money||0).toLocaleString('es-ES')}</span></div>
       <div class="fin-row"><span>Después de la inversión</span><span style="font-weight:600">€${Math.max(0,(G.money||0)-cost).toLocaleString('es-ES')}</span></div>
-      <div class="fin-row" style="border-top:1px solid #e0dfd8;margin-top:6px;padding-top:10px"><span>Reputación como entrenador</span><span style="color:#2d7a2d;font-weight:600">${G.coachReputation||0}/100</span></div>
+      <div class="fin-row" style="border-top:1px solid var(--line);margin-top:6px;padding-top:10px"><span>Reputación como entrenador</span><span style="color:var(--pos);font-weight:600">${G.coachReputation||0}/100</span></div>
       ${rosterCount>1?`<div class="fin-row"><span>Atletas en cartera</span><span>${rosterCount}</span></div>`:''}
     </div>
 
@@ -857,18 +857,18 @@ function renderClubIntro(){
     <div style="text-align:center;padding:20px 0 10px">
       <div style="font-size:36px;margin-bottom:8px">🏕️</div>
       <h1 style="font-size:22px;margin-bottom:4px">Nace un club</h1>
-      <p style="font-size:14px;color:#888">Año ${G.year} · Una nueva era empieza</p>
+      <p style="font-size:14px;color:var(--ink3)">Año ${G.year} · Una nueva era empieza</p>
     </div>
 
     <div class="card" style="margin-bottom:16px;border-left:3px solid #8B6F47;padding-left:18px;background:#F5EFE3">
-      <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:12px">Tu historial como entrenador</div>
+      <div style="font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;margin-bottom:12px">Tu historial como entrenador</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:#888">Años entrenando</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;color:var(--ink3)">Años entrenando</div>
           <div style="font-size:18px;font-weight:700">${coachingYears}</div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:#888">Reputación alcanzada</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;color:var(--ink3)">Reputación alcanzada</div>
           <div style="font-size:18px;font-weight:700">${coachRep}/100</div>
         </div>
       </div>
@@ -881,13 +881,13 @@ function renderClubIntro(){
         Especialidad: <strong>${specLabel}</strong><br>
         ${filData?`Filosofía: <strong>${filData.label}</strong>`:''}
       </div>
-      <div style="font-size:12px;background:#fff;border-radius:6px;padding:8px;color:#666">
+      <div style="font-size:12px;background:var(--card);border-radius:6px;padding:8px;color:var(--ink2)">
         ${filData?filData.desc:'Gestión flexible del club.'}
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px;background:#f8f7f3">
-      <div style="font-size:14px;line-height:1.7;color:#1a1a1a">
+    <div class="card" style="margin-bottom:20px;background:var(--soft)">
+      <div style="font-size:14px;line-height:1.7;color:var(--ink)">
         <p><strong>Tu experiencia como entrenador te ha preparado para esto.</strong> Ahora gestionas un equipo completo. Plantilla, sponsors, instalaciones, objetivos. El monte te enseñó como corredor. Tus atletas te enseñaron como entrenador. Ahora el club es tuyo.</p>
       </div>
     </div>
@@ -1000,15 +1000,15 @@ function renderLifeRetirement(){
     <div style="text-align:center;padding:20px 0 10px">
       <div style="font-size:36px;margin-bottom:8px">🏔</div>
       <h1 style="font-size:22px;margin-bottom:4px">Fin de la carrera deportiva</h1>
-      <p style="font-size:14px;color:#888">${name} · ${age} años · ${modeLabel}</p>
+      <p style="font-size:14px;color:var(--ink3)">${name} · ${age} años · ${modeLabel}</p>
     </div>
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title">Trayectoria completa</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         ${[['Temporadas',yearsActive],['Ranking final','#'+G.ranking],['Carreras',totalRaces],['Victorias',totalWins],['Podios',totalPodiums],['Premios','€'+totalPrize]].map(([l,v])=>`
-          <div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:12px;color:#aaa;margin-bottom:3px">${l}</div>
+          <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${l}</div>
             <div style="font-size:17px;font-weight:700">${v}</div>
           </div>`).join('')}
       </div>
@@ -1016,9 +1016,9 @@ function renderLifeRetirement(){
 
     <div class="note" style="font-size:14px;line-height:1.75;margin-bottom:16px"><strong>Legado:</strong> ${legacy}</div>
 
-    <div style="border-top:1px solid #e8e6e0;margin-bottom:20px;padding-top:20px">
+    <div style="border-top:1px solid var(--line);margin-bottom:20px;padding-top:20px">
       <div class="card" style="border-left:3px solid #534AB7;padding-left:18px;margin-bottom:16px">
-        <p style="font-size:15px;line-height:1.7;color:#1a1a1a;font-style:italic">"${transitionText}"</p>
+        <p style="font-size:15px;line-height:1.7;color:var(--ink);font-style:italic">"${transitionText}"</p>
       </div>
       ${a?`
         <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#EEEDFE;border-radius:10px;margin-bottom:16px">
@@ -1098,30 +1098,30 @@ function renderCoachIntro(){
     <div style="text-align:center;padding:20px 0 10px">
       <div style="font-size:36px;margin-bottom:8px">📋</div>
       <h1 style="font-size:22px;margin-bottom:4px">Nuevo rol: Entrenador</h1>
-      <p style="font-size:14px;color:#888">Año ${G.year} · Tu próximo capítulo comienza</p>
+      <p style="font-size:14px;color:var(--ink3)">Año ${G.year} · Tu próximo capítulo comienza</p>
     </div>
 
     <div class="card" style="margin-bottom:16px;border-left:3px solid #8B6F47;padding-left:18px;background:#F5EFE3">
-      <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:12px">Tu legado como corredor</div>
+      <div style="font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;margin-bottom:12px">Tu legado como corredor</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:#888">Temporadas</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;color:var(--ink3)">Temporadas</div>
           <div style="font-size:18px;font-weight:700">${yearsActive}</div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:#888">Carreras</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;color:var(--ink3)">Carreras</div>
           <div style="font-size:18px;font-weight:700">${totalRaces}</div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:#888">Victorias</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;color:var(--ink3)">Victorias</div>
           <div style="font-size:18px;font-weight:700">${totalWins}</div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:#888">Ranking mejor</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:12px;color:var(--ink3)">Ranking mejor</div>
           <div style="font-size:18px;font-weight:700">#${topRanking}</div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:10px;text-align:center;grid-column:1/-1">
-          <div style="font-size:12px;color:#888">Premios ganados</div>
+        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center;grid-column:1/-1">
+          <div style="font-size:12px;color:var(--ink3)">Premios ganados</div>
           <div style="font-size:18px;font-weight:700">€${totalPrize.toLocaleString('es-ES')}</div>
         </div>
       </div>
@@ -1138,8 +1138,8 @@ function renderCoachIntro(){
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:20px;background:#f8f7f3">
-      <div style="font-size:14px;line-height:1.7;color:#1a1a1a">
+    <div class="card" style="margin-bottom:20px;background:var(--soft)">
+      <div style="font-size:14px;line-height:1.7;color:var(--ink)">
         <p><strong>${athleteName} ha estado contigo en el solapamiento.</strong> Ahora empieza una nueva etapa: lo guiarás como su entrenador. Entrenamientos, carreras, su desarrollo. El monte te enseñó. Ahora es tu turno de enseñar.</p>
       </div>
     </div>
@@ -1195,7 +1195,7 @@ function renderDebtCrisis(){
       bolsillo. Cuando esté saldada, volverás a elegir tu jornada.
     </p>
     ${cfg.hard!=null?`<div class="note" style="margin-bottom:14px">Si la deuda llega a <strong>€${cfg.hard}</strong> estando ya a jornada completa, la carrera deportiva se acaba.</div>`:''}
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen=G._screenAfterCrisis||'workSetup';G._screenAfterCrisis=null;render()">Seguir adelante →</button>`;
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen=G._screenAfterCrisis||'workSetup';G._screenAfterCrisis=null;render()">Seguir adelante →</button>`;
 }
 
 // T29 (v86) — escalón 3: la partida queda visitable pero no jugable.
@@ -1214,7 +1214,7 @@ function renderCareerEnd(){
     <div style="text-align:center;padding:20px 0 10px">
       <div style="font-size:36px;margin-bottom:8px">📉</div>
       <h1 style="font-size:22px;margin-bottom:4px">Se acabó</h1>
-      <p style="font-size:14px;color:#888">${esc(G.runner.name||'El corredor')} · ${G.runner.age||25} años · ${modeLabel}</p>
+      <p style="font-size:14px;color:var(--ink3)">${esc(G.runner.name||'El corredor')} · ${G.runner.age||25} años · ${modeLabel}</p>
     </div>
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title">Trayectoria</div>
@@ -1222,8 +1222,8 @@ function renderCareerEnd(){
         ${[['Temporadas',Math.max(0,G.year-1)],['Ranking final',G.ranking<900?'#'+G.ranking:'—'],
            ['Carreras',hist.length],['Victorias',totalWins],['Podios',totalPodiums],
            ['Km totales',Math.round(G.totalCareerKm||0)+' km']].map(([l,v])=>`
-          <div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:12px;color:#aaa;margin-bottom:3px">${l}</div>
+          <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${l}</div>
             <div style="font-size:17px;font-weight:700">${v}</div>
           </div>`).join('')}
       </div>
@@ -1263,14 +1263,14 @@ function renderRetirement(){
     <div style="text-align:center;padding:20px 0 10px">
       <div style="font-size:36px;margin-bottom:8px">🏔</div>
       <h1 style="font-size:22px;margin-bottom:4px">Fin de carrera</h1>
-      <p style="font-size:14px;color:#888">${name} · ${age} años · ${modeLabel}</p>
+      <p style="font-size:14px;color:var(--ink3)">${name} · ${age} años · ${modeLabel}</p>
     </div>
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title">Trayectoria completa</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         ${[['Temporadas',yearsActive],['Ranking final','#'+G.ranking],['Carreras',totalRaces],['Victorias',totalWins],['Podios',totalPodiums],['Premios','€'+totalPrize]].map(([l,v])=>`
-          <div style="background:#f5f4f0;border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:12px;color:#aaa;margin-bottom:3px">${l}</div>
+          <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${l}</div>
             <div style="font-size:17px;font-weight:700">${v}</div>
           </div>`).join('')}
       </div>
@@ -1278,13 +1278,13 @@ function renderRetirement(){
     <div class="note" style="font-size:14px;line-height:1.75;margin-bottom:14px"><strong>Legado:</strong> ${legacy}</div>
     ${(G.seasonDiary||[]).length>0?`
     <div class="card" style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📓 Diario</div>
-      ${G.seasonDiary.slice(-5).reverse().map(e=>`<div style="padding:9px 0;border-bottom:1px solid #f0ede8">
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📓 Diario</div>
+      ${G.seasonDiary.slice(-5).reverse().map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
         <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-          <span style="font-size:12px;font-weight:600;color:#888">Año ${e.year} · ${e.age} años</span>
-          <span style="font-size:12px;color:#c07a10;font-weight:600">${e.highlight}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--ink3)">Año ${e.year} · ${e.age} años</span>
+          <span style="font-size:12px;color:var(--avi);font-weight:600">${e.highlight}</span>
         </div>
-        <div style="font-size:13px;color:#555;line-height:1.6">${esc(e.text||'')}</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${esc(e.text||'')}</div>
       </div>`).join('')}
     </div>`:''}
     <button class="main" onclick="G=freshState();render()">Nueva partida →</button>`;
@@ -1324,9 +1324,9 @@ window.afterRace=()=>{
       <p class="sub">${race?.name||'Próxima carrera'}</p>
       <div class="injury-card">
         <div class="injury-type">${injData.label||'Lesión'}</div>
-        <div style="font-size:13px;color:#555;margin:6px 0">No puedes participar en esta carrera. Tu cuerpo necesita recuperarse.</div>
+        <div style="font-size:13px;color:var(--ink2);margin:6px 0">No puedes participar en esta carrera. Tu cuerpo necesita recuperarse.</div>
         ${hasFisio()?`<div class="text-ok">El fisio está acelerando tu recuperación.</div>`:''}
-        ${remaining>0?`<div style="font-size:12px;color:#c0392b;margin-top:4px">Aún te quedan ${remaining} carrera${remaining>1?'s':''} de baja.</div>`:'<div class="text-ok">Podrás volver en la siguiente carrera, pero llegarás tocado.</div>'}
+        ${remaining>0?`<div style="font-size:12px;color:var(--neg);margin-top:4px">Aún te quedan ${remaining} carrera${remaining>1?'s':''} de baja.</div>`:'<div class="text-ok">Podrás volver en la siguiente carrera, pero llegarás tocado.</div>'}
       </div>
       <div class="warn">Has perdido la inscripción (€${race?.cost||0}) y el posible premio de hasta €${race?.prize||0}.</div>
       <button class="main" style="margin-top:12px" onclick="skipInjuredRace()">Continuar →</button>`;

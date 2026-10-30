@@ -219,36 +219,36 @@ function renderClubCreate(){
     ${G._clubUnlockedHint&&!G._clubFromLife?`<div class="note" style="margin-bottom:14px;background:#E1F5EE;border-color:#9FE1CB;color:#085041">Tu historial habla por ti. Empiezas con presupuesto un 15% mayor y reputación inicial de 13 en lugar de 10.</div>`:''}
     <label class="field-label">Nombre del club</label>
     <input id="club-name-inp" type="text" placeholder="Ej: Gorbea Trail Club, Txindoki Runners..." maxlength="32" value="${esc(name)}" oninput="G._clubNameDraft=this.value;"/>
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Especialidad de la plantilla</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Especialidad de la plantilla</div>
     ${specs.map(s=>`
-      <div class="work-card${spec===s.id?' sel':''}" onclick="G._clubSpecDraft='${s.id}';render()" style="margin-bottom:6px${spec===s.id?';border-color:#1a1a1a;background:#f5f4f0':''}">
+      <div class="work-card${spec===s.id?' sel':''}" onclick="G._clubSpecDraft='${s.id}';render()" style="margin-bottom:6px${spec===s.id?';border-color:var(--ink);background:var(--soft)':''}">
         <div style="font-size:14px;font-weight:600">${s.label}</div>
-        <div style="font-size:12px;color:#888">${s.desc}</div>
+        <div style="font-size:12px;color:var(--ink3)">${s.desc}</div>
       </div>`).join('')}
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">Filosofía del club (C9)</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">Filosofía del club (C9)</div>
     ${Object.entries(CLUB_FILOSOFIAS).map(([id,f])=>`
       <div class="work-card${fil===id?' sel':''}" onclick="G._clubFilDraft='${id}';render()" style="margin-bottom:6px${fil===id?`;border-color:${f.color};background:${f.color}11`:''};cursor:pointer">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:18px">${f.emoji}</span>
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:${fil===id?f.color:'#1a1a1a'}">${f.label}</div>
-            <div style="font-size:12px;color:#888">${f.desc}</div>
+            <div style="font-size:13px;font-weight:700;color:${fil===id?f.color:'var(--ink)'}">${f.label}</div>
+            <div style="font-size:12px;color:var(--ink3)">${f.desc}</div>
           </div>
         </div>
       </div>`).join('')}
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">Arquetipo de plantilla</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">Arquetipo de plantilla</div>
     ${Object.entries(CLUB_ARCHETYPES).map(([id,a])=>`
       <div class="work-card${arq===id?' sel':''}" onclick="G._clubArqDraft='${id}';render()" style="margin-bottom:6px${arq===id?`;border-color:${a.color};background:${a.color}11`:''};cursor:pointer">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:18px">${a.emoji}</span>
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:${arq===id?a.color:'#1a1a1a'}">${a.label}</div>
-            <div style="font-size:12px;color:#888">${a.desc}</div>
+            <div style="font-size:13px;font-weight:700;color:${arq===id?a.color:'var(--ink)'}">${a.label}</div>
+            <div style="font-size:12px;color:var(--ink3)">${a.desc}</div>
           </div>
         </div>
       </div>`).join('')}
     <div class="hint" style="margin-top:10px;margin-bottom:14px">Empiezas con 3 corredores, ${CLUB_ARCHETYPES[arq].socios} socios, €${CLUB_ARCHETYPES[arq].presupuesto} de presupuesto y cohesión ${CLUB_ARCHETYPES[arq].cohesion}/100.</div>
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doClubCreate()">Fundar el club →</button>
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doClubCreate()">Fundar el club →</button>
     <button class="main" style="margin-top:6px;opacity:0.5" onclick="G.screen=G._clubFromLife?'clubOffer':'modeSelect';render()">← Volver</button>`;
 }
 
@@ -323,15 +323,15 @@ function renderClubHub(){
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:11px;color:#aaa">Temporada</div>
+        <div style="font-size:11px;color:var(--ink3)">Temporada</div>
         <div style="font-size:18px;font-weight:700">${d.temporada}</div>
       </div>
     </div>
 
     ${d._coachingHistory?`
     <div class="card" style="margin-bottom:12px;background:#F5EFE3;border-left:3px solid #8B6F47">
-      <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:8px">Legado previo</div>
-      <div style="font-size:12px;color:#1a1a1a">
+      <div style="font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;margin-bottom:8px">Legado previo</div>
+      <div style="font-size:12px;color:var(--ink)">
         <strong>${d._coachingHistory.years}</strong> años entrenando ·
         <strong>${d._coachingHistory.coachReputation}/100</strong> reputación acumulada
       </div>
@@ -340,28 +340,28 @@ function renderClubHub(){
 
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
       ${[['👥',d.socios,'Socios'],['⭐',`${d.reputacion}`,'Rep.'],['💶',`€${d.presupuesto}`,'Presup.'],['🤝',`${d.cohesion}/100`,'Cohesión']].map(([ic,v,l])=>`
-        <div style="background:#fff;border:1px solid #e0dfd8;border-radius:8px;padding:8px;text-align:center">
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center">
           <div style="font-size:14px">${ic}</div>
           <div style="font-size:13px;font-weight:700">${v}</div>
-          <div style="font-size:10px;color:#aaa">${l}</div>
+          <div style="font-size:10px;color:var(--ink3)">${l}</div>
         </div>`).join('')}
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#888;margin-bottom:3px">
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink3);margin-bottom:3px">
       <span>🤝 Cohesión <button class="tip-btn" onclick="showTip('Qué mueve la cohesión',clubCohesionTipHtml())">ⓘ</button></span><span>${d.cohesion}/100</span>
     </div>
-    <div style="height:6px;background:#e5e4de;border-radius:3px;margin-bottom:12px;overflow:hidden">
+    <div style="height:6px;background:var(--trk);border-radius:3px;margin-bottom:12px;overflow:hidden">
       <div style="width:${d.cohesion}%;height:100%;background:${cohColor};border-radius:3px;transition:width .4s"></div>
     </div>
 
     ${obj?`
-    <div class="card" style="margin-bottom:12px;border-color:${d.seasonObjectiveMet===true?'#4a8a2a':d.seasonObjectiveMet===false?'#f5b8b8':'#c07a10'};border-width:1.5px">
+    <div class="card" style="margin-bottom:12px;border-color:${d.seasonObjectiveMet===true?'#4a8a2a':d.seasonObjectiveMet===false?'var(--line2)':'#c07a10'};border-width:1.5px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:18px">${d.seasonObjectiveMet===true?'✅':d.seasonObjectiveMet===false?'❌':'🎯'}</span>
         <div style="flex:1">
-          <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.4px">Objetivo de temporada</div>
+          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px">Objetivo de temporada</div>
           <div style="font-size:13px;font-weight:600">${obj.label}</div>
-          <div style="font-size:12px;color:#aaa;font-style:italic">${obj.desc}</div>
+          <div style="font-size:12px;color:var(--ink3);font-style:italic">${obj.desc}</div>
         </div>
       </div>
     </div>`:''}
@@ -371,10 +371,10 @@ function renderClubHub(){
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:22px">📣</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#c07a10">Evento pendiente</div>
-          <div style="font-size:12px;color:#555">${esc(d.pendingEvent.title)}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--avi)">Evento pendiente</div>
+          <div style="font-size:12px;color:var(--ink2)">${esc(d.pendingEvent.title)}</div>
         </div>
-        <span style="color:#c07a10">→</span>
+        <span style="color:var(--avi)">→</span>
       </div>
     </div>`:''}
 
@@ -390,7 +390,7 @@ function renderClubHub(){
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Estado de la temporada</div>
-      <div style="font-size:13px;color:#555">
+      <div style="font-size:13px;color:var(--ink2)">
         ${d.seasonSimulated
           ?`✅ Temporada completada — ${(d.seasonResults||[]).length} participaciones`
           :allAssigned
@@ -400,21 +400,21 @@ function renderClubHub(){
     </div>
 
     ${d.seasonSimulated
-      ?`<button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`
+      ?`<button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`
       :`${!d.monthlyFocus&&!d.seasonSimulated?`
         <div class="card" style="margin-bottom:10px;border-color:#8e44ad;border-width:1.5px">
           <div class="sec-title-sm" style="color:#8e44ad">🗓️ Decisión mensual (C16)</div>
-          <p style="font-size:12px;color:#555;margin-bottom:8px">¿En qué enfoca el club este mes?</p>
+          <p style="font-size:12px;color:var(--ink2);margin-bottom:8px">¿En qué enfoca el club este mes?</p>
           <div style="display:flex;flex-direction:column;gap:6px">
             ${[['resultados','🏆','Resultados','Entrenamiento intensivo — rendimiento +5% esta temporada'],['marketing','📣','Marketing','Campaña de visibilidad — +4 socios extra al cerrar temporada'],['formacion','🌱','Formación','Desarrollo de jóvenes — cantera crece un 20% más rápido'],['ahorro','💰','Gestión','Control de costes — ahorro de €200 en gastos de inscripción']].map(([id,emoji,label,desc])=>`
               <button class="main" style="text-align:left;padding:8px 12px" onclick="doClubMonthlyFocus('${id}')">
-                <strong>${emoji} ${label}</strong><br><span style="font-size:11px;color:#888">${desc}</span>
+                <strong>${emoji} ${label}</strong><br><span style="font-size:11px;color:var(--ink3)">${desc}</span>
               </button>`).join('')}
           </div>
         </div>`:''}
        <button class="main" ${!d.monthlyFocus?'style="opacity:0.5"':''} onclick="G.screen='clubCalendar';render()">📅 Asignar equipo a carreras${d.monthlyFocus?` — foco: ${d.monthlyFocus}`:''}</button>
        ${d.monthlyFocus?`<button class="secondary" style="margin-top:6px;width:100%" onclick="clearClubMonthlyFocus()">Cambiar el foco</button>`:''}
-       ${allAssigned?`<button class="main" style="margin-top:6px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doClubSimulateSeason()">🏁 Simular temporada →</button>`:''}`}
+       ${allAssigned?`<button class="main" style="margin-top:6px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doClubSimulateSeason()">🏁 Simular temporada →</button>`:''}`}
     <button class="main" style="margin-top:6px" onclick="G.screen='clubPlantilla';render()">👥 Plantilla (${d.plantilla.length}) ${d.cantera&&d.cantera.length>0?`· 🌱 Cantera (${d.cantera.length})`:''}</button>
     <button class="main" style="margin-top:6px" onclick="G.screen='clubStaff';render()">🧑‍⚕️ Staff técnico (${Object.keys(d.staff||{}).length} contratados)</button>
     <button class="main" style="margin-top:6px" onclick="G.screen='clubSponsors';render()">🤝 Sponsors del club (${(d.clubSponsors||[]).length})</button>
@@ -454,14 +454,14 @@ function renderClubPlantilla(){
             <div style="font-size:14px;font-weight:700">${esc(r.name)}</div>
             <span style="font-size:11px;color:${pc};background:${pc}18;padding:1px 5px;border-radius:3px;font-weight:600">${r.potential}</span>
             <span style="font-size:11px;background:${role.color}22;color:${role.color};padding:1px 6px;border-radius:3px;font-weight:600">${role.emoji} ${role.label}</span>
-            ${isCantera?`<span style="font-size:10px;background:#e8f4e8;color:#2d7a2d;padding:1px 5px;border-radius:3px">🌱 Cantera</span>`:''}
+            ${isCantera?`<span style="font-size:10px;background:#e8f4e8;color:var(--pos);padding:1px 5px;border-radius:3px">🌱 Cantera</span>`:''}
           </div>
-          <div style="font-size:12px;color:#888;margin-bottom:4px">${r.age} años · ${SPEC_LABEL[r.spec]||r.spec} · €${r.currentSalary||r.salary}/mes${hasEntrenador?` · ↑ +${growthPct}% crecimiento`:''}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">${r.age} años · ${SPEC_LABEL[r.spec]||r.spec} · €${r.currentSalary||r.salary}/mes${hasEntrenador?` · ↑ +${growthPct}% crecimiento`:''}</div>
           <div>${['Res','Vel','Sub','Baj'].map((k,ki)=>{
             const keys=['resistencia','velocidad','subida','bajada'];
             return`<span class="club-stat-pill">${k} ${r.stats[keys[ki]]}</span>`;
           }).join('')}</div>
-          <div style="font-size:11px;color:#aaa;margin-top:3px;font-style:italic">${esc(r.bio)}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:3px;font-style:italic">${esc(r.bio)}</div>
           ${(()=>{
             // C1: etiquetas dinámicas según historial acumulado
             const tags=[];
@@ -476,10 +476,10 @@ function renderClubPlantilla(){
           })()}
           <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
             ${Object.entries(CLUB_ROLES).map(([rid,rl])=>`
-              <button onclick="doClubSetRole(${isCantera?`'cantera'`:`'plantilla'`},${isCantera?cantIds.indexOf(r.id):i},'${rid}')" style="font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid ${(r.role||'normal')===rid?rl.color:'#e0dfd8'};background:${(r.role||'normal')===rid?rl.color+'22':'#fff'};color:${(r.role||'normal')===rid?rl.color:'#888'};cursor:pointer">${rl.emoji}</button>`).join('')}
+              <button onclick="doClubSetRole(${isCantera?`'cantera'`:`'plantilla'`},${isCantera?cantIds.indexOf(r.id):i},'${rid}')" style="font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid ${(r.role||'normal')===rid?rl.color:'#e0dfd8'};background:${(r.role||'normal')===rid?rl.color+'22':'var(--card)'};color:${(r.role||'normal')===rid?rl.color:'var(--ink3)'};cursor:pointer">${rl.emoji}</button>`).join('')}
           </div>
         </div>
-        ${d.plantilla.length>2&&!isCantera?`<button onclick="doClubRelease(${i})" style="border:1px solid #f5b8b8;border-radius:6px;padding:4px 8px;background:#fff;color:#c0392b;font-size:11px;cursor:pointer;flex-shrink:0">Liberar</button>`:''}
+        ${d.plantilla.length>2&&!isCantera?`<button onclick="doClubRelease(${i})" style="border:1px solid var(--line2);border-radius:6px;padding:4px 8px;background:var(--card);color:var(--neg);font-size:11px;cursor:pointer;flex-shrink:0">Liberar</button>`:''}
       </div>
     </div>`;
   };
@@ -487,7 +487,7 @@ function renderClubPlantilla(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin-bottom:0">Plantilla</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
+      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
     </div>
     <div class="hint" style="margin-bottom:10px">€${wages}/mes · €${wages*12}/año · Presupuesto: €${d.presupuesto}</div>
 
@@ -495,15 +495,15 @@ function renderClubPlantilla(){
       <div class="sec-title-sm">Infraestructura (C15)</div>
       ${[['gimnasio','🏋️','Gimnasio',500,'Todos los corredores +2 rendimiento'],['clinica','🏥','Clínica',800,'Reduce lesiones -30%'],['residencia','🏠','Residencia',1200,'Permite plantilla de hasta 8 corredores'],['marketingHQ','📣','Marketing HQ',600,'+5 socios automáticos al mes']].map(([id,emoji,label,cost,desc])=>{
         const owned=d.instalaciones&&d.instalaciones[id];
-        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f4f0">
+        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
           <span style="font-size:16px">${emoji}</span>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:600">${label}</div>
-            <div style="font-size:11px;color:#888">${desc}</div>
+            <div style="font-size:11px;color:var(--ink3)">${desc}</div>
           </div>
           ${owned
-            ?`<span style="font-size:11px;color:#2d7a2d;font-weight:600">✓ Activo</span>`
-            :`<button onclick="doClubBuyInstalacion('${id}',${cost})" style="font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid #ddd;background:#fff;cursor:pointer;flex-shrink:0">€${cost}</button>`}
+            ?`<span style="font-size:11px;color:var(--pos);font-weight:600">✓ Activo</span>`
+            :`<button onclick="doClubBuyInstalacion('${id}',${cost})" style="font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);background:var(--card);cursor:pointer;flex-shrink:0">€${cost}</button>`}
         </div>`;
       }).join('')}
     </div>
@@ -524,9 +524,9 @@ function renderClubPlantilla(){
         <div style="font-size:20px">${r.flag}</div>
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:5px"><div style="font-size:13px;font-weight:700">${esc(r.name)}</div><span style="font-size:11px;color:${pc};background:${pc}18;padding:1px 5px;border-radius:3px">${r.potential}</span></div>
-          <div style="font-size:12px;color:#888">${r.age}a · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>
+          <div style="font-size:12px;color:var(--ink3)">${r.age}a · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>
         </div>
-        <div style="font-size:11px;color:${canAfford?'#4a8a2a':'#c0392b'};flex-shrink:0">${canAfford?'+ Fichar':'Sin fondos'}</div>
+        <div style="font-size:11px;color:${canAfford?'var(--pos)':'var(--neg)'};flex-shrink:0">${canAfford?'+ Fichar':'Sin fondos'}</div>
       </div></div>`;
     }).join('')}`:''
 
@@ -534,17 +534,17 @@ function renderClubPlantilla(){
 
     ${youthAvail.length>0?`
     <div class="sec-title-sm" style="margin:12px 0 8px">🌱 Cantera disponible</div>
-    <p style="font-size:12px;color:#888;margin-bottom:8px">Jóvenes con potencial alto. Crecen un 50% más rápido pero rinden menos al inicio.</p>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:8px">Jóvenes con potencial alto. Crecen un 50% más rápido pero rinden menos al inicio.</p>
     ${youthAvail.slice(0,3).map(r=>{
       const canAfford=d.presupuesto>=r.salary*2;
       return`<div class="club-runner-card" style="${!canAfford?'opacity:0.45':''};margin-bottom:6px" ${canAfford?`onclick="doClubSignYouth('${r.id}')"`:''}><div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:20px">${r.flag}</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">${esc(r.name)} <span style="font-size:11px;color:#2d7a2d">🌱 Joven</span></div>
-          <div style="font-size:12px;color:#888">${r.age}a · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>
-          <div style="font-size:11px;color:#aaa;font-style:italic">${esc(r.bio)}</div>
+          <div style="font-size:13px;font-weight:700">${esc(r.name)} <span style="font-size:11px;color:var(--pos)">🌱 Joven</span></div>
+          <div style="font-size:12px;color:var(--ink3)">${r.age}a · ${SPEC_LABEL[r.spec]||r.spec} · €${r.salary}/mes</div>
+          <div style="font-size:11px;color:var(--ink3);font-style:italic">${esc(r.bio)}</div>
         </div>
-        <div style="font-size:11px;color:${canAfford?'#2d7a2d':'#c0392b'};flex-shrink:0">${canAfford?'+ Cantera':'Sin fondos'}</div>
+        <div style="font-size:11px;color:${canAfford?'var(--pos)':'var(--neg)'};flex-shrink:0">${canAfford?'+ Cantera':'Sin fondos'}</div>
       </div></div>`;
     }).join('')}`:''}`;
 }
@@ -616,7 +616,7 @@ function renderClubCalendar(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin-bottom:0">Calendario</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
+      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
     </div>
     <p class="sub">Asigna 1–4 corredores por carrera. Toca su nombre para añadir o quitar.</p>
     ${(()=>{
@@ -635,39 +635,39 @@ function renderClubCalendar(){
                 <span style="font-size:13px;font-weight:700">${esc(race.name)}</span>
                 <span style="font-size:10px;background:${tc}18;color:${tc};padding:1px 5px;border-radius:3px;font-weight:600;text-transform:uppercase">${race.tier}</span>
               </div>
-              <div style="font-size:12px;color:#888">${race.km}km · ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][race.month-1]} · ${race.cost>0?`€${race.cost} inscripción`:'Gratuita'} · Premio €${race.prize}</div>
+              <div style="font-size:12px;color:var(--ink3)">${race.km}km · ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][race.month-1]} · ${race.cost>0?`€${race.cost} inscripción`:'Gratuita'} · Premio €${race.prize}</div>
             </div>
-            <span style="font-size:12px;color:${assigned.length>0?'#2d7a2d':'#aaa'}">${assigned.length}/4</span>
+            <span style="font-size:12px;color:${assigned.length>0?'var(--pos)':'var(--ink3)'}">${assigned.length}/4</span>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:5px">
             ${d.plantilla.concat(d.cantera||[]).map(r=>{
               const isSel=assigned.includes(r.id);
               const role=CLUB_ROLES[r.role||'normal'];
-              return`<div onclick="doClubToggleAssign('${race.id}','${r.id}')" style="cursor:pointer;padding:4px 9px;border-radius:6px;font-size:12px;border:1px solid ${isSel?'#2d7a2d':'#e0dfd8'};background:${isSel?'#f2faf0':'#fafaf8'};color:${isSel?'#2d7a2d':'#555'}">${role.emoji} ${esc(r.name.split(' ')[0])}</div>`;
+              return`<div onclick="doClubToggleAssign('${race.id}','${r.id}')" style="cursor:pointer;padding:4px 9px;border-radius:6px;font-size:12px;border:1px solid ${isSel?'#2d7a2d':'#e0dfd8'};background:${isSel?'var(--soft)':'var(--soft)'};color:${isSel?'var(--pos)':'var(--ink2)'}">${role.emoji} ${esc(r.name.split(' ')[0])}</div>`;
             }).join('')}
           </div>
         </div>`;
       }).join('')}
       ${locked.length>0?`
       <div style="margin-top:14px;margin-bottom:6px">
-        <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">🔒 Carreras bloqueadas</div>
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">🔒 Carreras bloqueadas</div>
         ${locked.map(race=>{
           const tc=tierColors[race.tier]||'#888';
           const needRep=race.repReq>clubRep;
           const needSocios=race.sociosReq>clubSocios;
-          return`<div style="opacity:0.5;padding:10px 12px;border:1px dashed #ddd;border-radius:8px;margin-bottom:6px">
+          return`<div style="opacity:0.5;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;margin-bottom:6px">
             <div style="display:flex;align-items:center;gap:6px">
               <span style="font-size:13px;font-weight:600">${esc(race.name)}</span>
               <span style="font-size:10px;background:${tc}18;color:${tc};padding:1px 5px;border-radius:3px;text-transform:uppercase">${race.tier}</span>
             </div>
-            <div style="font-size:11px;color:#aaa;margin-top:3px">
+            <div style="font-size:11px;color:var(--ink3);margin-top:3px">
               ${needRep?`Rep. ≥${race.repReq} (actual: ${clubRep}) `:''}${needSocios?`· Socios ≥${race.sociosReq} (actual: ${clubSocios})`:''}
             </div>
           </div>`;
         }).join('')}
       </div>`:''}`;
     })()}
-    <button class="main" style="margin-top:10px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen='clubHub';render()">← Volver al hub</button>`;
+    <button class="main" style="margin-top:10px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='clubHub';render()">← Volver al hub</button>`;
 }
 
 window.doClubToggleAssign=(raceId,runnerId)=>{
@@ -789,7 +789,7 @@ function renderClubSimulate(){
         <h2>Temporada completa</h2>
         <p class="sub">Todos los resultados registrados</p>
       </div>
-      <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`;
+      <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='clubSeasonEnd';render()">Ver balance de temporada →</button>`;
     return;
   }
 
@@ -798,16 +798,16 @@ function renderClubSimulate(){
   const posIcon=r.pos===1?'🥇':r.pos===2?'🥈':r.pos===3?'🥉':r.pos<=10?'🎯':'🏃';
 
   el.innerHTML=`
-    <div style="font-size:12px;color:#aaa;margin-bottom:12px;text-align:center">Resultado ${idx+1} de ${results.length}</div>
-    <div style="height:3px;background:#e5e4de;border-radius:2px;overflow:hidden;margin-bottom:16px">
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:12px;text-align:center">Resultado ${idx+1} de ${results.length}</div>
+    <div style="height:3px;background:var(--trk);border-radius:2px;overflow:hidden;margin-bottom:16px">
       <div style="width:${Math.round((idx/results.length)*100)}%;height:100%;background:#4a90d9;border-radius:2px"></div>
     </div>
     <div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
       <div style="font-size:40px;margin-bottom:8px">${posIcon}</div>
       <div style="font-size:24px;font-weight:700;color:${posColor};margin-bottom:4px">#${r.pos} de ${r.rivals}</div>
       <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(r.runner.flag)} ${esc(r.runner.name)}</div>
-      <div style="font-size:13px;color:#888">${esc(r.race.name)} · ${clubRaceKm(r.race)}km</div>
-      ${r.prize>0?`<div style="font-size:13px;color:#2d7a2d;font-weight:600;margin-top:8px">+€${r.prize} premio</div>`:''}
+      <div style="font-size:13px;color:var(--ink3)">${esc(r.race.name)} · ${clubRaceKm(r.race)}km</div>
+      ${r.prize>0?`<div style="font-size:13px;color:var(--pos);font-weight:600;margin-top:8px">+€${r.prize} premio</div>`:''}
     </div>
     <div class="card" style="margin-bottom:14px">
       <div class="sec-title-sm">Detalles</div>
@@ -817,7 +817,7 @@ function renderClubSimulate(){
       <div class="fin-row"><span>Rendimiento</span><span>${r.perf}/100</span></div>
       ${r.prize>0?`<div class="fin-row"><span>Premio</span><span class="plus">+€${r.prize}</span></div>`:''}
     </div>
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G._clubSimIdx=${idx+1};render()">
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G._clubSimIdx=${idx+1};render()">
       ${idx+1<results.length?'Siguiente resultado →':'Ver balance final →'}
     </button>`;
 }
@@ -830,7 +830,7 @@ function renderClubStaff(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin-bottom:0">Staff Técnico</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
+      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
     </div>
     <p class="sub">Contrata personal de apoyo. Cada miembro del staff tiene un coste mensual y mejora un aspecto del club.</p>
     ${Object.entries(CLUB_STAFF_TYPES).map(([id,s])=>{
@@ -840,15 +840,15 @@ function renderClubStaff(){
           <span style="font-size:22px">${s.emoji}</span>
           <div style="flex:1">
             <div style="font-size:14px;font-weight:700">${s.label}</div>
-            <div style="font-size:12px;color:#888">${s.desc}</div>
+            <div style="font-size:12px;color:var(--ink3)">${s.desc}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:13px;font-weight:700;color:#c07a10">€${s.costMonth}/mes</div>
-            ${hired?`<div style="font-size:11px;color:#2d7a2d">✓ Contratado</div>`:''}
+            <div style="font-size:13px;font-weight:700;color:var(--avi)">€${s.costMonth}/mes</div>
+            ${hired?`<div style="font-size:11px;color:var(--pos)">✓ Contratado</div>`:''}
           </div>
         </div>
         ${hired
-          ?`<button class="main" style="margin-top:4px;border-color:#c0392b;color:#c0392b;font-size:12px" onclick="doClubFireStaff('${id}')">Despedir</button>`
+          ?`<button class="main" style="margin-top:4px;border-color:#c0392b;color:var(--neg);font-size:12px" onclick="doClubFireStaff('${id}')">Despedir</button>`
           :`<button class="main" style="margin-top:4px;font-size:12px" onclick="doClubHireStaff('${id}',${s.costMonth})">Contratar — €${s.costMonth}/mes</button>`}
       </div>`;
     }).join('')}`;
@@ -883,7 +883,7 @@ function renderClubSponsors(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin-bottom:0">Sponsors del Club</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
+      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
     </div>
     <p class="sub">Cada sponsor paga el 60 % de su contrato al simular la temporada y el 40 % restante solo si se cumple su objetivo. Si no se cumple, rescinde.</p>
     ${(d.clubSponsors||[]).length>0?`
@@ -893,20 +893,20 @@ function renderClubSponsors(){
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
             <div style="font-size:13px;font-weight:700">${esc(sp.name)}</div>
-            <div style="font-size:12px;color:#888">${sp.objective} · ${sp.seasonsLeft||1} temporada${(sp.seasonsLeft||1)!==1?'s':''} de contrato</div>
+            <div style="font-size:12px;color:var(--ink3)">${sp.objective} · ${sp.seasonsLeft||1} temporada${(sp.seasonsLeft||1)!==1?'s':''} de contrato</div>
           </div>
-          <span style="font-size:14px;font-weight:700;color:#2d7a2d">+€${sp.monthlyIncome}/mes</span>
+          <span style="font-size:14px;font-weight:700;color:var(--pos)">+€${sp.monthlyIncome}/mes</span>
         </div>
-        <button class="main" style="margin-top:6px;border-color:#c0392b;color:#c0392b;font-size:12px" onclick="doClubRemoveSponsor('${sp.id}')">Rescindir contrato</button>
+        <button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg);font-size:12px" onclick="doClubRemoveSponsor('${sp.id}')">Rescindir contrato</button>
       </div>`).join('')}`:''}
     <div class="sec-title-sm" style="margin-bottom:8px;margin-top:${(d.clubSponsors||[]).length?'14px':'0'}">Disponibles</div>
     ${available.filter(s=>!activeIds.includes(s.id)).map(sp=>`
       <div class="card" style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <div style="font-size:13px;font-weight:700">${esc(sp.name)}</div>
-          <span style="font-size:14px;font-weight:700;color:#c07a10">+€${sp.monthlyIncome}/mes</span>
+          <span style="font-size:14px;font-weight:700;color:var(--avi)">+€${sp.monthlyIncome}/mes</span>
         </div>
-        <div style="font-size:12px;color:#888;margin-bottom:6px">Objetivo: ${sp.objective} · ${sp.duration||1} temporada${(sp.duration||1)!==1?'s':''}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">Objetivo: ${sp.objective} · ${sp.duration||1} temporada${(sp.duration||1)!==1?'s':''}</div>
         <button class="main" style="font-size:12px" onclick="doClubAddSponsor('${sp.id}')">Firmar contrato</button>
       </div>`).join('')||'<div class="hint">Sin sponsors disponibles aún. Sube tu reputación para desbloquear más.</div>'}`;
 }
@@ -940,24 +940,24 @@ function renderClubRivals(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin-bottom:0">Clubes Rivales</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
+      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
     </div>
     <div class="card" style="margin-bottom:12px;border-color:#4a90d9">
-      <div style="font-size:11px;color:#aaa;margin-bottom:4px">TU CLUB</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:4px">TU CLUB</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="font-size:14px;font-weight:700">${esc(d.name)}</div>
         <span style="font-size:12px;background:${lvl.color}22;color:${lvl.color};padding:2px 8px;border-radius:4px">${lvl.label}</span>
       </div>
-      <div style="font-size:12px;color:#888;margin-top:4px">Rep: ${d.reputacion}/100 · Socios: ${d.socios} · Cohesión: ${d.cohesion}/100</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:4px">Rep: ${d.reputacion}/100 · Socios: ${d.socios} · Cohesión: ${d.cohesion}/100</div>
     </div>
     ${rivals.map(r=>{
       const isAhead=r.rep>d.reputacion;
       return`<div class="card" style="margin-bottom:8px;${isAhead?'border-color:#c07a10':''}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <div style="font-size:13px;font-weight:700">${esc(r.name)}</div>
-          <span style="font-size:11px;color:${isAhead?'#c07a10':'#2d7a2d'}">${isAhead?'▲ Por delante':'▼ Por detrás'}</span>
+          <span style="font-size:11px;color:${isAhead?'var(--avi)':'var(--pos)'}">${isAhead?'▲ Por delante':'▼ Por detrás'}</span>
         </div>
-        <div style="font-size:12px;color:#888">Rep: ${r.rep}/100 · Socios: ${r.socios} · Nivel: ${r.level}</div>
+        <div style="font-size:12px;color:var(--ink3)">Rep: ${r.rep}/100 · Socios: ${r.socios} · Nivel: ${r.level}</div>
       </div>`;
     }).join('')}
     <div class="hint" style="margin-top:10px">Los rivales crecen cada temporada. Si un rival supera tu reputación puede intentar ficharte corredores.</div>`;
@@ -990,26 +990,26 @@ function renderClubMonthly(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="margin-bottom:0">Decisión mensual</h2>
-      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
+      <button onclick="G.screen='clubHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
     </div>
     <p class="sub">Elige una opción en cada área y confirma. Nada se aplica hasta confirmar; toca una opción elegida para desmarcarla.${d.monthlyDecisionDone?'<br><strong>Ya has decidido esta temporada.</strong> La siguiente decisión llega con la próxima temporada.':' Una decisión por temporada.'}</p>
     ${decDefs.map(dec=>`
       <div style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">${dec.icon} ${dec.label}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">${dec.icon} ${dec.label}</div>
         ${dec.options.map(opt=>{
           const isSel=sel[dec.id]===opt.id;
           const sinFondos=!isSel&&(opt.cost||0)>(d.presupuesto||0);   // BUG-15 (v96)
-          return`<div ${sinFondos?'':`onclick="clubToggleMonthlySel('${dec.id}','${opt.id}')"`} style="cursor:${sinFondos?'default':'pointer'};${sinFondos?'opacity:0.45;':''}padding:10px 12px;border-radius:8px;border:1px solid ${isSel?'#4a90d9':'#e0dfd8'};background:${isSel?'#f0f6ff':'#fafaf8'};margin-bottom:6px;display:flex;align-items:center;gap:10px">
+          return`<div ${sinFondos?'':`onclick="clubToggleMonthlySel('${dec.id}','${opt.id}')"`} style="cursor:${sinFondos?'default':'pointer'};${sinFondos?'opacity:0.45;':''}padding:10px 12px;border-radius:8px;border:1px solid ${isSel?'#4a90d9':'#e0dfd8'};background:${isSel?'var(--soft)':'var(--soft)'};margin-bottom:6px;display:flex;align-items:center;gap:10px">
             <span style="font-size:18px">${opt.emoji}</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:${isSel?'700':'500'};color:${isSel?'#4a90d9':'#1a1a1a'}">${opt.text}</div>
-              <div style="font-size:12px;color:#888">${opt.desc}${opt.cost?` · −€${opt.cost}`:''}${sinFondos?' · <strong>Sin fondos</strong>':''}</div>
+              <div style="font-size:13px;font-weight:${isSel?'700':'500'};color:${isSel?'var(--cuerpo)':'var(--ink)'}">${opt.text}</div>
+              <div style="font-size:12px;color:var(--ink3)">${opt.desc}${opt.cost?` · −€${opt.cost}`:''}${sinFondos?' · <strong>Sin fondos</strong>':''}</div>
             </div>
-            ${isSel?`<span style="font-size:16px;color:#4a90d9">✓</span>`:''}
+            ${isSel?`<span style="font-size:16px;color:var(--cuerpo)">✓</span>`:''}
           </div>`;
         }).join('')}
       </div>`).join('')}
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a${(!allChosen||d.monthlyDecisionDone)?';opacity:0.4;pointer-events:none':''}" onclick="doClubApplyMonthlyFull()">Confirmar decisiones →</button>`;
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)${(!allChosen||d.monthlyDecisionDone)?';opacity:0.4;pointer-events:none':''}" onclick="doClubApplyMonthlyFull()">Confirmar decisiones →</button>`;
 }
 
 window.doClubApplyMonthlyFull=()=>{
@@ -1117,14 +1117,14 @@ function renderClubSeasonEnd(){
   else narrative=`Una temporada de transición. Se siembra ahora para recoger en los próximos años.`;
 
   el.innerHTML=`
-    <div style="background:linear-gradient(135deg,#fefcf8,#f5f3ef);border:1px solid #e0dfd8;border-radius:14px;padding:20px 16px;margin-bottom:14px;text-align:center">
+    <div style="background:linear-gradient(135deg,#fefcf8,#f5f3ef);border:1px solid var(--line);border-radius:14px;padding:20px 16px;margin-bottom:14px;text-align:center">
       <div style="font-size:40px;margin-bottom:8px">${wins>0?'🏆':podiums>0?'🎯':d.cohesion>=70?'🤝':'📋'}</div>
       <h2 style="margin-bottom:4px">Temporada ${d.temporada} — ${esc(d.name)}</h2>
     </div>
 
     <div class="card" style="margin-bottom:12px;border-left:3px solid #4a90d9">
-      <div style="font-size:13px;color:#555;font-style:italic;margin-bottom:8px">"${narrative}"</div>
-      <div style="display:flex;gap:12px;font-size:12px;color:#888;flex-wrap:wrap">
+      <div style="font-size:13px;color:var(--ink2);font-style:italic;margin-bottom:8px">"${narrative}"</div>
+      <div style="display:flex;gap:12px;font-size:12px;color:var(--ink3);flex-wrap:wrap">
         ${correvelacion?`<span>⭐ Revelación: <strong>${esc(correvelacion.runner.name.split(' ')[0])}</strong> (#${correvelacion.pos})</span>`:''}
         ${corrdecepcion?`<span>😞 Decepción: <strong>${esc(corrdecepcion.runner.name.split(' ')[0])}</strong> (DNF)</span>`:''}
         <span>🤝 Cohesión final: <strong>${d.cohesion}/100</strong></span>
@@ -1132,16 +1132,16 @@ function renderClubSeasonEnd(){
     </div>
 
     ${obj?`
-    <div class="card" style="margin-bottom:12px;border-color:${objMet?'#4a8a2a':'#f5b8b8'};border-width:1.5px">
+    <div class="card" style="margin-bottom:12px;border-color:${objMet?'#4a8a2a':'var(--line2)'};border-width:1.5px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:20px">${objMet?'✅':'❌'}</span>
         <div style="flex:1">
-          <div style="font-size:12px;color:#888">Objetivo de temporada</div>
+          <div style="font-size:12px;color:var(--ink3)">Objetivo de temporada</div>
           <div style="font-size:13px;font-weight:600">${obj.label}</div>
         </div>
         <div style="text-align:right;font-size:12px">
-          ${objRepDelta?`<div style="color:${objRepDelta>0?'#2d7a2d':'#c0392b'};font-weight:700">${objRepDelta>0?'+':''}${objRepDelta} rep</div>`:''}
-          ${objSociosDelta?`<div style="color:${objSociosDelta>0?'#2d7a2d':'#c0392b'};font-weight:700">${objSociosDelta>0?'+':''}${objSociosDelta} socios</div>`:''}
+          ${objRepDelta?`<div style="color:${objRepDelta>0?'var(--pos)':'var(--neg)'};font-weight:700">${objRepDelta>0?'+':''}${objRepDelta} rep</div>`:''}
+          ${objSociosDelta?`<div style="color:${objSociosDelta>0?'var(--pos)':'var(--neg)'};font-weight:700">${objSociosDelta>0?'+':''}${objSociosDelta} socios</div>`:''}
         </div>
       </div>
     </div>`:''}
@@ -1150,8 +1150,8 @@ function renderClubSeasonEnd(){
       <div class="sec-title-sm">Resultados</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
         ${[['Carreras',results.length],['Victorias',wins],['Podios',podiums],['DNF',dnfs]].map(([l,v])=>`
-          <div style="background:#f5f4f0;border-radius:8px;padding:8px">
-            <div style="font-size:11px;color:#aaa">${l}</div>
+          <div style="background:var(--soft);border-radius:8px;padding:8px">
+            <div style="font-size:11px;color:var(--ink3)">${l}</div>
             <div style="font-size:18px;font-weight:700">${v}</div>
           </div>`).join('')}
       </div>
@@ -1174,10 +1174,10 @@ function renderClubSeasonEnd(){
       <div class="fin-row"><span>Reputación</span><span><strong>${Math.max(0,Math.min(100,(d.reputacion||0)+objRepDelta))}/100</strong>${objRepDelta?` <span class="${objRepDelta>0?'plus':'minus'}">${objRepDelta>0?'+':''}${objRepDelta}</span>`:''}</span></div>
       <div class="fin-row"><span>Presupuesto final</span><span class="${d.presupuesto+closing<0?'minus':''}"><strong>€${d.presupuesto+closing}</strong></span></div>
       ${d.presupuesto+closing<0?`<div class="danger" style="margin-top:8px;font-size:13px">Cierras en números rojos: ${(d.redSeasons||0)+1} de ${CLUB_RED_SEASONS_MAX} temporadas seguidas.</div>`:''}
-      <div class="fin-row"><span>Cohesión</span><span style="color:${d.cohesion>=70?'#2d7a2d':d.cohesion>=40?'#c07a10':'#c0392b'}"><strong>${d.cohesion}/100</strong></span></div>
+      <div class="fin-row"><span>Cohesión</span><span style="color:${d.cohesion>=70?'var(--pos)':d.cohesion>=40?'var(--avi)':'var(--neg)'}"><strong>${d.cohesion}/100</strong></span></div>
     </div>
 
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doClubNextSeason(${socioGain},${socioLoss},${closing})">Temporada ${d.temporada+1} →</button>
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doClubNextSeason(${socioGain},${socioLoss},${closing})">Temporada ${d.temporada+1} →</button>
     <button class="main" style="margin-top:6px;opacity:0.5" onclick="backToMainMenu()">← Menú principal</button>`;
 }
 
@@ -1353,11 +1353,11 @@ function renderClubEvent(){
     </div>
     <div class="card" style="margin-bottom:14px">
       <div style="font-size:15px;font-weight:700;margin-bottom:10px">${esc(ev.title)}</div>
-      ${ev.body?`<div style="font-size:13px;color:#666;margin-bottom:12px;line-height:1.55">${esc(ev.body)}</div>`:''}
+      ${ev.body?`<div style="font-size:13px;color:var(--ink2);margin-bottom:12px;line-height:1.55">${esc(ev.body)}</div>`:''}
       ${ev.options.map((opt,i)=>`
         <button class="main" style="margin-top:${i===0?'0':'8px'};text-align:left" onclick="doClubEvent(${i})">
           <div style="font-weight:500">${esc(opt.text)}</div>
-          <div style="font-size:12px;color:#aaa;margin-top:2px">
+          <div style="font-size:12px;color:var(--ink3);margin-top:2px">
             ${opt.repDelta>0?`+${opt.repDelta} rep `:opt.repDelta<0?`${opt.repDelta} rep `:''}
             ${opt.sociosDelta>0?`+${opt.sociosDelta} socios `:opt.sociosDelta<0?`${opt.sociosDelta} socios `:''}
             ${opt.cost?`−€${opt.cost} `:''}${opt.income?`+€${opt.income} `:''}

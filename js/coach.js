@@ -157,20 +157,20 @@ function renderCoachSelect(){
       const pl=PERSONALITY_LABEL[a.personality];
       return`<div class="coach-card" onclick="doCoachSelect('${a.id}')">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-          <div style="width:44px;height:44px;border-radius:50%;background:#f0ede8;border:2px solid #e0dfd8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--soft);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
           <div style="flex:1">
             <div style="font-size:15px;font-weight:700">${a.name}</div>
-            <div style="font-size:12px;color:#888">${a.age} años${a.age>=33?` <span style="color:#c07a10">· en declive</span>`:a.age<23?` <span style="color:#2d7a2d">· en formación</span>`:''} · ${SPEC_LABEL[a.spec]||a.spec}</div>
+            <div style="font-size:12px;color:var(--ink3)">${a.age} años${a.age>=33?` <span style="color:var(--avi)">· en declive</span>`:a.age<23?` <span style="color:var(--pos)">· en formación</span>`:''} · ${SPEC_LABEL[a.spec]||a.spec}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:11px;color:#aaa">Honorarios</div>
+            <div style="font-size:11px;color:var(--ink3)">Honorarios</div>
             <div style="font-size:14px;font-weight:700">€${a.monthlyFee}/mes</div>
           </div>
         </div>
         <div class="hint" style="margin-bottom:10px;font-style:italic">"${a.bio}"</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="background:${pl.color}22;color:${pl.color};font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px">${pl.emoji} ${pl.label}</span>
-          <span style="font-size:12px;color:#888;max-width:180px;text-align:right">${pl.desc}</span>
+          <span style="font-size:12px;color:var(--ink3);max-width:180px;text-align:right">${pl.desc}</span>
         </div>
         ${Object.entries(a.baseStats).map(([k,v])=>`
           <div class="bar-row" style="margin-bottom:3px">
@@ -225,20 +225,20 @@ function renderCoachStyleSelect(){
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
           <span style="font-size:22px">${s.emoji}</span>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:700;color:${isSel?s.color:'#1a1a1a'}">${s.label}</div>
-            <div style="font-size:12px;color:#888">${s.desc}</div>
+            <div style="font-size:14px;font-weight:700;color:${isSel?s.color:'var(--ink)'}">${s.label}</div>
+            <div style="font-size:12px;color:var(--ink3)">${s.desc}</div>
           </div>
         </div>
-        <div style="display:flex;gap:10px;font-size:11px;color:#aaa;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;font-size:11px;color:var(--ink3);flex-wrap:wrap">
           <span>${s.trustMod>=0?'+':''}${s.trustMod} confianza/carrera</span>
           <span>${s.bodyLoadMod>=0?'+':''}${s.bodyLoadMod} carga</span>
           <span>${s.perfMod>=0?'+':''}${s.perfMod}% rendimiento</span>
-          ${s.trainingBonus?`<span style="color:#2d7a2d">↑ ${s.trainingBonus}</span>`:''}
-          ${s.trainingPenalty?`<span style="color:#c0392b">↓ ${s.trainingPenalty}</span>`:''}
+          ${s.trainingBonus?`<span style="color:var(--pos)">↑ ${s.trainingBonus}</span>`:''}
+          ${s.trainingPenalty?`<span style="color:var(--neg)">↓ ${s.trainingPenalty}</span>`:''}
         </div>
       </div>`;
     }).join('')}
-    <button class="main" style="margin-top:10px;background:#1a1a1a;color:#fff;border-color:#1a1a1a;${!sel?'opacity:0.4;pointer-events:none':''}" onclick="doConfirmTrainerStyle()">Confirmar estilo →</button>
+    <button class="main" style="margin-top:10px;background:var(--ink);color:var(--card);border-color:var(--ink);${!sel?'opacity:0.4;pointer-events:none':''}" onclick="doConfirmTrainerStyle()">Confirmar estilo →</button>
     <button class="main" style="margin-top:6px;opacity:0.5" onclick="G._pendingTrainerStyle=null;G.screen='coachSelect';render()">← Volver</button>`;
 }
 
@@ -283,14 +283,14 @@ function renderCoachHome(){
           ${notifs>0&&!isActive?`<span class="notif-dot"></span>`:''}
         </button>`;
       }).join('')}
-      ${filledSlots<2&&slot1Unlocked?`<button class="slot-tab" onclick="addCoachSlot()" style="border-style:dashed;color:#4a90d9">+ Atleta</button>`:''}
-      ${filledSlots===2&&slot2Unlocked?`<button class="slot-tab" onclick="addCoachSlot()" style="border-style:dashed;color:#4a90d9">+ Atleta</button>`:''}
+      ${filledSlots<2&&slot1Unlocked?`<button class="slot-tab" onclick="addCoachSlot()" style="border-style:dashed;color:var(--cuerpo)">+ Atleta</button>`:''}
+      ${filledSlots===2&&slot2Unlocked?`<button class="slot-tab" onclick="addCoachSlot()" style="border-style:dashed;color:var(--cuerpo)">+ Atleta</button>`:''}
     </div>`;
 
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <button onclick="G.screen='coachHub';render()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:#888">← Hub</button>
-      <div style="font-size:12px;color:#aaa">Rep. entrenador: <strong>${G.coachReputation||0}/100</strong></div>
+      <button onclick="G.screen='coachHub';render()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--ink3)">← Hub</button>
+      <div style="font-size:12px;color:var(--ink3)">Rep. entrenador: <strong>${G.coachReputation||0}/100</strong></div>
     </div>
     ${(()=>{
       const styleHtml=G.coachTrainerStyle?`<span style="background:${TRAINER_STYLES[G.coachTrainerStyle].color}22;color:${TRAINER_STYLES[G.coachTrainerStyle].color};font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px">${TRAINER_STYLES[G.coachTrainerStyle].emoji} ${TRAINER_STYLES[G.coachTrainerStyle].label}</span>`:'';
@@ -301,10 +301,10 @@ function renderCoachHome(){
     })()}
     ${filledSlots>1?tabsHtml:''}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div style="width:48px;height:48px;border-radius:50%;background:#f0ede8;border:2px solid #e0dfd8;display:flex;align-items:center;justify-content:center;font-size:24px">${a.flag}</div>
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--soft);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px">${a.flag}</div>
       <div style="flex:1">
         <div style="font-size:17px;font-weight:700">${esc(a.name)}</div>
-        <div style="font-size:12px;color:#888">Temporada ${G.coachSeason} · ${SPEC_LABEL[a.spec]||a.spec}</div>
+        <div style="font-size:12px;color:var(--ink3)">Temporada ${G.coachSeason} · ${SPEC_LABEL[a.spec]||a.spec}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span style="background:${pl.color}22;color:${pl.color};font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px">${pl.emoji} ${pl.label}</span>
@@ -316,37 +316,37 @@ function renderCoachHome(){
         <div class="sec-title-sm" style="margin-bottom:0">Confianza del atleta</div>
         <div style="font-size:13px;font-weight:700;color:${trustColor}">${G.coachTrust}/100 · ${trustLabel}</div>
       </div>
-      <div style="height:8px;background:#e5e4de;border-radius:4px;overflow:hidden">
+      <div style="height:8px;background:var(--trk);border-radius:4px;overflow:hidden">
         <div style="width:${G.coachTrust}%;height:100%;background:${trustColor};border-radius:4px;transition:width .4s"></div>
       </div>
       ${G.coachTrust<30?`<div class="danger" style="margin-top:8px;margin-bottom:0;font-size:12px">⚠️ Confianza crítica. Si no mejoras los resultados, el atleta puede marcharse.</div>`:''}
     </div>
 
     ${G.coachInjury&&G.coachInjury.racesLeft>0?`
-    <div class="card" style="margin-bottom:12px;border-color:#f5b8b8;border-width:1.5px">
+    <div class="card" style="margin-bottom:12px;border-color:var(--line2);border-width:1.5px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
         <span style="font-size:16px">🩹</span>
-        <div style="font-size:13px;font-weight:700;color:#c0392b">${G.coachInjury.label}</div>
-        <span style="font-size:11px;background:#fef0f0;color:#c0392b;padding:1px 6px;border-radius:3px;margin-left:auto">${G.coachInjury.racesLeft} carrera${G.coachInjury.racesLeft!==1?'s':''} de baja</span>
+        <div style="font-size:13px;font-weight:700;color:var(--neg)">${G.coachInjury.label}</div>
+        <span style="font-size:11px;background:var(--soft);color:var(--neg);padding:1px 6px;border-radius:3px;margin-left:auto">${G.coachInjury.racesLeft} carrera${G.coachInjury.racesLeft!==1?'s':''} de baja</span>
       </div>
-      <div style="font-size:12px;color:#888">${G.coachInjury.desc}</div>
+      <div style="font-size:12px;color:var(--ink3)">${G.coachInjury.desc}</div>
     </div>`:''}
 
     ${G.coachSeasonObjective?`
-    <div class="card" style="margin-bottom:12px;border-color:${G.coachSeasonObjective.met?'#4a8a2a':'#e0dfd8'}">
+    <div class="card" style="margin-bottom:12px;border-color:${G.coachSeasonObjective.met?'#4a8a2a':'var(--line)'}">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">${G.coachSeasonObjective.met?'✅':'🎯'}</span>
         <div style="flex:1">
-          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Objetivo de ${esc(a.name)}</div>
+          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Objetivo de ${esc(a.name)}</div>
           <div style="font-size:13px;font-weight:600">${G.coachSeasonObjective.label}</div>
-          <div style="font-size:12px;color:#aaa;font-style:italic;margin-top:2px">${G.coachSeasonObjective.desc}</div>
+          <div style="font-size:12px;color:var(--ink3);font-style:italic;margin-top:2px">${G.coachSeasonObjective.desc}</div>
         </div>
       </div>
     </div>`:''}
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Estado de la temporada</div>
-      <div style="font-size:13px;color:#555">
+      <div style="font-size:13px;color:var(--ink2)">
         ${!racesSelected?'📅 Aún no has planificado el calendario de esta temporada.'
           :allDone?`✅ Temporada completa — ${results.filter(r=>!r.dnf).length} carreras finalizadas.`
           :`🏃 ${G.coachRaceIdx}/${(G.coachSelectedRaces||[]).length} carreras. Próxima: <strong>${esc(nextRace?.name||'—')}</strong>`}
@@ -354,10 +354,10 @@ function renderCoachHome(){
       ${G.coachBodyLoad>70?`<div class="warn" style="margin-top:8px;margin-bottom:0;font-size:12px">Carga corporal del atleta: ${Math.round(G.coachBodyLoad)}% — considera un bloque de recuperación.</div>`:''}
     </div>
     ${allDone?`
-      <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen='coachSeasonEnd';render()">Ver balance de temporada →</button>
+      <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='coachSeasonEnd';render()">Ver balance de temporada →</button>
     `:!racesSelected?`
       <button class="main" onclick="G.screen='coachCalendar';G.activeTab='calendar';render()">📅 Planificar carreras de la temporada</button>
-      ${(G.coachSponsorPool||[]).length>0&&(G.coachSponsors||[]).length<2?`<button class="main" style="margin-top:6px;border-color:#c07a10;color:#c07a10" onclick="G.screen='coachSponsors';render()">🤝 Negociar sponsors del atleta (${(G.coachSponsorPool||[]).length} oferta${(G.coachSponsorPool||[]).length!==1?'s':''})</button>`:''}
+      ${(G.coachSponsorPool||[]).length>0&&(G.coachSponsors||[]).length<2?`<button class="main" style="margin-top:6px;border-color:#c07a10;color:var(--avi)" onclick="G.screen='coachSponsors';render()">🤝 Negociar sponsors del atleta (${(G.coachSponsorPool||[]).length} oferta${(G.coachSponsorPool||[]).length!==1?'s':''})</button>`:''}
     `:`
       <button class="main" onclick="G.screen='coachTraining';render()">💪 Proponer bloque de entrenamiento</button>
       ${G.coachInjury&&G.coachInjury.racesLeft>0
@@ -370,18 +370,18 @@ function renderCoachHome(){
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:24px">${G.coachPendingEvent.icon||'📋'}</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#c07a10">${G.coachPendingEvent.title}</div>
-          <div style="font-size:12px;color:#888">${esc(a.name)} quiere hablar contigo</div>
+          <div style="font-size:13px;font-weight:700;color:var(--avi)">${G.coachPendingEvent.title}</div>
+          <div style="font-size:12px;color:var(--ink3)">${esc(a.name)} quiere hablar contigo</div>
         </div>
-        <div style="font-size:18px;color:#c07a10">→</div>
+        <div style="font-size:18px;color:var(--avi)">→</div>
       </div>
     </div>`:''}
     ${G.coachNemesis&&G.coachNemesis.wins>=2?`
     <div class="hint" style="margin-top:10px">🎯 <strong>${esc(G.coachNemesis.name)}</strong> lleva ${G.coachNemesis.wins} carreras superando a ${esc(a.name)}. Está en la cabeza del atleta.</div>`:''}
     <div class="card" style="margin-top:14px">
       <div class="sec-title-sm">Economía de la temporada</div>
-      <div style="font-size:13px;color:#555">Honorarios: <strong>€${a.monthlyFee||250}/mes</strong></div>
-      <div style="font-size:12px;color:#888;margin-top:4px">Acumulado: <strong class="plus">+€${G.coachEarnings||0}</strong></div>
+      <div style="font-size:13px;color:var(--ink2)">Honorarios: <strong>€${a.monthlyFee||250}/mes</strong></div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:4px">Acumulado: <strong class="plus">+€${G.coachEarnings||0}</strong></div>
     </div>
     ${results.length>0?`
     <div class="card" style="margin-top:10px">
@@ -389,7 +389,7 @@ function renderCoachHome(){
       ${results.map((r,i)=>`
         <div class="history-row">
           <span style="font-size:13px">${esc((G.coachSelectedRaces||[])[i]?.name||r.raceName||'Carrera '+(i+1))}</span>
-          <span style="font-weight:700;font-size:13px;color:${r.dnf?'#c0392b':r.pos<=3?'#c07a10':'#1a1a1a'}">${r.dnf?'DNF':'#'+r.pos}</span>
+          <span style="font-weight:700;font-size:13px;color:${r.dnf?'var(--neg)':r.pos<=3?'var(--avi)':'var(--ink)'}">${r.dnf?'DNF':'#'+r.pos}</span>
         </div>`).join('')}
     </div>`:''}`;
 }
@@ -426,24 +426,24 @@ function renderCoachTraining(){
 
     ${nextRace?`
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
         Q${nextQ} — carreras del trimestre
       </div>
       ${qRaces.map(r=>{
         const isNext=r.id===nextRace.id;
         const tC=TIER_COLOR_RACE[r.tier]||'#888';
-        return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0ede8">
+        return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)">
           <div>
             <span style="font-size:13px;font-weight:${isNext?700:400}">${isNext?'→ ':''}${esc(r.name)}</span>
-            ${isNext?`<span style="font-size:11px;background:#f0f6ff;color:#4a90d9;padding:1px 6px;border-radius:3px;margin-left:6px">Próxima</span>`:''}
-            <div style="font-size:12px;color:#aaa">${MONTH_NAMES[(r.month||1)-1]} · ${r.type} · ${r.km}km · ${raceDesnivel(r)}</div>
+            ${isNext?`<span style="font-size:11px;background:var(--soft);color:var(--cuerpo);padding:1px 6px;border-radius:3px;margin-left:6px">Próxima</span>`:''}
+            <div style="font-size:12px;color:var(--ink3)">${MONTH_NAMES[(r.month||1)-1]} · ${r.type} · ${r.km}km · ${raceDesnivel(r)}</div>
           </div>
           <span style="font-size:11px;font-weight:700;color:${tC};flex-shrink:0;margin-left:8px">${TIER_LABEL_RACE[r.tier]||r.tier}</span>
         </div>`;
       }).join('')}
     </div>
     <div class="card" style="margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Perfil — ${esc(nextRace.name)}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Perfil — ${esc(nextRace.name)}</div>
       <div id="coach-train-prof-wrap">${profSvg(nextRace,-1,'preview',0,'coach-train')}</div>
       <div id="coach-train-prof-info" data-sel="-1" style="min-height:16px">${profSegInfo(nextRace,null,'preview',0)}</div>
       ${profLeyenda(false)}
@@ -471,26 +471,26 @@ function renderCoachTraining(){
       return warnings.map(w=>`<div class="${w.type}" style="margin-bottom:8px;font-size:12px">${w.msg}</div>`).join('');
     })()}
 
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Elige bloque</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Elige bloque</div>
     ${TRAINING_BLOCKS.map(b=>{
       const isRec=b.name===recLabel;
       const isSel=G.coachTrainingSelected===b.id;
-      return`<div class="train-card${isSel?' sel':''}" style="${isSel?'border-color:#1a1a1a;background:#f5f4f0;':isRec?'border-color:#4a90d9;':''}"
+      return`<div class="train-card${isSel?' sel':''}" style="${isSel?'border-color:var(--ink);background:var(--soft);':isRec?'border-color:#4a90d9;':''}"
         onclick="G.coachTrainingSelected='${b.id}';render()">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="card-title">${b.name}
-            ${isRec?` <span style="font-size:11px;background:#4a90d9;color:#fff;padding:1px 6px;border-radius:3px;margin-left:4px">Recomendado</span>`:''}
-            ${isSel?` <span style="font-size:11px;background:#1a1a1a;color:#fff;padding:1px 6px;border-radius:3px;margin-left:4px">Seleccionado</span>`:''}
+            ${isRec?` <span style="font-size:11px;background:#4a90d9;color:var(--card);padding:1px 6px;border-radius:3px;margin-left:4px">Recomendado</span>`:''}
+            ${isSel?` <span style="font-size:11px;background:var(--ink);color:var(--card);padding:1px 6px;border-radius:3px;margin-left:4px">Seleccionado</span>`:''}
           </div>
         </div>
         <div class="card-sub">${b.desc}</div>
         <div style="font-size:12px;margin-top:5px">
-          ${Object.entries(b.effects).filter(([,v])=>v!==0).map(([k,v])=>`<span style="color:${v>0?'#2d7a2d':'#c0392b'};margin-right:8px">${v>0?'+':''}${v} ${k.charAt(0).toUpperCase()+k.slice(1)}</span>`).join('')}
+          ${Object.entries(b.effects).filter(([,v])=>v!==0).map(([k,v])=>`<span style="color:${v>0?'var(--pos)':'var(--neg)'};margin-right:8px">${v>0?'+':''}${v} ${k.charAt(0).toUpperCase()+k.slice(1)}</span>`).join('')}
         </div>
       </div>`;
     }).join('')}
     ${G.coachTrainingSelected
-      ?`<button class="main" style="margin-top:10px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doCoachTraining(G.coachTrainingSelected)">
+      ?`<button class="main" style="margin-top:10px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doCoachTraining(G.coachTrainingSelected)">
           Confirmar — ${TRAINING_BLOCKS.find(b=>b.id===G.coachTrainingSelected)?.name||''} →
         </button>`
       :`<div class="hint" style="margin-top:8px;text-align:center">Toca un bloque para seleccionarlo</div>`}
@@ -579,19 +579,19 @@ function renderCoachTrainingReaction(){
     <h2>Reacción del atleta</h2>
     <p class="sub">${esc(a.name)}</p>
     <div class="card" style="margin-bottom:14px">
-      <div style="font-size:14px;color:#555;line-height:1.65;font-style:italic">"${lt.reactionMsg}"</div>
+      <div style="font-size:14px;color:var(--ink2);line-height:1.65;font-style:italic">"${lt.reactionMsg}"</div>
     </div>
     <div class="card" style="margin-bottom:14px">
       <div class="sec-title-sm">Resultado</div>
       ${lt.effMult>0
-        ?`<div style="font-size:13px;color:#555">Bloque: <strong>${lt.blockName}</strong> · Efectividad: <strong>${Math.round(lt.effMult*100)}%</strong></div>`
-        :`<div style="font-size:13px;color:#c0392b">No completó el entrenamiento. Sin mejora de stats.</div>`}
-      <div style="margin-top:8px;font-size:13px;color:${lt.trustDelta>=0?'#2d7a2d':'#c0392b'}">
+        ?`<div style="font-size:13px;color:var(--ink2)">Bloque: <strong>${lt.blockName}</strong> · Efectividad: <strong>${Math.round(lt.effMult*100)}%</strong></div>`
+        :`<div style="font-size:13px;color:var(--neg)">No completó el entrenamiento. Sin mejora de stats.</div>`}
+      <div style="margin-top:8px;font-size:13px;color:${lt.trustDelta>=0?'var(--pos)':'var(--neg)'}">
         Confianza: ${lt.trustDelta>=0?'+':''}${lt.trustDelta} → ${G.coachTrust}/100
       </div>
     </div>
     ${G.coachBodyLoad>70?`<div class="warn">Carga corporal: ${Math.round(G.coachBodyLoad)}%. Alto riesgo si se añade más volumen.</div>`:''}
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen='coachHome';render()">Continuar →</button>`;
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='coachHome';render()">Continuar →</button>`;
 }
 
 function renderCoachCalendar(){
@@ -631,7 +631,7 @@ function renderCoachCalendar(){
       </div>`;
     }).join('')}
     ${selIds.length>0
-      ?`<button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doCoachConfirmCalendar()">Confirmar (${selIds.length} carreras) →</button>`
+      ?`<button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doCoachConfirmCalendar()">Confirmar (${selIds.length} carreras) →</button>`
       :`<div class="hint">Selecciona al menos 1 carrera para continuar.</div>`}
     <button class="main" style="margin-top:6px;opacity:0.5" onclick="G.screen='coachHome';G.activeTab='game';render()">← Volver</button>`;
 }
@@ -687,7 +687,7 @@ function renderCoachPreRace(){
     <p class="sub">${esc(race.name)} · ${MONTH_NAMES[(race.month||1)-1]} · T${G.coachSeason}</p>
 
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Perfil de la carrera</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Perfil de la carrera</div>
       <div id="coach-pre-prof-wrap">${profSvg(race,-1,'preview',0,'coach-pre')}</div>
       <div id="coach-pre-prof-info" data-sel="-1" style="min-height:16px">${profSegInfo(race,null,'preview',0)}</div>
       ${profLeyenda(true)}
@@ -704,25 +704,25 @@ function renderCoachPreRace(){
     })()}
 
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Condición del día</div>
-      <div style="font-size:13px;color:#555">🌅 ${dc.text}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Condición del día</div>
+      <div style="font-size:13px;color:var(--ink2)">🌅 ${dc.text}</div>
     </div>
 
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Geles</div>
-      <div style="font-size:13px;color:#555;margin-bottom:10px">Cuántos geles lleva ${esc(a.name)} al bolsillo. Cada gel da +12% energía en avituallamiento.</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Geles</div>
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:10px">Cuántos geles lleva ${esc(a.name)} al bolsillo. Cada gel da +12% energía en avituallamiento.</div>
       <div style="display:flex;align-items:center;gap:16px">
-        <button onclick="G.coachGels=Math.max(0,G.coachGels-1);render()" style="width:36px;height:36px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:18px;cursor:pointer">−</button>
+        <button onclick="G.coachGels=Math.max(0,G.coachGels-1);render()" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:18px;cursor:pointer">−</button>
         <div style="font-size:20px;font-weight:700;min-width:40px;text-align:center">${gels} 🍬</div>
-        <button onclick="G.coachGels=Math.min(6,G.coachGels+1);render()" style="width:36px;height:36px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:18px;cursor:pointer">+</button>
-        <div style="font-size:12px;color:#888">Coste: €${gels*2}</div>
+        <button onclick="G.coachGels=Math.min(6,G.coachGels+1);render()" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:18px;cursor:pointer">+</button>
+        <div style="font-size:12px;color:var(--ink3)">Coste: €${gels*2}</div>
       </div>
       ${race.km>=40?`<div class="hint" style="margin-top:8px;margin-bottom:0;font-size:12px">Para una ${race.km}km se recomiendan al menos 4 geles.</div>`:''}
     </div>
 
     <div class="card" style="margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ajuste de último momento</div>
-      <div style="font-size:13px;color:#555;margin-bottom:10px">¿Quieres ajustar algo antes de salir?</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ajuste de último momento</div>
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:10px">¿Quieres ajustar algo antes de salir?</div>
       ${[{id:'taper_race',label:'Descarga final',desc:'Sesión ligera hoy — el atleta llega más fresco (+5% energía)',energyBonus:5},
          {id:'mental_talk',label:'Charla motivacional',desc:'10 minutos de activación mental (+8 confianza)',trustBonus:8},
          {id:'nothing',label:'Nada — está listo',desc:'Confías en el trabajo hecho'}
@@ -730,14 +730,14 @@ function renderCoachPreRace(){
         const isSel=(G.coachPreRaceBlock||'nothing')===opt.id;
         return`<div class="train-card${isSel?' sel':''}" style="${isSel?'border-color:#4a90d9;':''};margin-bottom:6px" onclick="G.coachPreRaceBlock='${opt.id}';render()">
           <div style="font-weight:600;font-size:13px">${opt.label}</div>
-          <div style="font-size:12px;color:#888">${opt.desc}</div>
+          <div style="font-size:12px;color:var(--ink3)">${opt.desc}</div>
         </div>`;
       }).join('')}
     </div>
 
-    <button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doCoachLaunchRace()">🏁 Salida — ${esc(race.name)} →</button>
-    <button class="main" style="margin-top:6px;border-color:#4a90d9;color:#4a90d9" onclick="doCoachDelegateRace()">📡 Delegar — ${esc(a.name)} corre solo</button>
-    <div style="font-size:12px;color:#aaa;text-align:center;margin-top:4px">Te avisaré cuando acabe con el resultado</div>
+    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doCoachLaunchRace()">🏁 Salida — ${esc(race.name)} →</button>
+    <button class="main" style="margin-top:6px;border-color:#4a90d9;color:var(--cuerpo)" onclick="doCoachDelegateRace()">📡 Delegar — ${esc(a.name)} corre solo</button>
+    <div style="font-size:12px;color:var(--ink3);text-align:center;margin-top:4px">Te avisaré cuando acabe con el resultado</div>
     <button class="main" style="margin-top:6px;opacity:0.5" onclick="G.coachDayCondition=null;G.screen='coachHome';render()">← Volver al hub</button>`;
 
   // Attach profile touch handlers
@@ -965,18 +965,18 @@ function renderCoachRace(){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div style="flex:1">
         <div style="font-size:15px;font-weight:700">${esc(race.name)}</div>
-        <div style="font-size:12px;color:#888">${race.type} · ${race.km}km · ${raceDesnivel(race)}</div>
+        <div style="font-size:12px;color:var(--ink3)">${race.type} · ${race.km}km · ${raceDesnivel(race)}</div>
       </div>
-      <div style="font-size:12px;background:#f5f4f0;padding:4px 10px;border-radius:6px;flex-shrink:0">${Math.round(kmDone)}/${race.km}km</div>
+      <div style="font-size:12px;background:var(--soft);padding:4px 10px;border-radius:6px;flex-shrink:0">${Math.round(kmDone)}/${race.km}km</div>
     </div>
-    <div style="height:5px;background:#e5e4de;border-radius:3px;margin-bottom:6px;overflow:hidden">
+    <div style="height:5px;background:var(--trk);border-radius:3px;margin-bottom:6px;overflow:hidden">
       <div style="width:${pct}%;height:100%;background:#4a90d9;border-radius:3px;transition:width .4s"></div>
     </div>
     ${!isDone?`<div style="text-align:right;margin-bottom:10px">
-      <button onclick="doCoachSkipRace()" style="background:none;border:1px solid #e0dfd8;border-radius:6px;padding:3px 10px;font-size:11px;color:#aaa;cursor:pointer">⏭ Saltar al resultado</button>
+      <button onclick="doCoachSkipRace()" style="background:none;border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--ink3);cursor:pointer">⏭ Saltar al resultado</button>
     </div>`:''}
 
-    ${shown.length===0?`<div style="text-align:center;padding:30px 0;color:#aaa;font-size:14px">⏳ Preparando salida...</div>`:''}
+    ${shown.length===0?`<div style="text-align:center;padding:30px 0;color:var(--ink3);font-size:14px">⏳ Preparando salida...</div>`:''}
     <div id="coach-race-feed">
     ${shown.map((seg,i)=>{
       const isLast=i===shown.length-1;
@@ -986,11 +986,11 @@ function renderCoachRace(){
       return`<div class="narrative-item ${seg.isAid?'aid-stop':''}" style="background:${bg};border-color:${brd}">
         <div style="display:flex;justify-content:space-between;margin-bottom:3px">
           <span style="font-size:12px;font-weight:600;color:${COL[seg.type]}">${ICO[seg.type]} ${esc(seg.name)}</span>
-          ${seg.isAid?`<span style="font-size:12px;font-weight:600;color:#c07a10">🔵 Avituallamiento</span>`:''}
+          ${seg.isAid?`<span style="font-size:12px;font-weight:600;color:var(--avi)">🔵 Avituallamiento</span>`:''}
         </div>
-        <div style="font-size:13px;color:#555">${seg.narrative}</div>
-        ${usedRadio?`<div style="font-size:11px;color:#4a90d9;margin-top:3px">📻 ${usedRadio}</div>`:''}
-        ${isLast&&!isDone?`<div style="margin-top:5px;display:flex;gap:12px;font-size:12px;color:#888">
+        <div style="font-size:13px;color:var(--ink2)">${seg.narrative}</div>
+        ${usedRadio?`<div style="font-size:11px;color:var(--cuerpo);margin-top:3px">📻 ${usedRadio}</div>`:''}
+        ${isLast&&!isDone?`<div style="margin-top:5px;display:flex;gap:12px;font-size:12px;color:var(--ink3)">
           <span>⚡ ${seg.energy}%</span><span>🦵 ${seg.legs}%</span><span>💧 ${seg.hydration}%</span>
           ${gelsLeft>0?`<span>🍬 ×${gelsLeft}</span>`:''}
         </div>`:''}
@@ -999,10 +999,10 @@ function renderCoachRace(){
     </div>
 
     ${showRadio&&!radioUsedHere?`
-    <div style="margin-top:10px;background:#f0f6ff;border:0.5px solid #4a90d9;border-radius:10px;padding:10px 12px">
+    <div style="margin-top:10px;background:var(--soft);border:0.5px solid #4a90d9;border-radius:10px;padding:10px 12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:12px;font-weight:700;color:#4a90d9">📻 Radio</div>
-        <div style="font-size:11px;color:#aaa">Se cierra solo en <span id="coach-radio-secs">${Math.ceil(_coachRadioPauseVal/10)}</span>s</div>
+        <div style="font-size:12px;font-weight:700;color:var(--cuerpo)">📻 Radio</div>
+        <div style="font-size:11px;color:var(--ink3)">Se cierra solo en <span id="coach-radio-secs">${Math.ceil(_coachRadioPauseVal/10)}</span>s</div>
       </div>
       <div style="height:3px;background:#dde8f8;border-radius:2px;overflow:hidden;margin-bottom:10px">
         <div id="coach-radio-bar" style="height:100%;background:#4a90d9;border-radius:2px;width:${(_coachRadioPauseVal/35*100).toFixed(0)}%;transition:width .1s linear"></div>
@@ -1011,23 +1011,23 @@ function renderCoachRace(){
         ${COACH_RADIO_MESSAGES.map((m,mi)=>{
           const disabled=m.id==='attack'&&lastSeg?.energy<20;
           const canAlone=m.id==='silent'&&highTrust;
-          return`<button onclick="doCoachRadio(${mi})" style="padding:8px;border-radius:6px;border:0.5px solid ${canAlone?'#4a8a2a':'#ddd'};background:${canAlone?'#f2faf0':'#fff'};font-size:12px;text-align:left;cursor:pointer;opacity:${disabled?0.4:1}" ${disabled?'disabled':''}>
+          return`<button onclick="doCoachRadio(${mi})" style="padding:8px;border-radius:6px;border:0.5px solid ${canAlone?'#4a8a2a':'#ddd'};background:${canAlone?'var(--soft)':'var(--card)'};font-size:12px;text-align:left;cursor:pointer;opacity:${disabled?0.4:1}" ${disabled?'disabled':''}>
             <div style="font-weight:600">${m.label}</div>
-            <div style="color:#aaa;font-size:11px">${m.desc}</div>
+            <div style="color:var(--ink3);font-size:11px">${m.desc}</div>
           </button>`;
         }).join('')}
       </div>
     </div>`:''}
 
     ${showRadio&&radioUsedHere?`
-    <div style="margin-top:8px;background:#f8f7f3;border:0.5px solid #e0dfd8;border-radius:8px;padding:8px 12px">
-      <span style="font-size:12px;color:#4a90d9">📻 ${radioUsedHere}</span>
+    <div style="margin-top:8px;background:var(--soft);border:0.5px solid var(--line);border-radius:8px;padding:8px 12px">
+      <span style="font-size:12px;color:var(--cuerpo)">📻 ${radioUsedHere}</span>
     </div>`:''}
 
     ${midEvt&&!isDone?`
     <div class="card" style="border-color:#c07a10;border-width:1.5px;margin-top:10px">
       <div style="font-size:15px;font-weight:700;margin-bottom:6px">${midEvt.icon||'⚡'} ${esc(midEvt.title)}</div>
-      <div style="font-size:13px;color:#555;margin-bottom:12px;font-style:italic">"${(midEvt.desc||'').replace(/\{\{name\}\}/g,esc(aName)).replace(/\{\{rival\}\}/g,esc(rival))}"</div>
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:12px;font-style:italic">"${(midEvt.desc||'').replace(/\{\{name\}\}/g,esc(aName)).replace(/\{\{rival\}\}/g,esc(rival))}"</div>
       ${midEvt.choices.map((c,ci)=>`
         <button class="main" style="margin-top:${ci===0?'0':'6px'}" onclick="doCoachMidRaceEvent(${ci})">${c.text}</button>
       `).join('')}
@@ -1036,49 +1036,49 @@ function renderCoachRace(){
     ${aidSeg&&!midEvt?`
     <div class="card" style="border-color:#4a90d9;margin-top:10px">
       <div style="font-size:14px;font-weight:700;margin-bottom:8px">📍 Avituallamiento ${aidSeg.aidNum||''} — ¿Qué hace ${esc(aName)}?</div>
-      <div style="display:flex;gap:12px;font-size:12px;color:#888;margin-bottom:10px">
+      <div style="display:flex;gap:12px;font-size:12px;color:var(--ink3);margin-bottom:10px">
         <span>⚡ ${aidSeg.energy}%</span><span>🦵 ${aidSeg.legs}%</span><span>💧 ${aidSeg.hydration}%</span><span>🍬 ×${gelsLeft}</span>
       </div>
       ${aidSeg.energy<30||aidSeg.legs<25?`<div class="warn" style="margin-bottom:10px;font-size:12px">⚠️ El atleta llega muy cargado. Continuar tiene riesgo real.</div>`:''}
       ${(G.coachNemesis&&G.coachNemesis.wins>=2)?`<div class="hint" style="margin-bottom:10px;font-size:12px">🎯 ${esc(G.coachNemesis.name)} está por delante. Puede que estés a tiempo.</div>`:''}
 
       ${aidSeg.aidRivals?`
-      <div style="background:#f5f4f0;border-radius:8px;padding:8px 12px;margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Clasificación en este punto</div>
+      <div style="background:var(--soft);border-radius:8px;padding:8px 12px;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Clasificación en este punto</div>
         ${aidSeg.aidRivals.above.map(r=>`
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;padding:2px 0">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:2px 0">
             <span>#${aidSeg.aidRivals.myRank-(aidSeg.aidRivals.above.indexOf(r)+1)} ${esc(r.name)}</span>
-            <span style="color:#c0392b">−${fmt(aidSeg.aidRivals.myTime-r.time)}</span>
+            <span style="color:var(--neg)">−${fmt(aidSeg.aidRivals.myTime-r.time)}</span>
           </div>`).join('')}
-        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#1a1a1a;padding:3px 0;background:#fff;border-radius:4px;padding:4px 8px;margin:3px -8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--ink);padding:3px 0;background:var(--card);border-radius:4px;padding:4px 8px;margin:3px -8px">
           <span>#${aidSeg.aidRivals.myRank} ${esc(aName)}</span>
           <span>← aquí</span>
         </div>
         ${aidSeg.aidRivals.below.map(r=>`
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;padding:2px 0">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:2px 0">
             <span>#${aidSeg.aidRivals.myRank+(aidSeg.aidRivals.below.indexOf(r)+1)} ${esc(r.name)}</span>
-            <span style="color:#2d7a2d">+${fmt(r.time-aidSeg.aidRivals.myTime)}</span>
+            <span style="color:var(--pos)">+${fmt(r.time-aidSeg.aidRivals.myTime)}</span>
           </div>`).join('')}
       </div>`:''}
 
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Ritmo</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Ritmo</div>
       <button class="main" style="margin-top:0" onclick="doCoachAidAdvice('mantener')">Continúa como vas</button>
       <button class="main" style="margin-top:6px" onclick="doCoachAidAdvice('bajar')">Baja el ritmo — ahorra para el final</button>
-      ${aidSeg.energy<30||aidSeg.legs<25?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:#c0392b" onclick="doCoachAidAdvice('abandonar')">Abandona — conserva el cuerpo</button>`:''}
+      ${aidSeg.energy<30||aidSeg.legs<25?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doCoachAidAdvice('abandonar')">Abandona — conserva el cuerpo</button>`:''}
 
       ${gelsLeft>0&&!G.coachAidExtras[aidSeg.aidNum||0]?`
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-top:12px;margin-bottom:6px">Nutrición</div>
-      <button class="main" style="margin-top:0;border-color:#c07a10;color:#c07a10" onclick="doCoachGiveGel(${aidSeg.aidNum||0})">
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-top:12px;margin-bottom:6px">Nutrición</div>
+      <button class="main" style="margin-top:0;border-color:#c07a10;color:var(--avi)" onclick="doCoachGiveGel(${aidSeg.aidNum||0})">
         🍬 Dar gel (${gelsLeft} disponibles) — +12% energía
       </button>`:''}
 
       ${race.km>=35&&!G.coachAidExtras['socks_'+( aidSeg.aidNum||0)]?`
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-top:12px;margin-bottom:6px">Cuidado del pie</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-top:12px;margin-bottom:6px">Cuidado del pie</div>
       <button class="main" style="margin-top:0" onclick="doCoachSocksChange(${aidSeg.aidNum||0})">
         🧦 Cambio de calcetines (+90s pero previene pérdida de piernas en km finales)
       </button>`:''}
 
-      <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-top:12px;margin-bottom:6px">Información táctica</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-top:12px;margin-bottom:6px">Información táctica</div>
       <button class="main" style="margin-top:0" onclick="doCoachTacticInfo(${aidSeg.aidNum||0})">
         📊 Decirle su posición y diferencia con el siguiente
       </button>
@@ -1086,16 +1086,16 @@ function renderCoachRace(){
 
     ${isDone?`
       ${G.coachLastDialogue?`
-        <div class="card" style="background:#fafaf8;border-color:#c07a10;margin-bottom:12px">
-          <div style="font-size:12px;color:#c07a10;font-weight:600;margin-bottom:4px">${esc(aName)} · post-carrera</div>
-          <div style="font-size:14px;color:#333;font-style:italic">${esc(G.coachLastDialogue)}</div>
+        <div class="card" style="background:var(--soft);border-color:#c07a10;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--avi);font-weight:600;margin-bottom:4px">${esc(aName)} · post-carrera</div>
+          <div style="font-size:14px;color:var(--ink);font-style:italic">${esc(G.coachLastDialogue)}</div>
         </div>`:''}
       <div class="card" style="background:#f0faf0;border-color:#4a8a2a;text-align:center;padding:20px;margin-bottom:0">
         <div style="font-size:32px;margin-bottom:6px">${data.finalPos<=3?'🏆':data.finalPos<=10?'🎯':'🏃'}</div>
         <div style="font-size:22px;font-weight:700;margin-bottom:4px">${data.finalPos<=3?`Podio — #${data.finalPos}`:`Posición #${data.finalPos}`}</div>
-        <div style="font-size:13px;color:#888">${data.totalParticipants} participantes · ${fmt(data.totalTime)}</div>
+        <div style="font-size:13px;color:var(--ink3)">${data.totalParticipants} participantes · ${fmt(data.totalTime)}</div>
       </div>
-      <button class="main" style="margin-top:12px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doCoachRaceFinish()">Registrar resultado →</button>`:''}`;
+      <button class="main" style="margin-top:12px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doCoachRaceFinish()">Registrar resultado →</button>`:''}`;
 
   setTimeout(()=>{
     const feed=document.getElementById('coach-race-feed');
@@ -1353,24 +1353,24 @@ function renderCoachPostRace(){
 
     ${G.coachLastDialogue?`
     <div class="card" style="margin-bottom:12px;border-left:3px solid ${es.color}">
-      <div style="font-size:12px;color:#aaa;margin-bottom:4px">${a.name} dice:</div>
-      <div style="font-size:14px;color:#333;font-style:italic">"${esc(G.coachLastDialogue)}"</div>
-      <div style="font-size:11px;color:#aaa;margin-top:6px">${es.emoji} Estado: <strong style="color:${es.color}">${es.label}</strong></div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">${a.name} dice:</div>
+      <div style="font-size:14px;color:var(--ink);font-style:italic">"${esc(G.coachLastDialogue)}"</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px">${es.emoji} Estado: <strong style="color:${es.color}">${es.label}</strong></div>
     </div>`:''}
 
     ${styleReaction?`
     <div class="hint" style="margin-bottom:12px">
-      <div style="font-size:11px;color:#aaa;margin-bottom:2px">Reacción a tu estilo ${TRAINER_STYLES[G.coachTrainerStyle].emoji}:</div>
-      <div style="font-size:13px;color:#555;font-style:italic">${esc(styleReaction)}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:2px">Reacción a tu estilo ${TRAINER_STYLES[G.coachTrainerStyle].emoji}:</div>
+      <div style="font-size:13px;color:var(--ink2);font-style:italic">${esc(styleReaction)}</div>
     </div>`:''}
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Balance de la carrera</div>
-      <div class="fin-row"><span>Posición</span><span style="font-weight:700;color:${r.pos<=3?'#c07a10':'#1a1a1a'}">#${r.pos}</span></div>
+      <div class="fin-row"><span>Posición</span><span style="font-weight:700;color:${r.pos<=3?'var(--avi)':'var(--ink)'}">#${r.pos}</span></div>
       ${r.prize>0?`<div class="fin-row"><span>Premio</span><span class="plus">+€${r.prize}</span></div>`:''}
       ${r.coachCut>0?`<div class="fin-row"><span>Tu comisión (20%)</span><span class="plus">+€${r.coachCut}</span></div>`:''}
-      <div class="fin-row"><span>Confianza del atleta</span><span style="font-weight:700;color:${G.coachTrust>=60?'#2d7a2d':G.coachTrust>=30?'#c07a10':'#c0392b'}">${G.coachTrust}/100</span></div>
-      <div class="fin-row"><span>Carga corporal</span><span style="color:${G.coachBodyLoad>70?'#c0392b':G.coachBodyLoad>50?'#c07a10':'#2d7a2d'}">${Math.round(G.coachBodyLoad)}%</span></div>
+      <div class="fin-row"><span>Confianza del atleta</span><span style="font-weight:700;color:${G.coachTrust>=60?'var(--pos)':G.coachTrust>=30?'var(--avi)':'var(--neg)'}">${G.coachTrust}/100</span></div>
+      <div class="fin-row"><span>Carga corporal</span><span style="color:${G.coachBodyLoad>70?'var(--neg)':G.coachBodyLoad>50?'var(--avi)':'var(--pos)'}">${Math.round(G.coachBodyLoad)}%</span></div>
     </div>
 
     ${G.coachPendingEvent?`
@@ -1378,30 +1378,30 @@ function renderCoachPostRace(){
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:22px">${G.coachPendingEvent.icon||'📋'}</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#c07a10">${G.coachPendingEvent.title}</div>
-          <div style="font-size:12px;color:#888">Hay algo pendiente de resolver</div>
+          <div style="font-size:13px;font-weight:700;color:var(--avi)">${G.coachPendingEvent.title}</div>
+          <div style="font-size:12px;color:var(--ink3)">Hay algo pendiente de resolver</div>
         </div>
       </div>
     </div>`:''}
 
     ${taperWasUsed?`
-    <div style="background:#f2faf0;border:1px solid #b8ddb8;border-radius:10px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+    <div style="background:var(--soft);border:1px solid var(--line2);border-radius:10px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
       <span style="font-size:20px">⚡</span>
       <div>
-        <div style="font-size:13px;font-weight:700;color:#2d7a2d">Descarga previa aplicada</div>
-        <div style="font-size:12px;color:#555;margin-top:2px">El taper de esta semana aportó +5% de energía/piernas al inicio. ${r.pos<=5?'Los datos confirman que llegaste más fresco.':'Aunque el resultado no fue el esperado, el cuerpo estaba a punto.'}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--pos)">Descarga previa aplicada</div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:2px">El taper de esta semana aportó +5% de energía/piernas al inicio. ${r.pos<=5?'Los datos confirman que llegaste más fresco.':'Aunque el resultado no fue el esperado, el cuerpo estaba a punto.'}</div>
       </div>
     </div>`:''}
 
     <div class="card" style="margin-bottom:14px">
       <div class="sec-title-sm">Siguiente paso</div>
-      <div style="font-size:13px;color:#555;margin-bottom:8px">💡 ${suggestedBlock}</div>
-      ${nextRace?`<div style="font-size:12px;color:#888">Próxima carrera: <strong>${esc(nextRace.name)}</strong></div>`:'<div style="font-size:12px;color:#2d7a2d">✅ Temporada completada — puedes ver el balance.</div>'}
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:8px">💡 ${suggestedBlock}</div>
+      ${nextRace?`<div style="font-size:12px;color:var(--ink3)">Próxima carrera: <strong>${esc(nextRace.name)}</strong></div>`:'<div style="font-size:12px;color:var(--pos)">✅ Temporada completada — puedes ver el balance.</div>'}
     </div>
 
     ${isAllDone
-      ?`<button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G.screen='coachSeasonEnd';render()">Ver balance de temporada →</button>`
-      :`<button class="main" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="G._lastRaceResult=null;G.screen='coachHome';render()">Continuar →</button>`
+      ?`<button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen='coachSeasonEnd';render()">Ver balance de temporada →</button>`
+      :`<button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G._lastRaceResult=null;G.screen='coachHome';render()">Continuar →</button>`
     }`;
 }
 
@@ -1519,32 +1519,32 @@ function renderCoachSeasonEnd(){
     </div>
 
     <div class="card" style="margin-bottom:12px;border-left:3px solid ${endingConfig.quoteBorder}">
-      <div style="font-size:12px;color:#aaa;margin-bottom:4px">${esc(a.name)} al final de temporada:</div>
-      <div style="font-size:14px;color:#333;font-style:italic">${endingConfig.athleteQuote}</div>
-      <div style="font-size:11px;color:#aaa;margin-top:6px">${es.emoji} Estado: <strong style="color:${es.color}">${es.label}</strong></div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">${esc(a.name)} al final de temporada:</div>
+      <div style="font-size:14px;color:var(--ink);font-style:italic">${endingConfig.athleteQuote}</div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px">${es.emoji} Estado: <strong style="color:${es.color}">${es.label}</strong></div>
     </div>
 
     <div class="card" style="margin-bottom:12px;border-left:3px solid ${endingConfig.quoteBorder}">
-      <div style="font-size:13px;color:#555;font-style:italic;margin-bottom:${thisSeasonLog.length?'10px':'0'}">"${endingConfig.narrativeFn()}"</div>
+      <div style="font-size:13px;color:var(--ink2);font-style:italic;margin-bottom:${thisSeasonLog.length?'10px':'0'}">"${endingConfig.narrativeFn()}"</div>
       ${thisSeasonLog.length?`
-        <div style="font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Tu huella esta temporada</div>
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Tu huella esta temporada</div>
         ${thisSeasonLog.map(d=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f5f4f0">
+          <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)">
             <span style="font-size:13px">${d.positive?'✅':'⚠️'}</span>
-            <span style="font-size:12px;color:#555">${esc(d.label)}</span>
+            <span style="font-size:12px;color:var(--ink2)">${esc(d.label)}</span>
           </div>`).join('')}`:''}
     </div>
 
     ${obj?`
-    <div class="card" style="margin-bottom:12px;border-color:${objMet?'#4a8a2a':'#f5b8b8'};border-width:1.5px">
+    <div class="card" style="margin-bottom:12px;border-color:${objMet?'#4a8a2a':'var(--line2)'};border-width:1.5px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:20px">${objMet?'✅':'❌'}</span>
         <div style="flex:1">
-          <div style="font-size:12px;color:#888;margin-bottom:2px">Objetivo de ${esc(a.name)}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:2px">Objetivo de ${esc(a.name)}</div>
           <div style="font-size:13px;font-weight:600">${obj.label}</div>
-          ${obj.fromHistory?`<div style="font-size:11px;color:#4a90d9;margin-top:2px">Basado en tu historial juntos</div>`:''}
+          ${obj.fromHistory?`<div style="font-size:11px;color:var(--cuerpo);margin-top:2px">Basado en tu historial juntos</div>`:''}
         </div>
-        <span style="font-size:13px;font-weight:700;color:${objTrustDelta>=0?'#2d7a2d':'#c0392b'}">${objTrustDelta>=0?'+':''}`+`${objTrustDelta} conf.</span>
+        <span style="font-size:13px;font-weight:700;color:${objTrustDelta>=0?'var(--pos)':'var(--neg)'}">${objTrustDelta>=0?'+':''}`+`${objTrustDelta} conf.</span>
       </div>
     </div>`:''}
 
@@ -1552,8 +1552,8 @@ function renderCoachSeasonEnd(){
       <div class="sec-title-sm">Resultados</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
         ${[['Carreras',results.filter(r=>!r.dnf).length],['Podios',podiums],['DNF',dnfs],['Mejor','#'+(bestPos<999?bestPos:'—')]].map(([l,v])=>`
-          <div style="background:#f5f4f0;border-radius:8px;padding:8px">
-            <div style="font-size:11px;color:#aaa">${l}</div>
+          <div style="background:var(--soft);border-radius:8px;padding:8px">
+            <div style="font-size:11px;color:var(--ink3)">${l}</div>
             <div style="font-size:18px;font-weight:700">${v}</div>
           </div>`).join('')}
       </div>
@@ -1565,7 +1565,7 @@ function renderCoachSeasonEnd(){
       <div class="fin-row"><span>Bonus podios (20%)</span><span class="plus">+€${totalCut}</span></div>
       ${sponsorIncome>0?`<div class="fin-row"><span>Comisión sponsors</span><span class="plus">+€${sponsorIncome}</span></div>`:''}
       <div class="fin-row tot"><span>Total temporada</span><span class="plus">+€${total}</span></div>
-      <div style="font-size:12px;color:#aaa;margin-top:6px">Reputación entrenador: ${G.coachReputation}/100</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:6px">Reputación entrenador: ${G.coachReputation}/100</div>
     </div>
 
     ${sponsorResults.length>0?`
@@ -1575,42 +1575,42 @@ function renderCoachSeasonEnd(){
         <div class="history-row">
           <div>
             <div style="font-size:13px;font-weight:500">${esc(sp.name)}</div>
-            <div style="font-size:12px;color:#888">${sp.objective}</div>
+            <div style="font-size:12px;color:var(--ink3)">${sp.objective}</div>
           </div>
-          <span style="font-size:12px;font-weight:700;color:${sp.met?'#2d7a2d':'#c0392b'}">${sp.met?'✓ Cumplido':'✗ No cumplido'}</span>
+          <span style="font-size:12px;font-weight:700;color:${sp.met?'var(--pos)':'var(--neg)'}">${sp.met?'✓ Cumplido':'✗ No cumplido'}</span>
         </div>`).join('')}
     </div>`:''}
 
-    <div class="card" style="margin-bottom:14px;border-color:${isEnthusiastic?'#2d7a2d':isBreakup?'#c0392b':'#e0dfd8'};border-width:${isEnthusiastic||isBreakup?'1.5px':'1px'}">
+    <div class="card" style="margin-bottom:14px;border-color:${isEnthusiastic?'#2d7a2d':isBreakup?'#c0392b':'var(--line)'};border-width:${isEnthusiastic||isBreakup?'1.5px':'1px'}">
       <div class="sec-title-sm">Decisión del atleta</div>
       ${isEnthusiastic?`
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
           <span style="font-size:22px">🤝</span>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#2d7a2d">${esc(a.name)} quiere renovar con más ambición</div>
-            <div style="font-size:12px;color:#555;margin-top:2px">Confía plenamente. Propone mejorar condiciones.</div>
+            <div style="font-size:14px;font-weight:700;color:var(--pos)">${esc(a.name)} quiere renovar con más ambición</div>
+            <div style="font-size:12px;color:var(--ink2);margin-top:2px">Confía plenamente. Propone mejorar condiciones.</div>
           </div>
         </div>
-        <button class="main" style="margin-top:8px;background:#2d7a2d;color:#fff;border-color:#2d7a2d" onclick="doCoachRenewEnthusiastic()">Renovar — condiciones mejoradas →</button>
+        <button class="main" style="margin-top:8px;background:#2d7a2d;color:var(--card);border-color:#2d7a2d" onclick="doCoachRenewEnthusiastic()">Renovar — condiciones mejoradas →</button>
         <button class="main" style="margin-top:6px;opacity:0.5" onclick="doCoachNewAthlete()">Buscar nuevo atleta en su lugar</button>`
       :isBreakup?`
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
           <span style="font-size:22px">🚪</span>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#c0392b">${esc(a.name)} no renueva</div>
-            <div style="font-size:12px;color:#555;margin-top:2px">${negDecisions>=2?'Demasiadas decisiones que le perjudicaron.':G.coachEmotionalState==='quemado'?'Necesita un cambio de aire tras el desgaste.':'La confianza no llegó a construirse.'}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--neg)">${esc(a.name)} no renueva</div>
+            <div style="font-size:12px;color:var(--ink2);margin-top:2px">${negDecisions>=2?'Demasiadas decisiones que le perjudicaron.':G.coachEmotionalState==='quemado'?'Necesita un cambio de aire tras el desgaste.':'La confianza no llegó a construirse.'}</div>
           </div>
         </div>
-        <button class="main" style="margin-top:8px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doCoachNewAthlete()">Buscar nuevo atleta →</button>`
+        <button class="main" style="margin-top:8px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doCoachNewAthlete()">Buscar nuevo atleta →</button>`
       :`
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
           <span style="font-size:22px">📋</span>
           <div>
             <div style="font-size:14px;font-weight:600">${esc(a.name)} ${trust>=60?'quiere renovar':'está dispuesto a renovar'}</div>
-            <div style="font-size:12px;color:#888;margin-top:2px">Confianza: ${trust}/100 · ${trust>=60?'La relación funciona.':'No ha sido fácil, pero sigue.'}</div>
+            <div style="font-size:12px;color:var(--ink3);margin-top:2px">Confianza: ${trust}/100 · ${trust>=60?'La relación funciona.':'No ha sido fácil, pero sigue.'}</div>
           </div>
         </div>
-        <button class="main" style="margin-top:8px;background:#1a1a1a;color:#fff;border-color:#1a1a1a" onclick="doCoachNextSeason()">Renovar — Temporada ${G.coachSeason+1} →</button>
+        <button class="main" style="margin-top:8px;background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="doCoachNextSeason()">Renovar — Temporada ${G.coachSeason+1} →</button>
         <button class="main" style="margin-top:6px;opacity:0.5" onclick="doCoachNewAthlete()">Buscar nuevo atleta en su lugar</button>`}
     </div>
 
@@ -1741,8 +1741,8 @@ function renderCoachHub(){
         <div style="display:flex;align-items:center;gap:10px">
           <div style="font-size:24px;opacity:0.4">🔒</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:#aaa">Slot ${idx+1} bloqueado</div>
-            <div style="font-size:12px;color:#bbb">Necesitas reputación ≥${reqRep} · Actual: ${rep}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink3)">Slot ${idx+1} bloqueado</div>
+            <div style="font-size:12px;color:var(--ink3)">Necesitas reputación ≥${reqRep} · Actual: ${rep}</div>
           </div>
         </div>
       </div>`;
@@ -1752,8 +1752,8 @@ function renderCoachHub(){
         <div style="display:flex;align-items:center;gap:10px">
           <div style="font-size:24px">➕</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:#4a90d9">Añadir atleta al slot ${idx+1}</div>
-            <div style="font-size:12px;color:#aaa">Presenta tres candidatos y elige uno</div>
+            <div style="font-size:13px;font-weight:600;color:var(--cuerpo)">Añadir atleta al slot ${idx+1}</div>
+            <div style="font-size:12px;color:var(--ink3)">Presenta tres candidatos y elige uno</div>
           </div>
         </div>
       </div>`;
@@ -1781,19 +1781,19 @@ function renderCoachHub(){
 
     return`<div class="coach-slot-card ${isActive?'active-slot':''}" onclick="switchCoachSlot(${idx})">
       <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="width:44px;height:44px;border-radius:50%;background:#f0ede8;border:2px solid #e0dfd8;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--soft);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
             <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div>
             ${notifs>0?`<span class="notif-dot ${pendingEvent||unreadNotifs.some(n=>n.type==='urgent')?'urgent':''}"></span>`:''}
             ${isActive?`<span style="font-size:10px;background:#e8eef8;color:#2d4fa0;padding:1px 5px;border-radius:3px;font-weight:700">ACTIVO</span>`:''}
           </div>
-          <div style="font-size:12px;color:#888;margin-bottom:6px">T${season} · ${SPEC_LABEL[a.spec]||a.spec} · Confianza <span style="color:${trustColor};font-weight:600">${trust}/100</span></div>
-          <div style="font-size:12px;color:#555">${statusText}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">T${season} · ${SPEC_LABEL[a.spec]||a.spec} · Confianza <span style="color:${trustColor};font-weight:600">${trust}/100</span></div>
+          <div style="font-size:12px;color:var(--ink2)">${statusText}</div>
           ${unreadNotifs.length>0?`
-          <div style="margin-top:8px;background:#f0f6ff;border-radius:6px;padding:7px 10px;border:1px solid #b8d4f0">
-            ${unreadNotifs.slice(0,2).map(n=>`<div style="font-size:12px;color:#4a90d9;margin-bottom:2px">${n.text}</div>`).join('')}
-            ${unreadNotifs.length>2?`<div style="font-size:11px;color:#aaa">+${unreadNotifs.length-2} más</div>`:''}
+          <div style="margin-top:8px;background:var(--soft);border-radius:6px;padding:7px 10px;border:1px solid var(--line2)">
+            ${unreadNotifs.slice(0,2).map(n=>`<div style="font-size:12px;color:var(--cuerpo);margin-bottom:2px">${n.text}</div>`).join('')}
+            ${unreadNotifs.length>2?`<div style="font-size:11px;color:var(--ink3)">+${unreadNotifs.length-2} más</div>`:''}
           </div>`:''}
         </div>
       </div>
@@ -1816,23 +1816,23 @@ function renderCoachHub(){
         ${[['Reputación',`${rep}/100`],['Atletas',totalAthletes],['Victorias',totalWins]].map(([l,v])=>`
           <div>
             <div style="font-size:18px;font-weight:700">${v}</div>
-            <div style="font-size:11px;color:#aaa">${l}</div>
+            <div style="font-size:11px;color:var(--ink3)">${l}</div>
           </div>`).join('')}
       </div>
-      <div style="height:5px;background:#e5e4de;border-radius:3px;margin-top:10px;overflow:hidden">
+      <div style="height:5px;background:var(--trk);border-radius:3px;margin-top:10px;overflow:hidden">
         <div style="width:${rep}%;height:100%;background:${repTier.color};border-radius:3px;transition:width .4s"></div>
       </div>
-      ${rep<40?`<div style="font-size:11px;color:#aaa;margin-top:4px;text-align:center">Reputación ≥40 para un 2º atleta · ≥70 para un 3º</div>`:''}
+      ${rep<40?`<div style="font-size:11px;color:var(--ink3);margin-top:4px;text-align:center">Reputación ≥40 para un 2º atleta · ≥70 para un 3º</div>`:''}
     </div>
 
     ${(G._slot1Celebrated&&rep>=40&&rep<70)||(G._slot2Celebrated&&rep>=70)?`
     <div style="background:linear-gradient(135deg,#fffbf0,#fff8e8);border:1.5px solid #c07a10;border-radius:12px;padding:14px 16px;margin-bottom:14px;text-align:center">
       <div style="font-size:28px;margin-bottom:4px">${rep>=70?'🌟':'🎉'}</div>
-      <div style="font-size:14px;font-weight:700;color:#c07a10">${rep>=70?'¡Slot 3 desbloqueado!':'¡Slot 2 desbloqueado!'}</div>
-      <div style="font-size:12px;color:#888;margin-top:3px">${rep>=70?'Puedes llevar hasta 3 atletas simultáneamente.':'Puedes añadir un segundo atleta a tu agencia.'}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--avi)">${rep>=70?'¡Slot 3 desbloqueado!':'¡Slot 2 desbloqueado!'}</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:3px">${rep>=70?'Puedes llevar hasta 3 atletas simultáneamente.':'Puedes añadir un segundo atleta a tu agencia.'}</div>
     </div>`:''}
 
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Mis atletas</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Mis atletas</div>
     ${slotCards}
 
     ${hist.length>0?`
@@ -1842,9 +1842,9 @@ function renderCoachHub(){
         <div class="history-row">
           <div>
             <div style="font-size:13px;font-weight:500">${esc(h.name)}</div>
-            <div style="font-size:12px;color:#888">T${h.season} · ${h.wins||0} victorias · Confianza final ${h.trust}/100</div>
+            <div style="font-size:12px;color:var(--ink3)">T${h.season} · ${h.wins||0} victorias · Confianza final ${h.trust}/100</div>
           </div>
-          <span style="font-size:11px;background:${h.completed?'#f0faf0':'#fef0f0'};color:${h.completed?'#2d7a2d':'#c0392b'};padding:2px 6px;border-radius:4px;font-weight:600">${h.completed?'Renovó':'No renovó'}</span>
+          <span style="font-size:11px;background:${h.completed?'#f0faf0':'var(--soft)'};color:${h.completed?'var(--pos)':'var(--neg)'};padding:2px 6px;border-radius:4px;font-weight:600">${h.completed?'Renovó':'No renovó'}</span>
         </div>`).join('')}
     </div>`:''}
 
@@ -1964,12 +1964,12 @@ function renderCoachAthleteTab(){
       <div class="runner-avatar">${a.flag}</div>
       <div>
         <div style="font-size:16px;font-weight:700">${esc(a.name)}</div>
-        <div style="font-size:12px;color:#888">${a.age} años · ${SPEC_LABEL[a.spec]||a.spec}</div>
+        <div style="font-size:12px;color:var(--ink3)">${a.age} años · ${SPEC_LABEL[a.spec]||a.spec}</div>
         <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
           <span style="background:${pl.color}22;color:${pl.color};font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px">${pl.emoji} ${pl.label}</span>
           <span style="background:${es.color}22;color:${es.color};font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px" title="${es.desc}">${es.emoji} ${es.label}</span>
         </div>
-        <div style="font-size:11px;color:#aaa;margin-top:4px;font-style:italic">${es.desc}</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:4px;font-style:italic">${es.desc}</div>
       </div>
     </div>
     ${G.carreraVida&&G.lifecyclePhase==='overlap'&&G.lifeAthlete&&G.lifeAthlete.id===a.id?`<div class="note" style="margin-bottom:12px;font-size:13px">🕒 Como corredor le dedicas <strong>${G.lifeAthleteHours||0}h a la semana</strong>${(G.lifeAthleteHours||0)>0?`: al cerrar tu temporada ganará +1 en ${lifeAthleteSeasonGain(G.lifeAthleteHours)} stat${lifeAthleteSeasonGain(G.lifeAthleteHours)>1?'s':''}`:'. Se asignan en tu bloque de entrenamiento'}.</div>`:''}
@@ -1978,7 +1978,7 @@ function renderCoachAthleteTab(){
         <div class="sec-title-sm" style="margin-bottom:0">Confianza</div>
         <span style="font-size:13px;font-weight:700;color:${trustColor}">${G.coachTrust}/100</span>
       </div>
-      <div style="height:8px;background:#e5e4de;border-radius:4px;overflow:hidden">
+      <div style="height:8px;background:var(--trk);border-radius:4px;overflow:hidden">
         <div style="width:${G.coachTrust}%;height:100%;background:${trustColor};border-radius:4px;transition:width .4s"></div>
       </div>
     </div>
@@ -2001,22 +2001,22 @@ function renderCoachAthleteTab(){
         if(G.coachEmotionalState==='quemado')alerts.push({icon:'🩶',text:'Atleta quemado — prioriza recuperación emocional',color:'#888'});
         return`
           <div style="display:flex;gap:12px;margin-bottom:10px">
-            <div style="flex:1;background:#f2faf0;border-radius:8px;padding:8px 10px;text-align:center">
-              <div style="font-size:10px;color:#888;margin-bottom:2px">PUNTO FUERTE</div>
-              <div style="font-size:13px;font-weight:700;color:#2d7a2d">${top[0].charAt(0).toUpperCase()+top[0].slice(1)}</div>
-              <div style="font-size:12px;color:#2d7a2d">${top[1]}</div>
+            <div style="flex:1;background:var(--soft);border-radius:8px;padding:8px 10px;text-align:center">
+              <div style="font-size:10px;color:var(--ink3);margin-bottom:2px">PUNTO FUERTE</div>
+              <div style="font-size:13px;font-weight:700;color:var(--pos)">${top[0].charAt(0).toUpperCase()+top[0].slice(1)}</div>
+              <div style="font-size:12px;color:var(--pos)">${top[1]}</div>
             </div>
             <div style="flex:1;background:#fff8f0;border-radius:8px;padding:8px 10px;text-align:center">
-              <div style="font-size:10px;color:#888;margin-bottom:2px">PUNTO DÉBIL</div>
-              <div style="font-size:13px;font-weight:700;color:#c07a10">${weak[0].charAt(0).toUpperCase()+weak[0].slice(1)}</div>
-              <div style="font-size:12px;color:#c07a10">${weak[1]}</div>
+              <div style="font-size:10px;color:var(--ink3);margin-bottom:2px">PUNTO DÉBIL</div>
+              <div style="font-size:13px;font-weight:700;color:var(--avi)">${weak[0].charAt(0).toUpperCase()+weak[0].slice(1)}</div>
+              <div style="font-size:12px;color:var(--avi)">${weak[1]}</div>
             </div>
-            <div style="flex:1;background:#f5f4f0;border-radius:8px;padding:8px 10px;text-align:center">
-              <div style="font-size:10px;color:#888;margin-bottom:2px">TENDENCIA</div>
+            <div style="flex:1;background:var(--soft);border-radius:8px;padding:8px 10px;text-align:center">
+              <div style="font-size:10px;color:var(--ink3);margin-bottom:2px">TENDENCIA</div>
               <div style="font-size:13px;font-weight:700;color:${trendColor}">${trendLabel}</div>
             </div>
           </div>
-          ${alerts.map(al=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:${al.color};padding:4px 0;border-bottom:1px solid #f5f4f0">${al.icon} ${al.text}</div>`).join('')}`;
+          ${alerts.map(al=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:${al.color};padding:4px 0;border-bottom:1px solid var(--line)">${al.icon} ${al.text}</div>`).join('')}`;
       })()}
     </div>
     <div class="card" style="margin-bottom:12px">
@@ -2031,22 +2031,22 @@ function renderCoachAthleteTab(){
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div class="sec-title-sm" style="margin-bottom:0">Carga corporal</div>
-        <span style="font-size:12px;font-weight:600;color:${load>70?'#c0392b':load>50?'#c07a10':'#4a8a2a'}">${Math.round(load)}%</span>
+        <span style="font-size:12px;font-weight:600;color:${load>70?'var(--neg)':load>50?'var(--avi)':'var(--pos)'}">${Math.round(load)}%</span>
       </div>
-      <div style="height:8px;background:#e5e4de;border-radius:4px;overflow:hidden">
+      <div style="height:8px;background:var(--trk);border-radius:4px;overflow:hidden">
         <div style="width:${load}%;height:100%;background:${load>70?'#c0392b':load>50?'#c07a10':'#4a8a2a'};border-radius:4px;transition:width .4s"></div>
       </div>
-      <div style="font-size:12px;color:#aaa;margin-top:6px">${load>70?'Alta — riesgo de lesión':load>50?'Moderada — ojo con el volumen':'En buena forma'}</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:6px">${load>70?'Alta — riesgo de lesión':load>50?'Moderada — ojo con el volumen':'En buena forma'}</div>
     </div>
     ${decisionLog.length>0?`
     <div class="card">
       <div class="sec-title-sm">Lo que recuerda de ti</div>
       ${decisionLog.map(d=>`
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f4f0">
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">
           <span style="font-size:13px">${d.positive?'✅':'⚠️'}</span>
           <div>
-            <div style="font-size:12px;color:#555">${esc(d.label)}</div>
-            <div style="font-size:11px;color:#bbb">T${d.season}</div>
+            <div style="font-size:12px;color:var(--ink2)">${esc(d.label)}</div>
+            <div style="font-size:11px;color:var(--ink3)">T${d.season}</div>
           </div>
         </div>`).join('')}
     </div>`:''}`;
@@ -2078,23 +2078,23 @@ function renderCoachRepTab(){
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="flex:1">
-          <div style="font-size:24px;font-weight:700;color:${repTier.color}">${rep}<span style="font-size:14px;color:#aaa">/100</span></div>
-          <div style="font-size:12px;color:#888;margin-top:1px">Reputación · <strong style="color:${repTier.color}">${repTier.label}</strong></div>
+          <div style="font-size:24px;font-weight:700;color:${repTier.color}">${rep}<span style="font-size:14px;color:var(--ink3)">/100</span></div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:1px">Reputación · <strong style="color:${repTier.color}">${repTier.label}</strong></div>
         </div>
         <div style="font-size:28px">📋</div>
       </div>
-      <div style="height:5px;background:#e5e4de;border-radius:3px;margin:8px 0;overflow:hidden">
+      <div style="height:5px;background:var(--trk);border-radius:3px;margin:8px 0;overflow:hidden">
         <div style="width:${rep}%;height:100%;background:${repTier.color};border-radius:3px;transition:width .5s"></div>
       </div>
-      <div style="font-size:12px;color:#aaa">${repDesc}</div>
+      <div style="font-size:12px;color:var(--ink3)">${repDesc}</div>
     </div>
 
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Palmares acumulado</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">
         ${[['Atletas',totalAthletes],['Temporadas',totalSeasons],['Victorias',totalWins],['Podios',totalPodiums]].map(([l,v])=>`
-          <div style="background:#f5f4f0;border-radius:8px;padding:8px 4px">
-            <div style="font-size:11px;color:#aaa">${l}</div>
+          <div style="background:var(--soft);border-radius:8px;padding:8px 4px">
+            <div style="font-size:11px;color:var(--ink3)">${l}</div>
             <div style="font-size:18px;font-weight:700">${v}</div>
           </div>`).join('')}
       </div>
@@ -2105,7 +2105,7 @@ function renderCoachRepTab(){
       <div class="sec-title-sm">Temporada actual — ${esc(a.name)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:13px">T${G.coachSeason} · ${SPEC_LABEL[a.spec]||a.spec}</span>
-        <span style="font-size:13px;font-weight:700;color:${G.coachTrust>=60?'#2d7a2d':G.coachTrust>=30?'#c07a10':'#c0392b'}">Confianza ${G.coachTrust}/100</span>
+        <span style="font-size:13px;font-weight:700;color:${G.coachTrust>=60?'var(--pos)':G.coachTrust>=30?'var(--avi)':'var(--neg)'}">Confianza ${G.coachTrust}/100</span>
       </div>
       ${Object.entries(a.currentStats).map(([k,v])=>{
         const base=a.baseStats?.[k]||50;
@@ -2113,7 +2113,7 @@ function renderCoachRepTab(){
         return`<div class="bar-row" style="margin-bottom:3px">
           <div class="bar-label" style="font-size:11px">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${v}%;background:#4a90d9"></div></div>
-          <div class="bar-pct" style="font-size:11px;color:${diff>0?'#2d7a2d':diff<0?'#c0392b':'#aaa'}">${diff>0?'+':''}${diff||0}</div>
+          <div class="bar-pct" style="font-size:11px;color:${diff>0?'var(--pos)':diff<0?'var(--neg)':'var(--ink3)'}">${diff>0?'+':''}${diff||0}</div>
         </div>`;
       }).join('')}
     </div>`:''}
@@ -2124,15 +2124,15 @@ function renderCoachRepTab(){
       ${allSeasons.map(s=>{
         const trustC=s.trust>=60?'#2d7a2d':s.trust>=30?'#c07a10':'#c0392b';
         const bestStr=s.bestPos<999?`Mejor #${s.bestPos}`:'—';
-        return`<div style="padding:10px 0;border-bottom:1px solid #f0ede8">
+        return`<div style="padding:10px 0;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
             <div>
               <span style="font-size:13px;font-weight:600">${esc(s.name)}</span>
-              ${s.current?`<span style="font-size:11px;background:#f0f6ff;color:#4a90d9;padding:1px 5px;border-radius:3px;margin-left:5px">Actual</span>`:''}
+              ${s.current?`<span style="font-size:11px;background:var(--soft);color:var(--cuerpo);padding:1px 5px;border-radius:3px;margin-left:5px">Actual</span>`:''}
             </div>
-            <span style="font-size:11px;font-weight:600;color:${s.completed?'#2d7a2d':s.current?'#4a90d9':'#c0392b'}">${s.current?'En curso':s.completed?'Renovó':'Se fue'}</span>
+            <span style="font-size:11px;font-weight:600;color:${s.completed?'var(--pos)':s.current?'var(--cuerpo)':'var(--neg)'}">${s.current?'En curso':s.completed?'Renovó':'Se fue'}</span>
           </div>
-          <div style="display:flex;gap:12px;font-size:12px;color:#888;flex-wrap:wrap">
+          <div style="display:flex;gap:12px;font-size:12px;color:var(--ink3);flex-wrap:wrap">
             <span>T${s.season}</span>
             <span>🏆 ${s.wins} vic.</span>
             <span>🎯 ${s.podiums} podios</span>
@@ -2206,14 +2206,14 @@ function renderCoachEvent(){
       <p class="sub">Entre carreras · ${esc(name)}</p>
     </div>
     <div class="card" style="margin-bottom:16px">
-      <div style="font-size:14px;color:#333;line-height:1.7;font-style:italic">"${desc}"</div>
+      <div style="font-size:14px;color:var(--ink);line-height:1.7;font-style:italic">"${desc}"</div>
     </div>
     ${ev.choices.map((c,ci)=>{
       const meta=[];
-      if(c.trust)meta.push(`<span style="color:${c.trust>0?'#2d7a2d':'#c0392b'}">${c.trust>0?'+':''}${c.trust} confianza</span>`);
-      if(c.bodyLoad)meta.push(`<span style="color:${c.bodyLoad<0?'#2d7a2d':'#c0392b'}">${c.bodyLoad>0?'+':''}${c.bodyLoad} carga</span>`);
-      if(c.money)meta.push(`<span style="color:${c.money>0?'#2d7a2d':'#c0392b'}">${c.money>0?'+':''}€${Math.abs(c.money)}</span>`);
-      if(c.reputation)meta.push(`<span style="color:#c07a10">+${c.reputation} reputación</span>`);
+      if(c.trust)meta.push(`<span style="color:${c.trust>0?'var(--pos)':'var(--neg)'}">${c.trust>0?'+':''}${c.trust} confianza</span>`);
+      if(c.bodyLoad)meta.push(`<span style="color:${c.bodyLoad<0?'var(--pos)':'var(--neg)'}">${c.bodyLoad>0?'+':''}${c.bodyLoad} carga</span>`);
+      if(c.money)meta.push(`<span style="color:${c.money>0?'var(--pos)':'var(--neg)'}">${c.money>0?'+':''}€${Math.abs(c.money)}</span>`);
+      if(c.reputation)meta.push(`<span style="color:var(--avi)">+${c.reputation} reputación</span>`);
       return`<div class="card" style="margin-bottom:8px;cursor:pointer;transition:background .15s" onclick="doCoachEventChoice(${ci})" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background=''">
         <div style="font-size:14px;font-weight:500;margin-bottom:${meta.length?'5px':'0'}">${c.text}</div>
         ${meta.length?`<div style="font-size:12px;display:flex;gap:10px;flex-wrap:wrap">${meta.join('')}</div>`:''}
@@ -2347,37 +2347,37 @@ function renderCoachSponsors(){
     <div class="card" style="margin-bottom:12px">
       <div class="sec-title-sm">Activos esta temporada</div>
       ${active.map(sp=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0ede8">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
           <div>
-            <div style="font-size:13px;font-weight:600">${esc(sp.name)} <span style="font-size:11px;color:#888">${CAT_LABEL[sp.cat]||sp.cat}</span></div>
-            <div style="font-size:12px;color:#aaa">${sp.objective}</div>
+            <div style="font-size:13px;font-weight:600">${esc(sp.name)} <span style="font-size:11px;color:var(--ink3)">${CAT_LABEL[sp.cat]||sp.cat}</span></div>
+            <div style="font-size:12px;color:var(--ink3)">${sp.objective}</div>
           </div>
           <div style="text-align:right;flex-shrink:0;margin-left:8px">
             <div style="font-size:13px;font-weight:700">€${sp.salary}/año</div>
-            <div style="font-size:11px;color:#4a90d9">+€${Math.round(sp.salary*(sp.coachCut||0.15))} para ti</div>
+            <div style="font-size:11px;color:var(--cuerpo)">+€${Math.round(sp.salary*(sp.coachCut||0.15))} para ti</div>
           </div>
         </div>`).join('')}
     </div>`:''}
 
     ${pool.filter(sp=>!active.find(ac=>ac.id===sp.id)).length>0?`
-    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ofertas disponibles</div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ofertas disponibles</div>
     ${pool.filter(sp=>!active.find(ac=>ac.id===sp.id)).map(sp=>`
       <div class="card" style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
           <div>
             <div style="font-size:14px;font-weight:600">${esc(sp.name)}</div>
-            <div style="font-size:12px;color:#888">${CAT_LABEL[sp.cat]||sp.cat}</div>
+            <div style="font-size:12px;color:var(--ink3)">${CAT_LABEL[sp.cat]||sp.cat}</div>
           </div>
           <div style="text-align:right;flex-shrink:0;margin-left:8px">
             <div style="font-size:14px;font-weight:700">€${sp.salary}/año</div>
-            <div style="font-size:11px;color:#4a90d9">+€${Math.round(sp.salary*(sp.coachCut||0.15))} comisión</div>
+            <div style="font-size:11px;color:var(--cuerpo)">+€${Math.round(sp.salary*(sp.coachCut||0.15))} comisión</div>
           </div>
         </div>
-        <div style="font-size:12px;color:#555;margin-bottom:4px">📋 ${sp.objective}</div>
-        <div style="font-size:12px;color:#888;margin-bottom:10px">🎁 ${sp.bonus}</div>
+        <div style="font-size:12px;color:var(--ink2);margin-bottom:4px">📋 ${sp.objective}</div>
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">🎁 ${sp.bonus}</div>
         ${active.length<2
           ?`<button class="main" style="margin-top:0" onclick="doCoachAcceptSponsor('${sp.id}')">Aceptar oferta →</button>`
-          :`<div style="font-size:12px;color:#aaa;text-align:center;padding:6px">Máx. 2 sponsors activos</div>`}
+          :`<div style="font-size:12px;color:var(--ink3);text-align:center;padding:6px">Máx. 2 sponsors activos</div>`}
       </div>`).join('')}
     `:`<div class="hint">No hay ofertas disponibles ahora mismo.</div>`}
 

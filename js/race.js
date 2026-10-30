@@ -191,7 +191,7 @@ function racePreviewCard(race, mode, raceProgress){
   const cid=race.id+(mode||'');
   return `<div class="card">
     <div style="font-size:14px;font-weight:600;margin-bottom:2px">${race.name}</div>
-    <div style="font-size:12px;color:#888;margin-bottom:10px">${race.type} · ${race.km}km · ${raceDesnivel(race)}</div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">${race.type} · ${race.km}km · ${raceDesnivel(race)}</div>
     <div id="prof-wrap-${cid}">${profSvg(race,-1,mode||'preview',raceProgress||0,cid)}</div>
     <div id="prof-info-${cid}" data-sel="-1" style="min-height:20px">${profSegInfo(race,null,mode||'preview',raceProgress||0)}</div>
     ${profLeyenda(true)}
@@ -450,13 +450,13 @@ function renderPreRace(){
 
   // ── PB de esta carrera ───────────────────────────────────────────
   const pb=G.personalBests&&G.personalBests[race.id];
-  const pbHtml=pb?`<div style="font-size:12px;background:#fef9ec;border-radius:6px;padding:6px 10px;margin-bottom:10px;color:#c07a10">🏆 Tu récord aquí: <strong>${fmt(pb.time)}</strong> · Año ${pb.year}${pb.pos?', '+pb.pos+'º':''}</div>`:'';
+  const pbHtml=pb?`<div style="font-size:12px;background:var(--soft);border-radius:6px;padding:6px 10px;margin-bottom:10px;color:var(--avi)">🏆 Tu récord aquí: <strong>${fmt(pb.time)}</strong> · Año ${pb.year}${pb.pos?', '+pb.pos+'º':''}</div>`:'';
   const nutr=PRE_RACE_NUTRITION.find(n=>n.id===(G.preRaceNutrition||'pasta'))||PRE_RACE_NUTRITION[0];
 
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
       <h2>${race.name}</h2>
-      <span style="font-size:12px;color:#999;padding-top:5px">Carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</span>
+      <span style="font-size:12px;color:var(--ink3);padding-top:5px">Carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</span>
     </div>
     <p class="sub">${race.type} · ${race.km}km · ${raceDesnivel(race)}</p>
     <div class="stat-grid">
@@ -464,10 +464,10 @@ function renderPreRace(){
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
       <span class="terrain-badge" style="background:${G.terrainCondition.color}22;color:${G.terrainCondition.color}">${G.terrainCondition.icon} ${G.terrainCondition.label}</span>
-      ${race.altitude?`<span class="terrain-badge" style="background:#4a90d922;color:#4a90d9">⛰ Alta altitud</span>`:''}
-      ${rep?`<span class="terrain-badge" style="background:#c07a1022;color:#c07a10">🏆 ${rep.label}</span>`:''}
+      ${race.altitude?`<span class="terrain-badge" style="background:#4a90d922;color:var(--cuerpo)">⛰ Alta altitud</span>`:''}
+      ${rep?`<span class="terrain-badge" style="background:#c07a1022;color:var(--avi)">🏆 ${rep.label}</span>`:''}
       <span class="terrain-badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">${modeLabelFull(G.gameMode)}</span>
-      ${G.startStrategy&&G.startStrategy!=='equilibrado'?`<span class="terrain-badge" style="background:${G.startStrategy==='conservador'?'#4a8a2a22':'#c0392b22'};color:${G.startStrategy==='conservador'?'#4a8a2a':'#c0392b'}">${G.startStrategy==='conservador'?'🐢 Conservador':'🔥 A tope'}</span>`:''}
+      ${G.startStrategy&&G.startStrategy!=='equilibrado'?`<span class="terrain-badge" style="background:${G.startStrategy==='conservador'?'#4a8a2a22':'#c0392b22'};color:${G.startStrategy==='conservador'?'var(--pos)':'var(--neg)'}">${G.startStrategy==='conservador'?'🐢 Conservador':'🔥 A tope'}</span>`:''}
     </div>
     ${pbHtml}
     ${G.dayCondition?`<div class="note">${G.dayCondition.icon} <strong>Condición del día</strong> — ${G.dayCondition.label}</div>`:''}
@@ -492,8 +492,8 @@ function renderPreRace(){
       ${G.rivals.slice(0,8).map(rv=>`<div style="font-size:11px;background:var(--color-background-secondary);border-radius:6px;padding:4px 10px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px">
         <span title="${rv.country||''}" style="cursor:default">${rv.flag||''}</span>
         <span style="font-weight:600">${rv.name}</span>
-        <span style="color:#aaa">·</span>
-        <span style="font-size:10px;color:#888">#${rv.ranking}${rv.recentWins?` · ${rv.recentWins}W`:''}</span>
+        <span style="color:var(--ink3)">·</span>
+        <span style="font-size:10px;color:var(--ink3)">#${rv.ranking}${rv.recentWins?` · ${rv.recentWins}W`:''}</span>
       </div>`).join('')}
       ${G.rivals.length>8?`<span style="font-size:12px;color:var(--color-text-tertiary);padding:3px 8px">+${G.rivals.length-8} más...</span>`:''}
     </div>
@@ -569,7 +569,7 @@ function liveClassPanel(){
       const gap=r.me?'—':r.time<myTime?'-'+fmt(myTime-r.time):'+'+fmt(r.time-myTime);
       const flagHtml=r.flag?`<span title="${r.country||''}" style="cursor:default;font-size:13px">${r.flag}</span> `:'';
       return `<div class="live-row ${r.me?'me':''}">
-        <span class="live-pos" style="color:${absPos===0?'#c07a10':'#bbb'}">${absPos+1}º</span>
+        <span class="live-pos" style="color:${absPos===0?'var(--avi)':'var(--ink3)'}">${absPos+1}º</span>
         <span class="live-name">${flagHtml}${r.name}${r.me?' ◀':''}</span>
         <span class="live-gap">${gap}</span>
       </div>`;}).join('')}
@@ -592,9 +592,9 @@ function renderStartStrategy(){
           <div style="display:flex;align-items:flex-start;gap:12px">
             <div style="font-size:26px;flex-shrink:0">${s.icon}</div>
             <div style="flex:1">
-              <div style="font-size:15px;font-weight:700;color:${sel===s.id?s.col:'#1a1a1a'}">${s.label}</div>
-              <div style="font-size:13px;color:#555;margin:2px 0">${s.desc}</div>
-              <div style="font-size:12px;color:#aaa">${s.detail}</div>
+              <div style="font-size:15px;font-weight:700;color:${sel===s.id?s.col:'var(--ink)'}">${s.label}</div>
+              <div style="font-size:13px;color:var(--ink2);margin:2px 0">${s.desc}</div>
+              <div style="font-size:12px;color:var(--ink3)">${s.detail}</div>
             </div>
             ${sel===s.id?`<span style="color:${s.col};font-size:18px;flex-shrink:0">✓</span>`:''}
           </div>
@@ -614,7 +614,7 @@ function renderSegment(){
   el.innerHTML=`
     ${topBar()}${progBar()}${raceStats()}
     ${liveClassPanel()}
-    ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span style="color:${G.rivalRadio.delta>0?'#4a8a2a':'#c0392b'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
+    ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span style="color:${G.rivalRadio.delta>0?'var(--pos)':'var(--neg)'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
     ${race?`<div style="margin-bottom:10px">
       <div id="prof-wrap-race">${profSvg(race,G.seg,'race',G.seg,'race')}</div>
       <div id="prof-info-race" data-sel="${G.seg}">${profSegInfo(race,G.seg,'race',G.seg)}</div>
@@ -678,7 +678,7 @@ function renderSegment(){
           <button class="abandon-btn" style="border-color:${col};color:${col};background:${bg};margin-top:0" onclick="doAbandon()">Abandonar carrera</button>
         </div>`;
       } else if(minStat<30){
-        return `<button class="abandon-btn" style="border-color:#ccc;color:#999;background:#fafafa;margin-top:8px;font-size:13px" onclick="doAbandon()">Abandonar carrera</button>`;
+        return `<button class="abandon-btn" style="border-color:var(--line2);color:var(--ink3);background:var(--soft);margin-top:8px;font-size:13px" onclick="doAbandon()">Abandonar carrera</button>`;
       }
       return '';
     })()}
@@ -688,10 +688,10 @@ function renderSegment(){
       const nb=G.sponsors.nutricion?1.2:1.0;
       const gelEnergy=Math.round(18*nb);
       const energyLow=G.runner.energy<50;
-      return `<div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:9px 14px;background:#f2faf0;border:1px solid #b8ddb8;border-radius:8px">
+      return `<div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--soft);border:1px solid var(--line2);border-radius:8px">
         <span style="font-size:18px">🧃</span>
-        <div style="flex:1;font-size:13px;color:#2d5a2d"><strong>${gelesLeft} gel${gelesLeft>1?'es':''} disponible${gelesLeft>1?'s':''}</strong> · +${gelEnergy} energía${energyLow?' — ¡buena idea ahora!':''}</div>
-        <button class="secondary" style="font-size:13px;padding:5px 12px;background:#4a8a2a;color:#fff;border-color:#4a8a2a" onclick="doUseGel()">Usar gel</button>
+        <div style="flex:1;font-size:13px;color:var(--pos-i)"><strong>${gelesLeft} gel${gelesLeft>1?'es':''} disponible${gelesLeft>1?'s':''}</strong> · +${gelEnergy} energía${energyLow?' — ¡buena idea ahora!':''}</div>
+        <button class="secondary" style="font-size:13px;padding:5px 12px;background:#4a8a2a;color:var(--card);border-color:#4a8a2a" onclick="doUseGel()">Usar gel</button>
       </div>`;
     })()}
     `;
@@ -723,7 +723,7 @@ function renderAid(){
   const remaining=2-sel.length;
   const selLabel=sel.length===0?'sin selección':sel.map(id=>AID_OPTIONS.find(a=>a.id===id)?.label).join(' + ');
   const nutBadge=G.sponsors.nutricion
-    ? ' · <span style="color:#4a8a2a;cursor:pointer;text-decoration:underline dotted" onclick="toggleNutTooltip()">sponsor nutrición +20% ⓘ</span>'
+    ? ' · <span style="color:var(--pos);cursor:pointer;text-decoration:underline dotted" onclick="toggleNutTooltip()">sponsor nutrición +20% ⓘ</span>'
     : '';
   const nutGel=Math.round(20*1.2);
   const nutSolid=Math.round(35*1.2);
@@ -739,10 +739,10 @@ function renderAid(){
   el.innerHTML=`
     ${topBar()}${progBar()}${raceStats()}
     ${liveClassPanel()}
-    ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span style="color:${G.rivalRadio.delta>0?'#4a8a2a':'#c0392b'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
+    ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span style="color:${G.rivalRadio.delta>0?'var(--pos)':'var(--neg)'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
     <p style="font-size:15px;font-weight:600;margin-bottom:2px">Avituallamiento</p>
-    <p style="font-size:13px;color:#888;margin-bottom:12px">Hasta 2 cosas · ${remaining} restante${remaining!==1?'s':''}${nutBadge}</p>
-    <div id="nut-tooltip" style="display:none;background:#eaf4ea;border:1px solid #b8ddb8;border-radius:8px;padding:9px 13px;font-size:13px;color:#2d5a2d;margin-bottom:12px">
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:12px">Hasta 2 cosas · ${remaining} restante${remaining!==1?'s':''}${nutBadge}</p>
+    <div id="nut-tooltip" style="display:none;background:var(--soft);border:1px solid var(--line2);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--pos-i);margin-bottom:12px">
       Tu sponsor de nutrición mejora la eficacia de los geles y la comida sólida un 20%. Gel: +${nutGel} energía (en vez de +20). Comida sólida: +${nutSolid} energía (en vez de +35).
     </div>
     ${AID_OPTIONS.map(a=>{
@@ -756,12 +756,12 @@ function renderAid(){
         <span class="aid-time">${a.timeCost>0?'+'+a.timeCost+' seg':'+0 seg'}</span>
       </div>`;}).join('')}
     ${isDropbagPoint&&dropItems.length>0?`
-    <div style="margin-top:10px;padding:10px 12px;background:#eaf4ea;border-radius:8px;border:1px solid #b8ddb8">
-      <div style="font-size:13px;font-weight:600;color:#2d5a2d;margin-bottom:6px">🎒 Tu dropbag está aquí</div>
+    <div style="margin-top:10px;padding:10px 12px;background:var(--soft);border-radius:8px;border:1px solid var(--line2)">
+      <div style="font-size:13px;font-weight:600;color:var(--pos-i);margin-bottom:6px">🎒 Tu dropbag está aquí</div>
       ${dropItems.map(id=>{
         const d=DROPBAG_OPTIONS.find(x=>x.id===id);
         if(!d)return '';
-        return `<div style="display:flex;justify-content:space-between;font-size:13px;color:#2d5a2d;padding:3px 0">
+        return `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--pos-i);padding:3px 0">
           <span>${d.label}</span>
           <button class="secondary" style="font-size:12px;padding:2px 8px" onclick="useDropbag('${id}')">Usar</button>
         </div>`;}).join('')}
@@ -773,7 +773,7 @@ function renderAid(){
       const col=critCount>=2?'#c0392b':critCount===1?'#c07a10':'#bbb';
       const fallbackLabel=critCount>=2?'⚠ Al límite — retirarse aquí es lo sensato':critCount===1?'Al límite — ¿seguir o retirarse?':'Retirarse en este avituallamiento';
       const label=critCount>=1&&scaledAid.msg?scaledAid.msg:fallbackLabel;
-      return `<button class="abandon-btn" style="margin-top:6px;border-color:${col};color:${col};background:${critCount>=2?'#fef0f0':critCount===1?'#fff9f0':'#fafafa'};font-size:13px;font-weight:${critCount>=1?'600':'400'}" onclick="doAbandon()">${label}</button>`;
+      return `<button class="abandon-btn" style="margin-top:6px;border-color:${col};color:${col};background:${critCount>=2?'var(--soft)':critCount===1?'#fff9f0':'var(--soft)'};font-size:13px;font-weight:${critCount>=1?'600':'400'}" onclick="doAbandon()">${label}</button>`;
     })()}
     `;
 }
@@ -920,8 +920,8 @@ window.doPace=p=>{
         <p class="sub">${race2.name}</p>
         <div class="injury-card">
           <div class="injury-type">${injData.label}</div>
-          <div style="font-size:13px;color:#555;margin:6px 0">${injData.desc}</div>
-          <div style="font-size:12px;color:#c0392b">Has tenido que retirarte en el km ~${Math.round(race2.km*(G.seg/segs.length))}. No es posible continuar con esta lesión.</div>
+          <div style="font-size:13px;color:var(--ink2);margin:6px 0">${injData.desc}</div>
+          <div style="font-size:12px;color:var(--neg)">Has tenido que retirarte en el km ~${Math.round(race2.km*(G.seg/segs.length))}. No es posible continuar con esta lesión.</div>
         </div>
         <div class="warn">Recuperación estimada: ${injData.recoverySeasons} temporada${injData.recoverySeasons>1?'s':''}. Descansa bien antes de la siguiente carrera.</div>
         ${raceStats()}
@@ -1705,18 +1705,18 @@ function renderMidRaceEvent(){
     <div style="margin:14px 0 6px">
       ${isTimed?`<div style="margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-size:11px;font-weight:700;color:#c07a10;letter-spacing:1px;text-transform:uppercase">⚡ Decisión rápida</div>
-          <div style="font-size:18px;font-weight:700;color:#c07a10" id="xp-timer-num">7</div>
+          <div style="font-size:11px;font-weight:700;color:var(--avi);letter-spacing:1px;text-transform:uppercase">⚡ Decisión rápida</div>
+          <div style="font-size:18px;font-weight:700;color:var(--avi)" id="xp-timer-num">7</div>
         </div>
         <div style="height:5px;background:#f0e8d8;border-radius:3px;overflow:hidden">
           <div id="xp-timer-bar" style="height:100%;width:100%;background:#c07a10;border-radius:3px;transition:width .9s linear"></div>
         </div>
-      </div>`:'<div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Evento en carrera</div>'}
+      </div>`:'<div style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Evento en carrera</div>'}
       <h2 style="font-size:19px;margin-bottom:6px">${ev.title}</h2>
-      <p style="font-size:14px;color:#555;line-height:1.65;margin-bottom:18px">${ev.desc}</p>
+      <p style="font-size:14px;color:var(--ink2);line-height:1.65;margin-bottom:18px">${ev.desc}</p>
       <div style="display:grid;gap:8px">
         ${ev.choices.map((c,i)=>`<div class="pace" onclick="resolveMidRaceEvent('${ev.id}','${c.id}')">
-          <div class="pace-label" style="font-size:14px;margin-bottom:0">${isTimed&&i===(ev.defaultChoice||0)?'<span style="font-size:11px;color:#aaa;font-weight:400">(por defecto) </span>':''}${c.text}</div>
+          <div class="pace-label" style="font-size:14px;margin-bottom:0">${isTimed&&i===(ev.defaultChoice||0)?'<span style="font-size:11px;color:var(--ink3);font-weight:400">(por defecto) </span>':''}${c.text}</div>
         </div>`).join('')}
       </div>
     </div>`;
@@ -2225,7 +2225,7 @@ window.doAbandon=()=>{
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-      <button class="main" style="margin-top:0;border-color:#c0392b;color:#c0392b" onclick="doAbandonConfirmed()">Sí, abandonar</button>
+      <button class="main" style="margin-top:0;border-color:#c0392b;color:var(--neg)" onclick="doAbandonConfirmed()">Sí, abandonar</button>
       <button class="main" style="margin-top:0" onclick="G.screen='segment';render()">Seguir corriendo →</button>
     </div>`;
 };
@@ -2258,8 +2258,8 @@ window.doAbandonConfirmed=()=>{
       <div style="font-size:13px">· Sin puntos de ranking en esta carrera</div>
       <div style="font-size:13px">· Sin premio</div>
       <div style="font-size:13px">· Carga corporal reducida — llegas mejor a la siguiente</div>
-      ${inj?`<div style="font-size:13px;color:#c0392b">· Te retiras con ${esc(inj.label)}: la baja${(G.injuryRacesLeft||0)>0?` de ${G.injuryRacesLeft} carrera${G.injuryRacesLeft!==1?'s':''}`:''} sigue en pie</div>`:''}
-      ${G.raceAbandonedCount>=2?`<div style="font-size:13px;color:#c07a10">· Historial de abandonos — puede afectar negociaciones con sponsors</div>`:''}
+      ${inj?`<div style="font-size:13px;color:var(--neg)">· Te retiras con ${esc(inj.label)}: la baja${(G.injuryRacesLeft||0)>0?` de ${G.injuryRacesLeft} carrera${G.injuryRacesLeft!==1?'s':''}`:''} sigue en pie</div>`:''}
+      ${G.raceAbandonedCount>=2?`<div style="font-size:13px;color:var(--avi)">· Historial de abandonos — puede afectar negociaciones con sponsors</div>`:''}
     </div>
     <button class="main" style="margin-top:8px" onclick="afterRace()">Continuar →</button>`;
 };
@@ -2575,31 +2575,31 @@ function finishRace(){
     <div class="finish-time"><div class="label">Tiempo final</div><div class="val">${fmt(G.time)}</div></div>
     ${G.postRaceConsequence?`<div class="danger" style="border-color:${G.postRaceConsequence.color};background:${G.postRaceConsequence.color}11;margin-bottom:10px">
       <div style="font-size:15px;font-weight:700;color:${G.postRaceConsequence.color};margin-bottom:4px">${G.postRaceConsequence.icon} ${G.postRaceConsequence.label}</div>
-      <div style="font-size:13px;color:#444;margin-bottom:${G.postRaceConsequence.fameBonus?'8px':'0'}">${G.postRaceConsequence.desc}</div>
-      ${G.postRaceConsequence.fameBonus?`<div style="font-size:12px;color:#c07a10;font-weight:600">❤️ +${G.postRaceConsequence.fameBonus} seguidores — la comunidad del trail está contigo</div>`:''}
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:${G.postRaceConsequence.fameBonus?'8px':'0'}">${G.postRaceConsequence.desc}</div>
+      ${G.postRaceConsequence.fameBonus?`<div style="font-size:12px;color:var(--avi);font-weight:600">❤️ +${G.postRaceConsequence.fameBonus} seguidores — la comunidad del trail está contigo</div>`:''}
     </div>`:''}
     <div style="margin-bottom:14px">
       ${topRows.map((x,i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary);${x.me?'font-weight:700;background:var(--color-background-secondary);border-radius:6px;padding:8px 6px;margin:2px -6px':''}">
         <div style="display:flex;gap:10px;align-items:center">
-          <span style="font-size:13px;color:${i===0?'#c07a10':i<=2?'#4a8a2a':'#bbb'};width:22px">${i+1}º</span>
+          <span style="font-size:13px;color:${i===0?'var(--avi)':i<=2?'var(--pos)':'var(--ink3)'};width:22px">${i+1}º</span>
           <span>${x.flag?`<span title="${esc(x.country||'')}" style="cursor:default">${x.flag}</span> `:''} ${esc(x.name)}${x.me?' ◀':''}</span>
         </div>
         <span style="font-size:13px;color:var(--color-text-secondary)">${fmt(x.time)}</span>
       </div>`).join('')}
-      ${!meInTop?`<div style="font-size:12px;color:#aaa;text-align:center;padding:4px">···</div>
+      ${!meInTop?`<div style="font-size:12px;color:var(--ink3);text-align:center;padding:4px">···</div>
       <div style="display:flex;justify-content:space-between;padding:8px 6px;font-weight:700;background:#f9f9f7;border-radius:6px">
         <div style="display:flex;gap:10px;align-items:center">
-          <span style="font-size:13px;color:#888;width:22px">${pos}º</span>
+          <span style="font-size:13px;color:var(--ink3);width:22px">${pos}º</span>
           <span>${esc(G.runner.name||'Tú')} ◀</span>
         </div>
-        <span style="font-size:13px;color:#888">${fmt(G.time)}</span>
+        <span style="font-size:13px;color:var(--ink3)">${fmt(G.time)}</span>
       </div>`:''}
     </div>
     ${G.injuryType?`<div class="injury-card">
       <div class="injury-type">${INJURY_TYPES[G.injuryType]?.label||'Lesión'}</div>
-      <div style="font-size:13px;color:#555;margin-bottom:6px">${INJURY_TYPES[G.injuryType]?.desc||''}</div>
-      <div style="font-size:12px;color:#888">Recuperación estimada: ${INJURY_TYPES[G.injuryType]?.recoverySeasons||1} temporada${INJURY_TYPES[G.injuryType]?.recoverySeasons>1?'s':''}</div>
-      ${!INJURY_TYPES[G.injuryType]?.canRace?`<div style="font-size:12px;color:#c0392b;margin-top:4px">⚠ Con esta lesión no puedes correr la siguiente carrera</div>`:''}
+      <div style="font-size:13px;color:var(--ink2);margin-bottom:6px">${INJURY_TYPES[G.injuryType]?.desc||''}</div>
+      <div style="font-size:12px;color:var(--ink3)">Recuperación estimada: ${INJURY_TYPES[G.injuryType]?.recoverySeasons||1} temporada${INJURY_TYPES[G.injuryType]?.recoverySeasons>1?'s':''}</div>
+      ${!INJURY_TYPES[G.injuryType]?.canRace?`<div style="font-size:12px;color:var(--neg);margin-top:4px">⚠ Con esta lesión no puedes correr la siguiente carrera</div>`:''}
     </div>`:
     G.injuryStatus==='leve'?`<div class="warn">Molestia leve tras la carrera. Nada grave, pero el cuerpo acusa el esfuerzo.</div>`:''}
     ${statGains.length>0?`<div class="note">
@@ -2610,18 +2610,18 @@ function finishRace(){
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
         <span>+€${prize} ingresados</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <span style="background:#f0ede8;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">Global ${pos}º / ${total}</span>
+          <span style="background:var(--soft);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">Global ${pos}º / ${total}</span>
           ${catTotal>1?`<span style="background:#e8eef8;color:#2d4fa0;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">${playerCat.label} ${catPos}º / ${catTotal}</span>`:''}
-          <span style="font-size:12px;color:#888">Ranking #${G.ranking}</span>
+          <span style="font-size:12px;color:var(--ink3)">Ranking #${G.ranking}</span>
         </div>
       </div>
     </div>`:
     `<div style="margin-top:8px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-        <span style="background:#f0ede8;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">Global ${pos}º / ${total}</span>
+        <span style="background:var(--soft);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">Global ${pos}º / ${total}</span>
         ${catTotal>1?`<span style="background:#e8eef8;color:#2d4fa0;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">${playerCat.label} ${catPos}º / ${catTotal}</span>`:''}
       </div>
-      <div style="font-size:13px;color:#aaa">Sin premio · Ranking #${G.ranking}</div>
+      <div style="font-size:13px;color:var(--ink3)">Sin premio · Ranking #${G.ranking}</div>
     </div>`}
     ${raceStats()}
     <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px">
