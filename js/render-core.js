@@ -188,7 +188,8 @@ function aplicarModoChasis(){
 function updateFinBar(){
   const bar=document.getElementById('fin-bar');
   if(!bar)return;
-  const screens=['intro','workSetup','canicrossAntigua','modeSelect'];   // la mañana de carrera sí lleva la barra (el dinero importa)
+  // paso 6: en carrera la sustituye la cabecera de carrera (TG-Direccion-Visual § 4)
+  const screens=['intro','workSetup','canicrossAntigua','modeSelect','segment','aid','midRaceEvent'];   // la mañana de carrera sí lleva la barra (el dinero importa)
   bar.style.display=screens.includes(G.screen)?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de

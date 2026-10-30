@@ -1333,6 +1333,8 @@ window.setAthleteHours=h=>{
   if(window.scrollTo)window.scrollTo(0,y);
 };
 // ── PRE-RACE PREP (Tanda 7) ────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Preparación» (§ 7):
+// interruptor de calentamiento y el gasto total de la preparación. Sin hex.
 function renderPreRacePrep(){
   const el=$main();
   const race=G.selectedRaces[G.currentRaceIdx];
@@ -1343,82 +1345,59 @@ function renderPreRacePrep(){
   const altPenalty=getAltitudePenalty(race);
   const sel=G.preRaceNutrition||'pasta';
   const bag=G.dropbagItems||[];
-
-  el.innerHTML=`
-    <h2>Preparación previa</h2>
-    <p class="sub">${race.name} · ${race.type}</p>
-
-    ${rep?`<div class="note"><strong>${rep.label}</strong> — +${rep.statBonus.mental} Mental esta carrera${rep.sponsorBonus?' · Sponsors lo valoran':''}</div>`:''}
-    ${abandon?`<div class="warn">⚠ ${abandon.label} — los sponsors reducen sus ofertas (×${abandon.sponsorMult})</div>`:''}
-    ${altPenalty>0?`<div class="warn">⚠ Carrera de alta altitud — sin entrenamiento específico irás un ${Math.round(altPenalty*100)}% más lento en subidas. Club de Alta Montaña o entrenador lo reducen.</div>`:''}
-    ${G.injuryType?`<div class="injury-card">
-      <div class="injury-type" style="font-size:14px">${INJURY_TYPES[G.injuryType]?.label||'Lesión'} — llegas tocado <button class="tip-btn" onclick="showTip('Tipos de lesión','${['tendinitis','rotura','fractura'].map(k=>`<strong>${INJURY_TYPES[k].label}</strong> — ${injuryBlockText(k)}.`).join('<br>')}<br><br>Los stats perdidos se recuperan poco a poco. El <strong>fisioterapeuta</strong> acorta las bajas y acelera esa recuperación. La carga corporal alta es la principal causa.')">ⓘ</button></div>
-      <div style="font-size:12px;color:var(--ink2);margin-top:4px">
-        Energía inicial: <strong>${INJURY_TYPES[G.injuryType]?.nextRaceStats?.energy||80}%</strong> ·
-        Piernas: <strong>${INJURY_TYPES[G.injuryType]?.nextRaceStats?.legs||70}%</strong> ·
-        Hidratación: <strong>${INJURY_TYPES[G.injuryType]?.nextRaceStats?.hydration||80}%</strong>
-      </div>
-      ${hasFisio()?`<div class="text-ok">El fisio reduce el impacto.</div>`:'<div style="font-size:12px;color:var(--neg);margin-top:4px">Sin fisio el impacto es máximo. Considera ir conservador.</div>'}
+  const gastoNut=getNutritionCost(sel)||0, gastoGeles=(G.gelsCarried||0)*2;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('temporada')}Carrera · la noche antes</div>
+    <div class="pz-titulo">Preparación previa</div>
+    <p class="pz-sub">${esc(race.name)} · ${race.type}</p>
+    ${rep||abandon||altPenalty>0?`<div class="pz-tarjeta pz-estado">
+      ${rep?`<div class="pz-linea"><span class="pz-diag mas"><b>${rep.label}</b> — +${rep.statBonus.mental} Mental esta carrera${rep.sponsorBonus?' · Sponsors lo valoran':''}</span></div>`:''}
+      ${abandon?`<div class="pz-linea"><span class="pz-diag ojo">${abandon.label} — los sponsors reducen sus ofertas (×${abandon.sponsorMult})</span></div>`:''}
+      ${altPenalty>0?`<div class="pz-linea"><span class="pz-diag ojo">Carrera de alta altitud — sin entrenamiento específico irás un ${Math.round(altPenalty*100)} % más lento en subidas. Club de Alta Montaña o entrenador lo reducen.</span></div>`:''}
+    </div>`:''}
+    ${G.injuryType?`<div class="pz-tarjeta">
+      <div class="injury-type" style="font-size:15px">${INJURY_TYPES[G.injuryType]?.label||'Lesión'} — llegas tocado <button class="tip-btn" onclick="showTip('Tipos de lesión','${['tendinitis','rotura','fractura'].map(k=>`<strong>${INJURY_TYPES[k].label}</strong> — ${injuryBlockText(k)}.`).join('<br>')}<br><br>Los stats perdidos se recuperan poco a poco. El <strong>fisioterapeuta</strong> acorta las bajas y acelera esa recuperación. La carga corporal alta es la principal causa.')">ⓘ</button></div>
+      <div class="pz-efectos" style="margin-top:4px">Energía inicial <span class="pz-num">${INJURY_TYPES[G.injuryType]?.nextRaceStats?.energy||80} %</span> · Piernas <span class="pz-num">${INJURY_TYPES[G.injuryType]?.nextRaceStats?.legs||70} %</span> · Hidratación <span class="pz-num">${INJURY_TYPES[G.injuryType]?.nextRaceStats?.hydration||80} %</span></div>
+      ${hasFisio()?`<div class="pz-diag mas">El fisio reduce el impacto.</div>`:'<div class="pz-diag menos">Sin fisio el impacto es máximo. Considera ir conservador.</div>'}
     </div>`:''}
 
-    <div class="section-label">Nutrición la noche antes <button class="tip-btn" onclick="showTip('Nutrición pre-carrera','Lo que comes la noche antes afecta tu <strong>energía inicial</strong> en carrera. Las opciones básicas están siempre disponibles. Las avanzadas (ayuno glucémico, protocolo pro) se desbloquean con años de experiencia.<br><br>Algunas opciones tienen <strong>coste económico</strong>. Si tienes una lesión activa, la energía inicial parte ya penalizada independientemente de la nutrición.')">ⓘ</button></div>
+    <div class="pz-label" style="margin:14px 0 6px">Nutrición la noche antes <button class="tip-btn" onclick="showTip('Nutrición pre-carrera','Lo que comes la noche antes afecta tu <strong>energía inicial</strong> en carrera. Las opciones básicas están siempre disponibles. Las avanzadas (ayuno glucémico, protocolo pro) se desbloquean con años de experiencia.<br><br>Algunas opciones tienen <strong>coste económico</strong>. Si tienes una lesión activa, la energía inicial parte ya penalizada independientemente de la nutrición.')">ⓘ</button></div>
     ${PRE_RACE_NUTRITION.map(n=>{
       const avail=isNutritionAvailable(n);
       const cost=getNutritionCost(n.id);
       const isSel=sel===n.id;
-      return `<div class="work-card ${isSel?'sel':''} ${!avail.ok?'locked-work':''}" onclick="${avail.ok?'setPreNutrition(\''+n.id+'\')':''}">
-        <div class="flex-between">
-          <div style="flex:1">
-            <div class="card-title">${n.label}</div>
-            <div class="card-sub">${n.desc}</div>
-            ${!avail.ok?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">🔒 ${avail.reason}</div>`:''}
-          </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:10px;font-size:12px">
-            ${n.energyBonus>0?`<div style="color:var(--pos)">+${n.energyBonus} energía</div>`:
-              n.energyBonus<0?`<div style="color:var(--avi)">${n.energyBonus} energía</div>`:
-              `<div style="color:var(--ink3)">sin bonus</div>`}
-            ${cost>0?`<div style="color:var(--neg);margin-top:2px">€${cost}</div>`:''}
-          </div>
-        </div>
+      return `<div class="pz-opcion${isSel?' sel':''}${!avail.ok?' pz-bloqueado':''}" ${avail.ok?`onclick="setPreNutrition('${n.id}')"`:''}>
+        <b>${n.label}</b><div class="pz-efectos">${n.desc}</div>
+        ${!avail.ok?motivoHTML(avail.reason):''}
+        <div class="pz-efectos" style="margin-top:4px">${n.energyBonus>0?`Energía <span class="pz-mas">+${n.energyBonus}</span>`:n.energyBonus<0?`Energía <span class="pz-menos">${n.energyBonus}</span>`:'Sin bonus'}${cost>0?` · <span class="pz-num">€${cost}</span>`:''}</div>
       </div>`;}).join('')}
 
     ${isUltra?`
-    <div class="section-label">Dropbag (máx. 2 items) <button class="tip-btn" onclick="showTip('Dropbag','Disponible en ultras de 40km+. Dejas hasta <strong>2 items</strong> en el avituallamiento central antes de salir.<br><br>Puedes usarlos <strong>una sola vez</strong> al pasar por ese avituallamiento en carrera. Elige según tus puntos débiles: energía, hidratación o recuperación de piernas.<br><br>Si no ves la opción de usar la dropbag en el avituallamiento, es que todavía no has llegado al punto donde la dejaste.')">ⓘ</button></div>
-    <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">Deja una bolsa en el avituallamiento central con material extra</div>
-    ${DROPBAG_OPTIONS.map(d=>{
+    <div class="pz-label" style="margin:14px 0 6px">Dropbag (máx. 2) <button class="tip-btn" onclick="showTip('Dropbag','Disponible en ultras de 40km+. Dejas hasta <strong>2 items</strong> en el avituallamiento central antes de salir.<br><br>Puedes usarlos <strong>una sola vez</strong> al pasar por ese avituallamiento en carrera. Elige según tus puntos débiles: energía, hidratación o recuperación de piernas.<br><br>Si no ves la opción de usar la dropbag en el avituallamiento, es que todavía no has llegado al punto donde la dejaste.')">ⓘ</button></div>
+    <p class="pz-efectos" style="margin-bottom:8px">Deja una bolsa en el avituallamiento central con material extra.</p>
+    <div class="pz-tarjeta" style="padding:2px 14px">${DROPBAG_OPTIONS.map(d=>{
       const isSel=bag.includes(d.id);
       const maxed=!isSel&&bag.length>=2;
-      return `<div class="dropbag-item ${isSel?'sel-bag':''} ${maxed?'disabled':''}" onclick="${maxed?'':'toggleDropbag(\''+d.id+'\')'}">
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${d.label}${isSel?' ✓':''}</div>
-          <div style="font-size:12px;color:var(--ink3)">${d.desc}</div>
-        </div>
-      </div>`;}).join('')}`:''}
+      return `<label class="pz-fila" style="cursor:${maxed?'default':'pointer'};${maxed?'color:var(--ink3)':''}"><input type="checkbox" class="pz-casilla" ${isSel?'checked':''} ${maxed?'disabled':''} onchange="toggleDropbag('${d.id}')"><span class="pz-fila-txt"><b>${d.label}</b><div class="pz-efectos">${d.desc}</div></span></label>`;}).join('')}</div>`:''}
 
-    <div class="section-label">🧃 Geles en el bolsillo <button class="tip-btn" onclick="showTip('Geles en carrera','Lleva geles en el bolsillo para usarlos en cualquier tramo, sin esperar al avituallamiento.<br><br>Cada gel da <strong>+18 energía</strong> (o +22 con sponsor nutrición) y cuesta <strong>€2</strong>. Máximo 5 geles.<br><br>En carreras cortas (−20km) llevar muchos no tiene sentido. Para ultras, pueden ser decisivos en el último tercio.')">ⓘ</button></div>
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px">
-      <button class="secondary" onclick="G.gelsCarried=Math.max(0,(G.gelsCarried||0)-1);render()" style="padding:6px 14px;font-size:16px" ${!(G.gelsCarried>0)?'disabled':''}>−</button>
-      <div style="flex:1;text-align:center">
-        <div style="font-size:22px;font-weight:700;color:var(--pos)">${G.gelsCarried||0}</div>
-        <div style="font-size:12px;color:var(--ink3)">geles · €${(G.gelsCarried||0)*2} · +${(G.gelsCarried||0)*18} energía potencial</div>
-      </div>
-      <button class="secondary" onclick="G.gelsCarried=Math.min(5,(G.gelsCarried||0)+1);render()" style="padding:6px 14px;font-size:16px" ${G.gelsCarried>=5?'disabled':''}>+</button>
+    <div class="pz-label" style="margin:14px 0 6px">Geles en el bolsillo <button class="tip-btn" onclick="showTip('Geles en carrera','Lleva geles en el bolsillo para usarlos en cualquier tramo, sin esperar al avituallamiento.<br><br>Cada gel da <strong>+18 energía</strong> (o +22 con sponsor nutrición) y cuesta <strong>€2</strong>. Máximo 5 geles.<br><br>En carreras cortas (−20km) llevar muchos no tiene sentido. Para ultras, pueden ser decisivos en el último tercio.')">ⓘ</button></div>
+    <div class="pz-tarjeta" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span class="pz-efectos">€2 cada uno · <span class="pz-mas">+${(G.gelsCarried||0)*18}</span> energía potencial</span>
+      <span class="pz-stepper"><button onclick="G.gelsCarried=Math.max(0,(G.gelsCarried||0)-1);render()" ${!(G.gelsCarried>0)?'disabled':''}>−</button><span class="pz-stepper-n">${G.gelsCarried||0}</span><button onclick="G.gelsCarried=Math.min(5,(G.gelsCarried||0)+1);render()" ${G.gelsCarried>=5?'disabled':''}>+</button></span>
     </div>
-    ${(G.gelsCarried||0)>0?`<div class="note" style="margin-bottom:12px">Llevas ${G.gelsCarried} gel${G.gelsCarried>1?'es':''} (€${G.gelsCarried*2}). Úsalos en cualquier tramo pulsando el botón que aparecerá en carrera.</div>`:''}
+    ${(G.gelsCarried||0)>0?`<div class="pz-diag" style="margin:-4px 0 12px">Úsalos en cualquier tramo con el botón que aparecerá en carrera.</div>`:''}
 
-    <div class="section-label">🏃 Calentamiento <button class="tip-btn" onclick="showTip('Calentamiento','20 minutos de calentamiento antes de la salida.<br><br><strong>Coste:</strong> −5 Energía inicial.<br><strong>Beneficio:</strong> +4 Velocidad y +3 Subida durante toda la carrera.<br><br>Vale la pena en carreras cortas (−25km) donde la velocidad importa desde el primer tramo. Para ultras, el coste de energía no compensa.')">ⓘ</button></div>
-    <div class="work-card ${G.warmedUp?'sel':''}" onclick="G.warmedUp=!G.warmedUp;render()" style="${G.warmedUp?'border-color:#4a8a2a;background:var(--soft);':''}">
-      <div class="flex-between-center">
-        <div>
-          <div class="card-title">Calentar 20 minutos</div>
-          <div class="card-sub">−5 energía · +4 Velocidad · +3 Subida durante la carrera</div>
-          ${race.km>25?`<div style="font-size:12px;color:var(--avi);margin-top:2px">En ultras el coste de energía puede no compensar</div>`:`<div style="font-size:12px;color:var(--pos);margin-top:2px">Para esta distancia es una buena decisión</div>`}
-        </div>
-        <span style="font-size:18px;color:${G.warmedUp?'var(--pos)':'#ddd'}">${G.warmedUp?'✓':'○'}</span>
-      </div>
-    </div>
+    <div class="pz-label" style="margin:14px 0 6px">Calentamiento <button class="tip-btn" onclick="showTip('Calentamiento','20 minutos de calentamiento antes de la salida.<br><br><strong>Coste:</strong> −5 Energía inicial.<br><strong>Beneficio:</strong> +4 Velocidad y +3 Subida durante toda la carrera.<br><br>Vale la pena en carreras cortas (−25km) donde la velocidad importa desde el primer tramo. Para ultras, el coste de energía no compensa.')">ⓘ</button></div>
+    <label class="pz-tarjeta" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+      <span class="pz-fila-txt"><b>Calentar 20 minutos</b><div class="pz-efectos">Energía <span class="pz-menos">−5</span> · Velocidad <span class="pz-mas">+4</span> · Subida <span class="pz-mas">+3</span> durante la carrera</div>
+        ${race.km>25?`<div class="pz-diag ojo">En ultras el coste de energía puede no compensar</div>`:`<div class="pz-diag mas">Para esta distancia es una buena decisión</div>`}</span>
+      <input type="checkbox" class="pz-interruptor" ${G.warmedUp?'checked':''} onchange="G.warmedUp=this.checked;render()">
+    </label>
 
-    <button class="main" style="margin-top:12px" onclick="goPreRace()">Confirmar y ver briefing →</button>`;
+    <div class="pz-tarjeta pz-estado"><div class="pz-linea"><span class="pz-fila-txt"><b>Gasto de la preparación</b><div class="pz-efectos">Nutrición €${gastoNut} · geles €${gastoGeles}</div></span><span class="pz-num" style="font-size:20px">${fmtEur(-(gastoNut+gastoGeles))}</span></div></div>
+
+    <button class="pz-btn" style="margin-top:4px" onclick="goPreRace()">Confirmar y ver briefing →</button>
+  </div>`;
 }
 window.setPreNutrition=id=>{G.preRaceNutrition=id;render();};
 window.toggleDropbag=id=>{

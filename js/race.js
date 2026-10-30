@@ -450,57 +450,61 @@ function renderPreRace(){
 
   // ── PB de esta carrera ───────────────────────────────────────────
   const pb=G.personalBests&&G.personalBests[race.id];
-  const pbHtml=pb?`<div style="font-size:12px;background:var(--soft);border-radius:6px;padding:6px 10px;margin-bottom:10px;color:var(--avi)">🏆 Tu récord aquí: <strong>${fmt(pb.time)}</strong> · Año ${pb.year}${pb.pos?', '+pb.pos+'º':''}</div>`:'';
+  const pbHtml=pb?`🏆 Tu récord aquí: <b class="pz-num">${fmt(pb.time)}</b> · año ${pb.year}${pb.pos?', '+pb.pos+'.º':''}`:'';
   const nutr=PRE_RACE_NUTRITION.find(n=>n.id===(G.preRaceNutrition||'pasta'))||PRE_RACE_NUTRITION[0];
 
-  el.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
-      <h2>${race.name}</h2>
-      <span style="font-size:12px;color:var(--ink3);padding-top:5px">Carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</span>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Briefing» (§ 7):
+  // perfil por terreno (racePreviewCard) y «Cómo llegas» con + / − / ±. Sin hex.
+  const L=(sig,txt)=>`<div class="pz-linea" style="align-items:flex-start"><span class="pz-num ${sig==='+'?'pz-mas':sig==='−'?'pz-menos':''}" style="width:14px;flex-shrink:0;font-size:17px;line-height:1.2">${sig}</span><span class="pz-efectos" style="color:var(--ink)">${txt}</span></div>`;
+  const hintSig={warn:'−',danger:'−',hint:'±',note:'+'};
+  const ad=agingDeg(),mm=G.mentalMomentum||0;
+  const llegas=[
+    G.dayCondition?L('±',`${G.dayCondition.icon} <b>Condición del día</b> — ${G.dayCondition.label}`):'',
+    G.taperBonus?L('+','💤 <b>Has hecho tapering</b> — llegas con más energía y las piernas más frescas (+6 energía, +6 piernas).'):'',
+    G.weather==='extremo'?L('−','Condiciones extremas — hidratación crítica.'):G.weather==='soleado'&&se.label.includes('☀')?L('−','Calor intenso de verano.'):'',
+    G.terrainCondition.id==='barro'?L('−','Terreno con barro — bajadas más lentas y mayor riesgo de caída.'):'',
+    G.terrainCondition.id==='nieve'?L('−','Nieve en ruta — ritmo muy reducido en todas las subidas y bajadas.'):'',
+    altPenalty>0?L('−',`Alta altitud sin entrenamiento específico — ${Math.round(altPenalty*100)} % más lento en subidas.`):'',
+    hint?L(hintSig[hint.type]||'±',hint.msg):'',
+    ad>0?(Math.round(ad*100)>=16?L('−',`⏳ Con ${G.runner.age} años el cuerpo gasta más energía y los avituallamientos recuperan menos. Los rivales también se alejan un poco más.`):L('±',`⏳ A los ${G.runner.age} años el desgaste empieza a notarse en carrera — más cansancio por tramo.`)):'',
+    G.runner.legs<100?L('−',`Llegas con las piernas tocadas (${Math.round(G.runner.legs)} %).`):'',
+    mm!==0?L(mm>0?'+':'−',`${mm>0?'🔥':'😶'} <b>Mental ${mm>0?'+'+mm:mm}</b> — ${mm>0?'Llevas una buena racha. El cuerpo responde mejor al esfuerzo.':'Vienes de resultados duros. La cabeza no ayuda hoy.'}`):'',
+    nutr.id!=='pasta'?L('+',`Nutrición previa: ${nutr.label} — energía inicial +${nutr.energyBonus}`):'',
+    (G.dropbagItems||[]).length>0?L('+',`Dropbag preparada: ${G.dropbagItems.map(id=>DROPBAG_OPTIONS.find(d=>d.id===id)?.label||id).join(' + ')}`):'',
+    (G.gelsCarried||0)>0?L('+',`🧃 Llevas ${G.gelsCarried} gel${G.gelsCarried>1?'es':''} en el bolsillo · €${G.gelsCarried*2}`):'',
+    G.warmedUp?L('±','🏃 Calentamiento hecho · −5 energía inicial · +4 Velocidad · +3 Subida'):'',
+    pbHtml?L('±',pbHtml):'',
+  ].filter(Boolean);
+  const chip=t=>`<span class="pz-chip" style="background:var(--soft);margin:0">${t}</span>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('temporada')}Carrera ${G.currentRaceIdx+1} de ${G.selectedRaces.length}</div>
+    <div class="pz-titulo">${esc(race.name)}</div>
+    <p class="pz-sub">${race.type} · ${race.km} km · ${raceDesnivel(race)}</p>
+    <div class="pz-tarjeta">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        ${[['Distancia',race.km+' km'],['Desnivel',raceDesnivel(race)],['Clima',wlabel[G.weather]]].map(([l,v])=>`<div><div class="pz-label">${l}</div><div class="pz-num" style="font-size:16px">${v}</div></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${chip(G.terrainCondition.icon+' '+G.terrainCondition.label)}
+        ${race.altitude?chip('⛰ Alta altitud'):''}
+        ${rep?chip('🏆 '+rep.label):''}
+        ${chip(modeLabelFull(G.gameMode))}
+        ${G.startStrategy&&G.startStrategy!=='equilibrado'?chip(G.startStrategy==='conservador'?'🐢 Conservador':'🔥 A tope'):''}
+      </div>
     </div>
-    <p class="sub">${race.type} · ${race.km}km · ${raceDesnivel(race)}</p>
-    <div class="stat-grid">
-      ${[['Distancia',race.km+'km'],['Desnivel',raceDesnivel(race)],['Clima',wlabel[G.weather]]].map(([l,v])=>`<div class="stat"><div class="stat-label">${l}</div><div class="stat-val" style="font-size:12px">${v}</div></div>`).join('')}
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-      <span class="terrain-badge" style="background:${G.terrainCondition.color}22;color:${G.terrainCondition.color}">${G.terrainCondition.icon} ${G.terrainCondition.label}</span>
-      ${race.altitude?`<span class="terrain-badge" style="background:#4a90d922;color:var(--cuerpo)">⛰ Alta altitud</span>`:''}
-      ${rep?`<span class="terrain-badge" style="background:#c07a1022;color:var(--avi)">🏆 ${rep.label}</span>`:''}
-      <span class="terrain-badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">${modeLabelFull(G.gameMode)}</span>
-      ${G.startStrategy&&G.startStrategy!=='equilibrado'?`<span class="terrain-badge" style="background:${G.startStrategy==='conservador'?'#4a8a2a22':'#c0392b22'};color:${G.startStrategy==='conservador'?'var(--pos)':'var(--neg)'}">${G.startStrategy==='conservador'?'🐢 Conservador':'🔥 A tope'}</span>`:''}
-    </div>
-    ${pbHtml}
-    ${G.dayCondition?`<div class="note">${G.dayCondition.icon} <strong>Condición del día</strong> — ${G.dayCondition.label}</div>`:''}
-    ${G.taperBonus?`<div class="note">💤 <strong>Has hecho tapering</strong> — llegas con más energía y las piernas más frescas (+6 energía, +6 piernas).</div>`:''}
-    ${G.weather==='extremo'?`<div class="warn">Condiciones extremas — hidratación crítica.</div>`:
-      G.weather==='soleado'&&se.label.includes('☀')?`<div class="warn">Calor intenso de verano.</div>`:''}
-    ${G.terrainCondition.id==='barro'?`<div class="warn">Terreno con barro — bajadas más lentas y mayor riesgo de caída.</div>`:''}
-    ${G.terrainCondition.id==='nieve'?`<div class="danger">Nieve en ruta — ritmo muy reducido en todas las subidas y bajadas.</div>`:''}
-    ${altPenalty>0?`<div class="warn">Alta altitud sin entrenamiento específico — ${Math.round(altPenalty*100)}% más lento en subidas.</div>`:''}
-    ${hint?`<div class="${hint.type}">${hint.msg}</div>`:''}
-    ${(()=>{const ad=agingDeg();if(ad<=0)return '';const pct=Math.round(ad*100);if(pct>=16)return `<div class="warn">⏳ Con ${G.runner.age} años el cuerpo gasta más energía y los avituallamientos recuperan menos. Los rivales también se alejan un poco más.</div>`;return `<div class="hint">⏳ A los ${G.runner.age} años el desgaste empieza a notarse en carrera — más cansancio por tramo.</div>`;})()}
-    ${G.runner.legs<100?`<div class="danger">Llegas con las piernas tocadas (${Math.round(G.runner.legs)}%).</div>`:''}
-    ${(()=>{const mm=G.mentalMomentum||0;if(mm===0)return '';const good=mm>0;return `<div class="${good?'note':'hint'}">${good?'🔥':'😶'} <strong>Mental ${good?'+'+mm:mm}</strong> — ${good?'Llevas una buena racha. El cuerpo responde mejor al esfuerzo.':'Vienes de resultados duros. La cabeza no ayuda hoy.'}</div>`;})()}
-    ${nutr.id!=='pasta'?`<div class="note">Nutrición previa: ${nutr.label} — energía inicial +${nutr.energyBonus}</div>`:''}
-    ${(G.dropbagItems||[]).length>0?`<div class="note">Dropbag preparada: ${G.dropbagItems.map(id=>DROPBAG_OPTIONS.find(d=>d.id===id)?.label||id).join(' + ')}</div>`:''}
-    ${(G.gelsCarried||0)>0?`<div class="note">🧃 Llevas ${G.gelsCarried} gel${G.gelsCarried>1?'es':''} en el bolsillo · €${G.gelsCarried*2}</div>`:''}
-    ${G.warmedUp?`<div class="note">🏃 Calentamiento hecho · −5 energía inicial · +4 Velocidad · +3 Subida</div>`:''}
+    ${llegas.length?`<div class="pz-label" style="margin:14px 0 6px">Cómo llegas</div><div class="pz-tarjeta pz-estado">${llegas.join('')}</div>`:''}
     ${racePreviewCard(race,'preview',0)}
-    <div class="section-label">${G.rivals.length} corredores en carrera <button class="tip-btn" onclick="showTip('Rivales en carrera','El <strong>tier</strong> del rival indica su nivel: tier 1 = amateur local, tier 3 = élite nacional. Su ranking (#) y victorias recientes (W) dan una idea de su forma actual.<br><br>Los rivales de tier alto son casi imbatibles los primeros años. Céntrate en acabar bien posicionado entre los de tu nivel — el ranking global mejora con consistencia, no con victorias sueltas.')">ⓘ</button></div>
-    ${(()=>{const nem=G.nemesis;if(!nem||nem.wins<2)return '';const inRace=G.rivals.some(r=>r.name===nem.name);if(!inRace)return '';return `<div class="warn" style="margin-bottom:8px">🎯 <strong>${nem.flag} ${nem.name}</strong> está en esta carrera — te lleva ${nem.wins}-0. Última vez te sacó ${fmt(nem.avgGap)}.</div>`;})()}
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-      ${G.rivals.slice(0,8).map(rv=>`<div style="font-size:11px;background:var(--color-background-secondary);border-radius:6px;padding:4px 10px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px">
-        <span title="${rv.country||''}" style="cursor:default">${rv.flag||''}</span>
-        <span style="font-weight:600">${rv.name}</span>
-        <span style="color:var(--ink3)">·</span>
-        <span style="font-size:10px;color:var(--ink3)">#${rv.ranking}${rv.recentWins?` · ${rv.recentWins}W`:''}</span>
-      </div>`).join('')}
-      ${G.rivals.length>8?`<span style="font-size:12px;color:var(--color-text-tertiary);padding:3px 8px">+${G.rivals.length-8} más...</span>`:''}
+    <div class="pz-label" style="margin:14px 0 6px">${G.rivals.length} corredores en carrera <button class="tip-btn" onclick="showTip('Rivales en carrera','El <strong>tier</strong> del rival indica su nivel: tier 1 = amateur local, tier 3 = élite nacional. Su ranking (#) y victorias recientes (W) dan una idea de su forma actual.<br><br>Los rivales de tier alto son casi imbatibles los primeros años. Céntrate en acabar bien posicionado entre los de tu nivel — el ranking global mejora con consistencia, no con victorias sueltas.')">ⓘ</button></div>
+    ${(()=>{const nem=G.nemesis;if(!nem||nem.wins<2)return '';const inRace=G.rivals.some(r=>r.name===nem.name);if(!inRace)return '';return `<div class="pz-diag ojo" style="margin-bottom:8px"><span>🎯 <b>${nem.flag} ${nem.name}</b> está en esta carrera — te lleva ${nem.wins}-0. Última vez te sacó ${fmt(nem.avgGap)}.</span></div>`;})()}
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+      ${G.rivals.slice(0,8).map(rv=>`<span class="pz-chip" style="background:var(--card);border:1px solid var(--line);margin:0"><span title="${rv.country||''}">${rv.flag||''}</span> ${rv.name} <span class="pz-efectos">#${rv.ranking}${rv.recentWins?` · ${rv.recentWins}W`:''}</span></span>`).join('')}
+      ${G.rivals.length>8?`<span class="pz-efectos" style="padding:3px 8px">+${G.rivals.length-8} más…</span>`:''}
     </div>
-    <div class="grid-2">
-      <button class="main" onclick="G.screen=${G.gameMode==='expres'?`'expresPreRacePrep'`:`'preRacePrep'`};render()" style="margin-top:0">← Preparación</button>
-      <button class="main" onclick="G.startStrategy=G.startStrategy||'equilibrado';G.screen=${G.gameMode==='expres'?`'segment';G.raceEvent=''`:`'startStrategy'`};render()" style="margin-top:0">${G.gameMode==='expres'?'¡Salir a correr! →':'Estrategia de salida →'}</button>
-    </div>`;
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px">
+      <button class="pz-btn sec" onclick="G.screen=${G.gameMode==='expres'?`'expresPreRacePrep'`:`'preRacePrep'`};render()">← Preparación</button>
+      <button class="pz-btn" onclick="G.startStrategy=G.startStrategy||'equilibrado';G.screen=${G.gameMode==='expres'?`'segment';G.raceEvent=''`:`'startStrategy'`};render()">${G.gameMode==='expres'?'¡Salir a correr! →':'Estrategia de salida →'}</button>
+    </div>
+  </div>`;
   attachProfHandlers(race, race.id+'preview', 'preview', 0);
 }
 
@@ -611,17 +615,34 @@ function renderSegment(){
   if(!s){finishRace();return;}
   const race=G.selectedRaces[G.currentRaceIdx];
   const el=$main();
+  // Paso 6 de la dirección visual (2026-10-30): tipo En directo, referencia «Tramo» (§ 7):
+  // cabecera de carrera (posición en grande, tiempo, km y el perfil con tu punto), el aviso de
+  // fatiga una sola vez y sin pestaña Finanzas. La barra de arriba no sale en carrera.
+  const segsAll=segs,kmHechos=segsAll.slice(0,G.seg).reduce((a,x)=>a+x.km,0),kmTot=segsAll.reduce((a,x)=>a+x.km,0);
+  const clas=(G.rivals&&G.rivals.length&&G.seg>0)?computeLiveClass():null;
+  const miPos=clas?clas.findIndex(x=>x.me)+1:null;
+  // Aviso de racha una sola vez, encima de los ritmos (antes salía en cada tarjeta)
+  const logPrev=G.paceLog||[];
+  const rachaTope=logPrev.slice(-2).filter(x=>x==='allout').length, rachaDura=logPrev.slice(-3).filter(x=>x==='allout'||x==='push').length;
+  const avisoRacha=rachaTope>=2?`Llevas ${rachaTope} tramos a tope seguidos: otro más multiplica la fatiga en energía y piernas.`
+    :rachaDura>=3?`Llevas ${rachaDura} tramos duros: el cuerpo está pagando el precio.`:'';
   el.innerHTML=`
-    ${topBar()}${progBar()}${raceStats()}
+    <div class="pz-cab-carrera pz">
+      <div class="pz-cab-fila"><span class="pz-cab-nombre">${esc(race?.name||'')} · tramo ${G.seg+1}/${segsAll.length}</span><span class="pz-cab-nombre">${modeLabelFull(G.gameMode)}</span></div>
+      <div class="pz-cab-fila" style="margin:4px 0 6px">
+        <span><span class="pz-cab-pos">${miPos?miPos+'.º':'—'}</span>${clas?` <span class="pz-efectos">de ${clas.length}</span>`:''}</span>
+        <span style="text-align:right"><span class="pz-cab-dato">${fmt(G.time)}</span><div class="pz-efectos">${kmHechos} de ${kmTot} km</div></span>
+      </div>
+      ${race?`<div id="prof-wrap-race">${profSvg(race,G.seg,'race',G.seg,'race')}</div>
+      <div id="prof-info-race" data-sel="${G.seg}">${profSegInfo(race,G.seg,'race',G.seg)}</div>`:''}
+    </div>
+    ${raceStats()}
     ${liveClassPanel()}
     ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span style="color:${G.rivalRadio.delta>0?'var(--pos)':'var(--neg)'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
-    ${race?`<div style="margin-bottom:10px">
-      <div id="prof-wrap-race">${profSvg(race,G.seg,'race',G.seg,'race')}</div>
-      <div id="prof-info-race" data-sel="${G.seg}">${profSegInfo(race,G.seg,'race',G.seg)}</div>
-    </div>`:''}
     ${G.raceEvent?`<div class="event-box">${G.raceEvent}</div>`:''}
-    ${G.stormActive?`<div class="${G.stormProtected?'note':'danger'}">⛈ Tormenta en curso${G.stormProtected?' · Equipado, hidratación protegida':' · Hidratación muy penalizada en todos los tramos'}</div>`:''}
-    <div class="section-label">Elige tu ritmo:</div>
+    ${G.stormActive?`<div class="pz-diag ${G.stormProtected?'mas':'menos'}" style="margin-bottom:8px">⛈ Tormenta en curso${G.stormProtected?' · Equipado, hidratación protegida':' · Hidratación muy penalizada en todos los tramos'}</div>`:''}
+    ${avisoRacha?`<div class="pz-diag ojo" style="margin-bottom:8px">${avisoRacha}</div>`:''}
+    <div class="pz-label" style="margin:6px 0">Elige tu ritmo</div>
     <div class="pace-grid">
       ${Object.entries(PACE_COSTS).map(([id,pcDef])=>{
         // T17 (v88): antes estos cinco valores estaban copiados a mano aquí.
@@ -641,17 +662,18 @@ function renderSegment(){
         const hardCount=recentLog.slice(-4).filter(x=>x==='allout'||x==='push').length;
         let warningMsg='';let warningCol='';
         const lt=getLoadThresholdsByMode();
+        // El aviso de racha va una vez encima de los ritmos; aquí, el multiplicador como cifra
         if(isAllout&&alloutStreak>=2){
-          {const baseMult=alloutStreak>=3?2.2:1.6;const realMult=(baseMult*(modeCfg().fatigueMult||1.0)).toFixed(1);warningMsg=`⚠ ${alloutStreak} tramos a tope seguidos — fatiga ×${realMult} en energía y piernas`;warningCol='#c0392b';}
+          {const baseMult=alloutStreak>=3?2.2:1.6;const realMult=(baseMult*(modeCfg().fatigueMult||1.0)).toFixed(1);warningMsg=`fatiga ×${realMult}`;warningCol='menos';}
         } else if((isAllout||isPush)&&hardCount>=3){
-          warningMsg=`⚠ Llevas ${hardCount} tramos duros — el cuerpo está pagando el precio`;warningCol='#c07a10';
+          warningMsg='';
         } else if(isAllout&&onDescent){
-          if(sb<50&&load>=lt.warningLevel2){warningMsg=`⚠ bajada técnica + cuerpo cargado (${load}%) — riesgo alto`;warningCol=getLoadWarningColor(load)||'#c0392b';}
-          else if(sb<50)     {warningMsg=`⚠ bajada técnica (bajada ${sb}) — posible caída`;warningCol='#c0392b';}
-          else if(load>=lt.criticalLevel)  {warningMsg=`⚠ cuerpo muy al límite (${load}%) — posible caída`;warningCol=getLoadWarningColor(load)||'#c0392b';}
-          else if(load>=lt.warningLevel2)  {warningMsg=`⚠ cuerpo cargado (${load}%) — hay riesgo de caída`;warningCol=getLoadWarningColor(load)||'#c07a10';}
+          if(sb<50&&load>=lt.warningLevel2){warningMsg=`bajada técnica + cuerpo cargado (${load} %) — riesgo alto`;warningCol='menos';}
+          else if(sb<50)     {warningMsg=`bajada técnica (bajada ${sb}) — posible caída`;warningCol='menos';}
+          else if(load>=lt.criticalLevel)  {warningMsg=`cuerpo muy al límite (${load} %) — posible caída`;warningCol='menos';}
+          else if(load>=lt.warningLevel2)  {warningMsg=`cuerpo cargado (${load} %) — hay riesgo de caída`;warningCol='ojo';}
         } else if(isAllout&&load>=lt.warningLevel2&&!onDescent){
-          warningMsg=`⚠ cuerpo cargado — recuperación lenta`;warningCol=getLoadWarningColor(load)||'#c07a10';
+          warningMsg=`cuerpo cargado — recuperación lenta`;warningCol='ojo';
         }
         // Adjust displayed cost if fatigue multiplier active
         // T16 (v88): el coste mostrado incluye el multiplicador de dificultad,
@@ -661,24 +683,23 @@ function renderSegment(){
         return `<div class="pace" onclick="doPace('${id}')">
           <div class="pace-label">${l}</div>
           <div class="pace-desc">${d}</div>
-          ${warningMsg?`<div style="font-size:12px;color:${warningCol};margin-bottom:4px">${warningMsg}</div>`:''}
-          <div class="pace-meta"><span style="font-size:12px">${adjCost}</span><span>~${mins} min</span></div>
+          ${warningMsg?`<div class="pz-diag ${warningCol}" style="font-size:12.5px;padding:0 0 4px">${warningMsg}</div>`:''}
+          <div class="pace-meta"><span style="font-size:12px">${adjCost}</span><span class="pz-num">~${mins} min</span></div>
         </div>`;}).join('')}
     </div>
     ${(()=>{
       const {minStat,critCount}=runnerCritState();
       if(minStat<10){
         const scaled=getLoadWarningMsg(getBodyLoad());
-        const col=critCount>=2?'#c0392b':critCount===1?'#c07a10':'#888';
-        const bg=critCount>=2?'#fef0f0':critCount===1?'#fff9f0':'#f5f5f5';
-        const fallback=critCount>=2?'⚠ Límite físico — continuar tiene consecuencias graves':critCount===1?'⚠ Al límite — continuar puede costar caro':'Al límite — considera abandonar';
+        const cls=critCount>=2?'menos':critCount===1?'ojo':'';
+        const fallback=critCount>=2?'Límite físico — continuar tiene consecuencias graves':critCount===1?'Al límite — continuar puede costar caro':'Al límite — considera abandonar';
         const msg=critCount>=1&&scaled.msg?scaled.msg:fallback;
-        return `<div style="margin-top:10px;padding:10px 12px;background:${bg};border:1.5px solid ${col};border-radius:8px">
-          <div style="font-size:12px;color:${col};font-weight:600;margin-bottom:6px">${msg}</div>
-          <button class="abandon-btn" style="border-color:${col};color:${col};background:${bg};margin-top:0" onclick="doAbandon()">Abandonar carrera</button>
+        return `<div class="pz-tarjeta pz" style="margin-top:10px">
+          <div class="pz-diag ${cls}" style="margin-bottom:8px"><b>${msg}</b></div>
+          <button class="abandon-btn" style="margin-top:0" onclick="doAbandon()">Abandonar carrera</button>
         </div>`;
       } else if(minStat<30){
-        return `<button class="abandon-btn" style="border-color:var(--line2);color:var(--ink3);background:var(--soft);margin-top:8px;font-size:13px" onclick="doAbandon()">Abandonar carrera</button>`;
+        return `<button class="abandon-btn" style="color:var(--ink3);margin-top:8px;font-size:13px" onclick="doAbandon()">Abandonar carrera</button>`;
       }
       return '';
     })()}
@@ -688,10 +709,10 @@ function renderSegment(){
       const nb=G.sponsors.nutricion?1.2:1.0;
       const gelEnergy=Math.round(18*nb);
       const energyLow=G.runner.energy<50;
-      return `<div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--soft);border:1px solid var(--line2);border-radius:8px">
+      return `<div class="pz-tarjeta pz" style="margin-top:10px;display:flex;align-items:center;gap:10px">
         <span style="font-size:18px">🧃</span>
-        <div style="flex:1;font-size:13px;color:var(--pos-i)"><strong>${gelesLeft} gel${gelesLeft>1?'es':''} disponible${gelesLeft>1?'s':''}</strong> · +${gelEnergy} energía${energyLow?' — ¡buena idea ahora!':''}</div>
-        <button class="secondary" style="font-size:13px;padding:5px 12px;background:#4a8a2a;color:var(--card);border-color:#4a8a2a" onclick="doUseGel()">Usar gel</button>
+        <div class="pz-fila-txt"><b>${gelesLeft} gel${gelesLeft>1?'es':''}</b> <span class="pz-efectos">· energía <span class="pz-mas">+${gelEnergy}</span>${energyLow?' — ¡buena idea ahora!':''}</span></div>
+        <button class="pz-btn sec" style="width:auto;padding:8px 14px" onclick="doUseGel()">Usar gel</button>
       </div>`;
     })()}
     `;
@@ -1695,31 +1716,35 @@ function checkMidRaceEvents(){
   return null;
 }
 
+// Paso 6 de la dirección visual (2026-10-30): tipo Evento, referencia «Evento en carrera»
+// (§ 7): tarjeta de momento con la etiqueta de familia y la nota del mental. La familia sale
+// del sistema del evento (clima y terreno → Carrera, fatiga y lesiones → Cuerpo, social →
+// Gente). Los efectos de cada opción los calcula su resolutor al elegir, así que no se
+// pueden enseñar antes como etiquetas sin duplicar esa lógica: queda anotado en el diseño.
+const MID_EVENT_FAMILY={clima:'carrera',terreno:'carrera',fatiga:'cuerpo',lesiones:'cuerpo',social:'gente'};
 function renderMidRaceEvent(){
   const el=$main();
   const ev=G.midRaceEvent;
   if(!ev){G.screen='segment';render();return;}
   const isTimed=ev.timed&&G.gameMode==='expres';
-  el.innerHTML=`
-    ${topBar()}${progBar()}${raceStats()}
-    <div style="margin:14px 0 6px">
-      ${isTimed?`<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-size:11px;font-weight:700;color:var(--avi);letter-spacing:1px;text-transform:uppercase">⚡ Decisión rápida</div>
-          <div style="font-size:18px;font-weight:700;color:var(--avi)" id="xp-timer-num">7</div>
-        </div>
-        <div style="height:5px;background:#f0e8d8;border-radius:3px;overflow:hidden">
-          <div id="xp-timer-bar" style="height:100%;width:100%;background:#c07a10;border-radius:3px;transition:width .9s linear"></div>
-        </div>
-      </div>`:'<div style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Evento en carrera</div>'}
-      <h2 style="font-size:19px;margin-bottom:6px">${ev.title}</h2>
-      <p style="font-size:14px;color:var(--ink2);line-height:1.65;margin-bottom:18px">${ev.desc}</p>
-      <div style="display:grid;gap:8px">
-        ${ev.choices.map((c,i)=>`<div class="pace" onclick="resolveMidRaceEvent('${ev.id}','${c.id}')">
-          <div class="pace-label" style="font-size:14px;margin-bottom:0">${isTimed&&i===(ev.defaultChoice||0)?'<span style="font-size:11px;color:var(--ink3);font-weight:400">(por defecto) </span>':''}${c.text}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
+  const def=CLASSIC_MID_RACE_EVENTS[ev.id]||Object.values(CLASSIC_MID_RACE_EVENTS).find(d=>d.key===ev.id);
+  const fam=MID_EVENT_FAMILY[def&&def.system]||'carrera';
+  const famLabel={carrera:'Carrera',cuerpo:'Cuerpo',gente:'Gente',dinero:'Dinero'}[fam];
+  const race=G.selectedRaces[G.currentRaceIdx];
+  el.innerHTML=`<div class="pz">
+    <div class="pz-cab-carrera"><div class="pz-cab-fila"><span class="pz-cab-nombre">${esc(race?.name||'')} · tramo ${G.seg+1}/${curSegs().length}</span><span class="pz-cab-dato">${fmt(G.time)}</span></div></div>
+    ${raceStats()}
+    <div class="pz-tarjeta fam-${fam}" style="border-color:var(--fam);border-width:1.5px">
+      <div class="pz-etiqueta fam-${fam}">${famLabel} · ${isTimed?'decisión rápida':'evento en carrera'}</div>
+      ${isTimed?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="pz-label">El tiempo corre</span><span class="pz-num pz-ojo" style="font-size:20px" id="xp-timer-num">7</span></div>
+        <div class="pz-barra" style="margin-bottom:12px"><div id="xp-timer-bar" class="pz-relleno ojo" style="width:100%;transition:width .9s linear"></div></div>`:''}
+      <div class="pz-titulo" style="font-size:22px">${ev.title}</div>
+      <p class="pz-sub" style="color:var(--ink);line-height:1.6">${ev.desc}</p>
+      ${ev.choices.map((c,i)=>`<button class="pz-opcion" onclick="resolveMidRaceEvent('${ev.id}','${c.id}')">${isTimed&&i===(ev.defaultChoice||0)?'<span class="pz-efectos">(por defecto) </span>':''}<b>${c.text}</b></button>`).join('')}
+      <div class="pz-efectos" style="margin-top:6px">El mental que gane o pierdas aquí solo cuenta en esta carrera.</div>
+    </div>
+  </div>`;
   if(isTimed)startExpressTimer(ev.defaultChoice||0);
 }
 // T83 (v93) — el resolutor de eventos a mitad de carrera, de 406 líneas de

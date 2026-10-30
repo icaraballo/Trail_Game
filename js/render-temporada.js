@@ -1175,27 +1175,30 @@ function debtPanel(){
 }
 
 // T29 (v86) — escalón 2: vuelta forzosa a jornada completa.
+// Paso 6 de la dirección visual (2026-10-30): tipo Momento negativo, referencia «Crisis de
+// deuda» (§ 5 y § 7): franja oscura con la cifra, qué cambia desde hoy, el texto y el aviso
+// en ámbar (antes iba en caja verde: hallazgo de la revisión visual). Sin hex.
 function renderDebtCrisis(){
   const el=$main();
   hideChrome();
   const cfg=modeCfg().bankruptcy||{soft:500,hard:null};
-  el.innerHTML=`
-    <div style="text-align:center;padding:18px 0 14px">
-      <div style="font-size:32px;margin-bottom:6px">📉</div>
-      <h2>No llegas</h2>
-      <p class="sub">Temporada ${G.year}</p>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja negativo">
+      <svg class="pz-franja-fondo" viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 12 L60 18 L110 14 L160 30 L210 38 L260 50 L300 56" style="fill:none;stroke:var(--card);stroke-width:2"/></svg>
+      <div class="pz-franja-sub" style="position:relative;margin:0 0 4px">No llegas · temporada ${G.year}</div>
+      <div class="pz-franja-num" style="position:relative">${fmtEur(-(G.debt||0))}</div>
+      <div class="pz-franja-sub" style="position:relative">de deuda</div>
     </div>
-    <div class="danger" style="margin-bottom:14px">
-      Debes <strong>€${G.debt}</strong>. Has tenido que volver a jornada completa
-      y cancelar el staff que tenías contratado.
+    <div class="pz-label" style="margin:6px 0">Qué cambia desde hoy</div>
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea"><span class="pz-diag menos">Vuelves a jornada completa</span></div>
+      <div class="pz-linea"><span class="pz-diag menos">Se cancela el staff que tenías contratado</span></div>
+      <div class="pz-linea"><span class="pz-diag">Cada euro que entre irá a la deuda; cuando esté saldada, vuelves a elegir jornada</span></div>
     </div>
-    <p style="font-size:14px;line-height:1.55;margin-bottom:14px">
-      El alquiler no espera. Vuelves al turno de siempre y entrenas con lo que
-      sobra, que es poco. Cada euro que entre irá a la deuda antes que a tu
-      bolsillo. Cuando esté saldada, volverás a elegir tu jornada.
-    </p>
-    ${cfg.hard!=null?`<div class="note" style="margin-bottom:14px">Si la deuda llega a <strong>€${cfg.hard}</strong> estando ya a jornada completa, la carrera deportiva se acaba.</div>`:''}
-    <button class="main" style="background:var(--ink);color:var(--card);border-color:var(--ink)" onclick="G.screen=G._screenAfterCrisis||'workSetup';G._screenAfterCrisis=null;render()">Seguir adelante →</button>`;
+    <p class="pz-sub" style="color:var(--ink);line-height:1.6">El alquiler no espera. Vuelves al turno de siempre y entrenas con lo que sobra, que es poco. Cada euro que entre irá a la deuda antes que a tu bolsillo. Cuando esté saldada, volverás a elegir tu jornada.</p>
+    ${cfg.hard!=null?`<div class="pz-diag ojo" style="margin-bottom:14px"><span>Si la deuda llega a <b class="pz-num">€${cfg.hard}</b> estando ya a jornada completa, la carrera deportiva se acaba.</span></div>`:''}
+    <button class="pz-btn" onclick="G.screen=G._screenAfterCrisis||'workSetup';G._screenAfterCrisis=null;render()">Seguir adelante →</button>
+  </div>`;
 }
 
 // T29 (v86) — escalón 3: la partida queda visitable pero no jugable.
@@ -1259,35 +1262,32 @@ function renderRetirement(){
 
   const modeLabel=modeLabelOf(G.gameMode);   // T54 (v93)
 
-  el.innerHTML=`
-    <div style="text-align:center;padding:20px 0 10px">
-      <div style="font-size:36px;margin-bottom:8px">🏔</div>
-      <h1 style="font-size:22px;margin-bottom:4px">Fin de carrera</h1>
-      <p style="font-size:14px;color:var(--ink3)">${name} · ${age} años · ${modeLabel}</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Cierre, referencia «Fin de carrera» (§ 5
+  // y § 7): portada de montaña con la línea llegando al final, legado destacado, trayectoria
+  // en cifras y el diario como línea de tiempo. Sin hex.
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja cierre" style="padding-top:30px">
+      <svg class="pz-franja-fondo" viewBox="0 0 300 80" preserveAspectRatio="none" style="height:80%;opacity:.3"><path d="M0 80 L0 60 L50 38 L90 52 L140 20 L190 44 L240 26 L300 40 L300 80Z" style="fill:var(--line2)"/><path d="M0 70 L60 62 L120 48 L180 40 L240 30 L292 22" style="fill:none;stroke:var(--carrera-t);stroke-width:2.5"/><circle cx="292" cy="22" r="4" style="fill:var(--carrera-t)"/></svg>
+      <div class="pz-franja-sub" style="position:relative;margin:0 0 2px">Fin de carrera</div>
+      <div class="pz-franja-num" style="position:relative;font-size:40px">${name}</div>
+      <div class="pz-franja-sub" style="position:relative">${age} años · ${modeLabel}</div>
     </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title">Trayectoria completa</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${[['Temporadas',yearsActive],['Ranking final','#'+G.ranking],['Carreras',totalRaces],['Victorias',totalWins],['Podios',totalPodiums],['Premios','€'+totalPrize]].map(([l,v])=>`
-          <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${l}</div>
-            <div style="font-size:17px;font-weight:700">${v}</div>
-          </div>`).join('')}
-      </div>
+    <div class="pz-tarjeta" style="border-color:var(--acc);border-width:1.5px"><div class="pz-label">Legado</div><div style="font-size:17px;line-height:1.5;margin-top:4px">${legacy}</div></div>
+    <div class="pz-label" style="margin:6px 0">Trayectoria</div>
+    <div class="pz-tarjeta" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      ${[['Temporadas',yearsActive],['Ranking final','#'+G.ranking],['Carreras',totalRaces],['Victorias',totalWins],['Podios',totalPodiums],['Premios',fmtEur(totalPrize)]].map(([l,v])=>`<div><div class="pz-label">${l}</div><div class="pz-num" style="font-size:24px">${v}</div></div>`).join('')}
     </div>
-    <div class="note" style="font-size:14px;line-height:1.75;margin-bottom:14px"><strong>Legado:</strong> ${legacy}</div>
-    ${(G.seasonDiary||[]).length>0?`
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📓 Diario</div>
-      ${G.seasonDiary.slice(-5).reverse().map(e=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-          <span style="font-size:12px;font-weight:600;color:var(--ink3)">Año ${e.year} · ${e.age} años</span>
-          <span style="font-size:12px;color:var(--avi);font-weight:600">${e.highlight}</span>
-        </div>
-        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${esc(e.text||'')}</div>
+    ${(G.seasonDiary||[]).length>0?`<div class="pz-label" style="margin:6px 0">📓 Diario</div>
+    <div class="pz-tarjeta" style="padding-left:24px;position:relative">
+      <div style="position:absolute;left:14px;top:18px;bottom:18px;width:2px;background:var(--line)"></div>
+      ${G.seasonDiary.slice(-5).reverse().map(e=>`<div style="position:relative;padding:6px 0 12px">
+        <span style="position:absolute;left:-14px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--acc)"></span>
+        <div style="display:flex;justify-content:space-between;gap:8px"><span class="pz-label">Año ${e.year} · ${e.age} años</span><span class="pz-num" style="font-size:14px">${e.highlight}</span></div>
+        <div class="pz-efectos" style="line-height:1.55;margin-top:2px">${esc(e.text||'')}</div>
       </div>`).join('')}
     </div>`:''}
-    <button class="main" onclick="G=freshState();render()">Nueva partida →</button>`;
+    <button class="pz-btn" onclick="G=freshState();render()">Nueva partida →</button>
+  </div>`;
 }
 
 // ══════════════════════════════════════
