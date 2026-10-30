@@ -31,6 +31,7 @@ const NUM_SLOTS=5;
 // (se leen desde ACHIEVEMENTS en constants.js). El resto de claves _ son timers,
 // handles o flags de un solo render y no deben persistirse.
 const PERSISTENT_UNDERSCORE_KEYS=[
+  '_raceResult',   // paso 6 (dirección visual): el resultado de la última carrera, como datos (T88/T122)
   '_nemesisDefeatCount','_firstSponsorObjMet','_wonWithTaper','_sponsorRenewals',
   '_cleanSponsorSeason','_clubFisioUsed','_clubEntrenadorUsed','_clubLoyaltyStreak',
   '_clubLoyaltyId','_clubAscent','_sponsorNegotiations','_sponsorBreaks',

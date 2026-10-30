@@ -943,7 +943,7 @@ console.log('\n── v98 · CR-81 · las precarreras no cambian la partida al p
   const _render=ctx.render,_toast=ctx.showToast;
   const pinta=domStub(ctx);
   ctx.render=()=>{};ctx.showToast=()=>{};
-  const foto=()=>{const g={...T.getG()};delete g._raceResultHTML;return JSON.stringify(g);};
+  const foto=()=>{const g={...T.getG()};delete g._raceResult;return JSON.stringify(g);};
   setG({gameMode:'medio',money:500,gelsCarried:2,selectedRaces:T.RACES_DB.slice(0,3).map(r=>({...r})),currentRaceIdx:0,screen:'preRacePrep'});
   const antes=foto();
   pinta(()=>ctx.renderPreRace());

@@ -257,7 +257,7 @@ function freshState(){
     _saveFailed:false,           // el último autoSave() no cupo en localStorage
     // race — estado de la carrera en curso
     _lastRadioSeg:-99,           // último tramo con mensaje de radio (se lee con ??-99)
-    _raceResultHTML:null,        // T122: markup de la pantalla de resultado (no se persiste)
+    _raceResult:null,            // T122 (paso 6 visual): datos de la pantalla de resultado; persiste (T88)
     _recoveryUsed:false,         // ya se usó la recuperación de esta carrera
     // state — Exprés y deuda
     _xpTimerVal:7,               // segundos que quedan en el temporizador

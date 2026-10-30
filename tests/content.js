@@ -431,7 +431,7 @@ if(!sinDefinir) ok('los '+manejadores.size+' manejadores citados desde el HTML e
 // devmode.js queda fuera a propósito: el panel de desarrollo tiene estilo propio.
 bloque('10 · Dirección visual: hex fuera de los tokens');
 const HEX_TECHO={
-  'index.html':42,'constants.js':71,'state.js':17,'race.js':25,'coach.js':102,'club.js':51,
+  'index.html':42,'constants.js':71,'state.js':17,'race.js':20,'coach.js':102,'club.js':51,
   'canicross-render.js':65,'render-core.js':41,'render-clasico.js':89,'render-temporada.js':66,
 };
 const HEX_FUERA=new Set(['devmode.js']);

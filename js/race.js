@@ -936,20 +936,12 @@ window.doPace=p=>{
       if(!G._abandonsByYear)G._abandonsByYear={};G._abandonsByYear[G.year]=(G._abandonsByYear[G.year]||0)+1;
       G.bodyLoad=Math.min(100,G.bodyLoad+5);
       recordDNF(race2,'abandono');   // v96: el abandono forzado no dejaba fila en ningún historial
-      el.innerHTML=`
-        <h2>Abandono forzado</h2>
-        <p class="sub">${race2.name}</p>
-        <div class="injury-card">
-          <div class="injury-type">${injData.label}</div>
-          <div style="font-size:13px;color:var(--ink2);margin:6px 0">${injData.desc}</div>
-          <div style="font-size:12px;color:var(--neg)">Has tenido que retirarte en el km ~${Math.round(race2.km*(G.seg/segs.length))}. No es posible continuar con esta lesión.</div>
-        </div>
-        <div class="warn">Recuperación estimada: ${injData.recoverySeasons} temporada${injData.recoverySeasons>1?'s':''}. Descansa bien antes de la siguiente carrera.</div>
-        ${raceStats()}
-        <button class="main" style="margin-top:8px" onclick="afterRace()">Continuar →</button>`;
-      G._raceResultHTML=el.innerHTML;
+      // Paso 6 (dirección visual) · T122: el resultado se guarda como datos, no como HTML
+      G._raceResult={kind:'abandono',raceName:race2.name,km:Math.round(race2.km*(G.seg/segs.length)),
+        inj:{label:injData.label,desc:injData.desc,seasons:injData.recoverySeasons}};
+      void el;
       G.screen='raceResult';
-      updateFinBar();
+      updateFinBar();renderRaceResult();
       return;
     } else {
       G.raceEvent=`${injData.label} — puedes terminar pero las piernas pagan el precio.`;
@@ -2381,10 +2373,66 @@ function resolveRedZoneConsequence(zeroCount, redZoneMax, stormActive){
   return null;
 }
 
+// Paso 6 de la dirección visual (2026-10-30): tipo Momento, referencia «Resultado» (§ 5 y
+// § 7): franja según el puesto (podio en teja, fuera del podio gris oscuro, no terminó gris
+// claro), la cifra en grande y «lo que te llevas». Se pinta desde G._raceResult. Sin hex.
 function renderRaceResult(){
   const el=$main();
-  if(G._raceResultHTML){el.innerHTML=G._raceResultHTML;}
-  else{el.innerHTML='<h2>Resultado</h2><p class="sub">Sin datos disponibles</p><button class="main" onclick="afterRace()">Continuar →</button>';}
+  const R=G._raceResult;
+  if(!R){el.innerHTML='<div class="pz"><div class="pz-titulo">Resultado</div><p class="pz-sub">Sin datos disponibles</p><button class="pz-btn" onclick="afterRace()">Continuar →</button></div>';return;}
+  const capStat=k=>k.charAt(0).toUpperCase()+k.slice(1);
+  if(R.kind==='abandono'||R.kind==='baja'){
+    el.innerHTML=`<div class="pz">
+      <div class="pz-franja dnf"><div class="pz-franja-sub" style="margin:0 0 4px">${esc(R.raceName||'')}</div><div class="pz-franja-num" style="font-size:44px">No terminó</div>
+        <div class="pz-franja-sub">${R.kind==='abandono'?`Abandono forzado en el km ~${R.km}`:'Baja por lesión'}</div></div>
+      <div class="pz-tarjeta"><div class="injury-type">${R.inj.label||'Lesión'}</div>
+        <div class="pz-efectos" style="margin:4px 0">${R.kind==='abandono'?(R.inj.desc||''):'No puedes participar en esta carrera. Tu cuerpo necesita recuperarse.'}</div>
+        ${R.kind==='abandono'?`<div class="pz-diag menos">No es posible continuar con esta lesión.</div>`:''}
+        ${R.kind==='baja'&&R.fisio?`<div class="pz-diag mas">El fisio está acelerando tu recuperación.</div>`:''}
+        ${R.kind==='baja'?(R.remaining>0?`<div class="pz-diag menos">Aún te quedan ${R.remaining} carrera${R.remaining>1?'s':''} de baja.</div>`:'<div class="pz-diag mas">Podrás volver en la siguiente carrera, pero llegarás tocado.</div>'):''}
+      </div>
+      <div class="pz-label" style="margin:6px 0">Lo que pierdes</div>
+      <div class="pz-tarjeta pz-estado">
+        ${R.kind==='abandono'?`<div class="pz-linea"><span class="pz-diag ojo">Recuperación estimada: ${R.inj.seasons} temporada${R.inj.seasons>1?'s':''}. Descansa bien antes de la siguiente carrera.</span></div>`
+          :`<div class="pz-linea"><span class="pz-diag ojo">La inscripción (<span class="pz-num">€${R.cost||0}</span>) y el posible premio de hasta <span class="pz-num">€${R.prize||0}</span>.</span></div>`}
+      </div>
+      ${R.kind==='abandono'?raceStats():''}
+      <button class="pz-btn" onclick="${R.kind==='baja'?'skipInjuredRace()':'afterRace()'}">Continuar →</button>
+    </div>`;
+    return;
+  }
+  const podio=R.pos<=3;
+  const titulo=['¡Victoria!','Segundo puesto','Tercer puesto'][R.pos-1]||'';
+  const inj=R.injury&&R.injury.type?INJURY_TYPES[R.injury.type]:null;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja ${podio?'podio':'fuera'}">
+      <svg class="pz-franja-fondo" viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 60 L0 40 L40 30 L80 38 L130 14 L170 30 L220 20 L260 34 L300 26 L300 60Z" style="fill:var(--card)"/></svg>
+      <div class="pz-franja-sub" style="position:relative;margin:0 0 4px">${esc(R.raceName||'')}${titulo?' · '+titulo:''}</div>
+      <div class="pz-franja-num" style="position:relative;font-size:72px">${R.pos}.º</div>
+      <div class="pz-franja-sub" style="position:relative">de ${R.total}${R.firstWin?' · primera victoria':''} · ${fmt(R.time)}</div>
+    </div>
+    ${R.consequence?`<div class="pz-tarjeta"><div class="pz-diag menos" style="font-size:16px"><b>${R.consequence.icon} ${R.consequence.label}</b></div>
+      <div class="pz-efectos">${R.consequence.desc}</div>
+      ${R.consequence.fameBonus?`<div class="pz-efectos" style="margin-top:6px">❤️ <span class="pz-mas">+${R.consequence.fameBonus}</span> seguidores — la comunidad del trail está contigo</div>`:''}</div>`:''}
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${R.top.map((x,i)=>`<div class="pz-fila" style="${x.me?'font-weight:600':''}"><span class="pz-num" style="width:26px">${i+1}.º</span><span class="pz-fila-txt">${x.flag?`<span title="${esc(x.country||'')}">${x.flag}</span> `:''}${esc(x.name)}${x.me?' ◀':''}</span><span class="pz-fila-dato">${fmt(x.time)}</span></div>`).join('')}
+      ${R.pos>5?`<div class="pz-fila" style="font-weight:600"><span class="pz-num" style="width:26px">${R.pos}.º</span><span class="pz-fila-txt">${esc(G.runner.name||'Tú')} ◀</span><span class="pz-fila-dato">${fmt(R.time)}</span></div>`:''}
+    </div>
+    ${inj?`<div class="pz-tarjeta"><div class="injury-type">${inj.label||'Lesión'}</div><div class="pz-efectos">${inj.desc||''}</div>
+      <div class="pz-efectos" style="margin-top:4px">Recuperación estimada: ${inj.recoverySeasons||1} temporada${inj.recoverySeasons>1?'s':''}</div>
+      ${!inj.canRace?`<div class="pz-diag menos">Con esta lesión no puedes correr la siguiente carrera</div>`:''}</div>`
+      :R.injury&&R.injury.leve?`<div class="pz-diag ojo" style="margin-bottom:10px">Molestia leve tras la carrera. Nada grave, pero el cuerpo acusa el esfuerzo.</div>`:''}
+    <div class="pz-label" style="margin:6px 0">Lo que te llevas</div>
+    <div class="pz-tarjeta" style="display:flex;flex-wrap:wrap;gap:6px">
+      ${R.prize>0?`<span class="pz-chip mas">+€${R.prize}</span>`:`<span class="pz-chip" style="background:var(--soft)">Sin premio</span>`}
+      ${R.statGains.map(({k,v})=>`<span class="pz-chip mas">${capStat(k)} +${v}</span>`).join('')}
+      <span class="pz-chip" style="background:var(--soft)">Global ${R.pos}.º / ${R.total}</span>
+      ${R.cat?`<span class="pz-chip" style="background:var(--soft)">${R.cat.label} ${R.cat.pos}.º / ${R.cat.total}</span>`:''}
+      <span class="pz-chip" style="background:var(--soft)">Ranking #${R.ranking}</span>
+    </div>
+    ${raceStats()}
+    <button class="pz-btn" style="margin-top:6px" onclick="postRaceContinue()">Continuar →</button>
+  </div>`;
 }
 
 // ── Calcula posición, premios y stats ganados ──────────
@@ -2589,71 +2637,18 @@ function finishRace(){
   applyPostRaceTracking(race,res);
   const {pos,total,all,prize,statGains,playerCat,catPos,catTotal}=res;
 
-  const el=$main();
-  const titles=['¡Victoria!','2.º puesto','3.º puesto','4.º puesto','5.º puesto'];
-  const capStat=k=>k.charAt(0).toUpperCase()+k.slice(1);
-  const topRows=all.slice(0,5);
-  const meInTop=pos<=5;
-  el.innerHTML=`
-    <h2>${titles[pos-1]||pos+'º de '+total}</h2>
-    <p class="sub">${race.name} · ${total} corredores</p>
-    <div class="finish-time"><div class="label">Tiempo final</div><div class="val">${fmt(G.time)}</div></div>
-    ${G.postRaceConsequence?`<div class="danger" style="border-color:${G.postRaceConsequence.color};background:${G.postRaceConsequence.color}11;margin-bottom:10px">
-      <div style="font-size:15px;font-weight:700;color:${G.postRaceConsequence.color};margin-bottom:4px">${G.postRaceConsequence.icon} ${G.postRaceConsequence.label}</div>
-      <div style="font-size:13px;color:var(--ink2);margin-bottom:${G.postRaceConsequence.fameBonus?'8px':'0'}">${G.postRaceConsequence.desc}</div>
-      ${G.postRaceConsequence.fameBonus?`<div style="font-size:12px;color:var(--avi);font-weight:600">❤️ +${G.postRaceConsequence.fameBonus} seguidores — la comunidad del trail está contigo</div>`:''}
-    </div>`:''}
-    <div style="margin-bottom:14px">
-      ${topRows.map((x,i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary);${x.me?'font-weight:700;background:var(--color-background-secondary);border-radius:6px;padding:8px 6px;margin:2px -6px':''}">
-        <div style="display:flex;gap:10px;align-items:center">
-          <span style="font-size:13px;color:${i===0?'var(--avi)':i<=2?'var(--pos)':'var(--ink3)'};width:22px">${i+1}º</span>
-          <span>${x.flag?`<span title="${esc(x.country||'')}" style="cursor:default">${x.flag}</span> `:''} ${esc(x.name)}${x.me?' ◀':''}</span>
-        </div>
-        <span style="font-size:13px;color:var(--color-text-secondary)">${fmt(x.time)}</span>
-      </div>`).join('')}
-      ${!meInTop?`<div style="font-size:12px;color:var(--ink3);text-align:center;padding:4px">···</div>
-      <div style="display:flex;justify-content:space-between;padding:8px 6px;font-weight:700;background:#f9f9f7;border-radius:6px">
-        <div style="display:flex;gap:10px;align-items:center">
-          <span style="font-size:13px;color:var(--ink3);width:22px">${pos}º</span>
-          <span>${esc(G.runner.name||'Tú')} ◀</span>
-        </div>
-        <span style="font-size:13px;color:var(--ink3)">${fmt(G.time)}</span>
-      </div>`:''}
-    </div>
-    ${G.injuryType?`<div class="injury-card">
-      <div class="injury-type">${INJURY_TYPES[G.injuryType]?.label||'Lesión'}</div>
-      <div style="font-size:13px;color:var(--ink2);margin-bottom:6px">${INJURY_TYPES[G.injuryType]?.desc||''}</div>
-      <div style="font-size:12px;color:var(--ink3)">Recuperación estimada: ${INJURY_TYPES[G.injuryType]?.recoverySeasons||1} temporada${INJURY_TYPES[G.injuryType]?.recoverySeasons>1?'s':''}</div>
-      ${!INJURY_TYPES[G.injuryType]?.canRace?`<div style="font-size:12px;color:var(--neg);margin-top:4px">⚠ Con esta lesión no puedes correr la siguiente carrera</div>`:''}
-    </div>`:
-    G.injuryStatus==='leve'?`<div class="warn">Molestia leve tras la carrera. Nada grave, pero el cuerpo acusa el esfuerzo.</div>`:''}
-    ${statGains.length>0?`<div class="note">
-      <div style="font-weight:600;margin-bottom:4px">Stats ganados</div>
-      ${statGains.map(({k,v})=>`<div style="font-size:13px">+${v} <strong>${capStat(k)}</strong></div>`).join('')}
-    </div>`:''}
-    ${prize>0?`<div class="note">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-        <span>+€${prize} ingresados</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <span style="background:var(--soft);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">Global ${pos}º / ${total}</span>
-          ${catTotal>1?`<span style="background:#e8eef8;color:#2d4fa0;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">${playerCat.label} ${catPos}º / ${catTotal}</span>`:''}
-          <span style="font-size:12px;color:var(--ink3)">Ranking #${G.ranking}</span>
-        </div>
-      </div>
-    </div>`:
-    `<div style="margin-top:8px">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-        <span style="background:var(--soft);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">Global ${pos}º / ${total}</span>
-        ${catTotal>1?`<span style="background:#e8eef8;color:#2d4fa0;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">${playerCat.label} ${catPos}º / ${catTotal}</span>`:''}
-      </div>
-      <div style="font-size:13px;color:var(--ink3)">Sin premio · Ranking #${G.ranking}</div>
-    </div>`}
-    ${raceStats()}
-    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px">
-      <button class="main" onclick="postRaceContinue()" style="margin-top:0">Continuar →</button>
-    </div>`;
-  G._raceResultHTML=el.innerHTML;
+  // Paso 6 (dirección visual) · T122/T88: lo que se ve en el resultado se guarda como datos
+  // (G._raceResult, persistente) y se pinta en renderRaceResult(): recargar ya no lo pierde.
+  const wins=finishedResults(G.careerHistory||[]).filter(r=>r.pos===1).length;
+  const pc=G.postRaceConsequence;
+  G._raceResult={kind:'final',raceName:race.name,pos,total,time:G.time,
+    top:all.slice(0,5).map(x=>({name:x.name,flag:x.flag||'',country:x.country||'',time:x.time,me:!!x.me})),
+    prize,statGains:statGains.map(({k,v})=>({k,v})),cat:catTotal>1?{label:playerCat.label,pos:catPos,total:catTotal}:null,
+    ranking:G.ranking,firstWin:pos===1&&wins===1,
+    consequence:pc?{icon:pc.icon,label:pc.label,desc:pc.desc,fameBonus:pc.fameBonus||0}:null,
+    injury:G.injuryType?{type:G.injuryType}:G.injuryStatus==='leve'?{leve:true}:null};
   updateFinBar();
+  renderRaceResult();
   autoSave();
 }
 // T74 (v90): estas líneas estaban copiadas en cuatro sitios (race.js:goNextRace,

@@ -1716,7 +1716,7 @@ function renderBetweenManage(){
       <div class="card-sub">${G.club&&G.club.id!=='none'?'Ver reputación o cambiar de club':'Sin club actualmente — explorar opciones'}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      ${G._raceResultHTML?`<button class="main" onclick="G.screen='raceResult';render()" style="margin-top:0;background:var(--soft);color:var(--ink);border-color:var(--line2)">← Ver resumen</button>`:'<div></div>'}
+      ${G._raceResult?`<button class="main" onclick="G.screen='raceResult';render()" style="margin-top:0;background:var(--soft);color:var(--ink);border-color:var(--line2)">← Ver resumen</button>`:'<div></div>'}
       <button class="main" onclick="afterRace()" style="margin-top:0">Siguiente carrera →</button>
     </div>`;
 }

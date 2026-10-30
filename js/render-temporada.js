@@ -1318,21 +1318,11 @@ window.afterRace=()=>{
     const injData=INJURY_TYPES[G.injuryType]||{};
     const remaining=G.injuryRacesLeft;
     recordDNF(race,'lesion',{injured:true,injuryLabel:injData.label||'Lesión'}); // T104 (v88): id · T45 (v89): forma única de DNF · v96: también en careerHistory
-    const el=$main();
-    el.innerHTML=`
-      <h2>Baja por lesión</h2>
-      <p class="sub">${race?.name||'Próxima carrera'}</p>
-      <div class="injury-card">
-        <div class="injury-type">${injData.label||'Lesión'}</div>
-        <div style="font-size:13px;color:var(--ink2);margin:6px 0">No puedes participar en esta carrera. Tu cuerpo necesita recuperarse.</div>
-        ${hasFisio()?`<div class="text-ok">El fisio está acelerando tu recuperación.</div>`:''}
-        ${remaining>0?`<div style="font-size:12px;color:var(--neg);margin-top:4px">Aún te quedan ${remaining} carrera${remaining>1?'s':''} de baja.</div>`:'<div class="text-ok">Podrás volver en la siguiente carrera, pero llegarás tocado.</div>'}
-      </div>
-      <div class="warn">Has perdido la inscripción (€${race?.cost||0}) y el posible premio de hasta €${race?.prize||0}.</div>
-      <button class="main" style="margin-top:12px" onclick="skipInjuredRace()">Continuar →</button>`;
-    G._raceResultHTML=el.innerHTML;
+    // Paso 6 (dirección visual) · T122: el resultado como datos
+    G._raceResult={kind:'baja',raceName:race?.name||'Próxima carrera',inj:{label:injData.label||'Lesión'},
+      fisio:hasFisio(),remaining,cost:race?.cost||0,prize:race?.prize||0};
     G.screen='raceResult';
-    updateFinBar();autoSave();
+    updateFinBar();renderRaceResult();autoSave();
     return;
   }
   if(G.injuryType&&INJURY_TYPES[G.injuryType]?.canRace===false){
