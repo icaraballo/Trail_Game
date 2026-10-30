@@ -582,32 +582,26 @@ function liveClassPanel(){
 
 // ── SEGMENT ────────────────────────────
 // ── START STRATEGY ─────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Preparación»: tres
+// opciones con su efecto en línea; lo elegido, con borde del acento. Sin hex.
 function renderStartStrategy(){
   const el=$main();
   const race=G.selectedRaces[G.currentRaceIdx];
   const strategies=RACE_STRATEGIES; // T33 (v88): fuente única en constants.js
   const sel=G.startStrategy||'equilibrado';
-  el.innerHTML=`
-    <h2>Estrategia de salida</h2>
-    <p class="sub">${race?.name||''} · ¿Cómo vas a salir?</p>
-    <div style="display:grid;gap:8px;margin-bottom:16px">
-      ${strategies.map(s=>`
-        <div class="work-card ${sel===s.id?'sel':''}" onclick="G.startStrategy='${s.id}';render()" style="${sel===s.id?'border-color:'+s.col+';background:'+s.col+'11;':''}">
-          <div style="display:flex;align-items:flex-start;gap:12px">
-            <div style="font-size:26px;flex-shrink:0">${s.icon}</div>
-            <div style="flex:1">
-              <div style="font-size:15px;font-weight:700;color:${sel===s.id?s.col:'var(--ink)'}">${s.label}</div>
-              <div style="font-size:13px;color:var(--ink2);margin:2px 0">${s.desc}</div>
-              <div style="font-size:12px;color:var(--ink3)">${s.detail}</div>
-            </div>
-            ${sel===s.id?`<span style="color:${s.col};font-size:18px;flex-shrink:0">✓</span>`:''}
-          </div>
-        </div>`).join('')}
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('temporada')}Carrera · la salida</div>
+    <div class="pz-titulo">Estrategia de salida</div>
+    <p class="pz-sub">${esc(race?.name||'')} · ¿Cómo vas a salir?</p>
+    ${strategies.map(x=>`<button class="pz-opcion${sel===x.id?' sel':''}" style="display:flex;gap:12px;align-items:flex-start" onclick="G.startStrategy='${x.id}';render()">
+      <span style="font-size:24px;line-height:1">${x.icon}</span>
+      <span><b>${x.label}</b><div class="pz-efectos">${x.desc}</div><div class="pz-efectos">${x.detail}</div></span>
+    </button>`).join('')}
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:8px">
+      <button class="pz-btn sec" onclick="goPreRace()">← Volver</button>
+      <button class="pz-btn" onclick="G.screen='segment';G.raceEvent='';render()">¡Salir a correr! →</button>
     </div>
-    <div class="grid-2">
-      <button class="main" onclick="goPreRace()" style="margin-top:0">← Volver</button>
-      <button class="main" onclick="G.screen='segment';G.raceEvent='';render()" style="margin-top:0">¡Salir a correr! →</button>
-    </div>`;
+  </div>`;
 }
 
 function renderSegment(){
@@ -744,7 +738,7 @@ function renderAid(){
   const remaining=2-sel.length;
   const selLabel=sel.length===0?'sin selección':sel.map(id=>AID_OPTIONS.find(a=>a.id===id)?.label).join(' + ');
   const nutBadge=G.sponsors.nutricion
-    ? ' · <span style="color:var(--pos);cursor:pointer;text-decoration:underline dotted" onclick="toggleNutTooltip()">sponsor nutrición +20% ⓘ</span>'
+    ? ' · <span style="cursor:pointer;text-decoration:underline dotted" onclick="toggleNutTooltip()">sponsor nutrición <span class="pz-mas">+20 %</span> ⓘ</span>'
     : '';
   const nutGel=Math.round(20*1.2);
   const nutSolid=Math.round(35*1.2);
@@ -757,46 +751,37 @@ function renderAid(){
   const dropItems=(G.dropbagItems||[]).filter(id=>!G.dropbagUsed?.includes(id));
   const isDropbagPoint=race&&race.km>=40&&dropItems.length>0&&!G.dropbagShown&&_racePct>=0.35&&_racePct<=0.72;
   if(isDropbagPoint) G.dropbagShown=true;
-  el.innerHTML=`
-    ${topBar()}${progBar()}${raceStats()}
+  // Paso 6 de la dirección visual (2026-10-30): tipo Decisión con cabecera de carrera; hasta
+  // dos cosas como opciones múltiples con casilla. Sin hex.
+  const crit=runnerCritState().critCount;
+  const scaledAid=getLoadWarningMsg(getBodyLoad());
+  const abLabel=crit>=1&&scaledAid.msg?scaledAid.msg:crit>=2?'Al límite — retirarse aquí es lo sensato':crit===1?'Al límite — ¿seguir o retirarse?':'Retirarse en este avituallamiento';
+  el.innerHTML=`<div class="pz">
+    <div class="pz-cab-carrera"><div class="pz-cab-fila"><span class="pz-cab-nombre">${esc(race?.name||'')} · avituallamiento · ${Math.round(_doneKm)} de ${Math.round(_totalKm)} km</span><span class="pz-cab-dato">${fmt(G.time)}</span></div></div>
+    ${raceStats()}
     ${liveClassPanel()}
-    ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span style="color:${G.rivalRadio.delta>0?'var(--pos)':'var(--neg)'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
-    <p style="font-size:15px;font-weight:600;margin-bottom:2px">Avituallamiento</p>
-    <p style="font-size:13px;color:var(--ink3);margin-bottom:12px">Hasta 2 cosas · ${remaining} restante${remaining!==1?'s':''}${nutBadge}</p>
-    <div id="nut-tooltip" style="display:none;background:var(--soft);border:1px solid var(--line2);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--pos-i);margin-bottom:12px">
-      Tu sponsor de nutrición mejora la eficacia de los geles y la comida sólida un 20%. Gel: +${nutGel} energía (en vez de +20). Comida sólida: +${nutSolid} energía (en vez de +35).
-    </div>
+    ${G.rivalRadio?`<div class="race-radio">📻 ${G.rivalRadio.txt} <span class="${G.rivalRadio.delta>0?'pz-mas':'pz-menos'}">${G.rivalRadio.delta>0?'+':'−'}${fmt(Math.abs(G.rivalRadio.delta))}</span></div>`:''}
+    <div class="pz-titulo" style="font-size:22px">Avituallamiento</div>
+    <p class="pz-sub">Hasta 2 cosas · te ${remaining===1?'queda':'quedan'} ${remaining}${nutBadge}</p>
+    <div id="nut-tooltip" class="pz-consejo" style="display:none">Tu sponsor de nutrición mejora la eficacia de los geles y la comida sólida un 20 %. Gel: +${nutGel} energía (en vez de +20). Comida sólida: +${nutSolid} energía (en vez de +35).</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
     ${AID_OPTIONS.map(a=>{
       const isSel=sel.includes(a.id);
       const disabled=!isSel&&remaining===0;
-      return `<div class="aid-row ${disabled?'disabled':''} ${isSel?'sel-aid':''}" onclick="${disabled?'':'toggleAid(\''+a.id+'\')'}">
-        <div>
-          <div class="aid-name" style="color:${a.col}">${a.label}${isSel?' ✓':''}</div>
-          <div class="aid-effect">${a.efFn(nb)}</div>
-        </div>
-        <span class="aid-time">${a.timeCost>0?'+'+a.timeCost+' seg':'+0 seg'}</span>
+      return `<div class="pz-fila" style="cursor:${disabled?'default':'pointer'};${disabled?'color:var(--ink3)':''}" ${disabled?'':`onclick="toggleAid('${a.id}')"`}>
+        <input type="checkbox" class="pz-casilla" style="pointer-events:none" ${isSel?'checked':''} ${disabled?'disabled':''} tabindex="-1" aria-hidden="true">
+        <span class="pz-fila-txt"><b>${a.label}</b><div class="pz-efectos">${a.efFn(nb)}</div></span>
+        <span class="pz-fila-dato">+${a.timeCost>0?a.timeCost:0} s</span>
       </div>`;}).join('')}
-    ${isDropbagPoint&&dropItems.length>0?`
-    <div style="margin-top:10px;padding:10px 12px;background:var(--soft);border-radius:8px;border:1px solid var(--line2)">
-      <div style="font-size:13px;font-weight:600;color:var(--pos-i);margin-bottom:6px">🎒 Tu dropbag está aquí</div>
-      ${dropItems.map(id=>{
-        const d=DROPBAG_OPTIONS.find(x=>x.id===id);
-        if(!d)return '';
-        return `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--pos-i);padding:3px 0">
-          <span>${d.label}</span>
-          <button class="secondary" style="font-size:12px;padding:2px 8px" onclick="useDropbag('${id}')">Usar</button>
-        </div>`;}).join('')}
+    </div>
+    ${isDropbagPoint&&dropItems.length>0?`<div class="pz-tarjeta" style="border-color:var(--acc)">
+      <b>🎒 Tu dropbag está aquí</b>
+      ${dropItems.map(id=>{const d=DROPBAG_OPTIONS.find(x=>x.id===id);if(!d)return '';
+        return `<div class="pz-fila"><span class="pz-fila-txt">${d.label}</span><button class="pz-btn sec" style="width:auto;padding:6px 12px" onclick="useDropbag('${id}')">Usar</button></div>`;}).join('')}
     </div>`:''}
-    <button class="main" style="margin-top:8px" onclick="confirmAid()">Continuar — ${selLabel} →</button>
-    ${(()=>{
-      const {critCount}=runnerCritState();
-      const scaledAid=getLoadWarningMsg(getBodyLoad());
-      const col=critCount>=2?'#c0392b':critCount===1?'#c07a10':'#bbb';
-      const fallbackLabel=critCount>=2?'⚠ Al límite — retirarse aquí es lo sensato':critCount===1?'Al límite — ¿seguir o retirarse?':'Retirarse en este avituallamiento';
-      const label=critCount>=1&&scaledAid.msg?scaledAid.msg:fallbackLabel;
-      return `<button class="abandon-btn" style="margin-top:6px;border-color:${col};color:${col};background:${critCount>=2?'var(--soft)':critCount===1?'#fff9f0':'var(--soft)'};font-size:13px;font-weight:${critCount>=1?'600':'400'}" onclick="doAbandon()">${label}</button>`;
-    })()}
-    `;
+    <button class="pz-btn" style="margin-top:8px" onclick="confirmAid()">Continuar — ${selLabel} →</button>
+    <button class="abandon-btn" style="margin-top:6px;font-size:13px;${crit>=1?'font-weight:600':'color:var(--ink3)'}" onclick="doAbandon()">${abLabel}</button>
+  </div>`;
 }
 function calcPaceCosts(p,seg,paceLog){
   const recentPaces=paceLog.slice(-4);

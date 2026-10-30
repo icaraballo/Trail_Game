@@ -898,67 +898,54 @@ window.setVacQ=(q,days)=>{
 };
 
 // ── SEASON START ───────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Hub de modo (§ 1): estado clave, la
+// decisión del periodo (objetivo de temporada) y la navegación en lista. Sin hex.
 function renderSeasonStart(){
   const el=$main();
   const wo=WORK_OPTIONS.find(o=>o.pct===currentWorkPct()); // T22 (v89)
   const net=monthlyNet();
   const showObjectives=!G.yearObjective||G._yearObjectiveRewardPaid; // Se vuelve a ofrecer cada vez que se cobra el objetivo actual
-  
-  el.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
-      <h2>Temporada ${G.year}</h2>
-      <span style="font-size:12px;color:var(--ink3);padding-top:5px">${G.ranking<900?'Ranking #'+G.ranking:'Sin ranking'}</span>
+  const nav=(icon,txt,sub,click)=>`<div class="pz-fila navega" onclick="${click}"><span style="font-size:18px">${icon}</span><span class="pz-fila-txt"><b>${txt}</b>${sub?`<div class="pz-efectos">${sub}</div>`:''}</span></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('temporada')}${modeLabelOf(G.gameMode)}${G.gameMode==='expres'?' · año '+G.year+'/3':''}${G.carreraVida?' · '+(PHASE_LABEL[G.lifecyclePhase]||PHASE_LABEL.runner):''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="pz-titulo">Temporada ${G.year}</div><span class="pz-efectos">${G.ranking<900?'Ranking <span class="pz-num">#'+G.ranking+'</span>':'Sin ranking'}</span></div>
+    <p class="pz-sub">${esc(G.runner.name||'Corredor')} · ${G.runner.specialty}${G.runner.age?' · '+G.runner.age+' años':''}</p>
+
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><div class="pz-label">Ahorros</div><div class="pz-num" style="font-size:20px">${fmtEur(G.money)}</div></div>
+        <div><div class="pz-label">Neto mensual</div><div class="${net>=0?'pz-mas':'pz-menos'}" style="font-size:20px">${fmtEur(net,true)}</div></div>
+        <div><div class="pz-label">Entreno</div><div class="pz-num" style="font-size:20px">${wo?.trainingH||5} h/sem</div></div>
+      </div>
+      <div class="pz-linea">${currentWorkPct()===100?`<span class="pz-diag ojo">Jornada completa — solo ${wo?.trainingH} h/sem de entrenamiento. Los bloques solo serán un ${Math.round(effForWork()*100)} % efectivos.</span>`:
+        currentWorkPct()===0?`<span class="pz-diag mas">Profesional — entrenamiento completo. Asegúrate de que los ingresos cubran gastos.</span>`:
+        `<span class="pz-diag">${wo?.label} — ${wo?.trainingH} h/sem de entrenamiento. Eficiencia de bloque: ${Math.round(effForWork()*100)} %.</span>`}</div>
+      ${G.yearObjective&&!showObjectives?`<div class="pz-linea"><span class="pz-diag">Objetivo: <b>${SEASON_OBJECTIVES.find(o=>o.id===G.yearObjective)?.label||'—'}</b></span></div>`:''}
     </div>
-    <p class="sub">${esc(G.runner.name||'Corredor')} · ${G.runner.specialty} · ${G.runner.age?G.runner.age+' años · ':''}<span style="font-size:12px;padding:1px 7px;border-radius:4px;background:${modeInfo(G.gameMode).bg};color:${modeInfo(G.gameMode).fg}">${modeLabelOf(G.gameMode)}</span>${G.gameMode==='expres'?` <span style="font-size:12px;color:var(--avi);font-weight:600">Año ${G.year}/3</span>`:''}${G.carreraVida?` <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:#EEEDFE;color:#534AB7;font-weight:600">${PHASE_LABEL[G.lifecyclePhase]||PHASE_LABEL.runner}</span>`:''}</p>
-    
-    ${showObjectives?`
-    <div style="background:var(--soft);border:1.5px solid var(--ink);border-radius:12px;padding:14px 16px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Elige tu objetivo de temporada</div>
-      ${SEASON_OBJECTIVES.map(obj=>`<div class="work-card" style="margin-bottom:8px" onclick="selectYearObjective('${obj.id}')">
-        <div style="flex:1">
-          <div class="card-title">${obj.label}</div>
-          <div class="card-sub">${obj.desc}</div>
-        </div>
-        <div style="font-size:12px;color:var(--pos);font-weight:600;flex-shrink:0;margin-left:10px">+€${obj.reward}</div>
-      </div>`).join('')}
-    </div>
-    `:''}
-    
-    ${G.yearObjective?`<div class="note">Objetivo: ${SEASON_OBJECTIVES.find(o=>o.id===G.yearObjective)?.label||'—'}</div>`:''}
-    
-    <div class="stat-grid">
-      <div class="stat"><div class="stat-label">Ahorros</div><div class="stat-val">€${G.money}</div></div>
-      <div class="stat"><div class="stat-label">Neto mensual</div><div class="stat-val" style="color:${net>=0?'var(--pos)':'var(--neg)'}">${net>=0?'+':''}€${net}</div></div>
-      <div class="stat"><div class="stat-label">Entreno</div><div class="stat-val">${wo?.trainingH||5}h/sem</div></div>
-    </div>
-    ${currentWorkPct()===100?`<div class="warn">Jornada completa — solo ${wo?.trainingH}h/sem de entrenamiento. Los bloques solo serán un ${Math.round(effForWork()*100)}% efectivos.</div>`:
-      currentWorkPct()===0?`<div class="note">Profesional — entrenamiento completo. Asegúrate de que los ingresos cubran gastos.</div>`:
-      `<div class="note">${wo?.label} — ${wo?.trainingH}h/sem de entrenamiento. Eficiencia de bloque: ${Math.round(effForWork()*100)}%.</div>`}
-    <div class="card" style="margin-bottom:14px">
-      <div class="sec-title-sm">Plan de jornada laboral por trimestre</div>
+
+    ${showObjectives?`<div class="pz-label" style="margin:14px 0 6px">Elige tu objetivo de temporada</div>
+      ${SEASON_OBJECTIVES.map(obj=>`<button class="pz-opcion${G.yearObjective===obj.id?' sel':''}" onclick="selectYearObjective('${obj.id}')"><b>${obj.label}</b><div class="pz-efectos">${obj.desc} · premio <span class="pz-mas">+€${obj.reward}</span></div></button>`).join('')}`:''}
+
+    <div class="pz-label" style="margin:14px 0 6px">Jornada por trimestre</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
       ${[1,2,3,4].map(q=>{
         const wo2=WORK_OPTIONS.find(o=>o.pct===G.workByQuarter[q]);
         const qRaces=G.selectedRaces.filter(r=>r.quarter===q);
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
-          <div>
-            <span style="font-size:13px;font-weight:600">${{1:'Q1',2:'Q2',3:'Q3',4:'Q4'}[q]}</span>
-            <span style="font-size:12px;color:var(--color-text-secondary);margin-left:8px">${wo2?.label||'—'}</span>
-            ${qRaces.length>0?`<span style="font-size:12px;color:var(--pos);margin-left:6px">${qRaces.length} carrera${qRaces.length>1?'s':''}</span>`:''}
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:12px;color:var(--cuerpo)">${wo2?.trainingH||5}h/sem</span>
-            <span style="font-size:12px;cursor:pointer;color:var(--ink3)" onclick="G.currentQuarter=${q};G.screen='workSetup';render()">✎</span>
-          </div>
-        </div>`;}).join('')}
+        return `<div class="pz-fila navega" onclick="G.currentQuarter=${q};G.screen='workSetup';render()"><span class="pz-num">Q${q}</span><span class="pz-fila-txt">${wo2?.label||'—'}${qRaces.length>0?` <span class="pz-efectos">· ${qRaces.length} carrera${qRaces.length>1?'s':''}</span>`:''}</span><span class="pz-fila-dato">${wo2?.trainingH||5} h/sem</span></div>`;}).join('')}
     </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="sec-title-sm">Tus stats actuales</div>
+
+    <div class="pz-tarjeta">
+      <div class="pz-label" style="margin-bottom:8px">Tus stats</div>
       ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}
     </div>
-    <button class="main" onclick="G.currentQuarter=1;G.screen='workSetup';render()">Planificar jornada laboral →</button>
-    <button class="main" onclick="G.screen='clubSetup';render()" style="margin-top:6px">${G.club&&G.club.id!=='none'?'🏃 Club: '+G.club.name+' →':'🏃 Unirse a un club →'}</button>
-    <button class="main" onclick="G.screen='circuits';render()" style="margin-top:6px">Unirse a circuitos / ligas →</button>
-    <button class="main" onclick="G.screen='calendar';autoSave();render()" style="margin-top:6px">Planificar calendario →</button>`;
+
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${nav('🗓','Planificar jornada laboral','',"G.currentQuarter=1;G.screen='workSetup';render()")}
+      ${nav('🏃',G.club&&G.club.id!=='none'?'Club: '+esc(G.club.name):'Unirse a un club','',"G.screen='clubSetup';render()")}
+      ${nav('🏆','Circuitos y ligas','',"G.screen='circuits';render()")}
+    </div>
+    <button class="pz-btn" onclick="G.screen='calendar';autoSave();render()">Planificar calendario →</button>
+  </div>`;
 }
 
 // ── CALENDAR ───────────────────────────
@@ -1057,36 +1044,31 @@ window.toggleSpecQ=q=>{
 };
 
 // ── SPONSORS ───────────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Entreno» (§ 2): una
+// opción por categoría; objetivo y penalización como efectos en línea; tier en escala de
+// grises; bloqueados con su motivo. Sin hex.
 function renderSponsors(){
   const el=$main();
   const cats=['zapatillas','ropa','nutricion','tecnologia'];
   const catLabel={zapatillas:'Zapatillas',ropa:'Ropa',nutricion:'Nutrición',tecnologia:'Tecnología GPS'};
   const tierLabel=TIER_LABEL_SPONSOR;
-  const tierColor=TIER_COLOR_SPONSOR;
-
-  // Filter sponsors available this year and ranking
   const avail=SPONSORS_DB.filter(s=>{
     if(s.reqYear&&G.year<s.reqYear)return false;
     if(s.reqRanking&&G.ranking>s.reqRanking)return false;
     return true;
   });
   const locked=SPONSORS_DB.filter(s=>!avail.includes(s));
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-dinero">${icono('finanzas')}Dinero · año ${G.year}</div>
+    <div class="pz-titulo">Patrocinios <button class="tip-btn" onclick="showTip('Patrocinios','Cada sponsor tiene un <strong>objetivo</strong> que cumplir al final del contrato (victorias, ranking, carreras completadas). Si no lo cumples pagas una <strong>penalización</strong> del porcentaje indicado sobre tu salario anual.<br><br>Romper el contrato antes de tiempo cuesta el <strong>40% del valor restante</strong>. Los contratos de varios años pagan más pero el compromiso es mayor.')">ⓘ</button></div>
+    <p class="pz-sub">Ingresos actuales <span class="pz-mas">+€${sponsorAnnual()}/año</span></p>
 
-  el.innerHTML=`
-    <h2>Patrocinios <button class="tip-btn" onclick="showTip('Patrocinios','Cada sponsor tiene un <strong>objetivo</strong> que cumplir al final del contrato (victorias, ranking, carreras completadas). Si no lo cumples pagas una <strong>penalización</strong> del porcentaje indicado sobre tu salario anual.<br><br>Romper el contrato antes de tiempo cuesta el <strong>40% del valor restante</strong>. Los contratos de varios años pagan más pero el compromiso es mayor.')">ⓘ</button></h2>
-    <p class="sub">Año ${G.year} · Ingresos actuales: <strong style="color:var(--pos)">+€${sponsorAnnual()}/año</strong></p>
-
-    ${G.sponsorPenalties&&G.sponsorPenalties.length>0?`
-    <div class="danger" style="margin-bottom:14px">
-      <div style="font-weight:600;margin-bottom:6px">Penalizaciones por incumplimiento</div>
-      ${G.sponsorPenalties.map(p=>`<div style="font-size:13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span>${p.name}</span>
-        <span style="font-weight:600">-€${p.amount}
-          <button class="secondary" style="font-size:12px;padding:2px 8px;margin-left:8px" onclick="payPenalty('${p.id}')">Pagar</button>
-          <button class="secondary" style="font-size:12px;padding:2px 8px;margin-left:4px;border-color:#c07a10;color:var(--avi)" onclick="negotiatePenalty('${p.id}')">Negociar</button>
-        </span>
-      </div>`).join('')}
-      <div style="font-size:12px;color:var(--avi);margin-top:6px">Negociar rebaja la sanción al 40% si aceptan (${Math.round(penaltyNegotiationChance()*100)}% de éxito con tu reputación actual). Si se niegan, pagas el total y pierdes seguidores. Sin resolver, se te cobra de oficio al cerrar la temporada que viene.</div>
+    ${G.sponsorPenalties&&G.sponsorPenalties.length>0?`<div class="pz-tarjeta">
+      <div class="pz-diag menos" style="margin-bottom:6px"><b>Penalizaciones por incumplimiento</b></div>
+      ${G.sponsorPenalties.map(p=>`<div class="pz-fila"><span class="pz-fila-txt">${esc(p.name)}</span><span class="pz-menos">−€${p.amount}</span>
+        <button class="pz-btn sec" style="width:auto;padding:6px 10px" onclick="payPenalty('${p.id}')">Pagar</button>
+        <button class="pz-btn sec" style="width:auto;padding:6px 10px" onclick="negotiatePenalty('${p.id}')">Negociar</button></div>`).join('')}
+      <div class="pz-efectos" style="margin-top:6px">Negociar rebaja la sanción al 40 % si aceptan (${Math.round(penaltyNegotiationChance()*100)} % de éxito con tu reputación actual). Si se niegan, pagas el total y pierdes seguidores. Sin resolver, se te cobra de oficio al cerrar la temporada que viene.</div>
     </div>`:''}
 
     ${cats.map(cat=>{
@@ -1094,75 +1076,34 @@ function renderSponsors(){
       const cur=G.sponsors[cat];
       const lockedOffers=locked.filter(s=>s.cat===cat).slice(0,2);
       const objMet=cur?checkSponsorObjective(cur):null;
-
-      return `<div style="margin-bottom:20px">
-        <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">${catLabel[cat]}</div>
-
-        ${cur?`<div style="padding:10px 12px;background:var(--soft);border-radius:8px;border:1px solid #4a90d9;margin-bottom:10px;font-size:12px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-            <div style="flex:1">
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
-                <span style="font-weight:700;color:var(--cuerpo)">${esc(cur.name)}</span>
-                <span style="font-size:11px;padding:1px 5px;border-radius:4px;background:${tierColor[cur.tier]||'#888'}22;color:${tierColor[cur.tier]||'var(--ink3)'}">${tierLabel[cur.tier]||'?'}</span>
-                <span style="color:${objMet?'var(--pos)':'var(--neg)'};font-weight:600;font-size:11px">${objMet?'✓ Objetivo cumplido':'⚠ Pendiente'}</span>
-              </div>
-              <div style="color:var(--ink3)">Obj: ${cur.objective} · <strong>${cur.duration}</strong> temp. restante${cur.duration!==1?'s':''}</div>
-              ${!objMet?`<div style="color:var(--neg);margin-top:2px">Penalización si no cumples: €${Math.round(cur.salary*cur.penaltyPct)}</div>`:''}
-              ${followersSponsorMult()>1?`<div style="font-size:12px;color:var(--cuerpo);margin-top:2px">📱 +${Math.round((followersSponsorMult()-1)*100)}% por reputación</div>`:''}
+      return `<div class="pz-label" style="margin:16px 0 6px">${catLabel[cat]}</div>
+        ${cur?`<div class="pz-tarjeta" style="border-color:var(--acc);border-width:1.5px">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+            <div class="pz-fila-txt">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${esc(cur.name)}</b>${nivelTag(cur.tier,tierLabel[cur.tier]||'?')}</div>
+              <div class="pz-diag ${objMet?'mas':'ojo'}">${objMet?'Objetivo cumplido':'Objetivo pendiente'}: ${cur.objective}</div>
+              <div class="pz-efectos">${cur.duration} temporada${cur.duration!==1?'s':''} restante${cur.duration!==1?'s':''}${!objMet?` · si no cumples, <span class="pz-menos">−€${Math.round(cur.salary*cur.penaltyPct)}</span>`:''}${followersSponsorMult()>1?` · 📱 <span class="pz-mas">+${Math.round((followersSponsorMult()-1)*100)} %</span> por reputación`:''}</div>
             </div>
-            <button class="secondary" onclick="breakSponsorContract('${cat}')" style="font-size:11px;padding:5px 9px;flex-shrink:0;color:var(--neg);border-color:#c0392b;background:#fff8f0;text-align:center;line-height:1.3">Romper<br><span style="font-size:10px">-€${Math.round(cur.salary*cur.duration*0.4)}</span></button>
+            <button class="pz-btn sec" style="width:auto;padding:6px 10px;line-height:1.3" onclick="breakSponsorContract('${cat}')">Romper<br><span class="pz-menos" style="font-size:12px">−€${Math.round(cur.salary*cur.duration*0.4)}</span></button>
           </div>
         </div>
-        ${offers.filter(sp=>sp.id!==cur.id).length>0?`<div style="font-size:12px;color:var(--ink3);font-style:italic;margin-bottom:6px">Otras ofertas (rompe el contrato para cambiar):</div>
-        ${offers.filter(sp=>sp.id!==cur.id).map(sp=>`<div style="background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:6px;opacity:0.5">
-          <div class="flex-between-center">
-            <div>
-              <span style="font-size:13px;font-weight:600;color:var(--ink3)">${sp.name}</span>
-              <span style="font-size:11px;font-weight:600;padding:1px 5px;border-radius:4px;background:${tierColor[sp.tier]}22;color:${tierColor[sp.tier]};margin-left:5px">${tierLabel[sp.tier]}</span>
-              ${sp.tier>cur.tier?`<span style="font-size:11px;color:var(--avi);font-weight:700;margin-left:4px">⬆ Upgrade</span>`:''}
-            </div>
-            <span style="font-size:13px;font-weight:600;color:var(--ink3)">+€${sp.salary}/año</span>
-          </div>
-        </div>`).join('')}`:''}`:''
-        }
-        ${!cur?offers.map(sp=>{
-          const isPending=G._pendingSponsors?.[cat]?.id===sp.id;
-          return `<div class="sponsor-card ${isPending?'sel-aid':''}" onclick="selectSponsor('${cat}','${sp.id}')" style="${isPending?'border:2px solid #4a90d9;background:var(--soft);':''}">
-            <div class="flex-between">
-              <div style="flex:1">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-                  <span class="card-title">${sp.name}</span>
-                  <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[sp.tier]}22;color:${tierColor[sp.tier]}">${tierLabel[sp.tier]}</span>
-                  ${isPending?`<span style="font-size:11px;font-weight:700;color:var(--cuerpo)">● Seleccionado</span>`:''}
-                </div>
-                <div style="font-size:12px;color:var(--ink3)">${sp.bonus}</div>
-                <div style="font-size:12px;color:var(--ink3);margin-top:2px">Obj: ${sp.objective}</div>
-                ${sp.duration>1?`<div style="font-size:12px;color:var(--cuerpo);margin-top:1px">Contrato ${sp.duration} temporadas</div>`:''}
-              </div>
-              <div class="right-col">
-                <div style="font-size:14px;font-weight:600;color:var(--pos)">+€${sp.salary}</div>
-                <div style="font-size:12px;color:var(--ink3)">/año</div>
-                <div class="text-warn">Penaliz. ${Math.round(sp.penaltyPct*100)}%</div>
-              </div>
-            </div>
-          </div>`;}).join(''):''}
-
-        ${lockedOffers.length>0?`
-          <div style="margin-top:6px">
-            ${lockedOffers.slice(0,1).map(sp=>`<div style="padding:8px 12px;background:var(--soft);border-radius:8px;border:0.5px dashed var(--line);font-size:12px;color:var(--ink3);display:flex;justify-content:space-between">
-              <span>🔒 ${sp.name} · ${tierLabel[sp.tier]}</span>
-              <span>${sp.reqYear?`Año ${sp.reqYear}`:''} ${sp.reqRanking?`· Ranking #${sp.reqRanking}`:''}</span>
-            </div>`).join('')}
-          </div>`:''}
-
-        ${offers.length===0&&lockedOffers.length===0?`<div style="font-size:13px;color:var(--ink3);padding:6px 0">Sin ofertas esta temporada.</div>`:''}
-      </div>`;}).join('')}
+        ${offers.filter(x=>x.id!==cur.id).length>0?`<div class="pz-efectos" style="margin-bottom:6px">Otras ofertas (rompe el contrato para cambiar):</div>
+        ${offers.filter(x=>x.id!==cur.id).map(x=>`<div class="pz-opcion pz-bloqueado"><span style="float:right" class="pz-num">€${x.salary}/año</span><b>${x.name}</b> ${nivelTag(x.tier,tierLabel[x.tier])}${x.tier>cur.tier?' <span class="pz-chip mas" style="margin:0">⬆ Mejora</span>':''}</div>`).join('')}`:''}`:''}
+        ${!cur?offers.map(x=>{
+          const isPending=G._pendingSponsors?.[cat]?.id===x.id;
+          return `<button class="pz-opcion${isPending?' sel':''}" onclick="selectSponsor('${cat}','${x.id}')">
+            <span style="float:right;text-align:right"><span class="pz-num" style="font-size:17px">€${x.salary}</span><div class="pz-efectos">/año</div></span>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${x.name}</b>${nivelTag(x.tier,tierLabel[x.tier])}</div>
+            <div class="pz-efectos">${x.bonus}</div>
+            <div class="pz-efectos">Objetivo: ${x.objective}${x.duration>1?` · contrato de ${x.duration} temporadas`:''} · penalización <span class="pz-menos">${Math.round(x.penaltyPct*100)} %</span></div>
+          </button>`;}).join(''):''}
+        ${lockedOffers.slice(0,1).map(x=>`<div class="pz-opcion pz-bloqueado"><b>${x.name}</b> ${nivelTag(x.tier,tierLabel[x.tier])}${motivoHTML([x.reqYear?'Disponible desde el año '+x.reqYear:'',x.reqRanking?'Ranking #'+x.reqRanking:''].filter(Boolean).join(' · '))}</div>`).join('')}
+        ${offers.length===0&&lockedOffers.length===0?`<div class="pz-efectos">Sin ofertas esta temporada.</div>`:''}`;}).join('')}
     ${Object.keys(G._pendingSponsors||{}).length>0?`
-    <div class="warn" style="margin-bottom:10px">
-      <strong>Tienes selecciones sin confirmar.</strong> Haz clic en un sponsor seleccionado para quitarlo, o confirma para firmar los contratos.
-    </div>
-    <button class="main" onclick="confirmSponsors()" style="background:#2d7a2d;border-color:#2d7a2d;color:var(--card);margin-bottom:8px">✓ Confirmar patrocinios seleccionados</button>`:''}
-    <button class="main" onclick="G._pendingSponsors={};G.screen='training';autoSave();render()">Bloque de entrenamiento →</button>`;
+    <div class="pz-diag ojo" style="margin:12px 0"><span><b>Tienes selecciones sin confirmar.</b> Toca un sponsor elegido para quitarlo, o confirma para firmar los contratos.</span></div>
+    <button class="pz-btn" onclick="confirmSponsors()">Confirmar patrocinios</button>`:''}
+    <button class="pz-btn sec" onclick="G._pendingSponsors={};G.screen='training';autoSave();render()">Bloque de entrenamiento →</button>
+  </div>`;
 }
 
 window.payPenalty=id=>{

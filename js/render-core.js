@@ -157,10 +157,11 @@ function consejoHTML(id,negrita,resto){
 }
 // Nivel de carrera en escala de grises (§ 2 *Terreno*): local con borde, regional claro,
 // nacional y élite oscuros. Más prestigio, más oscuro.
-function nivelTag(tier){
+function nivelTag(tier,label){
+  if(typeof tier==='number')tier=['local','local','regional','nacional','elite'][tier]||'elite';   // tiers 1-4 (sponsors)
   const st={local:'border:1px solid var(--line2);color:var(--ink2)',regional:'background:var(--tier-regional);color:var(--ink)',
     nacional:'background:var(--tier-nacional);color:var(--card)',elite:'background:var(--tier-elite);color:var(--card)'}[tier]||'border:1px solid var(--line2)';
-  return `<span class="pz-chip" style="${st};margin:0">${TIER_LABEL_RACE[tier]||''}</span>`;
+  return `<span class="pz-chip" style="${st};margin:0">${label||TIER_LABEL_RACE[tier]||''}</span>`;
 }
 function motivoHTML(txt){return `<div class="pz-motivo">${icono('candado')}${txt}</div>`;}
 function icono(k){return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONOS[k]||''}</svg>`;}
