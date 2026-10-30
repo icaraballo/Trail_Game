@@ -1126,23 +1126,20 @@ function debtPanel(){
   const cfg=modeCfg().bankruptcy||{interest:0.12,minPay:0.25};
   const frozen=!!G.forcedFullTime;
   const nextInt=frozen?0:Math.round(G.debt*(cfg.interest||0.12));
-  const btn=(lbl,val,dis)=>`<button class="main" style="margin-top:0;${dis?'opacity:.4;pointer-events:none':''}" onclick="doPayDebt(${val})">${lbl}</button>`;
-  return `
-    <div class="danger" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <strong>Deuda pendiente</strong><strong>€${G.debt}</strong>
-      </div>
-      <div style="font-size:12px;margin-top:4px">
-        ${frozen
+  // Paso 6 de la dirección visual (2026-10-30): la deuda como tarjeta de estado con la cifra y
+  // un diagnóstico, y la amortización como botones secundarios. Sin hex.
+  const btn=(lbl,val,dis)=>`<button class="pz-btn sec" style="margin:0" ${dis?'disabled':''} onclick="doPayDebt(${val})">${lbl}</button>`;
+  return `<div class="pz-tarjeta pz">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="pz-label">Deuda pendiente</span><span class="pz-num pz-menos" style="font-size:22px">${fmtEur(-G.debt)}</span></div>
+      <div class="pz-diag ${frozen?'ojo':'menos'}">${frozen
           ?'Intereses congelados mientras estés a jornada completa. Todo lo que ganes va aquí.'
-          :`Al cerrar la temporada se amortiza el ${Math.round((cfg.minPay??0.25)*100)}% de tu saldo y el resto genera <strong>€${nextInt}</strong> de intereses (${Math.round((cfg.interest||0.12)*100)}%).`}
-      </div>
-    </div>
-    ${frozen?'':`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px">
-      ${btn('−€100',100,(G.money||0)<100)}
-      ${btn('−€500',500,(G.money||0)<500)}
-      ${btn('Todo',"'all'",(G.money||0)<=0)}
-    </div>`}`;
+          :`Al cerrar la temporada se amortiza el ${Math.round((cfg.minPay??0.25)*100)} % de tu saldo y el resto genera <span class="pz-num">€${nextInt}</span> de intereses (${Math.round((cfg.interest||0.12)*100)} %).`}</div>
+      ${frozen?'':`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+        ${btn('−€100',100,(G.money||0)<100)}
+        ${btn('−€500',500,(G.money||0)<500)}
+        ${btn('Todo',"'all'",(G.money||0)<=0)}
+      </div>`}
+    </div>`;
 }
 
 // T29 (v86) — escalón 2: vuelta forzosa a jornada completa.

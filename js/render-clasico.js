@@ -80,58 +80,37 @@ function inviteBadge(r){
   if(!ev&&!rep)return '';
   return `<span class="pz-chip mas" style="margin:0">📩 ${ev?'Invitación del organizador':'Invitación por reputación'}</span>`;
 }
+// Paso 6 de la dirección visual (2026-10-30): pestaña Calendario, tipo Lista (solo lectura):
+// trimestres en tarjeta, carreras en filas con casilla y nivel en grises. Sin hex.
 function renderCalendarTab(){
   const el=$main();
   const selIds=G.selectedRaces.map(r=>r.id);
   const specRaces=getSpecRaces();
   const qLabel={1:'Primer trimestre',2:'Segundo trimestre',3:'Tercer trimestre',4:'Cuarto trimestre'};
-  // uses global QUARTERS
-  const tierColor=TIER_COLOR_RACE;
-  const tierLabel=TIER_LABEL_RACE;
   const canAccess=canAccessRace;   // DS08 (v95)
-
-  // Calcula qué carreras dan puntos de circuito y cuántos
   function circuitBadge(raceId){
     for(const cid of G.joinedCircuits){
       const c=CIRCUITS_DB.find(x=>x.id===cid);
-      if(c&&c.raceIds.includes(raceId)){
-        const estPts=circuitPoints(3,15);
-        return `<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#c07a1022;color:var(--avi)">Liga · ~${estPts}pts</span>`;
-      }
+      if(c&&c.raceIds.includes(raceId))return `<span class="pz-chip" style="background:var(--soft);margin:0">Liga · ~${circuitPoints(3,15)} pts</span>`;
     }
     return '';
   }
-
   function calRaceRow(r){
     const isSel=selIds.includes(r.id);
     const isLocked=!canAccess(r);
     const isInvited=!!(G.repInvitations||[]).find(i=>i.id===r.id);
-    const cls=isSel?'sel':isLocked?'lock':'avail';
-    const badge=circuitBadge(r.id);
-    return `<div class="cal-race ${cls}">
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:1px">
-          <span class="cal-race-name">${r.name}</span>
-          <span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
-          ${badge}
-          ${r.spec?`<span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:#4a8a2a22;color:var(--pos)">★ ${r.spec}</span>`:''}
-          ${inviteBadge(r)}
-        </div>
-        <div class="cal-race-meta">${r.monthName} · ${r.type} · ${raceDesnivel(r)}${isInvited?' · <span style="color:#2d7a2a">ranking no requerido</span>':''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-        ${isSel?`<span style="font-size:12px;color:var(--pos);font-weight:600">✓</span>`:isLocked?`<span style="font-size:12px;color:var(--ink3)">🔒</span>`:''}
-        <div class="cal-dot" style="background:${isSel?'#4a8a2a':'#ddd'}"></div>
-      </div>
+    return `<div class="pz-fila${isLocked?' pz-bloqueado':''}" style="align-items:flex-start;border:none;border-top:1px solid var(--line)">
+      <input type="checkbox" class="pz-casilla" style="pointer-events:none;margin-top:2px" ${isSel?'checked':''} disabled tabindex="-1" aria-hidden="true">
+      <span class="pz-fila-txt"><span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><b>${esc(r.name)}</b>${nivelTag(r.tier)}${circuitBadge(r.id)}${r.spec?`<span class="pz-chip" style="margin:0;border:1px solid var(--acc)">★ ${r.spec}</span>`:''}${inviteBadge(r)}</span>
+        <div class="pz-efectos">${r.monthName} · ${r.type} · ${raceDesnivel(r)}${isInvited?' · ranking no requerido':''}</div>
+        ${isLocked?motivoHTML('Ranking #'+r.reqRanking+' requerido'):''}</span>
     </div>`;
   }
-
-  el.innerHTML=`
-    <h2>Calendario ${G.year}</h2>
-    <p class="sub">Tu temporada de un vistazo</p>
-    ${G.joinedCircuits.length>0?`<div style="font-size:12px;color:var(--avi);background:#c07a1010;border-radius:8px;padding:8px 12px;margin-bottom:12px">
-      🏆 Liga activa — las carreras marcadas con <strong>Liga · ~Xpts</strong> suman puntos al circuito
-    </div>`:''}
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('calendario')}Carrera · temporada ${G.year}</div>
+    <div class="pz-titulo">Calendario ${G.year}</div>
+    <p class="pz-sub">Tu temporada de un vistazo.</p>
+    ${G.joinedCircuits.length>0?`<div class="pz-diag" style="margin-bottom:12px">🏆 Liga activa — las carreras con «Liga» suman puntos al circuito</div>`:''}
     ${QUARTERS.map(q=>{
       const common=RACES_DB.filter(r=>r.quarter===q.n);
       const spec=specRaces.filter(r=>r.quarter===q.n);
@@ -139,30 +118,19 @@ function renderCalendarTab(){
       const qSel=allQ.filter(r=>selIds.includes(r.id)).length;
       const hasLeague=allQ.some(r=>G.joinedCircuits.some(cid=>CIRCUITS_DB.find(c=>c.id===cid)?.raceIds.includes(r.id)));
       const isOpen=(G.openQuarters?.tab||[]).includes(q.n);
-      return `
-        <div class="quarter-wrap">
-          <div class="quarter-toggle ${qSel>0?'has-sel':''}" onclick="toggleQTab(${q.n})">
-            <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]}
-              <span style="font-size:12px;font-weight:400;color:var(--ink3)"> · ${q.months}</span>
-            </span>
-            ${hasLeague?`<span style="font-size:12px;color:var(--avi);margin-right:6px">🏆</span>`:''}
-            ${qSel>0?`<span style="font-size:12px;color:var(--pos);font-weight:600;margin-right:6px">${qSel} ✓</span>`:''}
-            <span style="font-size:12px;color:var(--ink3);display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
-          </div>
-          <div class="quarter-content ${isOpen?'open':''}" onclick="event.stopPropagation()">
-            ${common.map(r=>calRaceRow(r)).join('')}
-            ${spec.length>0?`
-              <div style="font-size:12px;color:var(--pos);font-weight:600;padding:6px 2px 4px">★ Específicas de tu especialidad</div>
-              ${spec.map(r=>calRaceRow(r)).join('')}
-            `:''}
-          </div>
-        </div>`;}).join('')}
-    ${G.trainingBlock?`<div class="card" style="margin-top:8px">
-      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bloque de entrenamiento</div>
-      <div class="card-title">${G.trainingBlock.name}</div>
-      <div class="card-sub">${G.trainingBlock.desc}</div>
-    </div>`:
-    `<div style="font-size:13px;color:var(--ink3);text-align:center;padding:12px 0">Bloque de entrenamiento por elegir</div>`}`;
+      return `<div class="pz-tarjeta" style="padding:0;overflow:hidden">
+        <div class="pz-fila navega" style="padding:12px 14px;border:none;${qSel>0?'box-shadow:inset 3px 0 0 var(--acc)':''}" onclick="toggleQTab(${q.n})">
+          <span class="pz-fila-txt"><b>${qLabel[q.n]}</b> <span class="pz-efectos">· ${q.months}</span></span>
+          ${hasLeague?'<span>🏆</span>':''}${qSel>0?`<span class="pz-fila-dato">${qSel} ✓</span>`:''}
+        </div>
+        ${isOpen?`<div style="padding:0 14px 8px" onclick="event.stopPropagation()">
+          ${common.map(r=>calRaceRow(r)).join('')}
+          ${spec.length>0?`<div class="pz-label" style="padding:10px 0 2px">★ Específicas de tu especialidad</div>${spec.map(r=>calRaceRow(r)).join('')}`:''}
+        </div>`:''}
+      </div>`;}).join('')}
+    ${G.trainingBlock?`<div class="pz-tarjeta"><div class="pz-label">Bloque de entrenamiento</div><b>${G.trainingBlock.name}</b><div class="pz-efectos">${G.trainingBlock.desc}</div></div>`
+      :`<div class="pz-efectos" style="text-align:center;padding:12px 0">Bloque de entrenamiento por elegir</div>`}
+  </div>`;
 }
 
 window.toggleQTab=q=>{
@@ -195,94 +163,70 @@ function renderFinancesTab(){
   const savingsEnd=Math.max(0,G.money+netAfterRaces);
   const savingsPct=Math.min(100,Math.round(savingsEnd/(G.money+Math.abs(netAfterRaces)+1)*100));
 
-  // ── Sección Tienda Propia ──────────────
+  // Paso 6 de la dirección visual (2026-10-30): tipo Resumen, referencia «Finanzas» (§ 7):
+  // ahorros y proyección arriba, con su diagnóstico; las cuentas en filas. Sin hex.
+  const F=(txt,v)=>`<div class="pz-fila"><span class="pz-fila-txt">${txt}</span><span class="pz-fila-dato ${v>=0?'pz-mas':'pz-menos'}">${fmtEur(v,true)}</span></div>`;
+  const T=(txt,v)=>`<div class="pz-fila" style="font-weight:600"><span class="pz-fila-txt">${txt}</span><span class="pz-fila-dato ${v>=0?'pz-mas':'pz-menos'}" style="font-size:18px">${fmtEur(v,true)}</span></div>`;
+  const fin=G.money+netAfterRaces;
   const brandEligible=canLaunchBrand()&&G.gameMode!=='expres';
   const canHireEmployee=G.ownBrand&&!G.ownBrand.hasEmployee&&(G.year>=G.ownBrand.launched+2);
   let brandSection='';
   if(G.ownBrand){
     const yearsActive=G.year-G.ownBrand.launched;
-    brandSection=`
-    <div class="fin-section" style="border-color:#c07a10">
-      <div class="fin-title" style="color:var(--avi)">👟 Tu Marca — ${G.ownBrand.hasEmployee?'Consolidada':'Activa'}</div>
-      ${G.ownBrand.hasEmployee
-        ? `<div class="fin-row"><span>Ingresos brutos marca</span><span class="plus">+€1.300/mes</span></div>
-           <div class="fin-row"><span>Coste empleado</span><span class="minus">-€700/mes</span></div>
-           <div class="fin-row"><span>Neto marca</span><span class="plus">+€600/mes</span></div>
-           <div style="font-size:12px;color:var(--pos);margin-top:8px">✓ Empleado contratado — sin coste de horas de entrenamiento</div>`
-        : `<div class="fin-row"><span>Ingresos marca</span><span class="plus">+€300/mes</span></div>
-           <div style="font-size:12px;color:var(--avi);margin-top:8px">⏱ Consume 6h/semana de tu tiempo de entrenamiento</div>
-           ${canHireEmployee
-             ? `<button class="main" style="margin-top:10px;border-color:#4a8a2a;color:var(--pos)" onclick="doHireEmployee()">Contratar empleado — €700/mes · recuperas 6h entrenamiento</button>`
-             : `<div style="font-size:12px;color:var(--ink3);margin-top:6px">Podrás contratar empleado a partir del año ${(G.ownBrand.launched+2)}</div>`
-           }`
-      }
-      <div style="font-size:11px;color:var(--ink3);margin-top:6px">Marca lanzada en Año ${G.ownBrand.launched} · ${yearsActive} temporada${yearsActive!==1?'s':''} activa${yearsActive!==1?'s':''}</div>
+    brandSection=`<div class="pz-label" style="margin:14px 0 6px">👟 Tu marca — ${G.ownBrand.hasEmployee?'consolidada':'activa'}</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${G.ownBrand.hasEmployee?F('Ingresos brutos de la marca',1300)+F('Coste del empleado',-700)+T('Neto de la marca',600)
+        :F('Ingresos de la marca',300)}
+      <div class="pz-fila"><span class="pz-diag ${G.ownBrand.hasEmployee?'mas':'ojo'}">${G.ownBrand.hasEmployee?'Empleado contratado — sin coste de horas de entrenamiento':'Consume 6 h/semana de tu tiempo de entrenamiento'}</span></div>
+      ${!G.ownBrand.hasEmployee?(canHireEmployee?`<div style="padding:8px 0"><button class="pz-btn sec" onclick="doHireEmployee()">Contratar empleado — €700/mes · recuperas 6 h de entreno</button></div>`:`<div class="pz-fila">${motivoHTML('Podrás contratar empleado a partir del año '+(G.ownBrand.launched+2))}</div>`):''}
+      <div class="pz-efectos" style="padding:6px 0 10px">Marca lanzada el año ${G.ownBrand.launched} · ${yearsActive} temporada${yearsActive!==1?'s':''} activa${yearsActive!==1?'s':''}</div>
     </div>`;
   } else if(brandEligible){
-    brandSection=`
-    <div class="fin-section" style="border-color:var(--line);border-style:dashed">
-      <div class="fin-title">👟 Tu Propia Marca</div>
-      <div style="font-size:13px;color:var(--ink2);margin-bottom:10px">Desbloqueable ahora que tienes nombre en el circuito. Inversión inicial de €2.500 — genera €300/mes aunque consume 6h/semana de entrenamiento.</div>
-      <div style="font-size:12px;color:var(--ink3);margin-bottom:10px">A los 2 años puedes contratar un empleado (€700/mes) y recuperar las horas de entrenamiento. La marca seguirá generando sin esfuerzo.</div>
-      ${G.money>=2500
-        ? `<button class="main" style="border-color:#c07a10;color:var(--avi)" onclick="doLaunchBrand()">Lanzar mi marca — −€2.500 · +€300/mes</button>`
-        : `<button class="main" disabled>Lanzar mi marca (necesitas €${2500-G.money} más)</button>`
-      }
+    brandSection=`<div class="pz-opcion${G.money>=2500?'':' pz-bloqueado'}" style="margin-top:14px" ${G.money>=2500?'onclick="doLaunchBrand()"':''}>
+      <b>👟 Lanzar tu propia marca</b>
+      <div class="pz-efectos">Desbloqueable ahora que tienes nombre en el circuito. Inversión inicial de <span class="pz-num">€2.500</span> — genera <span class="pz-mas">+€300/mes</span> aunque consume 6 h/semana de entrenamiento.</div>
+      <div class="pz-efectos">A los 2 años puedes contratar un empleado (€700/mes) y recuperar las horas de entrenamiento.</div>
+      ${G.money>=2500?'':motivoHTML('Te faltan €'+(2500-G.money))}
     </div>`;
   }
-
-  el.innerHTML=`
-    <h2>Finanzas</h2>
-    <p class="sub">Temporada ${G.year} · ${esc(G.runner.name||'Corredor')}</p>
-    ${debtPanel()}
-    <div class="fin-section">
-      <div class="fin-title">Mensual</div>
-      ${workM>0?`<div class="fin-row"><span>Trabajo (${wo.label})</span><span class="plus">+€${workM}</span></div>`:''}
-      ${sponsorM>0?`<div class="fin-row"><span>Patrocinios</span><span class="plus">+€${sponsorM}</span></div>`:''}
-      ${brandM>0?`<div class="fin-row"><span>Tu marca 👟</span><span class="plus">+€${brandM}</span></div>`:''}
-      <div class="fin-row"><span>Gastos fijos de vida</span><span class="minus">-€${FIXED_COSTS.total}</span></div>
-      ${clubM>0?`<div class="fin-row"><span>Club (${G.club?.name})</span><span class="minus">-€${clubM}</span></div>`:''}
-      ${staffM>0?`<div class="fin-row"><span>Staff (fisio/entrenador/suplem.)</span><span class="minus">-€${staffM}</span></div>`:''}
-      <div class="fin-row tot"><span>Neto mensual</span><span class="${netM>=0?'plus':'minus'}">${netM>=0?'+':''}€${netM}</span></div>
-    </div>
-
-    <div class="fin-section">
-      <div class="fin-title">Proyección anual</div>
-      ${workA>0?`<div class="fin-row"><span>Ingresos trabajo</span><span class="plus">+€${workA}</span></div>`:''}
-      ${sponsorA>0?`<div class="fin-row"><span>Ingresos patrocinios</span><span class="plus">+€${sponsorA}</span></div>`:''}
-      ${brandA>0?`<div class="fin-row"><span>Tu marca (neto)</span><span class="plus">+€${brandA}</span></div>`:''}
-      <div class="fin-row"><span>Gastos fijos (12 meses)</span><span class="minus">-€${fixedA}</span></div>
-      ${clubA>0?`<div class="fin-row"><span>Club</span><span class="minus">-€${clubA}</span></div>`:''}
-      ${raceCosts>0?`<div class="fin-row"><span>Inscripciones carreras</span><span class="minus">-€${raceCosts}</span></div>`:''}
-      ${staffA>0?`<div class="fin-row"><span>Staff (12 meses)</span><span class="minus">-€${staffA}</span></div>`:''}
-      <div class="fin-row tot"><span>Resultado del año</span><span class="${netAfterRaces>=0?'plus':'minus'}">${netAfterRaces>=0?'+':''}€${netAfterRaces}</span></div>
-    </div>
-
-    <div class="fin-section">
-      <div class="fin-title">Ahorros</div>
-      <div class="fin-row"><span>Ahorros actuales</span><span style="font-weight:600">€${G.money}</span></div>
-      <div class="fin-row"><span>Previsión fin de temporada</span><span style="font-weight:600;color:${savingsEnd>=G.money?'var(--pos)':'var(--neg)'}">€${Math.max(0,G.money+netAfterRaces)}</span></div>
-      <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
-          <span>€0</span><span>Previsión: €${Math.max(0,G.money+netAfterRaces)}</span>
-        </div>
-        <div style="height:6px;background:var(--trk);border-radius:3px;overflow:hidden">
-          <div style="height:100%;width:${Math.min(100,Math.round(G.money/(G.money+Math.abs(netAfterRaces)+1)*100))}%;background:#4a90d9;border-radius:3px"></div>
-        </div>
-        <div style="height:6px;background:transparent;border-radius:3px;margin-top:2px;overflow:hidden">
-          <div style="height:100%;width:${Math.min(100,savingsPct)}%;background:${netAfterRaces>=0?'#4a8a2a':'#c0392b'};border-radius:3px"></div>
-        </div>
-        <div style="font-size:12px;color:var(--ink3);margin-top:4px">
-          <span style="color:var(--cuerpo)">■</span> Actuales &nbsp;
-          <span style="color:${netAfterRaces>=0?'var(--pos)':'var(--neg)'}">■</span> ${netAfterRaces>=0?'Proyectado':'Riesgo'}
-        </div>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-dinero">${icono('finanzas')}Dinero · temporada ${G.year}</div>
+    <div class="pz-titulo">Finanzas</div>
+    <p class="pz-sub">${esc(G.runner.name||'Corredor')}</p>
+    <div class="pz-tarjeta">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="pz-label">Ahorros</div><div class="pz-num" style="font-size:30px">${fmtEur(G.money)}</div></div>
+        <div><div class="pz-label">Al cerrar la temporada</div><div class="pz-num ${fin>=G.money?'pz-mas':'pz-menos'}" style="font-size:30px">${fmtEur(Math.max(0,fin))}</div></div>
       </div>
+      <div class="pz-barra" style="margin:10px 0 8px"><div class="pz-relleno${netAfterRaces<0?' menos':''}" style="width:${Math.min(100,savingsPct)}%;${netAfterRaces>=0?'background:var(--dinero)':''}"></div></div>
+      ${netAfterRaces<0?`<div class="pz-diag menos">Con la configuración actual perderás <span class="pz-num">€${Math.abs(netAfterRaces)}</span> esta temporada. Considera aumentar la jornada laboral o reducir gastos.</div>`
+        :netM>=0?`<div class="pz-diag mas">Vas bien. La temporada cierra con superávit. Puedes valorar reducir jornada laboral para entrenar más.</div>`
+        :`<div class="pz-diag ojo">El mes sale en negativo, aunque el año cierra en positivo.</div>`}
     </div>
-
+    ${debtPanel()}
+    <div class="pz-label" style="margin:14px 0 6px">Cada mes</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${workM>0?F(`Trabajo (${wo.label})`,workM):''}
+      ${sponsorM>0?F('Patrocinios',sponsorM):''}
+      ${brandM>0?F('Tu marca 👟',brandM):''}
+      ${F('Gastos fijos de vida',-FIXED_COSTS.total)}
+      ${clubM>0?F(`Club (${esc(G.club?.name||'')})`,-clubM):''}
+      ${staffM>0?F('Staff (fisio, entrenador, suplementos)',-staffM):''}
+      ${T('Neto mensual',netM)}
+    </div>
+    <div class="pz-label" style="margin:14px 0 6px">Proyección del año</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${workA>0?F('Ingresos de trabajo',workA):''}
+      ${sponsorA>0?F('Ingresos de patrocinios',sponsorA):''}
+      ${brandA>0?F('Tu marca (neto)',brandA):''}
+      ${F('Gastos fijos (12 meses)',-fixedA)}
+      ${clubA>0?F('Club',-clubA):''}
+      ${raceCosts>0?F('Inscripciones',-raceCosts):''}
+      ${staffA>0?F('Staff (12 meses)',-staffA):''}
+      ${T('Resultado del año',netAfterRaces)}
+    </div>
     ${brandSection}
-
-    ${netAfterRaces<0?`<div class="warn">Atención: con la configuración actual perderás €${Math.abs(netAfterRaces)} esta temporada. Considera aumentar la jornada laboral o reducir gastos.</div>`:''}
-    ${netAfterRaces>=0&&netM>=0?`<div class="note">Vas bien. La temporada cierra con superávit. Puedes valorar reducir jornada laboral para entrenar más.</div>`:''}`;
+  </div>`;
 }
 
 // ── RUNNER TAB ─────────────────────────
@@ -1387,39 +1331,29 @@ function renderFameTab(){
   const availH=availableFameHours();
   const hasRecentRace=G.raceResults.length>0;
   const hasSponsor=Object.values(G.sponsors).some(Boolean);
-  el.innerHTML=`
-    <h2>Reputación</h2>
-    <p class="sub">${esc(G.runner.name||'Corredor')} · ${f.toLocaleString()} seguidores</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div class="fame-stat">
-        <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Seguidores</div>
-        <div style="font-size:18px;font-weight:700;color:var(--avi)">${f>=1000?(f/1000).toFixed(1)+'K':f}</div>
-        <div class="followers-bar"><div class="followers-fill" style="width:${nextLevel?Math.min(100,Math.round(f/nextLevel.followers*100)):100}%"></div></div>
+  // Paso 6 de la dirección visual (2026-10-30): pestaña Reputación, tipo Lista (§ 7): las
+  // acciones en filas con coste, seguidores, usos y el motivo si no se puede. Sin hex.
+  const wo=curWorkOpt();const blockH=G.trainingBlockHours||8;const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);const repH=Math.max(0,totalH-blockH);
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-gente">${icono('reputacion')}Gente · reputación</div>
+    <div class="pz-titulo">Reputación</div>
+    <p class="pz-sub">${esc(G.runner.name||'Corredor')}</p>
+    <div class="pz-tarjeta">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="pz-label">Seguidores</div><div class="pz-num" style="font-size:28px">${fmtMiles(f)}</div></div>
+        <div><div class="pz-label">Nivel</div><div style="font-weight:600;font-size:16px">${level?level.label:'Desconocido'}</div><div class="pz-efectos">${level?level.benefit:''}</div></div>
       </div>
-      <div class="fame-stat">
-        <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Nivel</div>
-        <div style="font-size:13px;font-weight:700">${level?level.label:'Desconocido'}</div>
-        <div style="font-size:12px;color:var(--ink3);margin-top:3px">${level?level.benefit:nextLevel?'→ '+nextLevel.followers.toLocaleString()+' seg':''}</div>
-      </div>
+      <div class="pz-barra" style="margin:10px 0 6px"><div class="pz-relleno" style="width:${nextLevel?Math.min(100,Math.round(f/nextLevel.followers*100)):100}%;background:var(--gente)"></div></div>
+      ${nextLevel?`<div class="pz-efectos">Próximo nivel: <b>${nextLevel.label}</b> a <span class="pz-num">${fmtMiles(nextLevel.followers-f)}</span> seguidores</div>`:''}
     </div>
-    ${nextLevel?`<div style="font-size:12px;color:var(--ink3);margin-bottom:14px">Próximo nivel: <strong>${nextLevel.label}</strong> a ${(nextLevel.followers-f).toLocaleString()} seguidores</div>`:''}
-    ${(()=>{const wo=curWorkOpt();const blockH=G.trainingBlockHours||8;const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);const repH=Math.max(0,totalH-blockH);return `<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);margin-bottom:4px">
-      <span>Horas disponibles</span>
-      <span style="font-weight:600;color:${availH<=2?'var(--neg)':availH<=5?'var(--avi)':'var(--ink)'}">${availH}h</span>
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea"><span class="pz-fila-txt">Horas para reputación<div class="pz-efectos">${totalH} h de entreno − ${blockH} h de bloque = ${repH} h · usadas ${G.fameHoursUsed||0} h</div></span><span class="pz-num ${availH<=2?'pz-menos':availH<=5?'pz-ojo':''}" style="font-size:20px">${availH} h</span></div>
+      ${availH<=2?`<div class="pz-linea"><span class="pz-diag ojo">Pocas horas disponibles — más actividad en redes reducirá tu tiempo de entrenamiento.</span></div>`:''}
     </div>
-    <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">${totalH}h trabajo − ${blockH}h bloque = ${repH}h reputación · usadas: ${G.fameHoursUsed||0}h</div>`;})()}
-    ${availH<=2?`<div class="warn">Pocas horas disponibles — más actividad en redes reducirá tu tiempo de entrenamiento.</div>`:''}
-    ${(G.repInvitations||[]).length>0?`<div class="card" style="margin-bottom:14px;border-color:#2d7a2d">
-      <div style="font-size:13px;font-weight:700;color:var(--pos);margin-bottom:8px">📩 Invitaciones disponibles esta temporada</div>
-      ${G.repInvitations.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--line)">
-        <div>
-          <div style="font-size:13px;font-weight:600">${esc(r.name)}</div>
-          <div style="font-size:12px;color:var(--ink3)">${r.tier} · ${r.monthName||''}</div>
-        </div>
-        <button class="secondary" onclick="addRepInvitation('${r.id}')" style="font-size:12px;padding:4px 10px">Añadir →</button>
-      </div>`).join('')}
-    </div>`:''}
-    <div class="section-label">Acciones disponibles</div>
+    ${(G.repInvitations||[]).length>0?`<div class="pz-label" style="margin:14px 0 6px">📩 Invitaciones esta temporada</div>
+      <div class="pz-tarjeta" style="padding:2px 14px">${G.repInvitations.map(r=>`<div class="pz-fila"><span class="pz-fila-txt"><b>${esc(r.name)}</b><div class="pz-efectos">${r.tier} · ${r.monthName||''}</div></span><button class="pz-btn sec" style="width:auto;padding:6px 12px" onclick="addRepInvitation('${r.id}')">Añadir</button></div>`).join('')}</div>`:''}
+    <div class="pz-label" style="margin:14px 0 6px">Acciones</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
     ${FAME_ACTIONS.map(a=>{
       const done=G.fameActionsThisSeason[a.id]||0;
       const onCooldown=done>=a.cooldown;
@@ -1427,26 +1361,15 @@ function renderFameTab(){
       const noSponsor=a.reqSponsor&&!hasSponsor;
       const noRace=a.reqLastRace&&!hasRecentRace;
       const disabled=onCooldown||noHours||noSponsor||noRace;
-      let reason='';
-      if(onCooldown)reason='Límite de esta temporada alcanzado';
-      else if(noSponsor)reason='Necesitas un sponsor activo';
-      else if(noRace)reason='Necesitas haber corrido una carrera primero';
-      else if(noHours)reason='Sin horas disponibles';
-      return `<div class="fame-action ${disabled?'fame-disabled':''}" onclick="${disabled?'':'doFameAction(\''+a.id+'\')'}">
-        <div class="flex-between">
-          <div style="flex:1">
-            <div class="card-title">${a.icon} ${a.label}</div>
-            <div class="card-sub">${a.desc}</div>
-            ${reason?`<div class="text-warn">${reason}</div>`:''}
-          </div>
-          <div class="right-col">
-            <div style="font-size:12px;color:var(--ink3)">-${a.hours}h</div>
-            <div style="font-size:12px;color:var(--avi);font-weight:600">+${a.followers} seg.</div>
-            ${a.income?`<div style="font-size:12px;color:var(--pos)">+€${a.income}</div>`:''}
-            <div style="font-size:12px;color:var(--ink3)">${done}/${a.cooldown} usado</div>
-          </div>
-        </div>
-      </div>`;}).join('')}`;
+      const reason=onCooldown?'Límite de esta temporada alcanzado':noSponsor?'Necesitas un sponsor activo':noRace?'Necesitas haber corrido una carrera primero':noHours?'Sin horas disponibles':'';
+      return `<div class="pz-fila${disabled?'':' navega'}" style="align-items:flex-start;${disabled?'color:var(--ink3)':'cursor:pointer'}" ${disabled?'':`onclick="doFameAction('${a.id}')"`}>
+        <span style="font-size:18px">${a.icon}</span>
+        <span class="pz-fila-txt"><b>${a.label}</b><div class="pz-efectos">${a.desc}</div>
+          <div class="pz-efectos">${a.hours} h · <span class="pz-mas">+${a.followers}</span> seguidores${a.income?` · <span class="pz-mas">+€${a.income}</span>`:''} · ${done}/${a.cooldown} usadas</div>
+          ${reason?motivoHTML(reason):''}</span>
+      </div>`;}).join('')}
+    </div>
+  </div>`;
 }
 window.doFameAction=id=>{
   const a=FAME_ACTIONS.find(x=>x.id===id);if(!a)return;
