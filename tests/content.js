@@ -432,7 +432,7 @@ if(!sinDefinir) ok('los '+manejadores.size+' manejadores citados desde el HTML e
 bloque('10 · Dirección visual: hex fuera de los tokens');
 const HEX_TECHO={
   'index.html':42,'constants.js':71,'state.js':17,'race.js':42,'coach.js':102,'club.js':51,
-  'canicross-render.js':65,'render-core.js':64,'render-clasico.js':113,'render-temporada.js':66,
+  'canicross-render.js':65,'render-core.js':41,'render-clasico.js':113,'render-temporada.js':66,
 };
 const HEX_FUERA=new Set(['devmode.js']);
 // `&#127939;` es una entidad HTML, no un color; `#tab-nav` un selector, no un hex.

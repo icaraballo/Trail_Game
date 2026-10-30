@@ -169,7 +169,7 @@ function aplicarModoChasis(){
 function updateFinBar(){
   const bar=document.getElementById('fin-bar');
   if(!bar)return;
-  const screens=['intro','workSetup','canicrossAntigua'];   // la mañana de carrera sí lleva la barra (el dinero importa)
+  const screens=['intro','workSetup','canicrossAntigua','modeSelect'];   // la mañana de carrera sí lleva la barra (el dinero importa)
   bar.style.display=screens.includes(G.screen)?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
@@ -636,19 +636,16 @@ window.doImport=(slot)=>{
   } else alert('Texto no válido. Asegúrate de copiar el texto completo.');
 };
 
+// Paso 6 de la dirección visual (2026-10-30): tipo Portada (TG-Direccion-Visual § 7, Menú).
+// Silueta de montaña, la dificultad en un desplegable con su indicador de barras y los modos
+// en orden: jugables → bloqueados con su motivo → próximamente. Sin hex: tokens y piezas.
 function renderModeSelect(){
   const el=$main();
-  const modeColors={
-    facil:    {bg:'#f2faf0', border:'#8cc88c', tick:'#2d7a2d',  iconBg:'#e0f2e0'},
-    medio:    {bg:'#fef9ec', border:'#e8c97a', tick:'#c07a10',  iconBg:'#fef3d0'},
-    dificil:  {bg:'#fff0ee', border:'#e8a0a0', tick:'#c0392b',  iconBg:'#fde0de'},
-    hardcore: {bg:'#eeece8', border:'#aaaaaa', tick:'#555555',  iconBg:'#e4e2dc'},
-  };
   const modes=[
-    {id:'facil',    icon:'🟢', label:'Fácil',    desc:'Rivales accesibles · sin penalizaciones duras · para descubrir el juego'},
-    {id:'medio',    icon:'🟡', label:'Medio',    desc:'Lesiones frecuentes · economía ajustada · el modo base actual'},
-    {id:'dificil',  icon:'🔴', label:'Difícil',  desc:'Errores tienen consecuencias · sponsors exigentes · élite inalcanzable'},
-    {id:'hardcore', icon:'💀', label:'Hardcore', desc:'Material importa · fractura = temporada perdida · sin red de seguridad'},
+    {id:'facil',    label:'Fácil',    desc:'Rivales accesibles · sin penalizaciones duras · para descubrir el juego'},
+    {id:'medio',    label:'Medio',    desc:'Lesiones frecuentes · economía ajustada · el modo base actual'},
+    {id:'dificil',  label:'Difícil',  desc:'Errores tienen consecuencias · sponsors exigentes · élite inalcanzable'},
+    {id:'hardcore', label:'Hardcore', desc:'Material importa · fractura = temporada perdida · sin red de seguridad'},
   ];
   const otherModes=[
     {id:'expres',        icon:'⚡',  label:'Carrera Exprés',  desc:'3 temporadas · sin jornada laboral · ganancias ×1.5', available:true,  lockable:false},
@@ -660,95 +657,50 @@ function renderModeSelect(){
   // Leer desbloqueos del localStorage
   let unlocked={coach:false,club:false};
   try{Object.assign(unlocked,JSON.parse(LS.get('unlocked')||'{}'));}catch(e){}
-
   const sel=G.gameMode||'medio';
-  el.innerHTML=`
-    <h1>Monte Perdido Trail</h1>
-    <p class="sub">Elige tu modo de juego</p>
+  const dif=DIFICULTADES[sel];
+  const bars=n=>`<span class="dif-bars" aria-hidden="true">${[1,2,3,4].map(i=>`<i${i<=n?' class="on"':''}></i>`).join('')}</span>`;
+  // Orden: jugables, bloqueados, próximamente
+  const rank=m=>!m.available?2:(m.lockable&&!unlocked[m.id])?1:0;
+  const otros=otherModes.slice().sort((a,b)=>rank(a)-rank(b));
+  const icono2=t=>`<span style="width:36px;height:36px;border-radius:9px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">${t}</span>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja" style="background:var(--ink);padding-top:26px">
+      <svg class="pz-franja-fondo" viewBox="0 0 300 90" preserveAspectRatio="none" style="height:75%;opacity:.35"><path d="M0 90 L0 62 L40 40 L70 55 L110 18 L150 50 L180 34 L220 60 L260 28 L300 52 L300 90Z" style="fill:var(--carrera)"/></svg>
+      <div class="pz-franja-num" style="font-size:46px;position:relative">Trail Game</div>
+      <div class="pz-franja-sub" style="position:relative">Elige cómo quieres correr</div>
+    </div>
 
-    <div class="carrera-group" style="${modeColors[sel]?`border-color:${modeColors[sel].border};`:''}">
-      <div class="carrera-group-header" onclick="toggleModeGroup()" style="${modeColors[sel]?`background:${modeColors[sel].bg};`:''}">
-        <div style="width:36px;height:36px;border-radius:8px;background:${modeColors[sel]?modeColors[sel].iconBg:'#EAF3DE'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🏃</div>
-        <div style="flex:1">
-          <div style="font-size:15px;font-weight:600;color:var(--color-text-primary)">Modo carrera</div>
-          <div style="font-size:12px;color:var(--color-text-secondary)">${modeColors[sel]?`<span style="font-weight:600;color:${modeColors[sel].tick}">${modes.find(m=>m.id===sel)?.label||''}</span> · `:''}Gestión completa · 4 niveles de dificultad</div>
-        </div>
-        <span id="modegroup-arrow" style="font-size:12px;color:${modeColors[sel]?modeColors[sel].tick:'var(--color-text-tertiary)'};transition:transform .2s;display:inline-block">▶</span>
+    <div class="pz-tarjeta" style="padding:0;overflow:hidden">
+      <div class="pz-fila navega" onclick="toggleModeGroup()" style="padding:12px 14px">
+        ${icono2('🏃')}
+        <span class="pz-fila-txt"><b>Modo carrera</b><div class="pz-efectos">Gestión completa · 4 niveles de dificultad</div></span>
+        ${dif?`<span class="dif-tag dif-${sel}">${bars(dif[1])}<span class="dif-name">${dif[0]}</span></span>`:''}
+        <span id="modegroup-arrow" style="display:none"></span>
       </div>
-      <div class="carrera-group-content" id="modegroup-content">
-        ${modes.map(m=>{
-          const isSel=sel===m.id;
-          const mc=modeColors[m.id]||{};
-          const cardStyle=isSel?`background:${mc.bg};border:1.5px solid ${mc.border};`:'';
-          const iconStyle=isSel?`background:${mc.iconBg};border:0.5px solid ${mc.border};`:'background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);';
-          return `
-          <div class="diff-card" style="${cardStyle}" onclick="selectMode('${m.id}')">
-            <div style="width:30px;height:30px;border-radius:6px;${iconStyle}display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${m.icon}</div>
-            <div style="flex:1">
-              <div style="font-size:13px;font-weight:${isSel?'600':'400'};color:var(--color-text-primary)">${m.label}</div>
-              <div style="font-size:12px;color:var(--color-text-secondary)">${m.desc}</div>
-            </div>
-            ${isSel?`<span style="font-size:14px;font-weight:700;color:${mc.tick}">✓</span>`:''}
-          </div>`;}).join('')}
+      <div class="carrera-group-content" id="modegroup-content" style="background:var(--soft);padding:8px">
+        ${modes.map(m=>{const d=DIFICULTADES[m.id];return`<button class="pz-opcion${sel===m.id?' sel':''}" onclick="selectMode('${m.id}')"><span class="dif-tag dif-${m.id}" style="float:right">${bars(d[1])}</span><b>${m.label}</b><div class="pz-efectos">${m.desc}</div></button>`;}).join('')}
       </div>
     </div>
 
-    <div style="font-size:12px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Otros modos</div>
-    <div class="carrera-group" style="margin-top:0">
-      ${otherModes.map(m=>{
-        // Próximamente
-        if(!m.available){
-          return `<div class="carrera-group-header" style="opacity:0.42;cursor:default">
-            <div style="width:36px;height:36px;border-radius:8px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${m.icon}</div>
-            <div style="flex:1">
-              <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">${m.label}</div>
-              <div style="font-size:12px;color:var(--color-text-secondary)">${m.desc}</div>
-            </div>
-            <span style="font-size:12px;color:var(--color-text-tertiary)">Próx.</span>
-          </div>`;
-        }
-        // Lockable y bloqueado
-        if(m.lockable&&!unlocked[m.id]){
-          return `<div class="carrera-group-header" style="opacity:0.55;cursor:default">
-            <div style="width:36px;height:36px;border-radius:8px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${m.icon}</div>
-            <div style="flex:1">
-              <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">${m.label} 🔒</div>
-              <div style="font-size:12px;color:var(--color-text-secondary)">Sigue el arco narrativo en modo carrera para desbloquear</div>
-            </div>
-          </div>`;
-        }
-        // Lockable y desbloqueado — dos botones
-        if(m.lockable&&unlocked[m.id]){
-          return `<div style="padding:12px 14px;border-bottom:1px solid var(--color-border-tertiary)">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-              <div style="width:36px;height:36px;border-radius:8px;background:#EEEDFE;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${m.icon}</div>
-              <div style="flex:1">
-                <div style="font-size:14px;font-weight:600;color:#3C3489">${m.label} <span style="font-size:11px;background:#EEEDFE;color:#534AB7;padding:1px 6px;border-radius:4px;font-weight:500">Desbloqueado</span></div>
-                <div style="font-size:12px;color:var(--color-text-secondary)">${m.desc}</div>
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button class="main" style="margin-top:0;font-size:13px;padding:9px 8px;border-color:#534AB7;color:#3C3489" onclick="selectAndConfirm('${m.id}','continuar')">Continuar historia</button>
-              <button class="main" style="margin-top:0;font-size:13px;padding:9px 8px" onclick="selectAndConfirm('${m.id}','nuevo')">Nuevo desde cero</button>
-            </div>
-          </div>`;
-        }
-        // Normal (expres)
+    <div class="pz-label" style="margin:16px 0 8px">Otros modos</div>
+    <div class="pz-tarjeta" style="padding:4px 14px">
+      ${otros.map(m=>{
+        if(!m.available)return `<div class="pz-fila" style="color:var(--ink3)">${icono2(m.icon)}<span class="pz-fila-txt"><b>${m.label}</b><div class="pz-efectos">${m.desc}</div></span><span class="pz-efectos">Próximamente</span></div>`;
+        if(m.lockable&&!unlocked[m.id])return `<div class="pz-fila" style="color:var(--ink3)">${icono2(m.icon)}<span class="pz-fila-txt"><b>${m.label}</b><div class="pz-motivo"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Sigue el arco narrativo en modo carrera para desbloquear</div></span></div>`;
+        if(m.lockable&&unlocked[m.id])return `<div class="pz-fila" style="flex-wrap:wrap">${icono2(m.icon)}<span class="pz-fila-txt"><b>${m.label}</b> <span class="pz-chip mas">Desbloqueado</span><div class="pz-efectos">${m.desc}</div></span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%">
+            <button class="pz-btn sec" onclick="selectAndConfirm('${m.id}','continuar')">Continuar historia</button>
+            <button class="pz-btn sec" onclick="selectAndConfirm('${m.id}','nuevo')">Nuevo desde cero</button></div></div>`;
         const isSel=sel===m.id;
-        return `<div class="carrera-group-header" onclick="selectMode('${m.id}')" style="${isSel?'background:var(--soft);border-bottom:1px solid var(--line)':''}">
-          <div style="width:36px;height:36px;border-radius:8px;background:${isSel?'var(--soft)':'var(--color-background-secondary)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${m.icon}</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:${isSel?'600':'500'};color:${isSel?'var(--avi)':'var(--color-text-primary)'}">${m.label}</div>
-            <div style="font-size:12px;color:var(--color-text-secondary)">${m.desc}</div>
-          </div>
-          <span style="font-size:12px;color:var(--avi);font-weight:600">${isSel?'✓':''}</span>
-        </div>`;
+        return `<button class="pz-opcion${isSel?' sel':''}" style="display:flex;align-items:center;gap:11px;margin:8px 0" onclick="selectMode('${m.id}')">${icono2(m.icon)}<span class="pz-fila-txt"><b>${m.label}</b><div class="pz-efectos">${m.desc}</div></span></button>`;
       }).join('')}
     </div>
 
-    <button class="secondary" style="margin-top:12px;width:100%;text-align:center" onclick="G.screen='achievements';render()">🏅 Ver todos los logros</button>
-    <button class="main" style="margin-top:16px" onclick="confirmMode()">Continuar →</button>
-    <button class="main" style="margin-top:6px;opacity:0.6" onclick="G.screen='saveScreen';render()">← Volver a partidas guardadas</button>`;
+    <button class="pz-btn sec" style="margin-top:12px" onclick="G.screen='achievements';render()">🏅 Ver todos los logros</button>
+    <button class="pz-btn" style="margin-top:16px" onclick="confirmMode()">Continuar →</button>
+    <button class="pz-btn sec" onclick="G.screen='saveScreen';render()">← Volver a partidas guardadas</button>
+  </div>`;
 }
 
 window.toggleModeGroup=()=>{
