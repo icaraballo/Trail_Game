@@ -518,72 +518,59 @@ function renderRunnerTab(){
 //  EXPRESS MODE SCREENS
 // ══════════════════════════════════════════════════════════════════
 
+// Paso 6 de la dirección visual (2026-10-30): Exprés con las piezas de Clásico y su acento
+// (mostaza, por data-modo). Sin hex.
 function renderExpresSeasonStart(){
   const el=$main();
   const load=getBodyLoad();const lt=getLoadThresholdsByMode();
   const showObjectives=!G.yearObjective||G._yearObjectiveRewardPaid;
-  el.innerHTML=`
-    <div style="background:var(--soft);border:1.5px solid var(--line2);border-radius:14px;padding:14px 16px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;font-weight:700;color:#8a4a00">⚡ CARRERA EXPRÉS</span>
-        <span style="font-size:13px;font-weight:700;color:var(--avi)">Temporada ${G.year}/3</span>
-      </div>
-      <div style="display:flex;gap:4px;margin-top:6px">
-        ${[1,2,3].map(y=>`<div style="flex:1;height:5px;border-radius:3px;background:${G.year>y?'#c07a10':G.year===y?'#f0d98a':'#e0dfd8'}"></div>`).join('')}
-      </div>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">⚡ Carrera Exprés · temporada ${G.year}/3</div>
+    <div style="display:flex;gap:4px;margin:0 0 12px">${[1,2,3].map(y=>`<div style="flex:1;height:5px;border-radius:3px;background:${G.year>y?'var(--acc)':G.year===y?'var(--acc-t)':'var(--trk)'}"></div>`).join('')}</div>
+    <div class="pz-titulo">${esc(G.runner.name||'Corredor')}</div>
+    <p class="pz-sub">${G.runner.specialty} · ${G.runner.age||25} años · ${G.ranking<900?'ranking #'+G.ranking:'sin ranking'}</p>
+    <div class="pz-tarjeta" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div><div class="pz-label">Ahorros</div><div class="pz-num" style="font-size:20px">${fmtEur(G.money)}</div></div>
+      <div><div class="pz-label">Carga</div><div class="pz-num ${load>=lt.warningLevel2?'pz-menos':load>=lt.warningLevel1?'pz-ojo':''}" style="font-size:20px">${load} %</div></div>
+      <div><div class="pz-label">Carreras</div><div class="pz-num" style="font-size:20px">${G.raceResults?.length||0}</div></div>
     </div>
-    <h2>${esc(G.runner.name||'Corredor')}</h2>
-    <p class="sub">${G.runner.specialty} · ${G.runner.age||25} años · ${G.ranking<900?'Ranking #'+G.ranking:'Sin ranking'}</p>
-    <div class="stat-grid" style="margin-bottom:14px">
-      <div class="stat"><div class="stat-label">Ahorros</div><div class="stat-val">€${G.money}</div></div>
-      <div class="stat"><div class="stat-label">Carga corporal</div><div class="stat-val" style="color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--pos)'}">${load}%</div></div>
-      <div class="stat"><div class="stat-label">Carreras</div><div class="stat-val">${G.raceResults?.length||0} hechas</div></div>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="sec-title-sm">Stats del corredor</div>
-      ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}
-    </div>
-    ${showObjectives?`
-    <div style="font-size:13px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Objetivo de temporada</div>
-    ${SEASON_OBJECTIVES.map(obj=>`<div class="work-card" style="margin-bottom:8px" onclick="selectYearObjective('${obj.id}')">
-      <div style="flex:1"><div class="card-title">${obj.label}</div><div class="card-sub">${obj.desc}</div></div>
-      <div style="font-size:12px;color:var(--pos);font-weight:600;margin-left:10px">+€${obj.reward}</div>
-    </div>`).join('')}
-    `:G.yearObjective?`<div class="note">🎯 Objetivo: ${SEASON_OBJECTIVES.find(o=>o.id===G.yearObjective)?.label||'—'}</div>`:''}
-    <button class="main" onclick="G.screen='expresCalendar';render()">Elegir carreras →</button>`;
+    <div class="pz-tarjeta"><div class="pz-label" style="margin-bottom:8px">Stats</div>${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}</div>
+    ${showObjectives?`<div class="pz-label" style="margin:14px 0 6px">Objetivo de temporada</div>
+      ${SEASON_OBJECTIVES.map(obj=>`<button class="pz-opcion${G.yearObjective===obj.id?' sel':''}" onclick="selectYearObjective('${obj.id}')"><b>${obj.label}</b><div class="pz-efectos">${obj.desc} · premio <span class="pz-mas">+€${obj.reward}</span></div></button>`).join('')}`
+      :G.yearObjective?`<div class="pz-diag" style="margin-bottom:12px">🎯 Objetivo: <b>${SEASON_OBJECTIVES.find(o=>o.id===G.yearObjective)?.label||'—'}</b></div>`:''}
+    <button class="pz-btn" onclick="G.screen='expresCalendar';render()">Elegir carreras →</button>
+  </div>`;
 }
 
+// Paso 6 de la dirección visual (2026-10-30): Exprés con las piezas de Clásico y su acento
+// (mostaza, por data-modo). Sin hex.
 function renderExpresCalendar(){
   const el=$main();
   const selIds=G.selectedRaces.map(r=>r.id);
   const canAccess=canAccessRace;   // DS08 (v95)
   const allRaces=[...RACES_DB,...getSpecRaces()];
-  const tierColor=TIER_COLOR_RACE;
   const MAX=5;
-
-  el.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <h2>Elige 5 carreras</h2>
-      <span style="font-size:13px;font-weight:700;color:${selIds.length>=MAX?'var(--pos)':'var(--avi)'}">${selIds.length}/${MAX}</span>
-    </div>
-    <p class="sub">Temporada ${G.year}/3 · elige 5 carreras · sin coste de inscripción</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">⚡ Exprés · temporada ${G.year}/3</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="pz-titulo">Elige 5 carreras</div><span class="pz-num" style="font-size:20px">${selIds.length}/${MAX}</span></div>
+    <p class="pz-sub">Sin coste de inscripción.</p>
+    <div class="pz-tarjeta" style="padding:2px 14px">
       ${allRaces.map(r=>{
         const sel=selIds.includes(r.id);
         const locked=!canAccess(r);
         const full=!sel&&selIds.length>=MAX;
-        const zegamaBadge=r.zegamaSpecial&&!locked&&G.zegamaQual?'<div style="font-size:10px;color:var(--pos);margin-top:2px">✓ Clasificado por tiempo</div>':r.zegamaSpecial&&!locked&&G.ranking<=20?'<div style="font-size:10px;color:var(--avi);margin-top:2px">✓ Invitación por ranking</div>':'';
-
-        return `<div style="background:var(--card);border:1.5px solid ${sel?'#4a8a2a':locked?'#eee':'#e0dfd8'};border-radius:10px;padding:10px 12px;cursor:${locked||full?'default':'pointer'};opacity:${locked||(!sel&&full)?0.45:1};transition:background .15s" onclick="${locked||full?'':'window.toggleExpresRace(\''+r.id+'\')'}" >
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.3">${sel?'✓ ':''}<span style="color:${tierColor[r.tier]||'var(--ink3)'}">${r.name}</span></div>
-          <div style="font-size:12px;color:var(--ink3)">${r.km}km · ${r.type}</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:2px">${r.monthName}</div>
-          ${locked?(r.zegamaSpecial?`<div style="font-size:11px;color:var(--avi);margin-top:3px">🏔️ Invitación — Top 20 o clasificado por tiempo</div>`:`<div style="font-size:11px;color:var(--ink3);margin-top:3px">🔒 Ranking #${r.reqRanking}</div>`):zegamaBadge}
-        </div>`;
-      }).join('')}
+        const clic=!(locked||full);
+        const zegamaBadge=r.zegamaSpecial&&!locked&&G.zegamaQual?'<div class="pz-diag mas" style="font-size:12.5px">✓ Clasificado por tiempo</div>':r.zegamaSpecial&&!locked&&G.ranking<=20?'<div class="pz-diag mas" style="font-size:12.5px">✓ Invitación por ranking</div>':'';
+        return `<div class="pz-fila${locked?' pz-bloqueado':''}" style="cursor:${clic?'pointer':'default'};align-items:flex-start;${full&&!sel?'color:var(--ink3)':''}" ${clic?`onclick="window.toggleExpresRace('${r.id}')"`:''}>
+          <input type="checkbox" class="pz-casilla" style="pointer-events:none;margin-top:2px" ${sel?'checked':''} ${clic?'':'disabled'} tabindex="-1" aria-hidden="true">
+          <span class="pz-fila-txt"><span style="display:flex;gap:5px;align-items:center;flex-wrap:wrap"><b>${esc(r.name)}</b>${nivelTag(r.tier)}</span>
+            <div class="pz-efectos">${r.km} km · ${r.type} · ${r.monthName}</div>
+            ${locked?motivoHTML(r.zegamaSpecial?'Invitación — Top 20 o clasificado por tiempo':'Ranking #'+r.reqRanking):zegamaBadge}</span>
+        </div>`;}).join('')}
     </div>
-    <button class="main" onclick="G.screen='expresSponsors';render()" ${selIds.length<MAX?'disabled':''}>Continuar →</button>
-    <button class="main" style="margin-top:6px" onclick="G.screen='expresSeasonStart';render()">← Volver</button>`;
+    <button class="pz-btn" onclick="G.screen='expresSponsors';render()" ${selIds.length<MAX?'disabled':''}>Continuar →</button>
+    <button class="pz-btn sec" onclick="G.screen='expresSeasonStart';render()">← Volver</button>
+  </div>`;
 }
 
 window.toggleExpresRace=id=>{
@@ -595,38 +582,28 @@ window.toggleExpresRace=id=>{
   render();
 };
 
+// Paso 6 de la dirección visual (2026-10-30): Exprés con las piezas de Clásico y su acento
+// (mostaza, por data-modo). Sin hex.
 function renderExpresSponsors(){
   const el=$main();
   if(!G._expressSponsorPool){G._expressSponsorPool=getExpressSponsors();}
   const pool=G._expressSponsorPool;
   const curSponsors=Object.values(G.sponsors).filter(Boolean);
-
-  el.innerHTML=`
-    <h2>Patrocinador de temporada</h2>
-    <p class="sub">Temporada ${G.year}/3 · elige uno o sigue sin patrocinador</p>
-    ${curSponsors.length>0?`<div class="note">Ya tienes patrocinador activo — puedes cambiarlo o continuar.</div>`:''}
-    <div style="display:grid;gap:10px;margin-bottom:14px">
-      ${pool.map(sp=>{
-        const isCur=Object.values(G.sponsors).some(s=>s?.id===sp.id);
-        return `<div class="sponsor-card ${isCur?'active':''}" onclick="selectExpressSponsor('${sp.id}','${sp.cat}')">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div style="flex:1">
-              <div style="font-size:15px;font-weight:700;margin-bottom:2px">${sp.name}${isCur?' ✓':''}</div>
-              <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">${sp.bonus}</div>
-              <div style="font-size:12px;color:var(--pos)">+${Object.entries(sp.statBonus).map(([k,v])=>v+' '+k.charAt(0).toUpperCase()+k.slice(1)).join(', ')}</div>
-              <div style="font-size:12px;color:var(--ink2);margin-top:3px">🎯 ${sp.objective}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0;margin-left:12px">
-              <div style="font-size:16px;font-weight:700;color:var(--pos)">+€${sp.salary}</div>
-              <div style="font-size:11px;color:var(--ink3)">/año</div>
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
-      <div class="sponsor-card" onclick="G._expressSponsorPool=null;G.screen='expresPrep';render()" style="text-align:center;color:var(--ink3)">
-        <div style="font-size:14px">Sin patrocinador esta temporada</div>
-      </div>
-    </div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-dinero">${icono('finanzas')}Dinero · temporada ${G.year}/3</div>
+    <div class="pz-titulo">Patrocinador de temporada</div>
+    <p class="pz-sub">Elige uno o sigue sin patrocinador.</p>
+    ${curSponsors.length>0?`<div class="pz-diag" style="margin-bottom:10px">Ya tienes patrocinador activo — puedes cambiarlo o continuar.</div>`:''}
+    ${pool.map(sp=>{
+      const isCur=Object.values(G.sponsors).some(x=>x?.id===sp.id);
+      return `<button class="pz-opcion${isCur?' sel':''}" onclick="selectExpressSponsor('${sp.id}','${sp.cat}')">
+        <span style="float:right;text-align:right"><span class="pz-num" style="font-size:17px">€${sp.salary}</span><div class="pz-efectos">/año</div></span>
+        <b>${sp.name}</b><div class="pz-efectos">${sp.bonus}</div>
+        <div class="pz-efectos">${Object.entries(sp.statBonus).map(([k,v])=>k.charAt(0).toUpperCase()+k.slice(1)+' <span class="pz-mas">+'+v+'</span>').join(' · ')}</div>
+        <div class="pz-efectos">🎯 ${sp.objective}</div>
+      </button>`;}).join('')}
+    <button class="pz-btn sec" onclick="G._expressSponsorPool=null;G.screen='expresPrep';render()">Sin patrocinador esta temporada</button>
+  </div>`;
 }
 
 window.selectExpressSponsor=(spId,cat)=>{
@@ -640,6 +617,8 @@ window.selectExpressSponsor=(spId,cat)=>{
   G.screen='expresPrep';render();
 };
 
+// Paso 6 de la dirección visual (2026-10-30): Exprés con las piezas de Clásico y su acento
+// (mostaza, por data-modo). Sin hex.
 function renderExpresPrep(){
   const el=$main();
   const nextRace=G.selectedRaces[G.currentRaceIdx];
@@ -647,48 +626,24 @@ function renderExpresPrep(){
   const lt=getLoadThresholdsByMode();
   const hint=bodyLoadHint();
   const racesLeft=G.selectedRaces.length-G.currentRaceIdx;
-
-  el.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <h2>Preparación</h2>
-      <span style="font-size:12px;color:var(--ink3)">${racesLeft} carrera${racesLeft!==1?'s':''} restante${racesLeft!==1?'s':''}</span>
+  const dc={warn:'ojo',danger:'menos',hint:'',note:'mas'};
+  const op=(id,ico,t,d,ef)=>`<button class="pz-opcion" style="display:flex;gap:12px;align-items:flex-start" onclick="doExpresPrep('${id}')"><span style="font-size:22px;line-height:1">${ico}</span><span><b>${t}</b><div class="pz-efectos">${d}</div><div class="pz-efectos" style="margin-top:4px">${ef}</div></span></button>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-cuerpo">${icono('corredor')}Cuerpo · ${racesLeft} carrera${racesLeft!==1?'s':''} restante${racesLeft!==1?'s':''}</div>
+    <div class="pz-titulo">Preparación</div>
+    <p class="pz-sub">${nextRace?'Próxima: <b>'+esc(nextRace.name)+'</b> · '+nextRace.km+' km':'Última carrera de la temporada'}</p>
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="pz-label">Carga corporal</span><span class="pz-num ${load>=lt.warningLevel2?'pz-menos':load>=lt.warningLevel1?'pz-ojo':''}" style="font-size:18px">${load} %</span></div>
+        <div class="pz-barra"><div class="pz-relleno${load>=lt.warningLevel2?' menos':load>=lt.warningLevel1?' ojo':''}" style="width:${Math.min(100,load)}%"></div><div class="pz-umbral" style="left:70%"></div></div>
+      </div>
+      ${hint?`<div class="pz-linea"><span class="pz-diag ${dc[hint.type]||''}">${hint.msg}</span></div>`:''}
     </div>
-    <p class="sub">${nextRace?'Próxima: <strong>'+nextRace.name+'</strong> · '+nextRace.km+'km':'Última carrera de la temporada'}</p>
-    ${hint?`<div class="${hint.type}">${hint.msg}</div>`:''}
-    <div style="margin-bottom:6px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
-        <span>Carga corporal</span><span style="font-weight:600;color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--pos)'}">${load}%</span>
-      </div>
-      ${hbar(load,100,load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9')}
-    </div>
-    <div style="font-size:12px;color:var(--ink3);margin:14px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">¿Cómo preparas la carrera?</div>
-    <div style="display:grid;gap:8px;margin-bottom:16px">
-      <div class="work-card" onclick="doExpresPrep('train')">
-        <div style="font-size:24px;margin-bottom:4px">🏃</div>
-        <div class="card-title">Entrenamiento intenso</div>
-        <div class="card-sub">Subes el bloque al máximo. El cuerpo lo nota pero llegas más fuerte.</div>
-        <div style="display:flex;gap:12px;font-size:12px;margin-top:6px">
-          <span style="color:var(--pos)">+6 stat principal</span>
-          <span style="color:var(--neg)">Carga +${load>=lt.warningLevel2?'12 ⚠':'12'}</span>
-        </div>
-      </div>
-      <div class="work-card" onclick="doExpresPrep('rest')">
-        <div style="font-size:24px;margin-bottom:4px">🛌</div>
-        <div class="card-title">Descanso activo</div>
-        <div class="card-sub">Rodaje suave, estiramientos, recuperación completa.</div>
-        <div style="display:flex;gap:12px;font-size:12px;margin-top:6px">
-          <span style="color:var(--pos)">+3 Mental · Carga -14</span>
-        </div>
-      </div>
-      <div class="work-card" onclick="doExpresPrep('focus')">
-        <div style="font-size:24px;margin-bottom:4px">🎯</div>
-        <div class="card-title">Foco mental</div>
-        <div class="card-sub">Visualización de ruta, trabajo táctico, análisis de rivales.</div>
-        <div style="display:flex;gap:12px;font-size:12px;margin-top:6px">
-          <span style="color:var(--pos)">+5 Mental · Carga -4</span>
-        </div>
-      </div>
-    </div>`;
+    <div class="pz-label" style="margin:14px 0 6px">¿Cómo preparas la carrera?</div>
+    ${op('train','🏃','Entrenamiento intenso','Subes el bloque al máximo. El cuerpo lo nota pero llegas más fuerte.',`Stat principal <span class="pz-mas">+6</span> · carga <span class="pz-menos">+12</span>${load>=lt.warningLevel2?' ⚠':''}`)}
+    ${op('rest','🛌','Descanso activo','Rodaje suave, estiramientos, recuperación completa.','Mental <span class="pz-mas">+3</span> · carga <span class="pz-mas">−14</span>')}
+    ${op('focus','🎯','Foco mental','Visualización de ruta, trabajo táctico, análisis de rivales.','Mental <span class="pz-mas">+5</span> · carga <span class="pz-mas">−4</span>')}
+  </div>`;
 }
 
 window.doExpresPrep=choice=>{
@@ -714,85 +669,66 @@ window.doExpresPrep=choice=>{
   G.screen='expresPreRacePrep';render();
 };
 
+// Paso 6 de la dirección visual (2026-10-30): Exprés con las piezas de Clásico y su acento
+// (mostaza, por data-modo). Sin hex.
 function renderExpresPreRacePrep(){
   const el=$main();
   const race=G.selectedRaces[G.currentRaceIdx];
   if(!race){G.screen='preRace';render();return;}
   const altPenalty=getAltitudePenalty(race);
   const sel=G.preRaceNutrition||'pasta';
-
-  el.innerHTML=`
-    <div style="font-size:12px;font-weight:700;color:var(--avi);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">⚡ EXPRÉS · Carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</div>
-    <h2>${race.name}</h2>
-    <p class="sub">${race.km}km · ${race.type} · ${race.monthName}</p>
-    ${altPenalty>0?`<div class="warn">⚠ Alta altitud — irás un ${Math.round(altPenalty*100)}% más lento en subidas sin preparación específica.</div>`:''}
-    ${G.injuryType?`<div class="danger">⚠ Llegas con ${INJURY_TYPES[G.injuryType]?.label||'lesión'}. Energía y piernas reducidas.</div>`:''}
-    <div class="section-label">Cena previa</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      ${PRE_RACE_NUTRITION.slice(0,2).map(n=>{
-        const isSel=sel===n.id;
-        const cost=getNutritionCost(n.id);
-        return `<div style="background:var(--card);border:1.5px solid ${isSel?'#4a8a2a':'#e0dfd8'};border-radius:10px;padding:12px;cursor:pointer;transition:background .15s" onclick="G.preRaceNutrition='${n.id}';render()">
-          <div style="font-size:13px;font-weight:600;margin-bottom:3px">${isSel?'✓ ':''} ${n.label}</div>
-          <div style="font-size:12px;color:var(--ink3)">${n.desc}</div>
-          <div style="font-size:12px;color:${n.energyBonus>0?'var(--pos)':'var(--avi)'};margin-top:4px">${n.energyBonus>0?'+'+n.energyBonus+' energía':n.energyBonus+' energía'}${cost>0?' · -€'+cost:''}</div>
-        </div>`;
-      }).join('')}
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">⚡ Exprés · carrera ${G.currentRaceIdx+1}/${G.selectedRaces.length}</div>
+    <div class="pz-titulo">${esc(race.name)}</div>
+    <p class="pz-sub">${race.km} km · ${race.type} · ${race.monthName}</p>
+    ${altPenalty>0||G.injuryType?`<div class="pz-tarjeta pz-estado">
+      ${altPenalty>0?`<div class="pz-linea"><span class="pz-diag ojo">Alta altitud — irás un ${Math.round(altPenalty*100)} % más lento en subidas sin preparación específica.</span></div>`:''}
+      ${G.injuryType?`<div class="pz-linea"><span class="pz-diag menos">Llegas con ${INJURY_TYPES[G.injuryType]?.label||'lesión'}. Energía y piernas reducidas.</span></div>`:''}
+    </div>`:''}
+    <div class="pz-label" style="margin:14px 0 6px">Cena previa</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${PRE_RACE_NUTRITION.slice(0,2).map(n=>{const isSel=sel===n.id;const cost=getNutritionCost(n.id);
+        return `<button class="pz-opcion${isSel?' sel':''}" onclick="G.preRaceNutrition='${n.id}';render()"><b>${n.label}</b><div class="pz-efectos">${n.desc}</div><div class="pz-efectos">Energía <span class="${n.energyBonus>0?'pz-mas':'pz-menos'}">${n.energyBonus>0?'+':''}${n.energyBonus}</span>${cost>0?' · €'+cost:''}</div></button>`;}).join('')}
     </div>
-    <div class="section-label">Estrategia de salida</div>
-    <div style="display:grid;gap:8px;margin-bottom:16px">
-      ${[
-        {id:'conservador',label:'Conservador 🐢',desc:'Primeros tramos lentos, últimos con reservas',energyMod:5,legsMod:3,timeMod:1.06},
-        {id:'equilibrado',label:'Equilibrado ⚖',desc:'Ritmo constante desde el principio',energyMod:0,legsMod:0,timeMod:1.0},
-        {id:'a_tope',label:'A tope 🔥',desc:'Máxima velocidad desde el km 1 — riesgo real',energyMod:-8,legsMod:-6,timeMod:0.94},
-      ].map(s=>{
-        const isSel=(G.startStrategy||'equilibrado')===s.id;
-        return `<div style="background:var(--card);border:1.5px solid ${isSel?'#4a8a2a':'#e0dfd8'};border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="G.startStrategy='${s.id}';render()">
-          <div><div style="font-size:13px;font-weight:600">${isSel?'✓ ':''} ${s.label}</div><div style="font-size:12px;color:var(--ink3)">${s.desc}</div></div>
-        </div>`;
-      }).join('')}
-    </div>
-    <button class="main" onclick="goPreRace()">Salir a correr →</button>`;
+    <div class="pz-label" style="margin:14px 0 6px">Estrategia de salida</div>
+    ${[
+      {id:'conservador',label:'Conservador 🐢',desc:'Primeros tramos lentos, últimos con reservas'},
+      {id:'equilibrado',label:'Equilibrado ⚖',desc:'Ritmo constante desde el principio'},
+      {id:'a_tope',label:'A tope 🔥',desc:'Máxima velocidad desde el km 1 — riesgo real'},
+    ].map(x=>`<button class="pz-opcion${(G.startStrategy||'equilibrado')===x.id?' sel':''}" onclick="G.startStrategy='${x.id}';render()"><b>${x.label}</b><div class="pz-efectos">${x.desc}</div></button>`).join('')}
+    <button class="pz-btn" style="margin-top:6px" onclick="goPreRace()">Salir a correr →</button>
+  </div>`;
 }
 
+// Paso 6 de la dirección visual (2026-10-30): Exprés con las piezas de Clásico y su acento
+// (mostaza, por data-modo). Sin hex.
 function renderExpresSeasonBalance(){
   const el=$main();
   const sponsorIncome=sponsorAnnual();
   const raceIncome=G.raceResults.reduce((a,r)=>a+r.prize,0);
   const yearNet=sponsorIncome+raceIncome;
-
-  el.innerHTML=`
-    <div style="background:var(--soft);border:1.5px solid var(--line2);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:700;color:#8a4a00">⚡ Temporada ${G.year}/${modeCfg().maxYears} completada</span>
-      ${G.year>=modeCfg().maxYears?'<span style="font-size:12px;color:var(--avi);font-weight:600">Última temporada 🏁</span>':''}
+  const pen=(G.sponsorPenalties||[]).filter(p=>p.year===G.year).reduce((a,p)=>a+p.amount,0);
+  const F=(txt,v)=>`<div class="pz-fila"><span class="pz-fila-txt">${txt}</span><span class="pz-fila-dato ${v>=0?'pz-mas':'pz-menos'}">${fmtEur(v,true)}</span></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">⚡ Temporada ${G.year}/${modeCfg().maxYears} completada${G.year>=modeCfg().maxYears?' · la última 🏁':''}</div>
+    <div class="pz-titulo">Balance de temporada</div>
+    <p class="pz-sub">${esc(G.runner.name||'Corredor')} · ranking #${G.ranking<900?G.ranking:'—'}</p>
+    <div class="pz-tarjeta"><div class="pz-label">Resultado del año</div><div class="pz-num ${yearNet>=0?'pz-mas':'pz-menos'}" style="font-size:40px;line-height:1.1">${fmtEur(yearNet,true)}</div></div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${G.raceResults.length===0?'<p class="pz-efectos" style="padding:10px 0">Sin carreras completadas.</p>':G.raceResults.map(r=>isDNF(r)
+        ?`<div class="pz-fila"><span class="pz-num pz-menos" style="width:30px">DNF</span><span class="pz-fila-txt">${r.name}</span><span class="pz-efectos">${dnfLabel(r)}</span></div>`
+        :`<div class="pz-fila"><span class="pz-num" style="width:30px">${r.pos}.º</span><span class="pz-fila-txt">${r.name}</span><span class="pz-mas">+€${r.prize}</span></div>`).join('')}
     </div>
-    <h2>Balance de temporada</h2>
-    <p class="sub">${esc(G.runner.name||'Corredor')} · Ranking #${G.ranking<900?G.ranking:'—'}</p>
-    <div style="margin-bottom:16px">
-      ${G.raceResults.length===0?'<p style="font-size:13px;color:var(--ink3)">Sin carreras completadas.</p>':
-        G.raceResults.map(r=>{
-          if(isDNF(r))return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px">
-            <div><span style="color:var(--neg);margin-right:8px">❌</span>${r.name}</div>
-            <span style="font-size:12px;color:var(--neg)">${dnfLabel(r)}</span></div>`;
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px">
-            <div><span style="font-weight:700;color:${r.pos===1?'var(--avi)':r.pos<=3?'var(--pos)':'var(--ink3)'};margin-right:8px">${r.pos}º</span>${r.name}</div>
-            <span style="font-size:13px;color:var(--pos)">+€${r.prize}</span></div>`;
-        }).join('')}
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${sponsorIncome>0?F('Patrocinios',sponsorIncome):''}
+      ${raceIncome>0?F('Premios de carrera',raceIncome):''}
+      ${pen>0?F('Penalizaciones sponsor',-pen):''}
+      <div class="pz-fila" style="font-weight:600"><span class="pz-fila-txt">Resultado del año</span><span class="pz-fila-dato ${yearNet>=0?'pz-mas':'pz-menos'}">${fmtEur(yearNet,true)}</span></div>
     </div>
-    <div class="card" style="margin-bottom:14px">
-      <table class="eco-table">
-        ${sponsorIncome>0?`<tr><td>Patrocinios</td><td class="right plus">+€${sponsorIncome}</td></tr>`:''}
-        ${raceIncome>0?`<tr><td>Premios de carrera</td><td class="right plus">+€${raceIncome}</td></tr>`:''}
-        ${(G.sponsorPenalties||[]).filter(p=>p.year===G.year).reduce((a,p)=>a+p.amount,0)>0?`<tr><td>Penalizaciones sponsor</td><td class="right minus">-€${G.sponsorPenalties.filter(p=>p.year===G.year).reduce((a,p)=>a+p.amount,0)}</td></tr>`:''}
-        <tr><td>Resultado del año</td><td class="right ${yearNet>=0?'plus':'minus'}">${yearNet>=0?'+':''}€${yearNet}</td></tr>
-      </table>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="sec-title-sm">Stats finales</div>
-      ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}
-    </div>
-    <button class="main" onclick="doNextYear(${yearNet})">${G.year>=modeCfg().maxYears?'Ver resumen de carrera →':'Temporada '+(G.year+1)+' →'}</button>
-    ${G.year>=2?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}`;
+    <div class="pz-tarjeta"><div class="pz-label" style="margin-bottom:8px">Stats finales</div>${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}</div>
+    <button class="pz-btn" onclick="doNextYear(${yearNet})">${G.year>=modeCfg().maxYears?'Ver resumen de carrera →':'Temporada '+(G.year+1)+' →'}</button>
+    ${G.year>=2?`<button class="pz-btn sec" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}
+  </div>`;
 }
 
 // ── WORK SETUP (TRIMESTRAL) ────────────
