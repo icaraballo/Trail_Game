@@ -493,11 +493,11 @@ function changeClubRep(delta){
 }
 function clubRepLabel(){
   const r=G.clubReputation||0;
-  if(r>=80) return {text:'Leyenda del club 🏆',color:'#c07a10'};
-  if(r>=60) return {text:'Referente del club',color:'#4a8a2a'};
-  if(r>=40) return {text:'Miembro activo',color:'#4a90d9'};
-  if(r>=20) return {text:'Miembro reciente',color:'#888'};
-  return {text:'Recién llegado',color:'#aaa'};
+  if(r>=80) return {text:'Leyenda del club 🏆',color:'var(--ink)'};
+  if(r>=60) return {text:'Referente del club',color:'var(--ink)'};
+  if(r>=40) return {text:'Miembro activo',color:'var(--ink2)'};
+  if(r>=20) return {text:'Miembro reciente',color:'var(--ink3)'};
+  return {text:'Recién llegado',color:'var(--ink3)'};
 }
 
 function monthlyStaffCost(){
@@ -922,12 +922,13 @@ function getLoadWarningColor(load){
   if(load<t.warningLevel1)return null;
   const mode=G.gameMode||'medio';
   const palette={
-    facil:    {n1:'#f0a000', n2:'#c07a10'},
-    expres:   {n1:'#f0a000', n2:'#c07a10'},
-    medio:    {n1:'#c07a10', n2:'#c0392b'},
-    coach:    {n1:'#c07a10', n2:'#c0392b'},
-    dificil:  {n1:'#d97a00', n2:'#a82525'},
-    hardcore: {n1:'#c0392b', n2:'#8b1a1a'},
+    // Paso 6 (2026-10-30): con tokens; los matices por dificultad se perdían en dos ámbar y dos rojos
+    facil:    {n1:'var(--avi)', n2:'var(--avi)'},
+    expres:   {n1:'var(--avi)', n2:'var(--avi)'},
+    medio:    {n1:'var(--avi)', n2:'var(--neg)'},
+    coach:    {n1:'var(--avi)', n2:'var(--neg)'},
+    dificil:  {n1:'var(--avi)', n2:'var(--neg)'},
+    hardcore: {n1:'var(--neg)', n2:'var(--neg)'},
   };
   const p=palette[mode]||palette.medio;
   return load>=t.warningLevel2?p.n2:p.n1;

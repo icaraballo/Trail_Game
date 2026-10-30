@@ -212,10 +212,10 @@ function getTerrainCondition(race){
   // Based on season and recent weather_risk
   const s=getSeason(race.month);
   const roll=Math.random();
-  if(s==='invierno'&&roll<0.4)return {id:'nieve',label:'Nieve',icon:'❄',descentMult:1.3,climbMult:1.2,color:'#4a90d9'};
-  if(s==='invierno'&&roll<0.7)return {id:'barro',label:'Barro',icon:'🟫',descentMult:1.2,climbMult:1.1,color:'#8B5E3C'};
-  if(s==='verano'&&roll<0.3)return {id:'seco',label:'Polvo seco',icon:'🌵',descentMult:1.15,climbMult:1.0,color:'#c07a10'};
-  if(race.weather_risk>0.25&&roll<0.3)return {id:'barro',label:'Barro (lluvia reciente)',icon:'🟫',descentMult:1.25,climbMult:1.1,color:'#8B5E3C'};
+  if(s==='invierno'&&roll<0.4)return {id:'nieve',label:'Nieve',icon:'❄',descentMult:1.3,climbMult:1.2,color:'var(--cuerpo)'};
+  if(s==='invierno'&&roll<0.7)return {id:'barro',label:'Barro',icon:'🟫',descentMult:1.2,climbMult:1.1,color:'var(--ink2)'};
+  if(s==='verano'&&roll<0.3)return {id:'seco',label:'Polvo seco',icon:'🌵',descentMult:1.15,climbMult:1.0,color:'var(--avi)'};
+  if(race.weather_risk>0.25&&roll<0.3)return {id:'barro',label:'Barro (lluvia reciente)',icon:'🟫',descentMult:1.25,climbMult:1.1,color:'var(--ink2)'};
   return {...TERRAIN_BUENO};   // T51 (v93): mismo objeto que el de freshState()
 }
 function getAltitudePenalty(race){
@@ -726,10 +726,10 @@ window.doUseGel=()=>{
   render();
 };
 const AID_OPTIONS=[
-  {id:'gel',    label:'Gel energético', col:'#4a8a2a', timeCost:15, efFn:(nb)=>`+${Math.round(20*nb)} energía`},
-  {id:'agua',   label:'Beber agua',     col:'#4a90d9', timeCost:0,  efFn:(nb)=>'+30 hidratación'},
-  {id:'solido', label:'Comida sólida',  col:'#c07a10', timeCost:45, efFn:(nb)=>`+${Math.round(35*nb)} energía`},
-  {id:'descanso',label:'Descansar',     col:'#888',    timeCost:90, efFn:(nb)=>'+15 energía +15 hidra'},
+  {id:'gel',    label:'Gel energético', col:'var(--pos)', timeCost:15, efFn:(nb)=>`+${Math.round(20*nb)} energía`},
+  {id:'agua',   label:'Beber agua',     col:'var(--cuerpo)', timeCost:0,  efFn:(nb)=>'+30 hidratación'},
+  {id:'solido', label:'Comida sólida',  col:'var(--avi)', timeCost:45, efFn:(nb)=>`+${Math.round(35*nb)} energía`},
+  {id:'descanso',label:'Descansar',     col:'var(--ink3)', timeCost:90, efFn:(nb)=>'+15 energía +15 hidra'},
 ];
 function renderAid(){
   const el=$main();
@@ -2227,7 +2227,7 @@ window.doAbandon=()=>{
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-      <button class="main" style="margin-top:0;border-color:#c0392b;color:var(--neg)" onclick="doAbandonConfirmed()">Sí, abandonar</button>
+      <button class="main" style="margin-top:0;border-color:var(--neg);color:var(--neg)" onclick="doAbandonConfirmed()">Sí, abandonar</button>
       <button class="main" style="margin-top:0" onclick="G.screen='segment';render()">Seguir corriendo →</button>
     </div>`;
 };
@@ -2316,11 +2316,11 @@ function resolveRedZoneConsequence(zeroCount, redZoneMax, stormActive){
     const opts=[
       {id:'hospitalizacion', label:'Hospitalización',
        desc:'El cuerpo dijo basta. Semana en urgencias, rehidratación IV. Pierdes €150 y un mes completo de competición.',
-       icon:'🏥', color:'#c0392b',
+       icon:'🏥', color:'var(--neg)',
        apply:(G)=>{G.money=Math.max(0,G.money-150);G.injuryRacesLeft=(G.injuryRacesLeft||0)+2;G.postRaceRestWeeks=(G.postRaceRestWeeks||0)+3;addFollowers(1200);},fameBonus:1200},
       {id:'colapso_muscular', label:'Colapso muscular',
        desc:'Rotura de fibras múltiples. El fisio dice que no corras en 6 semanas. Las piernas tardarán en volver.',
-       icon:'💢', color:'#c0392b',
+       icon:'💢', color:'var(--neg)',
        apply:(G)=>{G.runner.stats.resistencia=Math.max(10,(G.runner.stats.resistencia||50)-8);G.injuryRacesLeft=(G.injuryRacesLeft||0)+2;G.postRaceRestWeeks=(G.postRaceRestWeeks||0)+2;addFollowers(900);},fameBonus:900},
     ];
     return opts[Math.floor(roll*opts.length)];
@@ -2329,15 +2329,15 @@ function resolveRedZoneConsequence(zeroCount, redZoneMax, stormActive){
     const opts=[
       {id:'gripe', label:'Bajón inmune — gripe',
        desc:'El esfuerzo extremo dejó las defensas por los suelos. Tres semanas en casa, sin entrenar ni competir.',
-       icon:'🤒', color:'#c07a10',
+       icon:'🤒', color:'var(--avi)',
        apply:(G)=>{G.injuryRacesLeft=(G.injuryRacesLeft||0)+1;G.postRaceRestWeeks=(G.postRaceRestWeeks||0)+2;addFollowers(500);},fameBonus:500},
       {id:'sobrecarga', label:'Sobrecarga muscular crónica',
        desc:'Las piernas han pagado el precio. Este año entrenarás un 20% menos efectivo en todo lo que sea de piernas.',
-       icon:'🦵', color:'#c07a10',
+       icon:'🦵', color:'var(--avi)',
        apply:(G)=>{G.seasonLegsPenalty=(G.seasonLegsPenalty||0)+0.20;addFollowers(350);},fameBonus:350},
       {id:'deshidratacion', label:'Deshidratación severa',
        desc:'La siguiente carrera la empiezas al 60% de hidratación. El cuerpo aún no ha recuperado el equilibrio electrolítico.',
-       icon:'💧', color:'#c07a10',
+       icon:'💧', color:'var(--avi)',
        apply:(G)=>{G.nextRaceHydrationStart=60;addFollowers(250);},fameBonus:250},
     ];
     return opts[Math.floor(roll*opts.length)];
@@ -2346,11 +2346,11 @@ function resolveRedZoneConsequence(zeroCount, redZoneMax, stormActive){
     const opts=[
       {id:'fatiga_residual', label:'Fatiga residual',
        desc:'El cuerpo no se ha recuperado del todo. La siguiente carrera empieza al 65% de energía y piernas.',
-       icon:'😮‍💨', color:'#888',
+       icon:'😮‍💨', color:'var(--ink3)',
        apply:(G)=>{G.nextRaceEnergyStart=65;G.nextRaceLegsStart=65;addFollowers(120);},fameBonus:120},
       {id:'descanso_forzado', label:'Semana de descanso obligatorio',
        desc:'El médico recomienda no entrenar esta semana. Pierdes un bloque de entrenamiento.',
-       icon:'🛌', color:'#888',
+       icon:'🛌', color:'var(--ink3)',
        apply:(G)=>{G.postRaceRestWeeks=(G.postRaceRestWeeks||0)+1;addFollowers(80);},fameBonus:80},
     ];
     return opts[Math.floor(roll*opts.length)];

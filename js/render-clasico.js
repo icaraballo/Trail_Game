@@ -260,7 +260,7 @@ function renderRunnerTab(){
         <span style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px">Carga corporal</span>
         <span style="font-size:14px;font-weight:700;color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--pos)'}">${load}%</span>
       </div>
-      <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9'}"></div></div>
+      <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi-bar)':'var(--cuerpo)'}"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:4px">
         <span>0%</span><span style="color:var(--avi)">${lt.warningLevel1}% riesgo</span><span style="color:var(--neg)">100% lesión</span>
       </div>
@@ -271,8 +271,8 @@ function renderRunnerTab(){
       <div class="sec-title">Stats actuales</div>
       ${G.lastRaceGains&&G.lastRaceGains.length>0?`
         <div style="background:var(--soft);border-radius:var(--border-radius-md);padding:9px 12px;margin-bottom:12px">
-          <div style="font-size:12px;font-weight:600;color:#3B6D11;margin-bottom:5px">Ganado en la última carrera</div>
-          <div style="font-size:13px;color:#27500A">${G.lastRaceGains.map(({k,v})=>'+'+v+' '+k.charAt(0).toUpperCase()+k.slice(1)).join(' &nbsp;·&nbsp; ')}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--pos-i);margin-bottom:5px">Ganado en la última carrera</div>
+          <div style="font-size:13px;color:var(--pos)">${G.lastRaceGains.map(({k,v})=>'+'+v+' '+k.charAt(0).toUpperCase()+k.slice(1)).join(' &nbsp;·&nbsp; ')}</div>
         </div>`:''}
       ${Object.entries(r.stats).map(([k,v])=>{
         const eff=getEffStat(k);
@@ -281,7 +281,7 @@ function renderRunnerTab(){
         return `<div class="bar-row">
           <span class="bar-label">${label}</span>
           <div class="bar-track" style="flex:1">
-            <div class="bar-fill" style="width:${Math.min(100,eff)}%;background:${eff>=70?'#4a8a2a':eff>=50?'#4a90d9':eff>=35?'#c07a10':'#c0392b'}"></div>
+            <div class="bar-fill" style="width:${Math.min(100,eff)}%;background:${eff>=70?'var(--pos)':eff>=50?'var(--cuerpo)':eff>=35?'var(--avi-bar)':'var(--neg)'}"></div>
           </div>
           <span class="bar-pct">${Math.round(v)}${bonus>0?'<span style="font-size:12px;color:var(--pos)"> +'+Math.round(bonus)+'</span>':''}</span>
         </div>`;}).join('')}
@@ -303,7 +303,7 @@ function renderRunnerTab(){
         const obj=checkYearObjectiveMet();
         if(!obj)return '';
         const pct=Math.min(100,Math.round((obj.actual/obj.target)*100));
-        const color=obj.met?'#4a8a2a':'#c07a10';
+        const color=obj.met?'var(--pos)':'var(--avi-bar)';
         return `<div style="margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <span style="font-size:13px;font-weight:600">${obj.label}</span>
@@ -329,8 +329,8 @@ function renderRunnerTab(){
     </div>
 
     ${(()=>{
-      const RARITY={easy:{c:'#4a8a2a',bg:'#eaf4ea',l:'Fácil'},medium:{c:'#4a90d9',bg:'#e8f0fb',l:'Medio'},hard:{c:'#c07a10',bg:'#fdf0e0',l:'Difícil'},legendary:{c:'#8b2252',bg:'#f8e8f2',l:'Legendario'}};
-      const rb=a=>{const r=RARITY[a.rarity]||{c:'#888',bg:'#eee',l:''};return`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:${r.bg};color:${r.c}">${r.l}</span>`;};
+      const RARITY={easy:{c:'var(--ink2)',bg:'var(--soft)',l:'Fácil'},medium:{c:'var(--ink)',bg:'var(--tier-regional)',l:'Medio'},hard:{c:'var(--card)',bg:'var(--tier-nacional)',l:'Difícil'},legendary:{c:'var(--card)',bg:'var(--tier-elite)',l:'Legendario'}};   // la escala de grises de los tiers
+      const rb=a=>{const r=RARITY[a.rarity]||{c:'var(--ink3)',bg:'var(--soft)',l:''};return`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:${r.bg};color:${r.c}">${r.l}</span>`;};
       const meta=G.achievementMeta||{};
       const unlocked=G.unlockedAchievements||[];
       const normalAchs=ACHIEVEMENTS.filter(a=>!a.mode);
@@ -362,14 +362,13 @@ function renderRunnerTab(){
       ${activeSponsorList.map(([cat,sp])=>{
         const met=checkSponsorObjective(sp);
         const penalty=Math.round(sp.salary*(sp.penaltyPct||0.15));
-        const tierColor=TIER_COLOR_SPONSOR;
         const tierLabel=TIER_LABEL_SPONSOR;
         return `<div style="padding:10px 0;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
             <div style="flex:1">
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
                 <span style="font-weight:600;font-size:14px">${sp.name}</span>
-                <span style="font-size:12px;font-weight:600;padding:1px 6px;border-radius:4px;background:${tierColor[sp.tier]||'#888'}22;color:${tierColor[sp.tier]||'var(--ink3)'}">${tierLabel[sp.tier]||''}</span>
+                ${nivelTag(sp.tier,tierLabel[sp.tier]||'')}
               </div>
               <div style="font-size:12px;color:var(--ink3)">${sp.bonus}</div>
             </div>
@@ -378,25 +377,25 @@ function renderRunnerTab(){
               <div style="font-size:12px;color:var(--ink3)">${sp.duration} temp. restante${sp.duration!==1?'s':''}</div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;background:${met?'var(--soft)':'#fff8f0'}">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;background:${met?'var(--soft)':'var(--avi-t)'}">
             <div style="flex:1">
-              <div style="font-size:12px;font-weight:600;color:${met?'var(--pos-i)':'#7a3a10'}">${met?'✓ Objetivo cumplido':'⚠ Objetivo pendiente'}</div>
+              <div style="font-size:12px;font-weight:600;color:${met?'var(--pos-i)':'var(--avi)'}">${met?'✓ Objetivo cumplido':'⚠ Objetivo pendiente'}</div>
               <div style="font-size:12px;color:${met?'var(--pos)':'var(--ink3)'};margin-top:1px">${sp.objective}</div>
             </div>
             ${!met?`<div style="font-size:12px;color:var(--neg);font-weight:600;flex-shrink:0;margin-left:8px;margin-right:8px">-€${penalty} si falla</div>`:''}
-            <button class="secondary" style="font-size:11px;padding:3px 8px;flex-shrink:0;color:var(--neg);border-color:#c0392b;background:#fff8f0" onclick="breakSponsorContract('${cat}')">Romper</button>
+            <button class="secondary" style="font-size:11px;padding:3px 8px;flex-shrink:0;color:var(--neg);border-color:var(--neg);background:var(--card)" onclick="breakSponsorContract('${cat}')">Romper</button>
           </div>
         </div>`;}).join('')}
     </div>`:''}
 
     ${G.sponsorPenalties&&G.sponsorPenalties.length>0?`<div class="card" style="border-color:var(--line2)">
       <div style="font-size:12px;font-weight:700;color:var(--neg);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Penalizaciones pendientes</div>
-      ${G.sponsorPenalties.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #fef0f0">
+      ${G.sponsorPenalties.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
         <div style="font-size:13px;color:var(--color-text-primary)">${p.name}</div>
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:13px;font-weight:600;color:var(--neg)">-€${p.amount}</span>
           <button class="secondary" style="font-size:12px;padding:3px 10px" onclick="payPenalty('${p.id}')">Pagar</button>
-          <button class="secondary" style="font-size:12px;padding:3px 10px;border-color:#c07a10;color:var(--avi)" onclick="negotiatePenalty('${p.id}')">Negociar</button>
+          <button class="secondary" style="font-size:12px;padding:3px 10px;border-color:var(--avi-bar);color:var(--avi)" onclick="negotiatePenalty('${p.id}')">Negociar</button>
         </div>
       </div>`).join('')}
       <div style="font-size:12px;color:var(--ink3);margin-top:8px">Negociar deja la sanción en el 40% si el sponsor acepta — ${Math.round(penaltyNegotiationChance()*100)}% de probabilidad con tu reputación actual. Si se niega, pagas el total y pierdes seguidores. Lo que no resuelvas se cobra solo al cerrar la temporada que viene.</div>
@@ -421,7 +420,7 @@ function renderRunnerTab(){
             <span style="font-size:12px;color:var(--ink3)">Reputación en el club</span>
             <span style="font-size:13px;font-weight:700;color:${repInfo.color}">${repInfo.text}</span>
           </div>
-          <div class="load-bar-track"><div class="bar-fill" style="width:${rep}%;background:${rep>=60?'#c07a10':rep>=30?'#4a90d9':'#bbb'}"></div></div>
+          <div class="load-bar-track"><div class="bar-fill" style="width:${rep}%;background:${rep>=60?'var(--carrera)':rep>=30?'var(--carrera)':'var(--ink3)'}"></div></div>
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:3px">
             <span>0</span><span style="color:var(--pos)">75 → Copa Clubes 🏆</span><span>100</span>
           </div>
@@ -438,7 +437,7 @@ function renderRunnerTab(){
         <div>
           <div style="font-weight:500">${h.name}</div>
           <div style="font-size:12px;color:var(--ink3);margin-top:1px">Año ${h.year} · ${h.dnf?dnfLabel(h):fmt(h.time)}</div>
-          ${h.catPos&&h.catTotal>1?`<div style="margin-top:3px"><span style="font-size:11px;background:#e8eef8;color:#2d4fa0;border-radius:4px;padding:1px 6px;font-weight:600">${h.catName} ${h.catPos}º</span></div>`:''}
+          ${h.catPos&&h.catTotal>1?`<div style="margin-top:3px"><span style="font-size:11px;background:var(--soft);color:var(--ink);border-radius:4px;padding:1px 6px;font-weight:600">${h.catName} ${h.catPos}º</span></div>`:''}
         </div>
         <div style="text-align:right">
           ${h.dnf?`<div style="font-size:14px;font-weight:700;color:var(--neg)">DNF</div>`:`<div style="font-size:14px;font-weight:700;color:${h.pos===1?'var(--avi)':h.pos<=3?'var(--pos)':'var(--ink3)'}">${h.pos}º</div>`}
@@ -1102,7 +1101,7 @@ function renderAthleteHoursBlock(){
       <div style="display:flex;gap:8px;margin-bottom:10px">
         ${opts.map(v=>{
           const sel=h===v;
-          return `<div onclick="setAthleteHours(${v})" style="flex:1;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid ${sel?'#534AB7':'#e0dfd8'};background:${sel?'#EEEDFE':'var(--card)'};cursor:pointer;font-size:13px;font-weight:${sel?'600':'400'};color:${sel?'#534AB7':'var(--ink2)'};transition:all .15s">${v}h</div>`;
+          return `<div onclick="setAthleteHours(${v})" style="flex:1;text-align:center;padding:8px 4px;border-radius:8px;border:1.5px solid ${sel?'var(--acc-entrenador)':'var(--line)'};background:${sel?'var(--acc-entrenador-t)':'var(--card)'};cursor:pointer;font-size:13px;font-weight:${sel?'600':'400'};color:${sel?'var(--acc-entrenador)':'var(--ink2)'};transition:all .15s">${v}h</div>`;
         }).join('')}
       </div>
       ${h>0?`<div style="font-size:12px;color:var(--avi)">–${h}h para ti · +${h}h para ${first} · tu entrenamiento al <strong>${effPct}%</strong> · al cerrar la temporada, ${first} +1 en ${lifeAthleteSeasonGain(h)} stat${lifeAthleteSeasonGain(h)>1?'s':''}</div>`
@@ -1584,7 +1583,7 @@ window.breakSponsorContract=(cat)=>{
       </div>
       <div class="danger" style="margin-bottom:16px;font-size:13px">Una vez roto, perderás el bono <strong>${sp.bonus}</strong> y el objetivo de sponsor quedará sin cumplir este año.</div>
       <div class="grid-2">
-        <button class="main" style="margin-top:0;border-color:#c0392b;color:var(--neg)" onclick="confirmBreakSponsor('${cat}')">Romper — €${penaltyAmount}</button>
+        <button class="main" style="margin-top:0;border-color:var(--neg);color:var(--neg)" onclick="confirmBreakSponsor('${cat}')">Romper — €${penaltyAmount}</button>
         <button class="main" style="margin-top:0" onclick="document.getElementById('break-confirm-overlay').remove()">Cancelar</button>
       </div>
     </div>`;

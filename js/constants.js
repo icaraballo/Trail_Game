@@ -120,7 +120,7 @@ const ACHIEVEMENTS=[
   {id:'win_1',         rarity:'easy',   label:'Primera victoria',      desc:'Ganar una carrera',                                   check:()=>careerAgg().wins>=1},
   {id:'first_sponsor', rarity:'easy',   label:'Primer contrato',       desc:'Firmar el primer contrato de patrocinio',             check:()=>Object.values(G.sponsors||{}).some(Boolean)},
   {id:'year_3',        rarity:'easy',   label:'En rodaje',             desc:'Completar 3 temporadas',                             check:()=>G.year>=3},
-  {id:'top_100',       rarity:'easy',   label:'Top 100 nacional',      desc:'Alcanzar el ranking #100 o mejor',                   check:()=>(G.ranking||999)<=100},
+  {id:'top_100',       rarity:'easy',   label:'Top 100 nacional',      desc:'Alcanzar el puesto 100 del ranking o mejor',                   check:()=>(G.ranking||999)<=100},
   {id:'fame_1k',       rarity:'easy',   label:'Micro-influencer',      desc:'Llegar a 1.000 seguidores',                           check:()=>(G.followers||0)>=1000},
   {id:'distance_100',  rarity:'easy',   label:'Primeros 100 km',       desc:'Acumular 100 km en carrera',                         check:()=>(G.totalCareerKm||0)>=100},
   {id:'survived_storm',rarity:'easy',   label:'Superviviente',         desc:'Terminar una carrera con tormenta activa',           check:()=>(G.stormSurvivedCount||0)>=1},
@@ -286,7 +286,7 @@ const ACHIEVEMENTS=[
   // ══ MODO EXPRÉS — JOKE ══════════════════════════════════
   {id:'joke_xp_slow',        rarity:'joke',mode:'expres',label:'Lento o vago',        desc:'No responder a ningún evento temporizado antes de que expire en una carrera',check:()=>!!(G._xpNoAnswerRace)},
   {id:'joke_xp_dnf_y1',      rarity:'joke',mode:'expres',label:'Ni arrancó',          desc:'Abandonar en la primera temporada del modo Exprés',        check:()=>(G.gameMode==='expres')&&(G.year||0)<=1&&(G.raceAbandonedCount||0)>=1},
-  {id:'joke_xp_last',        rarity:'joke',mode:'expres',label:'Express al revés',    desc:'Terminar las 3 temporadas con el ranking #200 o peor',     check:()=>(G.gameMode==='expres')&&(G.year||0)>=3&&(G.ranking||999)>=200},
+  {id:'joke_xp_last',        rarity:'joke',mode:'expres',label:'Express al revés',    desc:'Terminar las 3 temporadas en el puesto 200 del ranking o peor',     check:()=>(G.gameMode==='expres')&&(G.year||0)>=3&&(G.ranking||999)>=200},
   {id:'joke_xp_no_sponsor',  rarity:'joke',mode:'expres',label:'Solo ante el peligro',desc:'Completar las 3 temporadas sin firmar ningún sponsor',     check:()=>(G.gameMode==='expres')&&(G.year||0)>=3&&!Object.values(G.sponsors||{}).some(Boolean)},
   // ══ CANICROSS — FÁCIL (nuevos) ═══════════════════════════
   {id:'cn_first_podium', rarity:'easy',  mode:'cn',label:'Primer podio juntos',       desc:'Conseguir el primer podio en canicross',                   check:()=>(G.cnRaceResults||[]).some(r=>!r.dnf&&r.pos<=3)},
@@ -786,9 +786,7 @@ const QUARTERS=[
   {n:1,label:'Q1',months:'Ene · Feb · Mar'},{n:2,label:'Q2',months:'Abr · May · Jun'},
   {n:3,label:'Q3',months:'Jul · Ago · Sep'},{n:4,label:'Q4',months:'Oct · Nov · Dic'},
 ];
-const TIER_COLOR_RACE={local:'#888',regional:'#4a90d9',nacional:'#4a8a2a',elite:'#c07a10'};
 const TIER_LABEL_RACE={local:'Local',regional:'Regional',nacional:'Nacional',elite:'Élite'};
-const TIER_COLOR_SPONSOR={1:'#888',2:'#4a90d9',3:'#4a8a2a',4:'#c07a10'};
 const TIER_LABEL_SPONSOR={1:'Local',2:'Regional',3:'Nacional',4:'Élite'};
 const SPEC_LABEL={fondista:'Fondista',montanero:'Montañero',tecnico:'Técnico',todoterreno:'Todoterreno'};
 
@@ -816,14 +814,14 @@ const DAY_CONDITIONS=[
 ];
 
 const MODE_LABELS={
-  facil:    {label:'Fácil',     emoji:'🟢', bg:'#EAF3DE', fg:'#27500A'},
-  medio:    {label:'Medio',     emoji:'🟡', bg:'#FAEEDA', fg:'#633806'},
-  dificil:  {label:'Difícil',   emoji:'🔴', bg:'#FCEBEB', fg:'#791F1F'},
-  hardcore: {label:'Hardcore',  emoji:'💀', bg:'#F1EFE8', fg:'#444441'},
-  expres:   {label:'Exprés',    emoji:'⚡', bg:'#fef9ec', fg:'#8a4a00'},
-  coach:    {label:'Entrenador',emoji:'📋', bg:'#EEEDFE', fg:'#534AB7'},
-  club:     {label:'Club',      emoji:'🏕', bg:'#EAF3DE', fg:'#27500A'},
-  canicross:{label:'Canicross', emoji:'🐕', bg:'#e8f0fb', fg:'#2a5d8f'},
+  facil:    {label:'Fácil',     emoji:'🟢'},
+  medio:    {label:'Medio',     emoji:'🟡'},
+  dificil:  {label:'Difícil',   emoji:'🔴'},
+  hardcore: {label:'Hardcore',  emoji:'💀'},
+  expres:   {label:'Exprés',    emoji:'⚡'},
+  coach:    {label:'Entrenador',emoji:'📋'},
+  club:     {label:'Club',      emoji:'🏕'},
+  canicross:{label:'Canicross', emoji:'🐕'},
 };
 const modeInfo     =m=>MODE_LABELS[m]||MODE_LABELS.medio;
 const modeEmoji    =m=>modeInfo(m).emoji;
@@ -844,7 +842,7 @@ const PHASE_LABEL={
 // como valor de salida, así que freshState() no podía declararlo y cada lectura
 // de G.terrainCondition se protegía a su manera (sin nada, con `||{...}` y con
 // `?.`). Ahora es un dato, freshState() arranca con él y los accesos son directos.
-const TERRAIN_BUENO={id:'bueno',label:'Terreno en buen estado',icon:'✅',descentMult:1.0,climbMult:1.0,color:'#4a8a2a'};
+const TERRAIN_BUENO={id:'bueno',label:'Terreno en buen estado',icon:'✅',descentMult:1.0,climbMult:1.0};
 
 // ══════════════════════════════════════
 //  CONSTANTES DE BALANCE (E2)
@@ -866,15 +864,15 @@ const RACE_STRATEGIES=[
   {id:'conservador',icon:'\u{1F422}',label:'Conservador',
    desc:'Sales tranquilo. Guardas fuerzas para el final.',
    detail:'Primeros tramos \u22128% velocidad. \u00daltimos tramos +10% rendimiento. Fatiga acumulada m\u00e1s lenta.',
-   earlyMult:1.08, lateMult:0.92, fatigueMod:-0.15, col:'#4a8a2a'},
+   earlyMult:1.08, lateMult:0.92, fatigueMod:-0.15},
   {id:'equilibrado',icon:'\u2696\uFE0F',label:'Equilibrado',
    desc:'Ritmo constante de principio a fin.',
    detail:'Sin bonos ni penalizaciones. El modo base.',
-   earlyMult:1.0, lateMult:1.0, fatigueMod:0, col:'#4a90d9'},
+   earlyMult:1.0, lateMult:1.0, fatigueMod:0},
   {id:'atope',icon:'\u{1F525}',label:'A tope',
    desc:'M\u00e1xima velocidad desde la salida. El cuerpo paga despu\u00e9s.',
    detail:'Primeros tramos +10% velocidad. Fatiga exponencial acumulada m\u00e1s r\u00e1pida. Los \u00faltimos km cuestan el doble.',
-   earlyMult:0.90, lateMult:1.12, fatigueMod:0.30, col:'#c0392b'},
+   earlyMult:0.90, lateMult:1.12, fatigueMod:0.30},
 ];
 const RACE_STRATEGY_BY_ID=Object.fromEntries(RACE_STRATEGIES.map(s=>[s.id,s]));
 // Penalización por reservas bajas
@@ -978,9 +976,9 @@ const LIFE_ATHLETE_POOL=[
    baseStats:{resistencia:68,velocidad:60,subida:44,bajada:40,nutricion:52,mental:58}},
 ];
 const LIFE_POTENTIAL_LABEL={
-  bruto:         {label:'Talento bruto',  color:'#c07a10', desc:'Base física excepcional, sin pulir.'},
-  prometedor:    {label:'Prometedor',     color:'#185FA5', desc:'Perfil equilibrado con margen de mejora claro.'},
-  talento_oculto:{label:'Talento oculto', color:'#534AB7', desc:'Nadie lo ha visto todavía. Podría sorprenderte.'},
+  bruto:         {label:'Talento bruto', desc:'Base física excepcional, sin pulir.'},
+  prometedor:    {label:'Prometedor', desc:'Perfil equilibrado con margen de mejora claro.'},
+  talento_oculto:{label:'Talento oculto', desc:'Nadie lo ha visto todavía. Podría sorprenderte.'},
 };
 
 const LIFE_EXTRA_ATHLETES=[
@@ -1002,45 +1000,45 @@ const LIFE_EXTRA_ATHLETES=[
    baseStats:{resistencia:64,velocidad:52,subida:60,bajada:58,nutricion:55,mental:62}},
 ];
 const PERSONALITY_LABEL={
-  rebelde:       {label:'Rebelde',       color:'#c0392b',emoji:'🔴',desc:'Modifica tus planes. Difícil de controlar pero tiene chispa.'},
-  motivado:      {label:'Motivado',      color:'#c07a10',emoji:'🟡',desc:'Se entrega al máximo. Puede sobreentrenar si no lo controlas.'},
-  obediente:     {label:'Obediente',     color:'#2d7a2d',emoji:'🟢',desc:'Sigue tus instrucciones al pie de la letra.'},
-  quemado:       {label:'Quemado',       color:'#888',   emoji:'⚫',desc:'Necesita apoyo emocional. Puede recuperar el nivel con el tiempo.'},
-  perfeccionista:{label:'Perfeccionista',color:'#6c3483',emoji:'🟣',desc:'Exige feedback constante. Muy sensible a los errores, pero crece mucho con confianza alta.'},
+  rebelde:       {label:'Rebelde',emoji:'🔴',desc:'Modifica tus planes. Difícil de controlar pero tiene chispa.'},
+  motivado:      {label:'Motivado',emoji:'🟡',desc:'Se entrega al máximo. Puede sobreentrenar si no lo controlas.'},
+  obediente:     {label:'Obediente',emoji:'🟢',desc:'Sigue tus instrucciones al pie de la letra.'},
+  quemado:       {label:'Quemado',   emoji:'⚫',desc:'Necesita apoyo emocional. Puede recuperar el nivel con el tiempo.'},
+  perfeccionista:{label:'Perfeccionista',emoji:'🟣',desc:'Exige feedback constante. Muy sensible a los errores, pero crece mucho con confianza alta.'},
 };
 
 // ── Estado emocional evolutivo ──────────────────────────────────────────────
 // Independiente de la personalidad. Cambia según decisiones, carga y resultados.
 const EMOTIONAL_STATES={
-  fresco:    {label:'Fresco',      color:'#4a90d9',emoji:'💙',desc:'Motivado, sin desgaste acumulado.'},
-  confiado:  {label:'Confiado',    color:'#2d7a2d',emoji:'💚',desc:'Resultados positivos. Rinde mejor en carrera.'},
-  dudoso:    {label:'Dudoso',      color:'#c07a10',emoji:'🟡',desc:'Incertidumbre. Necesita un resultado o un gesto de confianza.'},
-  quemado:   {label:'Quemado',     color:'#888',   emoji:'🩶',desc:'Agotado emocionalmente. Riesgo de no renovar.'},
-  recuperado:{label:'Recuperado',  color:'#8e44ad',emoji:'💜',desc:'Volvió de un bache. Comprometido y agradecido.'},
+  fresco:    {label:'Fresco',emoji:'💙',desc:'Motivado, sin desgaste acumulado.'},
+  confiado:  {label:'Confiado',emoji:'💚',desc:'Resultados positivos. Rinde mejor en carrera.'},
+  dudoso:    {label:'Dudoso',emoji:'🟡',desc:'Incertidumbre. Necesita un resultado o un gesto de confianza.'},
+  quemado:   {label:'Quemado',   emoji:'🩶',desc:'Agotado emocionalmente. Riesgo de no renovar.'},
+  recuperado:{label:'Recuperado',emoji:'💜',desc:'Volvió de un bache. Comprometido y agradecido.'},
 };
 
 // Transiciones: qué condiciones llevan a cada estado
 // Se evalúa al fin de carrera y en eventos clave
 const TRAINER_STYLES={
-  motivador:   {label:'Motivador',   emoji:'🔥', color:'#c07a10',
+  motivador:   {label:'Motivador',   emoji:'🔥',
     desc:'Discursos, confianza extrema. El atleta rinde más cuando cree en sí mismo.',
     trustMod:+4, bodyLoadMod:-3, perfMod:+5,
     trainingBonus:'mental', trainingPenalty:null,
     reactionGood:'Se le ilumina la cara. "Si tú lo dices, puedo."',
     reactionBad:'Se nota forzado. No toda la motivación cala igual.'},
-  cientifico:  {label:'Científico',  emoji:'📊', color:'#4a90d9',
+  cientifico:  {label:'Científico',  emoji:'📊',
     desc:'Datos, periodización exacta. Cada bloque tiene su porqué.',
     trustMod:+2, bodyLoadMod:-6, perfMod:+3,
     trainingBonus:'resistencia', trainingPenalty:null,
     reactionGood:'"Los números cuadran. Confío en el plan."',
     reactionBad:'Los atletas emocionales necesitan más que datos.'},
-  conservador: {label:'Conservador', emoji:'🛡', color:'#2d7a2d',
+  conservador: {label:'Conservador', emoji:'🛡',
     desc:'Menos lesiones, progresión lenta pero segura.',
     trustMod:+3, bodyLoadMod:-10, perfMod:-3,
     trainingBonus:null, trainingPenalty:'velocidad',
     reactionGood:'"Me siento protegido. No me has quemado."',
     reactionBad:'Algunos atletas necesitan ser empujados más.'},
-  agresivo:    {label:'Agresivo',    emoji:'⚡', color:'#c0392b',
+  agresivo:    {label:'Agresivo',    emoji:'⚡',
     desc:'Carga alta, resultados rápidos. Mayor riesgo de lesión.',
     trustMod:-2, bodyLoadMod:+8, perfMod:+8,
     trainingBonus:'velocidad', trainingPenalty:null,
@@ -1051,19 +1049,19 @@ const TRAINER_STYLES={
 // ── Rasgos emergentes del entrenador (E13) ──────────────────────────────────
 // Se calculan automáticamente del historial de decisiones
 const TRAINER_TRAITS=[
-  {id:'protector',  label:'Protector',   emoji:'🛡', color:'#2d7a2d',
+  {id:'protector',  label:'Protector',   emoji:'🛡',
    desc:'Siempre priorizas la salud del atleta. Se nota.',
    condition:(log)=>log.filter(d=>d.positive&&(d.type==='taper_used'||d.type==='injury_scare_rest')).length>=3},
-  {id:'ganador',    label:'Ganador',     emoji:'🏆', color:'#c07a10',
+  {id:'ganador',    label:'Ganador',     emoji:'🏆',
    desc:'Tienes olfato para los podios. Tu historial lo demuestra.',
    condition:(log,hist)=>(hist||[]).reduce((s,h)=>s+(h.wins||0),0)>=3},
-  {id:'comunicador',label:'Comunicador', emoji:'💬', color:'#4a90d9',
+  {id:'comunicador',label:'Comunicador', emoji:'💬',
    desc:'Sabes escuchar. Los atletas confían en ti como persona.',
    condition:(log)=>log.filter(d=>d.positive&&d.type==='mental_talk').length>=3},
-  {id:'exigente',   label:'Exigente',    emoji:'🔥', color:'#c0392b',
+  {id:'exigente',   label:'Exigente',    emoji:'🔥',
    desc:'Empujas duro. Los resultados son buenos, pero hay desgaste.',
    condition:(log)=>log.filter(d=>!d.positive&&d.type==='forced_injury').length>=2},
-  {id:'equilibrado',label:'Equilibrado', emoji:'⚖️', color:'#555',
+  {id:'equilibrado',label:'Equilibrado', emoji:'⚖️',
    desc:'Ni demasiado blando ni demasiado duro. Consistente.',
    condition:(log)=>log.filter(d=>d.positive).length>=4&&log.filter(d=>!d.positive).length<=1},
 ];
@@ -1534,21 +1532,21 @@ function allRacesByName(){
 }
 
 const CIRCUITS_DB=[
-  {id:'copa_trail',name:'Copa Trail España',color:'#4a90d9',
+  {id:'copa_trail',name:'Copa Trail España',
    desc:'Liga nacional con 3 pruebas clave. Acumula puntos para el podio final.',
    prize:'€500 + patrocinio garantizado para el top 3',
    raceIds:['copa','junio','sierra'],
    pointsForPrize:150,
    reward:{money:500,sponsorBonus:true}},
   {id:'circuito_montana', // T140 (v92): llevaba ñ, y los ids son claves de objeto que acaban en localStorage
-   name:'Circuito de Alta Montaña',color:'#4a8a2a',
+   name:'Circuito de Alta Montaña',
    desc:'3 pruebas de montaña exigentes. Solo para los mejores.',
    prize:'€800 + acceso directo al Monte Perdido',
    raceIds:['agosto','sm2','sm3'],
    pointsForPrize:180,
    reqRanking:25,
    reward:{money:800,unlockElite:true}},
-  {id:'liga_local',name:'Liga Local Trail',color:'#888',
+  {id:'liga_local',name:'Liga Local Trail',
    desc:'Perfecta para el año 1. 3 pruebas accesibles con buena recompensa.',
    prize:'€200 + visibilidad ante sponsors locales',
    raceIds:['pinar','febrero','octubre'],
@@ -1635,38 +1633,38 @@ const CLUB_RUNNER_POOL=[
 // BUG-16 (v96): los textos dicen lo que hace simClubRace(). crewBonus y dnfShield no los
 // lee nadie; el +6 del especialista cuenta cuando su especialidad es la del club.
 const CLUB_ROLES={
-  capitan:    {label:'Capitán',    emoji:'⭐',color:'#c07a10',
+  capitan:    {label:'Capitán',    emoji:'⭐',
     desc:'Sube la cohesión del equipo en +5 por temporada y rinde +4 en carrera.',
     cohesionBonus:5, perfBonus:4, crewBonus:true},
-  promesa:    {label:'Promesa',    emoji:'🌱',color:'#2d7a2d',
+  promesa:    {label:'Promesa',    emoji:'🌱',
     desc:'Progresa un 50% más rápido que el resto. Solo menores de 26 años.',
     growthBonus:1.5, perfBonus:0},
-  especialista:{label:'Especialista',emoji:'🎯',color:'#4a90d9',
+  especialista:{label:'Especialista',emoji:'🎯',
     desc:'+10 de rendimiento en carrera, y +6 más si su especialidad es la del club.',
     perfBonus:10, specBonus:true},
-  gregario:   {label:'Gregario',  emoji:'🤝',color:'#888',
+  gregario:   {label:'Gregario',  emoji:'🤝',
     desc:'Corredor de apoyo: rinde −3 en carrera.',
     perfBonus:-3, dnfShield:true},
-  normal:     {label:'Corredor',  emoji:'🏃',color:'#aaa',
+  normal:     {label:'Corredor',  emoji:'🏃',
     desc:'Sin bonus especial.',
     perfBonus:0},
 };
 
 // ── Filosofía del club (C9) ────────────────────────────────────────────────
 const CLUB_FILOSOFIAS={
-  montanero:  {label:'Montañero',  emoji:'🏔️',color:'#2d7a2d',
+  montanero:  {label:'Montañero',  emoji:'🏔️',
     desc:'Especialistas en desnivel. Corredores de subida crecen más rápido.',
     specBonus:'montanero', raceBonus:['regional','nacional'], sponsorBonus:'material',
     statGrowthKey:'subida', cohesionBonus:2},
-  tecnico:    {label:'Técnico',   emoji:'⚡',color:'#4a90d9',
+  tecnico:    {label:'Técnico',   emoji:'⚡',
     desc:'Precisión en descensos técnicos. Más eventos de visibilidad mediática.',
     specBonus:'tecnico', raceBonus:['local','regional'], sponsorBonus:'tecnologia',
     statGrowthKey:'bajada', cohesionBonus:0},
-  estrategico:{label:'Estratégico',emoji:'🧠',color:'#8e44ad',
+  estrategico:{label:'Estratégico',emoji:'🧠',
     desc:'Menos lesiones. Mejor gestión de carga y calendario.',
     specBonus:null, raceBonus:[], sponsorBonus:'nutricion',
     injuryReduction:0.3, cohesionBonus:3},
-  comercial:  {label:'Comercial', emoji:'💰',color:'#c07a10',
+  comercial:  {label:'Comercial', emoji:'💰',
     desc:'Más patrocinadores disponibles. Ingresos de socios +20%.',
     specBonus:null, raceBonus:[], sponsorBonus:'local',
     socioBonus:1.2, cohesionBonus:0},
@@ -1677,13 +1675,13 @@ const CLUB_FILOSOFIAS={
 // cohesión: elegir club no cambiaba nada. Cada arquetipo filtra el pool y fija
 // las condiciones de salida.
 const CLUB_ARCHETYPES={
-  cantera:{     label:'Cantera',     emoji:'🌱', color:'#2d7a2d',
+  cantera:{     label:'Cantera',     emoji:'🌱',
     desc:'Tres jóvenes con poco rodaje y mucho techo. Salarios bajos y presupuesto holgado, pero los resultados tardan.',
     ageMax:26, potential:['alto'],           presupuesto:1100, socios:8,  cohesion:45},
-  veteranos:{   label:'Veteranos',   emoji:'🧓', color:'#c07a10',
+  veteranos:{   label:'Veteranos',   emoji:'🧓',
     desc:'Tres corredores hechos. Compiten desde el primer día, pero cobran más y se te caen en tres o cuatro temporadas.',
     ageMin:30, potential:['bajo','medio'],   presupuesto:600,  socios:12, cohesion:60},
-  equilibrado:{ label:'Equilibrado', emoji:'⚖️', color:'#4a90d9',
+  equilibrado:{ label:'Equilibrado', emoji:'⚖️',
     desc:'Una plantilla mezclada, sin extremos. La opción neutra.',
     potential:null,                          presupuesto:800,  socios:8,  cohesion:50},
 };
@@ -1774,10 +1772,10 @@ const CLUB_OBJECTIVES=[
 ];
 
 const CLUB_LEVELS=[
-  {id:'local',    label:'Club Local',    icon:'🏘️', sociosMin:0,   sociosMax:30,  presupuestoBase:800,  color:'#888',    repReq:0},
-  {id:'regional', label:'Club Regional', icon:'🏔️', sociosMin:31,  sociosMax:100, presupuestoBase:2000, color:'#4a90d9', repReq:40},
-  {id:'nacional', label:'Club Nacional', icon:'🏅', sociosMin:101, sociosMax:300, presupuestoBase:5000, color:'#2d7a2d', repReq:70},
-  {id:'elite',    label:'Club Élite',    icon:'🌟', sociosMin:301, sociosMax:999, presupuestoBase:12000,color:'#c07a10', repReq:90},
+  {id:'local',    label:'Club Local',    icon:'🏘️', sociosMin:0,   sociosMax:30,  presupuestoBase:800,    repReq:0},
+  {id:'regional', label:'Club Regional', icon:'🏔️', sociosMin:31,  sociosMax:100, presupuestoBase:2000, repReq:40},
+  {id:'nacional', label:'Club Nacional', icon:'🏅', sociosMin:101, sociosMax:300, presupuestoBase:5000, repReq:70},
+  {id:'elite',    label:'Club Élite',    icon:'🌟', sociosMin:301, sociosMax:999, presupuestoBase:12000, repReq:90},
 ];
 
 // ── Incidentes de rivales (T32, v85) ───────────────────────────────────────

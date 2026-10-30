@@ -30,7 +30,7 @@ if(!window.DEV_ON){
     d.innerHTML='<div class="fatal-card"><div class="fatal-title">Algo ha fallado</div>'+
       '<p>El juego se ha encontrado con un error. Tu partida se guarda sola al avanzar; por si acaso, cópiala antes de recargar.</p>'+
       '<button class="main" id="fatal-copy">Copiar partida</button>'+
-      '<button class="main" style="margin-top:8px;background:#fff;color:#1a1a1a;border:1px solid #ccc" onclick="location.reload()">Recargar</button>'+
+      '<button class="main" style="margin-top:8px;background:var(--card);color:var(--ink);border:1px solid var(--line2)" onclick="location.reload()">Recargar</button>'+
       '<button class="fatal-close" onclick="this.closest(\'#fatal-err\').remove()">Seguir sin recargar</button></div>';
     document.body.appendChild(d);
     document.getElementById('fatal-copy').onclick=()=>{
@@ -65,18 +65,17 @@ addEventListener('keydown',e=>{
 <meta property="og:image:alt" content="Trail Game: una carrera en curso, con el perfil del recorrido y las barras de energía, hidratación y piernas">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f5f4f0">
+<meta name="theme-color" content="#F3F1EB"><!-- = --ground; una meta no lee var(), tests/content.js la deja fuera de la regla de hex -->
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <title>Trail Game · v102</title>
 <style>
-:root{--color-background-primary:#fff;--color-background-secondary:#f8f7f3;--color-background-tertiary:#f0ede8;--color-text-primary:#1a1a1a;--color-text-secondary:#888;--color-text-tertiary:#aaa;--color-border-tertiary:#e0dfd8;--border-radius-md:8px;--border-radius-lg:12px}
 /* ══ DIRECCIÓN VISUAL (v102) · TOKENS ══════════════════════════════════════════
    Vault: Diseño/TG-Direccion-Visual § 2. ÚNICO sitio con hex permitido: los renders
    escriben var(--token). tests/content.js cuenta los hex del resto de ficheros y
    no deja que suban (su lista de excepciones baja según se migran pantallas).
-   Las --color-* de arriba son las de antes y siguen hasta migrar cada pantalla. */
+   Las --color-* de antes se borraron al acabar el paso 6 (2026-10-30). */
 :root{
   /* Base */
   --ground:#F3F1EB;--card:#FFFFFF;--soft:#F7F5F0;--line:#E4E0D6;--line2:#CDC7B9;--trk:#EAE6DC;
@@ -145,7 +144,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ico{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 .quarter-wrap{border:1.5px solid var(--ink);border-radius:10px;margin-bottom:10px;overflow:hidden}
 .quarter-toggle{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:var(--card);transition:background .15s}
-.quarter-toggle:hover{background:var(--color-background-secondary)}
+.quarter-toggle:hover{background:var(--soft)}
 .quarter-toggle.has-sel{background:var(--soft)}
 .quarter-content{display:none;padding:10px 10px 6px;border-top:1px solid var(--line);background:var(--soft)}
 .quarter-content.open{display:block}
@@ -192,14 +191,14 @@ button.secondary:hover{background:var(--soft)}
 .stat-val{font-size:14px;font-weight:700}
 .race-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:8px;cursor:pointer;transition:background .15s}
 .race-card:hover{background:var(--soft)}
-.race-card.sel{border-color:#4a8a2a;background:var(--soft)}
+.race-card.sel{border-color:var(--acc);background:var(--soft)}
 .race-card.locked{opacity:0.4;cursor:default}
 .sponsor-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:8px;cursor:pointer;transition:background .15s}
 .sponsor-card:hover{background:var(--soft)}
-.sponsor-card.active{border-color:#4a90d9;background:var(--soft)}
+.sponsor-card.active{border-color:var(--acc);background:var(--soft)}
 .train-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;cursor:pointer;transition:background .15s;margin-bottom:8px}
 .train-card:hover{background:var(--soft)}
-.train-card.sel{border-color:#4a90d9;background:var(--soft)}
+.train-card.sel{border-color:var(--acc);background:var(--soft)}
 .work-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:8px;cursor:pointer;transition:all .15s}
 .work-card:hover:not(.locked-work){background:var(--soft)}
 .work-card.sel{border-color:var(--ink);background:var(--soft)}
@@ -214,21 +213,21 @@ button.secondary:hover{background:var(--soft)}
 .aid-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border:1px solid var(--line);border-radius:8px;cursor:pointer;margin-bottom:8px;transition:background .15s;background:var(--card)}
 .aid-row:hover:not(.disabled){background:var(--soft)}
 .aid-row.disabled{opacity:0.4;cursor:default}
-.aid-row.sel-aid{border-color:#4a8a2a;background:var(--soft)}
+.aid-row.sel-aid{border-color:var(--acc);background:var(--soft)}
 .finish-time{background:var(--soft);border-radius:12px;padding:18px;text-align:center;margin-bottom:16px}
 .finish-time .label{font-size:12px;color:var(--ink3);margin-bottom:4px}
 .finish-time .val{font-size:32px;font-weight:700}
 .prog-wrap{margin-bottom:12px}
 .prog-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px}
 .prog-track{height:3px;background:var(--trk);border-radius:2px;overflow:hidden}
-.prog-fill{height:100%;background:#4a90d9;border-radius:2px;transition:width .4s}
+.prog-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .4s}
 .event-box{font-size:13px;color:var(--ink2);font-style:italic;background:var(--soft);padding:9px 12px;border-radius:8px;margin-bottom:10px}
 .warn{background:var(--soft);border:1px solid var(--line2);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--avi);margin-bottom:12px}
-.notif-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#4a8a2a;flex-shrink:0;box-shadow:0 0 0 2px #fff}
-.notif-dot.urgent{background:#c0392b}
+.notif-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--acc);flex-shrink:0;box-shadow:0 0 0 2px var(--card)}
+.notif-dot.urgent{background:var(--neg)}
 .coach-slot-card{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative}
 .coach-slot-card:hover{background:var(--soft);border-color:var(--line2)}
-.coach-slot-card.active-slot{border-color:#4a90d9;background:var(--soft)}
+.coach-slot-card.active-slot{border-color:var(--acc);background:var(--soft)}
 .coach-slot-card.empty-slot{border:1.5px dashed var(--line2);background:var(--soft);opacity:0.7}
 .coach-slot-card.locked-slot{border:1.5px dashed var(--line);background:var(--soft);opacity:0.45;cursor:default}
 .slot-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
@@ -238,8 +237,8 @@ button.secondary:hover{background:var(--soft)}
 .delegated-badge{display:inline-block;background:var(--soft);color:var(--cuerpo);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;border:1px solid var(--line2)}
 .club-runner-card{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
 .club-runner-card:hover{background:var(--soft)}
-.club-runner-card.sel{border-color:#4a8a2a;background:var(--soft)}
-.club-runner-card.assigned{border-color:#4a90d9;background:var(--soft)}
+.club-runner-card.sel{border-color:var(--acc);background:var(--soft)}
+.club-runner-card.assigned{border-color:var(--acc);background:var(--soft)}
 .club-stat-pill{display:inline-block;background:var(--soft);border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;color:var(--ink2);margin-right:4px}
 .club-level-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
 .club-race-row{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:6px}
@@ -255,35 +254,35 @@ button.secondary:hover{background:var(--soft)}
 .terrain-badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;display:inline-block;margin-right:4px}
 .injury-card{background:var(--card);border:1.5px solid var(--line2);border-radius:10px;padding:13px 16px;margin-bottom:10px}
 .injury-type{font-size:15px;font-weight:700;color:var(--neg-i);margin-bottom:4px}
-.abandon-btn{width:100%;padding:11px;border:1.5px solid #c0392b;border-radius:8px;background:var(--soft);color:var(--neg);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .15s}
-.abandon-btn:hover{background:#fdd}
+.abandon-btn{width:100%;padding:11px;border:1.5px solid var(--neg);border-radius:8px;background:var(--soft);color:var(--neg);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .15s}
+.abandon-btn:hover{background:var(--neg-t)}
 /* Mode select screen */
 .carrera-group{border:1.5px solid var(--ink);border-radius:12px;margin-bottom:8px;overflow:hidden}
-.carrera-group-header{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;background:var(--color-background-primary);transition:background .15s}
-.carrera-group-header:hover{background:var(--color-background-secondary)}
-.carrera-group-content{border-top:1px solid var(--color-border-tertiary);background:var(--color-background-secondary);padding:8px;display:none}
+.carrera-group-header{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;background:var(--card);transition:background .15s}
+.carrera-group-header:hover{background:var(--soft)}
+.carrera-group-content{border-top:1px solid var(--line);background:var(--soft);padding:8px;display:none}
 .carrera-group-content.open{display:block}
-.diff-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;margin-bottom:5px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
-.diff-card:hover{background:var(--color-background-secondary)}
+.diff-card{background:var(--card);border:0.5px solid var(--line);border-radius:var(--border-radius-md);padding:10px 12px;margin-bottom:5px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
+.diff-card:hover{background:var(--soft)}
 .diff-card.sel-diff{border:1.5px solid currentColor}
 .diff-card:last-child{margin-bottom:0}
-.mode-big{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:13px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:background .15s}
-.mode-big:hover{background:var(--color-background-secondary)}
+.mode-big{background:var(--card);border:0.5px solid var(--line);border-radius:var(--border-radius-lg);padding:13px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:background .15s}
+.mode-big:hover{background:var(--soft)}
 /* Save slots */
 .save-slot{background:var(--card);border:0.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px}
 .save-slot.empty{border-style:dashed;background:var(--soft)}
 .save-slot.slot-locked{border-color:var(--line2);background:var(--soft)}
 /* PUB-07 (v99): enlace de privacidad junto a la versión; ::after agranda la zona de toque */
-.enlace-priv{position:relative;border:none;background:none;padding:0;font:inherit;color:#4a6f99;text-decoration:underline;cursor:pointer}
+.enlace-priv{position:relative;border:none;background:none;padding:0;font:inherit;color:var(--cuerpo);text-decoration:underline;cursor:pointer}
 .enlace-priv::after{content:'';position:absolute;inset:-14px -10px}
 /* v101 · Opinar: el botón, a la derecha de la versión, y la hoja desde abajo, como en La
    Colmena. Por debajo de la privacidad (tip-overlay, 1200), que se abre desde aquí. */
-.opinar-btn{margin-left:auto;display:flex;align-items:center;gap:6px;min-height:36px;padding:0 14px 0 12px;border:1px solid #b9d3a8;border-radius:18px;background:#f2f8ee;color:#2f6a1f;font-size:13px;font-weight:600;cursor:pointer}
-.opinar-btn:hover{background:#e6f1df}
+.opinar-btn{margin-left:auto;display:flex;align-items:center;gap:6px;min-height:36px;padding:0 14px 0 12px;border:1px solid var(--line2);border-radius:18px;background:var(--pos-t);color:var(--pos-i);font-size:13px;font-weight:600;cursor:pointer}
+.opinar-btn:hover{background:var(--pos-t)}
 #opinion-fondo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;opacity:0;transition:opacity .25s ease-out}
 #opinion-fondo.abierta{opacity:1}
 #opinion{position:fixed;left:0;right:0;bottom:0;top:clamp(24px,8dvh,72px);z-index:1101;max-width:560px;margin:0 auto;
-  background:var(--card);border-top:3px solid #4a8a2a;border-radius:16px 16px 0 0;
+  background:var(--card);border-top:3px solid var(--acc);border-radius:16px 16px 0 0;
   padding:14px 18px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;
   box-shadow:0 -4px 24px rgba(0,0,0,.12);transform:translateY(100%);transition:transform .25s ease-out}
 #opinion.abierta{transform:none}
@@ -296,12 +295,12 @@ button.secondary:hover{background:var(--soft)}
 .op-preguntas label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
 .op-preguntas textarea,.op-preguntas input{font:inherit;font-size:16px;font-weight:400;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;resize:none;box-sizing:border-box}
 .op-preguntas textarea{min-height:66px}
-.op-preguntas textarea:focus,.op-preguntas input:focus{outline:none;border-color:#4a8a2a;background:var(--card)}
+.op-preguntas textarea:focus,.op-preguntas input:focus{outline:none;border-color:var(--acc);background:var(--card)}
 .op-preguntas ::placeholder{color:var(--ink3)}
 .op-aviso{font-size:13px;color:var(--neg);flex:none;margin:0}
 .op-aviso:empty{display:none}
 .op-enviar{flex:none;min-height:48px;border:1px solid var(--ink);border-radius:8px;background:var(--ink);color:var(--card);font-size:15px;font-weight:600;cursor:pointer}
-.op-enviar:hover:not([disabled]){background:#333}
+.op-enviar:hover:not([disabled]){background:var(--ink2)}
 .op-enviar:disabled{opacity:.55;cursor:default}
 .op-privacidad{flex:none;margin:-4px 0 0;font-size:12px;line-height:1.4;color:var(--ink3);text-align:center}
 #opinion.con-teclado .op-privacidad{display:none}
@@ -322,17 +321,17 @@ button.secondary:hover{background:var(--soft)}
 .save-btn:hover{background:var(--soft)}
 .save-btn.danger{border-color:var(--line2);color:var(--neg)}
 .save-btn.danger:hover{background:var(--soft)}
-.save-btn.primary{border-color:#4a90d9;color:var(--cuerpo)}
+.save-btn.primary{border-color:var(--acc);color:var(--cuerpo)}
 .save-btn.primary:hover{background:var(--soft)}
 .import-area{width:100%;min-height:80px;padding:10px;border:0.5px solid var(--line);border-radius:8px;font-size:12px;font-family:monospace;resize:vertical;background:var(--soft)}
 .import-area:focus{outline:none;border-color:var(--line2)}
 /* Dropbag */
-.dropbag-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;margin-bottom:6px;cursor:pointer;background:var(--card);transition:background .15s}
-.dropbag-item:hover{background:var(--color-background-secondary)}
-.dropbag-item.sel-bag{border-color:#4a8a2a;background:var(--soft)}
+.dropbag-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:0.5px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer;background:var(--card);transition:background .15s}
+.dropbag-item:hover{background:var(--soft)}
+.dropbag-item.sel-bag{border-color:var(--acc);background:var(--soft)}
 /* ── SPEC RACES DROPDOWN ── */
-.spec-toggle{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-radius:8px;background:var(--color-background-secondary);margin-bottom:6px;font-size:13px;font-weight:600;border:0.5px solid var(--color-border-tertiary)}
-.spec-toggle:hover{background:var(--color-background-tertiary)}
+.spec-toggle{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-radius:8px;background:var(--soft);margin-bottom:6px;font-size:13px;font-weight:600;border:0.5px solid var(--line)}
+.spec-toggle:hover{background:var(--trk)}
 .spec-arrow{font-size:12px;transition:transform .2s;flex-shrink:0}
 .spec-arrow.open{transform:rotate(90deg)}
 .spec-races{display:none;padding-left:8px}
@@ -340,7 +339,7 @@ button.secondary:hover{background:var(--soft)}
 /* ── CIRCUIT CARD ── */
 .circuit-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:8px;cursor:pointer;transition:background .15s}
 .circuit-card:hover{background:var(--soft)}
-.circuit-card.joined{border-color:#c07a10;background:var(--soft)}
+.circuit-card.joined{border-color:var(--acc);background:var(--soft)}
 .circuit-pts{font-size:22px;font-weight:700;color:var(--avi)}
 /* ── FAME TAB ── */
 .fame-action{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:8px;cursor:pointer;transition:background .15s}
@@ -348,14 +347,14 @@ button.secondary:hover{background:var(--soft)}
 .fame-action.fame-disabled{opacity:0.4;cursor:default}
 .fame-stat{background:var(--soft);border-radius:8px;padding:10px;text-align:center}
 .followers-bar{height:6px;background:var(--trk);border-radius:3px;overflow:hidden;margin-top:6px}
-.followers-fill{height:100%;background:#c07a10;border-radius:3px;transition:width .4s}
+.followers-fill{height:100%;background:var(--carrera);border-radius:3px;transition:width .4s}
 .divider{border:none;border-top:1px solid var(--line);margin:16px 0}
 .section-label{font-size:13px;color:var(--ink3);margin-bottom:8px}
 .profile{display:flex;gap:3px;align-items:flex-end;height:40px;margin-bottom:6px}
 /* ── CLASIFICACIÓN EN VIVO ── */
 .live-class{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px}
 .live-class-title{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.race-radio{font-size:12px;color:#8a8a8a;font-style:italic;padding:6px 2px 8px;line-height:1.4}
+.race-radio{font-size:12px;color:var(--ink3);font-style:italic;padding:6px 2px 8px;line-height:1.4}
 .live-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
 .live-row.me{font-weight:700;background:var(--soft);border-radius:6px;padding:5px 6px;margin:2px -6px}
 .live-pos{width:22px;text-align:center;font-size:12px;flex-shrink:0}
@@ -366,7 +365,7 @@ button.secondary:hover{background:var(--soft)}
 .runner-avatar{width:52px;height:52px;border-radius:50%;background:var(--soft);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
 .rank-badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-right:6px;margin-top:4px}
 .rank-global{background:var(--soft);color:var(--ink2)}
-.rank-spec{background:#e8eef8;color:#2d4fa0}
+.rank-spec{background:var(--soft);color:var(--ink)}
 .history-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
 .history-row:last-child{border-bottom:none}
 .contract-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
@@ -459,7 +458,7 @@ button.secondary:hover{background:var(--soft)}
 /* ── COACH MODE ── */
 .coach-card{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;transition:background .15s}
 .coach-card:hover{background:var(--soft)}
-.coach-card.sel{border-color:#4a90d9;background:var(--soft)}
+.coach-card.sel{border-color:var(--acc);background:var(--soft)}
 .narrative-item{padding:9px 12px;border-radius:8px;margin-bottom:6px;font-size:13px;border:0.5px solid var(--line);background:var(--card);animation:fadeIn 300ms ease-out}
 .narrative-item.aid-stop{background:var(--soft);border-color:var(--line2)}
 .personality-badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px}
@@ -666,7 +665,7 @@ input[type=text]:focus{border-color:var(--ink3)}
       <p class="op-privacidad">Se envía a un formulario de Google con la versión y tu última partida. Nombre y contacto, solo si los pones. <button type="button" class="enlace-priv" onclick="showPrivacy()">Privacidad</button></p>
     </form>
     <div class="op-gracias" id="opinion-gracias" hidden>
-      <div class="op-ok"><svg width="56" height="56" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#4a8a2a"/><path d="M14 25l7 7 13-15" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="op-ok"><svg width="56" height="56" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" style="fill:var(--pos)"/><path d="M14 25l7 7 13-15" style="stroke:var(--card)" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>¡Gracias!</h3><p>Lo leo todo. Tu opinión ayuda a que el juego mejore.</p></div>
       <button type="button" class="op-enviar" id="opinion-volver" onclick="cerrarOpinion()">Volver al juego</button>
     </div>

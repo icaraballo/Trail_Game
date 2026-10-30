@@ -1056,7 +1056,7 @@ const TUTORIAL_CARDS=[
     icon:'💪',
     title:'Entrenamiento y carga corporal',
     text:`Entrenar sube tus stats pero acumula <strong>Carga corporal</strong>. Por encima del 70% el rendimiento baja. Si llegas al 100% aparece una lesión. La carga se reduce parcialmente entre temporadas.
-    <div style="margin-top:12px;padding:8px 12px;background:#fffbf0;border-left:3px solid #c07a10;border-radius:4px;font-size:13px;color:#8a5a00">
+    <div style="margin-top:12px;padding:8px 12px;background:var(--avi-t);border-left:3px solid var(--avi-bar);border-radius:4px;font-size:13px;color:var(--ink)">
       💡 <strong>Tip:</strong> Nunca vayas a tope todo el rato — el cuerpo necesita recuperarse.
     </div>`
   },
@@ -1064,7 +1064,7 @@ const TUTORIAL_CARDS=[
     icon:'🏃',
     title:'En carrera',
     text:`En cada tramo eliges un ritmo. Ir fuerte gasta <strong>Energía</strong> y <strong>Piernas</strong> más rápido. Usa los <strong>avituallamientos</strong> para recuperar.
-    <div style="margin-top:12px;padding:8px 12px;background:#fff5f5;border-left:3px solid #c0392b;border-radius:4px;font-size:13px;color:#8a0000">
+    <div style="margin-top:12px;padding:8px 12px;background:var(--neg-t);border-left:3px solid var(--neg);border-radius:4px;font-size:13px;color:var(--ink)">
       ⚠️ Si Energía o Piernas llegan a <strong>0</strong> antes del final, el cuerpo decide por ti: el rendimiento cae en picado y los siguientes entrenos se resienten.
     </div>`
   },
@@ -1082,7 +1082,7 @@ const TUTORIAL_CARDS=[
       <div>🟠 <strong>${INJURY_TYPES.rotura.label}</strong> — ${injuryBlockText('rotura')}</div>
       <div>🔴 <strong>${INJURY_TYPES.fractura.label}</strong> — ${injuryBlockText('fractura')}</div>
     </div>
-    <div style="margin-top:10px;padding:8px 12px;background:#fffbf0;border-left:3px solid #c07a10;border-radius:4px;font-size:13px;color:#8a5a00">
+    <div style="margin-top:10px;padding:8px 12px;background:var(--avi-t);border-left:3px solid var(--avi-bar);border-radius:4px;font-size:13px;color:var(--ink)">
       💡 Los stats que quita una lesión se recuperan poco a poco. Con <strong>fisioterapeuta</strong>, las bajas son más cortas y la recuperación más rápida.
     </div>`
   },
@@ -1126,7 +1126,7 @@ function _renderTutCard(){
       <div style="font-size:14px;color:var(--ink2);line-height:1.65">${c.text}</div>
     </div>
     <div style="display:flex;justify-content:center;gap:7px;margin-bottom:20px">
-      ${TUTORIAL_CARDS.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===_tutPage?'var(--ink)':'#ddd'};transition:background .2s"></div>`).join('')}
+      ${TUTORIAL_CARDS.map((_,i)=>`<div style="width:7px;height:7px;border-radius:50%;background:${i===_tutPage?'var(--ink)':'var(--line2)'};transition:background .2s"></div>`).join('')}
     </div>
     <div class="grid-2">
       <button class="main" style="margin-top:0;${_tutPage===0?'visibility:hidden':''}" onclick="tutNav(-1)">← Anterior</button>

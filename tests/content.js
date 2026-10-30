@@ -335,10 +335,10 @@ if(!unaOpcion) ok('todos los eventos ofrecen al menos dos opciones con texto');
 // `hardcore:`, que es la forma que tenían las seis.
 bloque('Interfaz · etiquetas de modo');
 const MODOS=['facil','medio','dificil','hardcore','expres','coach','club','canicross'];
-const faltan=MODOS.filter(m=>!T.MODE_LABELS[m]||!T.MODE_LABELS[m].label||!T.MODE_LABELS[m].emoji
-  ||!T.MODE_LABELS[m].bg||!T.MODE_LABELS[m].fg);
+// Paso 6 (2026-10-30): sin bg/fg; el color de cada modo lo da el chasis (data-modo), no el dato.
+const faltan=MODOS.filter(m=>!T.MODE_LABELS[m]||!T.MODE_LABELS[m].label||!T.MODE_LABELS[m].emoji);
 if(faltan.length) err('modos sin entrada completa en MODE_LABELS', faltan.join(', '));
-else ok('los '+MODOS.length+' modos tienen label, emoji y colores');
+else ok('los '+MODOS.length+' modos tienen label y emoji');
 const sueltas=Object.entries(LIMPIO).filter(([f,t])=>f!=='constants.js'&&/\b(facil|hardcore):\s*'/.test(t)).map(([f])=>f);
 if(sueltas.length) err('tabla de etiquetas de modo escrita a mano fuera de constants.js (T54)', sueltas.join(', '));
 else ok('ningún fichero repite la tabla de modos');
@@ -430,10 +430,9 @@ if(!sinDefinir) ok('los '+manejadores.size+' manejadores citados desde el HTML e
 // a 0 se quita de la lista y desde ahí cualquier hex es ERROR.
 // devmode.js queda fuera a propósito: el panel de desarrollo tiene estilo propio.
 bloque('10 · Dirección visual: hex fuera de los tokens');
-const HEX_TECHO={
-  'index.html':42,'constants.js':71,'state.js':17,'race.js':16,'coach.js':0,'club.js':0,
-  'canicross-render.js':0,'render-core.js':10,'render-clasico.js':38,'render-temporada.js':0,
-};
+// Vacía desde el 2026-10-30 (paso 6 acabado): ningún fichero puede tener hex fuera del bloque de
+// tokens. Si algún día hace falta una excepción, va aquí con su techo y su porqué.
+const HEX_TECHO={};
 const HEX_FUERA=new Set(['devmode.js']);
 // `&#127939;` es una entidad HTML, no un color; `#tab-nav` un selector, no un hex.
 const RE_HEX=/(?<![&\w])#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![\w-])/g;
@@ -442,7 +441,9 @@ function sinTokens(html){
   // «DIRECCIÓN VISUAL (v102) · TOKENS» a las @font-face de Barlow).
   const a=html.indexOf('/* ══ DIRECCIÓN VISUAL (v102) · TOKENS'),b=html.indexOf('/* Barlow servida');
   if(a<0||b<a){err('index.html: no encuentro el bloque de tokens','¿se ha movido el comentario de cabecera?');return html;}
-  return (html.slice(0,a)+html.slice(b)).replace(/\/\*[\s\S]*?\*\//g,'').replace(/<!--[\s\S]*?-->/g,'');
+  // La meta theme-color tampoco cuenta: es el --ground escrito a mano porque una meta no lee var().
+  return (html.slice(0,a)+html.slice(b)).replace(/\/\*[\s\S]*?\*\//g,'').replace(/<!--[\s\S]*?-->/g,'')
+    .replace(/<meta name="theme-color" content="#[0-9a-fA-F]{6}">/,'');
 }
 {
   const cuentas=Object.entries(LIMPIO).filter(([f])=>!HEX_FUERA.has(f))
