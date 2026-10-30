@@ -162,7 +162,8 @@ function fmtEur(n,signo){return (n<0?'−':signo&&n>0?'+':'')+'€'+fmtMiles(n);
 // Solo lee G: pintar no cambia la partida.
 function chasisModo(){
   if(G.canicrossMode||G.gameMode==='canicross')return 'canicross';
-  if(G.gameMode==='backyard'||(typeof G.screen==='string'&&/^by[A-Z]/.test(G.screen)))return 'backyard';
+  // Backyard y Ultra comparten acento: serán el mismo modo cuando llegue la carcasa
+  if(G.gameMode==='backyard'||G.gameMode==='ultra'||(typeof G.screen==='string'&&/^(by|ut)[A-Z]/.test(G.screen)))return 'backyard';
   if(G.carreraVida&&G.lifecyclePhase==='club')return 'club';
   if(typeof G.screen==='string'&&G.screen.startsWith('club')&&G.screen!=='clubSetup')return 'club';
   if(coachViewActive())return 'entrenador';
@@ -176,7 +177,7 @@ function aplicarModoChasis(){
   const m=chasisModo();
   if(root.dataset.modo!==m)root.dataset.modo=m;
   // La noche del Backyard oscurece la pantalla redefiniendo los tokens (TG-Orden § Paso 5)
-  const noche=typeof byNocheAhora==='function'&&byNocheAhora()?'1':'';
+  const noche=(typeof byNocheAhora==='function'&&byNocheAhora())||(typeof ultraNocheAhora==='function'&&ultraNocheAhora())?'1':'';
   if((root.dataset.noche||'')!==noche){if(noche)root.dataset.noche=noche;else delete root.dataset.noche;}
 }
 function updateFinBar(){
@@ -184,7 +185,7 @@ function updateFinBar(){
   if(!bar)return;
   // paso 6: en carrera la sustituye la cabecera de carrera (TG-Direccion-Visual § 4)
   const screens=['intro','workSetup','canicrossAntigua','modeSelect','saveScreen','segment','aid','midRaceEvent',
-    'byMenu','byPre','byBell','byLoop','byCorral','byEnd'];   // el Backyard no tiene dinero   // la mañana de carrera sí lleva la barra (el dinero importa)
+    'byMenu','byPre','byBell','byLoop','byCorral','byEnd','utPre','utBloque','utBolsa','utFin'];   // Backyard y Ultra no tienen dinero   // la mañana de carrera sí lleva la barra (el dinero importa)
   bar.style.display=screens.includes(G.screen)?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
@@ -650,6 +651,7 @@ function renderModeSelect(){
     {id:'club',          icon:'🏕️', label:'Club',            desc:'Gestiona un club · plantilla · presupuesto',          available:true,  lockable:true},
     {id:'canicross',     icon:'🐕',  label:'Canicross',       desc:'Corres con tu perro · el perro no tiene barra, tiene gestos', available:true, lockable:false},
     {id:'backyard',      icon:'🔔',  label:'Backyard',        desc:'Una vuelta cada hora en punto · gana el último en pie · reto suelto', available:true, lockable:false},
+    {id:'ultra',         icon:'🏔',  label:'Ultra',           desc:'Una carrera de 105 km con noche y barreras · carrera suelta, en pruebas', available:true, lockable:false},
   ];
   // Leer desbloqueos del localStorage
   let unlocked={coach:false,club:false};
@@ -745,6 +747,8 @@ window.confirmMode=()=>{
   if(G.gameMode==='canicross'){G.screen='intro';render();return;}
   // El Backyard guarda su tirada en su propia clave, no en una ranura de partida (§ 18)
   if(G.gameMode==='backyard'){G._saveSlot=null;G.screen=byTiradaGuardada()?'byMenu':'byPre';render();return;}
+  // La carrera ultra suelta tampoco usa ranura (hasta que exista la carcasa del modo)
+  if(G.gameMode==='ultra'){G._saveSlot=null;G.screen='utPre';render();return;}
   if(G.gameMode==='club'){
     // Guiño narrativo si el modo está desbloqueado vía arco narrativo
     let unlocked={};try{unlocked=JSON.parse(LS.get('unlocked')||'{}');}catch(e){}

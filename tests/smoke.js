@@ -37,7 +37,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'CN_REV','cnAddDog','cnActiveDog','cnDogs','cnDogById','cnInitDog','CN_MONTH_NAMES',
   'cnPerfFactor','cnTeamLevel','cnDogCapMult','cnDogGain','cnGenerateRivals','cnRivalTime','cnAgeRivals','CN_RIVAL_TEAMS','CN_TIER_LEVELS','cnRival',
   'CN_BEHAVIOURS','CN_COMMANDS','CN_INTENTS','CN_TEMPERAMENTS','cnPickBehaviour','cnObedience','cnApplyMonthHours','cnHoursUsed','cnSponsorIncome','CN_EQUIP','CN_CMD_LEVEL_HOURS','cnEquipSeg',
-  'byStart','bySalir','byEntrarCorral','byHacer','byPalanca','byALaLineaLogica','byVivos','byTiempoPrevisto','byCorrerVuelta','byCampanaRivales','byEncadenar','byFijarRutina','byNoSalgo','byNocheAhora','BY_EVENTOS','BY_CORREDORES','BY_NOMBRES','BY_LEYENDAS','BY_ORGANIZADOR','BY_LUGAR',
+  'ultraStart','ultraTramos','ultraCorrerBloque','ultraParar','ultraMargen','ultraCarrera','ultraRetirarse','ULTRA_RACES','ULTRA_CORREDORES','byStart','bySalir','byEntrarCorral','byHacer','byPalanca','byALaLineaLogica','byVivos','byTiempoPrevisto','byCorrerVuelta','byCampanaRivales','byEncadenar','byFijarRutina','byNoSalgo','byNocheAhora','BY_EVENTOS','BY_CORREDORES','BY_NOMBRES','BY_LEYENDAS','BY_ORGANIZADOR','BY_LUGAR',
   'cnDestiny','cnRetireDogAs','cnCircuitStanding','cnHomeDogs','cnCompanionStrip','cnSyncGraph','renderCnNotebook','renderCnEpilogo','cnCalibrate',
   'cnTempPen','cnComfort','cnTickCondition','cnGiveCondition','CN_CONDITIONS','CN_HEAT_CANCEL','cnDoneIds','cnSegSurface']);
 const t=scorer();
@@ -1324,6 +1324,39 @@ console.log('\n── Backyard (paso 5 del orden, reto suelto) ──');
     !/Txomin|Arrizabal|Marangoni/.test(src['backyard.js'].split('// ── Utilidades')[1])&&!/Txomin|Arrizabal|Marangoni/.test(src['backyard-render.js']));
   t('el Backyard no guarda en una ranura de partida', /G\.gameMode==='backyard'\)\{G\._saveSlot=null;/.test(src['render-core.js']));
   t('la noche del Backyard solo existe en sus pantallas', (setG({screen:'workSetup',by:b}),T.byNocheAhora()===false));
+}
+
+console.log('\n── Ultra (paso 5 del orden, capas ultra sobre race.js) ──');
+{
+  const race=T.ULTRA_RACES[0],tr=T.ultraTramos(race);
+  t('cada bloque genera sus tramos y acaba en avituallamiento (salvo la meta)',
+    race.bloques.every((b,i)=>{const de=tr.filter(x=>x.bloque===i);return de.length>=2&&de[de.length-1].aid===(b.fin!=='meta');}));
+  t('los tramos suman la distancia de la carrera', Math.abs(tr.reduce((a,x)=>a+x.km,0)-race.km)<0.01);
+  t('motor compartido: la capa ultra resuelve los tramos con calcPaceCosts y checkSegInjury de race.js',
+    /calcPaceCosts\(p,s,G\.paceLog\)/.test(src['ultra.js'])&&/checkSegInjury\(/.test(src['ultra.js'])&&!/function calcPaceCosts/.test(src['ultra.js']));
+  setG({gameMode:'ultra'});
+  T.ultraStart({carrera:'macizo',corredor:'rodador',repuesto:'mochila'});
+  let g=T.getG(),c=g.ut.carrera;
+  t('la carrera corre sobre el motor de Clásico, con su estado dentro de G.ut', g.selectedRaces[0].ultra===true&&c.lucidez===100&&g.seg===0);
+  const r=T.ultraCorrerBloque('steady');
+  t('un bloque avanza el reloj y para en el avituallamiento', r==='avituallamiento'&&g.time>0&&c.bloque===1);
+  const m0=T.ultraMargen(),t0=g.time;T.ultraParar('comer');
+  t('parar suma al reloj y el margen baja', g.time===t0+180&&T.ultraMargen()<m0);
+  t('no se come dos veces en el mismo avituallamiento', T.ultraParar('comer')===false);
+  // Barrera horaria: llegar tarde es DNF por barrera, no abandono
+  while(c.bloque<5)T.ultraCorrerBloque('steady');
+  g.time+=12*3600;
+  T.ultraCorrerBloque('steady');
+  t('llegar tarde a la barrera es DNF por barrera', c.fin&&c.fin.kind==='dnf'&&c.fin.motivo==='barrera'&&c.fin.km===42);
+  // Retirarse
+  setG({gameMode:'ultra'});T.ultraStart({carrera:'macizo',corredor:'veterano',repuesto:'bolsa'});g=T.getG();c=g.ut.carrera;
+  T.ultraCorrerBloque('steady');T.ultraRetirarse();
+  t('retirarse en un avituallamiento deja el km', c.fin.motivo==='abandono'&&c.fin.km===7);
+  // Una carrera entera termina
+  setG({gameMode:'ultra'});T.ultraStart({carrera:'macizo',corredor:'montanero',repuesto:'mochila'});g=T.getG();c=g.ut.carrera;
+  let e='',n=0;while(e!=='fin'&&n++<30){if(c.enBolsa){c.enBolsa=false;}T.ultraParar('beber');T.ultraParar('comer');e=T.ultraCorrerBloque('steady');}
+  t('la carrera acaba (meta o DNF) y nunca se queda a medias', !!c.fin&&n<30);
+  t('nombres inventados en las carreras ultra', !T.ULTRA_RACES.some(x=>/Aneto|Transvulcania|Pirineu|UTMB/i.test(x.name)));
 }
 
 t.done('TODO OK');

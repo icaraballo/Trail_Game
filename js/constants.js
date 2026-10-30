@@ -823,6 +823,7 @@ const MODE_LABELS={
   club:     {label:'Club',      emoji:'🏕'},
   canicross:{label:'Canicross', emoji:'🐕'},
   backyard: {label:'Backyard',  emoji:'🔔'},
+  ultra:    {label:'Ultra',     emoji:'🏔'},
 };
 const modeInfo     =m=>MODE_LABELS[m]||MODE_LABELS.medio;
 const modeEmoji    =m=>modeInfo(m).emoji;
