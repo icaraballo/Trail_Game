@@ -23,55 +23,34 @@ function renderClubSetup(){
   const companion=G.clubCompanion;
   const fromBetween=G._clubFromBetween||false;
 
-  el.innerHTML=`
-    <h2>Elige tu club</h2>
-    <p class="sub">El club define tu entorno de entrenamiento y red de apoyo.</p>
-
-    ${currentClub.id!=='none'?`
-    <div class="card" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Club actual — ${esc(currentClub.name)}</div>
-      ${companion?`<div style="font-size:13px;color:var(--ink2);margin-bottom:8px">Tu compañero: <strong>${esc(companion)}</strong></div>`:''}
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:12px;color:var(--ink3)">Reputación</span>
-        <span style="font-size:13px;font-weight:700;color:${repInfo.color}">${repInfo.text}</span>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Decisión: el club actual como tarjeta de
+  // estado (reputación con el umbral de la Copa) y los clubes como opciones. Sin hex.
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-gente">${icono('corredor')}Gente · club</div>
+    <div class="pz-titulo">Elige tu club</div>
+    <p class="pz-sub">El club define tu entorno de entrenamiento y red de apoyo.</p>
+    ${currentClub.id!=='none'?`<div class="pz-tarjeta pz-estado">
+      <div class="pz-linea"><span class="pz-fila-txt"><span class="pz-label">Club actual</span><div><b>${esc(currentClub.name)}</b>${companion?` <span class="pz-efectos">· tu compañero: ${esc(companion)}</span>`:''}</div></span></div>
+      <div class="pz-linea" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="pz-label">Reputación</span><span class="pz-num">${repInfo.text}</span></div>
+        <div class="pz-barra"><div class="pz-relleno" style="width:${rep}%;background:var(--gente)"></div><div class="pz-umbral" style="left:75%"></div></div>
+        <div class="pz-efectos" style="margin-top:4px">${rep>=75?'<span class="pz-mas">✓</span> Reputación suficiente para la Copa de Clubes':'A 75, la Copa de Clubes'}</div>
       </div>
-      <div class="load-bar-track"><div class="bar-fill" style="width:${rep}%;background:${rep>=60?'#c07a10':rep>=30?'#4a90d9':'#bbb'}"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:3px">
-        <span>0</span><span style="color:var(--pos)">75 → Copa de Clubes</span><span>100</span>
-      </div>
-      ${rep>=75?`<div style="font-size:12px;color:var(--pos);margin-top:6px">✓ Reputación suficiente para la Copa de Clubes</div>`:''}
     </div>`:''}
-
-    <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Opciones disponibles</div>
+    <div class="pz-label" style="margin:14px 0 6px">Opciones disponibles</div>
     ${CLUBS.filter(c=>c.id==='none'||(c.minYear||1)<=G.year).map(c=>{
       const isActive=currentClub.id===c.id;
-      const monthCost=c.cost;
-      const annualCost=monthCost*12;
-      const bonuses=Object.entries(c.statBonus).map(([k,v])=>`+${v} ${k.charAt(0).toUpperCase()+k.slice(1)}`).join(', ');
-      const perks=[];
-      if(c.hasFisio)perks.push('Fisio incluido');
-      if(c.hasEntrenador)perks.push('Entrenador incluido');
-      return `<div class="work-card" style="margin-bottom:10px;${isActive?'border:2px solid #4a90d9;':''}" onclick="${isActive?'':'selectClub(\''+c.id+'\')'}">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <span class="card-title">${c.name}</span>
-            ${isActive?`<span style="font-size:11px;background:#e8eef8;color:#2d4fa0;border-radius:4px;padding:1px 6px;font-weight:600">Actual</span>`:''}
-          </div>
-          <div class="card-sub">${c.desc}</div>
-          ${bonuses?`<div style="font-size:12px;color:var(--pos);margin-top:4px">${bonuses}</div>`:''}
-          ${perks.length?`<div style="font-size:12px;color:var(--cuerpo);margin-top:2px">${perks.join(' · ')}</div>`:''}
-        </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          ${monthCost>0?`<div style="font-size:14px;font-weight:700;color:var(--neg)">-€${monthCost}/mes</div>
-          <div style="font-size:11px;color:var(--ink3)">€${annualCost}/año</div>`
-          :`<div style="font-size:13px;font-weight:600;color:var(--ink3)">Gratis</div>`}
-        </div>
-      </div>`;
-    }).join('')}
-
-    <div style="margin-top:4px">
-      <button class="main" onclick="${fromBetween?`G._clubFromBetween=false;G.screen='betweenManage'`:`G.screen='seasonStart'`};render()">← Volver</button>
-    </div>`;
+      const bonuses=Object.entries(c.statBonus).map(([k,v])=>`${k.charAt(0).toUpperCase()+k.slice(1)} <span class="pz-mas">+${v}</span>`).join(' · ');
+      const perks=[c.hasFisio?'Fisio incluido':'',c.hasEntrenador?'Entrenador incluido':''].filter(Boolean);
+      return `<div class="pz-opcion${isActive?' sel':''}" ${isActive?'':`onclick="selectClub('${c.id}')"`}>
+        <span style="float:right;text-align:right">${c.cost>0?`<span class="pz-num" style="font-size:16px">€${c.cost}/mes</span><div class="pz-efectos">€${c.cost*12}/año</div>`:'<span class="pz-efectos">Gratis</span>'}</span>
+        <b>${c.name}</b>${isActive?' <span class="pz-chip" style="background:var(--soft);margin:0">Actual</span>':''}
+        <div class="pz-efectos">${c.desc}</div>
+        ${bonuses?`<div class="pz-efectos" style="margin-top:4px">${bonuses}</div>`:''}
+        ${perks.length?`<div class="pz-efectos">${perks.join(' · ')}</div>`:''}
+      </div>`;}).join('')}
+    <button class="pz-btn sec" style="margin-top:4px" onclick="${fromBetween?`G._clubFromBetween=false;G.screen='betweenManage'`:`G.screen='seasonStart'`};render()">← Volver</button>
+  </div>`;
 }
 
 window.selectClub=id=>{
@@ -1352,55 +1331,35 @@ window.toggleDropbag=id=>{
 // ══════════════════════════════════════
 //  CONDICIÓN DEL DÍA DE CARRERA
 // ══════════════════════════════════════
+// Paso 6 de la dirección visual (2026-10-30): tipo Lista, como el calendario, con las ya
+// corridas marcadas y sin poder tocarlas. Sin hex.
 function renderMidSeasonCalendar(){
   const el=$main();
   const doneNames=G.raceResults.map(r=>r.name);
   const selIds=G.selectedRaces.map(r=>r.id);
   const spent=G.selectedRaces.reduce((a,r)=>a+r.cost,0);
   const canAccess=canAccessRace;   // DS08 (v95)
-  const tierColor=TIER_COLOR_RACE;
-  const tierLabel=TIER_LABEL_RACE;
   const qLabel={1:'Primer trimestre',2:'Segundo trimestre',3:'Tercer trimestre',4:'Cuarto trimestre'};
-  // uses global QUARTERS
-
   function raceRow(r){
     const isDone=doneNames.includes(r.name);
     const isSel=selIds.includes(r.id);
     const locked=!canAccess(r);
     const noMoney=!isSel&&(spent+r.cost>G.money);
-    if(isDone){
-      return `<div class="race-card" style="opacity:0.45;cursor:default">
-        <div class="flex-between-center">
-          <div><div style="font-size:14px;font-weight:600;color:var(--ink3)">${r.name}</div>
-          <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ya corrida</div></div>
-          <span style="font-size:12px;color:var(--pos);font-weight:600">✓ hecha</span>
-        </div>
-      </div>`;
-    }
-    return `<div class="race-card ${isSel?'sel':locked?'locked':''}" onclick="${locked?'':'toggleRaceMid(\''+r.id+'\')'}">
-      <div class="flex-between">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:2px">
-            <span class="card-title">${esc(r.name)}</span>
-            <span style="font-size:12px;font-weight:600;padding:1px 5px;border-radius:3px;background:${tierColor[r.tier]||'#888'}22;color:${tierColor[r.tier]||'var(--ink3)'}">${tierLabel[r.tier]||''}</span>
-            ${inviteBadge(r)}
-          </div>
-          <div style="font-size:12px;color:var(--ink3)">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
-          ${locked?(r.zegamaSpecial?`<div style="font-size:12px;color:var(--avi);margin-top:2px">🏔️ Invitación Top 20 o clasificación por tiempo (corte 4h20)</div>`:`<div style="font-size:12px;color:var(--ink3);margin-top:2px">🔒 Ranking #${r.reqRanking} requerido</div>`):''}
-          ${noMoney&&!isSel?`<div class="text-warn">Sin presupuesto</div>`:''}
-        </div>
-        <div class="right-col">
-          <div style="font-size:13px;font-weight:600;color:var(--pos)">€${r.prize}</div>
-          <div style="font-size:12px;color:var(--ink3)">€${r.cost} inscr.</div>
-          ${isSel?`<div style="font-size:12px;color:var(--pos);font-weight:600;margin-top:2px">✓</div>`:''}
-        </div>
-      </div>
+    if(isDone)return `<div class="pz-fila" style="color:var(--ink3);border-top:1px solid var(--line);border-bottom:none"><input type="checkbox" class="pz-casilla" checked disabled tabindex="-1" aria-hidden="true"><span class="pz-fila-txt"><s>${esc(r.name)}</s><div class="pz-efectos">${r.monthName} · ya corrida</div></span><span class="pz-diag mas">hecha</span></div>`;
+    const clic=!locked;
+    return `<div class="pz-fila${locked?' pz-bloqueado':''}" style="cursor:${clic?'pointer':'default'};align-items:flex-start;border:none;border-top:1px solid var(--line)" ${clic?`onclick="toggleRaceMid('${r.id}')"`:''}>
+      <input type="checkbox" class="pz-casilla" style="pointer-events:none;margin-top:2px" ${isSel?'checked':''} ${clic?'':'disabled'} tabindex="-1" aria-hidden="true">
+      <span class="pz-fila-txt"><span style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><b>${esc(r.name)}</b>${nivelTag(r.tier)}${inviteBadge(r)}</span>
+        <div class="pz-efectos">${r.monthName} · ${r.type} · ${raceDesnivel(r)}</div>
+        ${locked?motivoHTML(r.zegamaSpecial?'Invitación Top 20 o clasificación por tiempo (corte 4h20)':'Ranking #'+r.reqRanking+' requerido'):''}
+        ${noMoney&&!isSel?motivoHTML('Sin presupuesto'):''}</span>
+      <span style="text-align:right"><div class="pz-num">€${r.prize}</div><div class="pz-efectos">€${r.cost} inscr.</div></span>
     </div>`;
   }
-
-  el.innerHTML=`
-    <h2>Modificar calendario</h2>
-    <p class="sub">Las carreras ya corridas no se pueden cambiar</p>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('calendario')}Carrera · a mitad de temporada</div>
+    <div class="pz-titulo">Modificar calendario</div>
+    <p class="pz-sub">Las carreras ya corridas no se pueden cambiar.</p>
     ${QUARTERS.map(q=>{
       const races=RACES_DB.filter(r=>r.quarter===q.n);
       const specRaces=getSpecRaces().filter(r=>r.quarter===q.n);
@@ -1408,28 +1367,21 @@ function renderMidSeasonCalendar(){
       const qSel=allQ.filter(r=>selIds.includes(r.id)).length;
       const qDone=allQ.filter(r=>doneNames.includes(r.name)).length;
       const isOpen=(G.openQuarters?.mid||[]).includes(q.n);
-      return `
-        <div class="quarter-wrap">
-          <div class="quarter-toggle ${qSel>0?'has-sel':''}" onclick="toggleQMid(${q.n})">
-            <span style="font-size:14px;font-weight:600;flex:1">${qLabel[q.n]}
-              <span style="font-size:12px;font-weight:400;color:var(--ink3)"> · ${q.months}</span>
-            </span>
-            ${qDone>0?`<span style="font-size:12px;color:var(--pos);margin-right:6px">${qDone} ✓ hecha${qDone>1?'s':''}</span>`:''}
-            ${qSel>qDone?`<span style="font-size:12px;color:var(--cuerpo);margin-right:6px">${qSel-qDone} pendiente${qSel-qDone>1?'s':''}</span>`:''}
-            <span style="font-size:12px;color:var(--ink3);display:inline-block;transform:${isOpen?'rotate(90deg)':''};transition:transform .2s">▶</span>
-          </div>
-          <div class="quarter-content ${isOpen?'open':''}" onclick="event.stopPropagation()">
-            ${races.map(r=>raceRow(r)).join('')}
-            ${specRaces.length>0?`
-              <div style="font-size:12px;color:var(--pos);font-weight:600;padding:6px 2px 4px">★ Específicas de tu especialidad</div>
-              ${specRaces.map(r=>raceRow(r)).join('')}
-            `:''}
-          </div>
-        </div>`;}).join('')}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
-      <button class="main" onclick="G.screen='betweenManage';render()" style="margin-top:0">← Volver</button>
-      <button class="main" onclick="afterRace()" style="margin-top:0">Confirmar →</button>
-    </div>`;
+      return `<div class="pz-tarjeta" style="padding:0;overflow:hidden">
+        <div class="pz-fila navega" style="padding:12px 14px;border:none;${qSel>0?'box-shadow:inset 3px 0 0 var(--acc)':''}" onclick="toggleQMid(${q.n})">
+          <span class="pz-fila-txt"><b>${qLabel[q.n]}</b> <span class="pz-efectos">· ${q.months}</span></span>
+          <span class="pz-efectos">${qDone>0?qDone+' hecha'+(qDone>1?'s':''):''}${qDone>0&&qSel>qDone?' · ':''}${qSel>qDone?(qSel-qDone)+' pendiente'+(qSel-qDone>1?'s':''):''}</span>
+        </div>
+        ${isOpen?`<div style="padding:0 14px 8px" onclick="event.stopPropagation()">
+          ${races.map(r=>raceRow(r)).join('')}
+          ${specRaces.length>0?`<div class="pz-label" style="padding:10px 0 2px">★ Específicas de tu especialidad</div>${specRaces.map(r=>raceRow(r)).join('')}`:''}
+        </div>`:''}
+      </div>`;}).join('')}
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:14px">
+      <button class="pz-btn sec" onclick="G.screen='betweenManage';render()">← Volver</button>
+      <button class="pz-btn" onclick="afterRace()">Confirmar →</button>
+    </div>
+  </div>`;
 }
 
 window.toggleQMid=q=>{
@@ -1457,39 +1409,31 @@ window.toggleRaceMid=id=>{
 };
 
 // ── CIRCUITS ───────────────────────────
+// Paso 6 de la dirección visual (2026-10-30): tipo Lista; los puntos de liga como cifra, no
+// como color. Sin hex (el color propio de cada circuito ya no se usa).
 function renderCircuits(){
   const el=$main();
-  el.innerHTML=`
-    <h2>Circuitos y ligas</h2>
-    <p class="sub">Únete a un circuito para ganar puntos extra y premios al final del año</p>
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-carrera">${icono('reputacion')}Carrera · ligas</div>
+    <div class="pz-titulo">Circuitos y ligas</div>
+    <p class="pz-sub">Únete a un circuito para ganar puntos extra y premios al final del año.</p>
     ${CIRCUITS_DB.map(c=>{
       const joined=G.joinedCircuits.includes(c.id);
       const locked=c.reqRanking&&G.ranking>c.reqRanking;
       const pts=G.circuitPoints[c.id]||0;
-      const raceNames=c.raceIds.map(id=>{
-        const r=[...RACES_DB,...getSpecRaces()].find(x=>x.id===id);
-        return r?r.name:id;
-      });
-      return `<div class="circuit-card ${joined?'joined':''}" onclick="${locked?'':'toggleCircuit(\''+c.id+'\')'}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-          <div style="flex:1">
-            <div style="font-size:15px;font-weight:600;color:${c.color}">${c.name}</div>
-            <div class="card-sub">${c.desc}</div>
-          </div>
-          ${joined?`<span style="font-size:12px;color:var(--avi);font-weight:600;flex-shrink:0;margin-left:10px">✓ Unido</span>`:''}
-          ${locked?`<span style="font-size:12px;color:var(--ink3);flex-shrink:0;margin-left:10px">🔒</span>`:''}
-        </div>
-        <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">Carreras: ${raceNames.join(' · ')}</div>
-        <div style="font-size:12px;color:var(--pos);margin-bottom:6px">Premio: ${c.prize}</div>
-        ${joined?`<div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px">
-          <span style="color:var(--ink3)">Puntos acumulados</span>
-          <span style="font-weight:600;color:var(--avi)">${pts} / ${c.pointsForPrize}</span>
-        </div>
-        <div style="height:4px;background:var(--trk);border-radius:2px;margin-top:4px;overflow:hidden">
-          <div style="height:100%;width:${Math.min(100,Math.round(pts/c.pointsForPrize*100))}%;background:#c07a10;border-radius:2px"></div>
-        </div>`:''}
+      const raceNames=c.raceIds.map(id=>{const r=[...RACES_DB,...getSpecRaces()].find(x=>x.id===id);return r?r.name:id;});
+      const pct=Math.min(100,Math.round(pts/c.pointsForPrize*100));
+      return `<div class="pz-opcion${joined?' sel':''}${locked?' pz-bloqueado':''}" ${locked?'':`onclick="toggleCircuit('${c.id}')"`}>
+        <b>${c.name}</b>${joined?' <span class="pz-chip mas" style="margin:0 0 0 4px">Unido</span>':''}
+        <div class="pz-efectos">${c.desc}</div>
+        ${locked?motivoHTML('Ranking #'+c.reqRanking+' requerido'):''}
+        <div class="pz-efectos" style="margin-top:6px">Carreras: ${raceNames.map(esc).join(' · ')}</div>
+        <div class="pz-efectos">Premio: ${c.prize}</div>
+        ${joined?`<div style="display:flex;justify-content:space-between;margin:8px 0 4px" class="pz-efectos"><span>Puntos</span><span class="pz-num" style="color:var(--ink)">${pts} / ${c.pointsForPrize}</span></div>
+        <div class="pz-barra"><div class="pz-relleno" style="width:${pct}%;background:var(--carrera)"></div></div>`:''}
       </div>`;}).join('')}
-    <button class="main" style="margin-top:8px" onclick="G.screen='seasonStart';autoSave();render()">← Volver</button>`;
+    <button class="pz-btn sec" style="margin-top:8px" onclick="G.screen='seasonStart';autoSave();render()">← Volver</button>
+  </div>`;
 }
 window.toggleCircuit=id=>{
   const idx=G.joinedCircuits.indexOf(id);
@@ -1602,64 +1546,44 @@ function renderBetweenManage(){
     {id:'massage',label:'Masaje deportivo',cost:25,loadRedux:8,desc:'Menos intenso pero más barato. Buena recuperación muscular.'},
     {id:'rest',label:'Descanso activo',cost:0,loadRedux:5,desc:'Sin coste. Movilidad suave y stretching.'},
   ];
-  el.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
-      <h2>Entre carreras</h2>
-      <span style="font-size:12px;color:var(--ink3);padding-top:5px">${G.currentRaceIdx}/${G.selectedRaces.length} corridas</span>
-    </div>
-    <p class="sub">${nextRace?'Próxima: '+nextRace.name:'Fin de temporada'}</p>
-    <div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:4px">
-        <span>Carga corporal</span>
-        <span style="color:${load>=lt.warningLevel2?'var(--neg)':load>=lt.warningLevel1?'var(--avi)':'var(--ink3)'}">${load}%</span>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Entreno»: la
+  // recuperación como opciones y «otras opciones» como navegación en lista. Sin hex.
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-cuerpo">${icono('corredor')}Cuerpo · ${G.currentRaceIdx} de ${G.selectedRaces.length} corridas</div>
+    <div class="pz-titulo">Entre carreras</div>
+    <p class="pz-sub">${nextRace?'Próxima: '+esc(nextRace.name):'Fin de temporada'}</p>
+    <div class="pz-tarjeta pz-estado">
+      <div class="pz-linea" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="pz-label">Carga corporal</span><span class="pz-num ${load>=lt.warningLevel2?'pz-menos':load>=lt.warningLevel1?'pz-ojo':''}" style="font-size:18px">${load} %</span></div>
+        <div class="pz-barra"><div class="pz-relleno${load>=lt.warningLevel2?' menos':load>=lt.warningLevel1?' ojo':''}" style="width:${Math.min(100,load)}%"></div><div class="pz-umbral" style="left:70%"></div></div>
       </div>
-      <div class="load-bar-track"><div class="bar-fill" style="width:${load}%;background:${load>=lt.warningLevel2?'#c0392b':load>=lt.warningLevel1?'#c07a10':'#4a90d9'}"></div></div>
-      ${load>=lt.warningLevel2?`<div style="font-size:12px;color:var(--neg);margin-top:4px">Carga alta — considera recuperar antes de la próxima.</div>`:
-        load>=lt.warningLevel1?`<div style="font-size:12px;color:var(--avi);margin-top:4px">Carga moderada. Una sesión te vendrá bien.</div>`:''}
+      ${load>=lt.warningLevel2?`<div class="pz-linea"><span class="pz-diag menos">Carga alta — considera recuperar antes de la próxima.</span></div>`:
+        load>=lt.warningLevel1?`<div class="pz-linea"><span class="pz-diag ojo">Carga moderada. Una sesión te vendrá bien.</span></div>`:''}
+      ${hasFisioContract?(()=>{const cov=Math.round((1-fisioInjuryMult(load))*100);const sat=load>=lt.warningLevel1;
+        return `<div class="pz-linea"><span class="pz-diag ${sat?'ojo':'mas'}">🧑‍⚕️ Fisio contratado — hoy te cubre un <b>${cov} %</b> del riesgo de lesión. ${sat?'Con la carga a este nivel ya no da abasto. Una sesión puntual la baja y vuelve a protegerte.':'Las sesiones puntuales son extra.'}</span></div>`;})():''}
     </div>
     ${debtPanel()}
-    <div class="section-label">Recuperación${G._recoveryUsed?' <span style="font-size:12px;color:var(--ink3);font-weight:400">(1 acción usada)</span>':''}</div>
+    <div class="pz-label" style="margin:14px 0 6px">Recuperación${G._recoveryUsed?' · 1 acción usada':''}</div>
     ${FISIO_OPTIONS.map(o=>{
       const cantAfford=o.cost>0&&o.cost>G.money;
       const alreadyUsed=!!G._recoveryUsed;
       const disabled=cantAfford||alreadyUsed;
-      let reason='';
-      if(alreadyUsed)reason='Ya has usado una acción de recuperación';
-      else if(cantAfford)reason='Sin presupuesto';
-      return `<div class="work-card ${disabled?'locked-work':''}" onclick="${disabled?'':'doRecovery(\''+o.id+'\')'}">
-        <div class="flex-between">
-          <div style="flex:1">
-            <div class="card-title">${o.label}</div>
-            <div class="card-sub">${o.desc}</div>
-            ${reason?`<div class="text-warn">${reason}</div>`:''}
-          </div>
-          <div class="right-col">
-            ${o.cost>0?`<div style="font-size:13px;font-weight:600;color:var(--neg)">-€${o.cost}</div>`:`<div style="font-size:13px;font-weight:600;color:var(--ink3)">Gratis</div>`}
-            <div style="font-size:12px;color:var(--pos)">carga -${o.loadRedux}%</div>
-          </div>
-        </div>
+      const reason=alreadyUsed?'Ya has usado una acción de recuperación':cantAfford?'Sin presupuesto':'';
+      return `<div class="pz-opcion${disabled?' pz-bloqueado':''}" ${disabled?'':`onclick="doRecovery('${o.id}')"`}>
+        <span style="float:right;text-align:right">${o.cost>0?`<span class="pz-num">€${o.cost}</span>`:'<span class="pz-efectos">Gratis</span>'}</span>
+        <b>${o.label}</b><div class="pz-efectos">${o.desc} · carga <span class="pz-mas">−${o.loadRedux} %</span></div>
+        ${reason?motivoHTML(reason):''}
       </div>`;}).join('')}
-    ${hasFisioContract?(()=>{
-      const cov=Math.round((1-fisioInjuryMult(load))*100);
-      const saturado=load>=lt.warningLevel1;
-      return `<div class="note" style="${saturado?'background:#FBF0E4;border-color:#E3C39A;color:#7a4d10':''}">🧑‍⚕️ Fisio contratado — hoy te cubre un <strong>${cov}%</strong> del riesgo de lesión. ${saturado
-        ?'Con la carga a este nivel ya no da abasto. Una sesión puntual la baja y vuelve a protegerte.'
-        :'Las sesiones puntuales son extra.'}</div>`;
-    })():''}
-    <div class="divider"></div>
-    <div class="section-label">Otras opciones</div>
-    <div class="work-card" onclick="G.screen='midSeasonCalendar';render()" style="margin-bottom:14px">
-      <div class="card-title">📅 Modificar calendario pendiente</div>
-      <div class="card-sub">Añade o quita carreras que aún no has corrido</div>
+    <div class="pz-label" style="margin:14px 0 6px">Otras opciones</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      <div class="pz-fila navega" onclick="G.screen='midSeasonCalendar';render()"><span>📅</span><span class="pz-fila-txt"><b>Modificar calendario pendiente</b><div class="pz-efectos">Añade o quita carreras que aún no has corrido</div></span></div>
+      <div class="pz-fila navega" onclick="G._clubFromBetween=true;G.screen='clubSetup';render()"><span>🏃</span><span class="pz-fila-txt"><b>${G.club&&G.club.id!=='none'?'Club: '+esc(G.club.name):'Unirse a un club'}</b><div class="pz-efectos">${G.club&&G.club.id!=='none'?'Ver reputación o cambiar de club':'Sin club actualmente — explorar opciones'}</div></span></div>
     </div>
-    <div class="work-card" onclick="G._clubFromBetween=true;G.screen='clubSetup';render()" style="margin-bottom:14px">
-      <div class="card-title">🏃 ${G.club&&G.club.id!=='none'?'Club: '+G.club.name:'Unirse a un club'}</div>
-      <div class="card-sub">${G.club&&G.club.id!=='none'?'Ver reputación o cambiar de club':'Sin club actualmente — explorar opciones'}</div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+      ${G._raceResult?`<button class="pz-btn sec" onclick="G.screen='raceResult';render()">← Ver resumen</button>`:'<div></div>'}
+      <button class="pz-btn" onclick="afterRace()">Siguiente carrera →</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      ${G._raceResult?`<button class="main" onclick="G.screen='raceResult';render()" style="margin-top:0;background:var(--soft);color:var(--ink);border-color:var(--line2)">← Ver resumen</button>`:'<div></div>'}
-      <button class="main" onclick="afterRace()" style="margin-top:0">Siguiente carrera →</button>
-    </div>`;
+  </div>`;
 }
 window.doRecovery=id=>{
   if(G._recoveryUsed){showToast('Ya has usado una acción de recuperación');return;}
@@ -1673,16 +1597,16 @@ window.doRecovery=id=>{
   showToast(`Carga -${o.loadRedux}%${o.cost>0?' · -€'+o.cost:''}${_rec?' · stats +'+_rec:''}`);
   render();
 };
+// Paso 6: pantalla puente con un evento entre carreras; tipo Evento (tarjeta de momento).
 function renderBetweenRace(){
   const el=$main();const ev=G.pendingEvent;
   if(!ev){goNextRace();return;}
-  el.innerHTML=`
-    <div style="font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Entre carreras</div>
-    <h2>${ev.title}</h2>
-    <p style="font-size:14px;color:var(--ink2);margin:6px 0 20px;line-height:1.65">${ev.desc}</p>
-    <div style="display:grid;gap:8px">
-      ${ev.choices.map((c,i)=>`<div class="pace" onclick="handleEv('${ev.id}',${i})"><div class="pace-label" style="font-size:14px;margin-bottom:0">${c.text}</div></div>`).join('')}
-    </div>`;
+  el.innerHTML=`<div class="pz"><div class="pz-tarjeta">
+    <div class="pz-etiqueta acento">Entre carreras</div>
+    <div class="pz-titulo" style="font-size:22px">${ev.title}</div>
+    <p class="pz-sub" style="color:var(--ink);line-height:1.6">${ev.desc}</p>
+    ${ev.choices.map((c,i)=>`<button class="pz-opcion" onclick="handleEv('${ev.id}',${i})"><b>${c.text}</b></button>`).join('')}
+  </div></div>`;
 }
 
 // ══════════════════════════════════════

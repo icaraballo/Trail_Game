@@ -23,106 +23,77 @@ function renderSeasonBalance(){
   const raceCosts=G.selectedRaces.reduce((a,r)=>a+r.cost,0);
   const annualBrand=monthlyBrandIncome()*12;
   const yearNet=seasonYearNet();   // H19 (v95): la misma cuenta que usa el modo dev
-  el.innerHTML=`
-    <h2>Balance Temporada ${G.year}</h2>
-    <p class="sub">${esc(G.runner.name)} · Año ${G.year} completado</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Km temporada</div>
-        <div style="font-size:20px;font-weight:700;color:var(--cuerpo)">${G.seasonKm||0} km</div>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Resumen, referencia «Finanzas» (§ 1): la
+  // tarjeta principal con el resultado del año y su diagnóstico con punto, filas y total.
+  // Pendiente del inventario: «Resistencia 55 → 59» del bloque (el valor de antes no se guarda).
+  const pen=Object.values(G.workChangePenalties||{}).reduce((a,v)=>a+(v?.amount||v||0),0);
+  const F=(txt,v)=>`<div class="pz-fila"><span class="pz-fila-txt">${txt}</span><span class="pz-fila-dato ${v>=0?'pz-mas':'pz-menos'}">${fmtEur(v,true)}</span></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta fam-dinero">${icono('finanzas')}Dinero · año ${G.year} completado</div>
+    <div class="pz-titulo">Balance de la temporada ${G.year}</div>
+    <p class="pz-sub">${esc(G.runner.name)}</p>
+    <div class="pz-tarjeta">
+      <div class="pz-label">Resultado del año</div>
+      <div class="pz-num ${yearNet>=0?'pz-mas':'pz-menos'}" style="font-size:40px;line-height:1.1">${fmtEur(yearNet,true)}</div>
+      <div class="pz-diag ${yearNet>=0?'mas':'menos'}">Ahorros tras el cierre: <span class="pz-num">${fmtEur(Math.max(0,G.money+yearNet))}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <div><div class="pz-label">Km de la temporada</div><div class="pz-num" style="font-size:20px">${G.seasonKm||0} km</div></div>
+        <div><div class="pz-label">Km de toda la carrera</div><div class="pz-num" style="font-size:20px">${G.totalCareerKm||0} km</div></div>
       </div>
-      <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
-        <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Km carrera total</div>
-        <div style="font-size:20px;font-weight:700;color:var(--pos)">${G.totalCareerKm||0} km</div>
-      </div>
     </div>
-    ${G.joinedCircuits.length>0?`<div style="margin-bottom:14px">
-      <div class="section-label">Circuitos</div>
-      ${G.joinedCircuits.map(cid=>{
-        const c=CIRCUITS_DB.find(x=>x.id===cid);if(!c)return '';
-        const pts=G.circuitPoints[cid]||0;
-        const completed=G.circuitCompleted.includes(cid)||pts>=c.pointsForPrize;
-        return `<div class="card">
-          <div style="font-size:14px;font-weight:600;color:${c.color}">${c.name}</div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px">
-            <span style="color:var(--ink3)">Puntos acumulados</span>
-            <span style="font-weight:600;color:${completed?'var(--pos)':'var(--avi)'}">${pts} / ${c.pointsForPrize}</span>
-          </div>
-          ${completed?`<div class="note" style="margin-top:8px;margin-bottom:0">🏆 Circuito completado — Premio: +€${c.reward.money}</div>`:
-            `<div style="font-size:12px;color:var(--ink3);margin-top:6px">Faltan ${c.pointsForPrize-pts} puntos para el premio</div>`}
-        </div>`;}).join('')}
-    </div>`:''}
+    ${G.joinedCircuits.length>0?`<div class="pz-label" style="margin:14px 0 6px">Circuitos</div>
+      ${G.joinedCircuits.map(cid=>{const c=CIRCUITS_DB.find(x=>x.id===cid);if(!c)return '';
+        const pts=G.circuitPoints[cid]||0;const completed=G.circuitCompleted.includes(cid)||pts>=c.pointsForPrize;
+        return `<div class="pz-tarjeta"><div style="display:flex;justify-content:space-between"><b>${c.name}</b><span class="pz-num">${pts} / ${c.pointsForPrize}</span></div>
+          ${completed?`<div class="pz-diag mas">🏆 Circuito completado — premio <span class="pz-num">+€${c.reward.money}</span></div>`:`<div class="pz-efectos">Faltan ${c.pointsForPrize-pts} puntos para el premio</div>`}</div>`;}).join('')}`:''}
 
-    <div class="section-label">Carreras</div>
-    ${G.raceResults.length===0?'<p style="font-size:13px;color:var(--ink3);margin-bottom:14px">Sin carreras completadas.</p>':
-      `<div style="margin-bottom:14px">${G.raceResults.map(r=>{
-        if(isDNF(r)) return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
-            <div><span style="font-size:13px;color:var(--neg);margin-right:8px;font-weight:600">❌</span>${r.name}</div>
-            <span style="font-size:12px;color:var(--neg);font-weight:600">${r.dnfReason==='lesion'?'No participó':'No clasificado'}</span>
-          </div>
-          <div style="font-size:12px;color:var(--neg);margin-top:3px">${r.dnfReason==='lesion'?(r.injuryLabel||'Lesión')+' — baja forzada':dnfLabel(r)+' — sin clasificación'} · €0 premio</div>
-        </div>`;
-        return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
-            <div>
-              <span style="font-size:13px;color:${r.pos===1?'var(--avi)':r.pos<=3?'var(--pos)':'var(--ink3)'};margin-right:8px;font-weight:600">${r.pos}º</span>
-              ${r.name}
-            </div>
-            <span style="font-size:13px;color:var(--ink3)">${fmt(r.time)} · <span style="color:var(--pos)">+€${r.prize}</span></span>
-          </div>
-          ${r.catPos&&r.catTotal>1?`<div style="margin-top:4px"><span style="font-size:12px;background:#e8eef8;color:#2d4fa0;border-radius:4px;padding:1px 7px;font-weight:600">${r.catName} ${r.catPos}º / ${r.catTotal}</span></div>`:''}
-          ${r.injuryType?`<div style="font-size:12px;color:var(--neg);margin-top:4px">
-            ⚠ ${r.injuryLabel||r.injuryType}${r.kmAtInjury?' (km '+r.kmAtInjury+')':''} · stats: ${Object.entries(INJURY_TYPES[r.injuryType]?.statPenalty||{}).map(([k,v])=>v+' '+k).join(', ')}
-          </div>`:''}
-        </div>`;}).join('')}</div>`}
+    <div class="pz-label" style="margin:14px 0 6px">Carreras</div>
+    ${G.raceResults.length===0?'<p class="pz-efectos" style="margin-bottom:14px">Sin carreras completadas.</p>':
+      `<div class="pz-tarjeta" style="padding:2px 14px">${G.raceResults.map(r=>{
+        if(isDNF(r))return `<div class="pz-fila" style="align-items:flex-start"><span class="pz-num pz-menos" style="width:30px">DNF</span><span class="pz-fila-txt">${r.name}<div class="pz-efectos">${r.dnfReason==='lesion'?(r.injuryLabel||'Lesión')+' — baja forzada':dnfLabel(r)+' — sin clasificación'} · €0</div></span><span class="pz-efectos">${r.dnfReason==='lesion'?'No participó':'No clasificado'}</span></div>`;
+        return `<div class="pz-fila" style="align-items:flex-start"><span class="pz-num" style="width:30px">${r.pos}.º</span><span class="pz-fila-txt">${r.name}
+          ${r.catPos&&r.catTotal>1?`<div class="pz-efectos">${r.catName} ${r.catPos}.º / ${r.catTotal}</div>`:''}
+          ${r.injuryType?`<div class="pz-diag menos" style="font-size:12.5px">${r.injuryLabel||r.injuryType}${r.kmAtInjury?' (km '+r.kmAtInjury+')':''} · stats: ${Object.entries(INJURY_TYPES[r.injuryType]?.statPenalty||{}).map(([k,v])=>v+' '+k).join(', ')}</div>`:''}</span>
+          <span style="text-align:right"><div class="pz-num">${fmt(r.time)}</div><div class="pz-mas">+€${r.prize}</div></span></div>`;}).join('')}</div>`}
 
-    <div class="section-label">Cuenta anual</div>
-    <div class="card" style="margin-bottom:16px">
-      <table class="eco-table">
-        ${annualWork>0?`<tr><td>Trabajo (${currentWorkPct()}%)</td><td class="right plus">+€${annualWork}</td></tr>`:''}
-        ${annualSponsor>0?`<tr><td>Patrocinios</td><td class="right plus">+€${annualSponsor}</td></tr>`:''}
-        ${raceIncome>0?`<tr><td>Premios de carrera</td><td class="right plus">+€${raceIncome}</td></tr>`:''}
-        ${annualBrand>0?`<tr><td>Tu marca 👟</td><td class="right plus">+€${annualBrand}</td></tr>`:''}
-        <tr><td>Gastos fijos de vida</td><td class="right minus">-€${annualFixed}</td></tr>
-        ${annualClub>0?`<tr><td>Club (${G.club?.name})</td><td class="right minus">-€${annualClub}</td></tr>`:''}
-        ${raceCosts>0?`<tr><td>Inscripciones y viajes</td><td class="right minus">-€${raceCosts}</td></tr>`:''}
-        ${G.spending.fisio?`<tr><td>Fisioterapeuta (12 meses)</td><td class="right minus">-€${STAFF_COSTS.fisio*12}</td></tr>`:''}
-        ${G.spending.entrenador?`<tr><td>Entrenador (12 meses)</td><td class="right minus">-€${STAFF_COSTS.entrenador*12}</td></tr>`:''}
-        ${G.spending.suplementos?`<tr><td>Suplementos (12 meses)</td><td class="right minus">-€${STAFF_COSTS.suplementos*12}</td></tr>`:''}
-        ${Object.values(G.workChangePenalties||{}).reduce((a,v)=>a+(v?.amount||v||0),0)>0?`<tr><td>Penalización cambios jornada</td><td class="right minus">-€${Object.values(G.workChangePenalties||{}).reduce((a,v)=>a+(v?.amount||v||0),0)}</td></tr>`:''}        <tr><td class="total">Resultado del año</td><td class="right total ${yearNet>=0?'plus':'minus'}">${yearNet>=0?'+':''}€${yearNet}</td></tr>
-      </table>
+    <div class="pz-label" style="margin:14px 0 6px">Cuenta anual</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${annualWork>0?F(`Trabajo (${currentWorkPct()} %)`,annualWork):''}
+      ${annualSponsor>0?F('Patrocinios',annualSponsor):''}
+      ${raceIncome>0?F('Premios de carrera',raceIncome):''}
+      ${annualBrand>0?F('Tu marca 👟',annualBrand):''}
+      ${F('Gastos fijos de vida',-annualFixed)}
+      ${annualClub>0?F(`Club (${esc(G.club?.name||'')})`,-annualClub):''}
+      ${raceCosts>0?F('Inscripciones y viajes',-raceCosts):''}
+      ${G.spending.fisio?F('Fisioterapeuta (12 meses)',-STAFF_COSTS.fisio*12):''}
+      ${G.spending.entrenador?F('Entrenador (12 meses)',-STAFF_COSTS.entrenador*12):''}
+      ${G.spending.suplementos?F('Suplementos (12 meses)',-STAFF_COSTS.suplementos*12):''}
+      ${pen>0?F('Penalización cambios de jornada',-pen):''}
+      <div class="pz-fila" style="font-weight:600"><span class="pz-fila-txt">Resultado del año</span><span class="pz-fila-dato ${yearNet>=0?'pz-mas':'pz-menos'}" style="font-size:18px">${fmtEur(yearNet,true)}</span></div>
     </div>
 
-    <div class="card" style="margin-bottom:16px">
-      <div class="sec-title-sm">Stats tras entrenamiento</div>
-      ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}
-    </div>
+    <div class="pz-tarjeta"><div class="pz-label" style="margin-bottom:8px">Stats tras el entrenamiento</div>
+      ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}</div>
 
-    <div class="section-label">¿En qué inviertes para la próxima temporada?</div>
-    <p style="font-size:13px;color:var(--ink3);margin-bottom:10px">Ahorros tras el cierre: €${Math.max(0,G.money+yearNet)} · el staff se paga ahora, por la temporada que empieza</p>
+    <div class="pz-label" style="margin:14px 0 6px">¿En qué inviertes para la próxima temporada?</div>
+    <p class="pz-efectos" style="margin-bottom:8px">El staff se paga ahora, por la temporada que empieza.</p>
+    <div class="pz-tarjeta" style="padding:2px 14px">
     ${[['fisio','Fisioterapeuta','Reduce riesgo de lesión. Recuperación más rápida.'],['entrenador','Entrenador personal','Bloques de entrenamiento +20% efectivos.'],['suplementos','Suplementos y nutrición','Avituallamientos más eficaces. +3 Nutrición.']].map(([id,l,d])=>`
-      <div class="aid-row ${G.spending[id]?'sel-aid':''}" onclick="toggleSpend('${id}')">
-        <div><div class="aid-name">${l}${G.spending[id]?` <span style="font-size:12px;color:var(--cuerpo);font-weight:400">· contratado</span>`:''}</div><div class="aid-effect">${d}</div></div>
-        <span class="aid-time" style="font-size:13px;font-weight:600">€${STAFF_COSTS[id]}/mes</span>
-      </div>`).join('')}
+      <label class="pz-fila" style="cursor:pointer"><input type="checkbox" class="pz-casilla" ${G.spending[id]?'checked':''} onchange="toggleSpend('${id}')"><span class="pz-fila-txt"><b>${l}</b><div class="pz-efectos">${d}</div></span><span class="pz-fila-dato">€${STAFF_COSTS[id]}/mes</span></label>`).join('')}
+    </div>
 
     ${G.monthlyEvents&&G.monthlyEvents.length>0&&!G.monthlyEvents[0].resolved?`
-    <div style="margin-top:18px;border-top:1px solid var(--color-border-tertiary);padding-top:16px">
-      <div style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Evento del mes</div>
-      <p style="font-size:14px;font-weight:600;margin-bottom:4px">${G.monthlyEvents[0].title}</p>
-      <p style="font-size:12px;color:var(--ink3);margin-bottom:14px">Puedes dejarlo para la temporada que viene.</p>
-      <div style="display:grid;gap:8px">
-        ${G.monthlyEvents[0].options.map((o,i)=>`<div class="pace" onclick="resolveMonthlyEvent(0,${i})">
-          <div class="pace-label" style="font-size:13px;margin-bottom:2px">${o.text}</div>
-          <div class="pace-desc">${o.value>0?`+€${o.value}`:o.value<0?`-€${Math.abs(o.value)}`:''} ${o.statBonus?'· '+Object.entries(o.statBonus).map(([k,v])=>'+'+v+' '+k).join(' '):''}${o.loadRedux?'· carga -'+o.loadRedux+'%':''}</div>
-        </div>`).join('')}
-      </div>
+    <div class="pz-tarjeta">
+      <div class="pz-etiqueta acento">Evento del mes</div>
+      <b>${G.monthlyEvents[0].title}</b>
+      <p class="pz-efectos" style="margin:2px 0 8px">Puedes dejarlo para la temporada que viene.</p>
+      ${G.monthlyEvents[0].options.map((o,i)=>`<button class="pz-opcion" onclick="resolveMonthlyEvent(0,${i})"><b>${o.text}</b><div class="pz-efectos">${o.value>0?`<span class="pz-mas">+€${o.value}</span>`:o.value<0?`<span class="pz-menos">−€${Math.abs(o.value)}</span>`:''} ${o.statBonus?'· '+Object.entries(o.statBonus).map(([k,v])=>k+' <span class="pz-mas">+'+v+'</span>').join(' '):''}${o.loadRedux?' · carga <span class="pz-mas">−'+o.loadRedux+' %</span>':''}</div></button>`).join('')}
     </div>`:''}
-    <button class="main" style="margin-top:14px" onclick="doNextYear(${yearNet})">${G.gameMode==='expres'&&G.year>=modeCfg().maxYears?'Ver resumen final →':`Temporada ${G.year+1} →`}</button>
-    ${(G.runner.age||25)>=42&&G.gameMode!=='expres'?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doRetire()">Retirarse — ver resumen de carrera</button>`:''}
-    ${G.carreraVida&&G.lifecyclePhase==='overlap'&&(G.runner.age||25)<42?`<button class="main" style="margin-top:6px;border-color:#534AB7;color:#3C3489" onclick="doRetire()">Dejar la competición — pasar a entrenador</button>`:''}
-    ${G.gameMode==='expres'&&G.year>=2?`<button class="main" style="margin-top:6px;border-color:#c0392b;color:var(--neg)" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}`;
+    <button class="pz-btn" style="margin-top:14px" onclick="doNextYear(${yearNet})">${G.gameMode==='expres'&&G.year>=modeCfg().maxYears?'Ver resumen final →':`Temporada ${G.year+1} →`}</button>
+    ${(G.runner.age||25)>=42&&G.gameMode!=='expres'?`<button class="pz-btn sec" onclick="doRetire()">Retirarse — ver resumen de carrera</button>`:''}
+    ${G.carreraVida&&G.lifecyclePhase==='overlap'&&(G.runner.age||25)<42?`<button class="pz-btn sec" onclick="doRetire()">Dejar la competición — pasar a entrenador</button>`:''}
+    ${G.gameMode==='expres'&&G.year>=2?`<button class="pz-btn sec" onclick="doRetire()">Retiro anticipado — ver resumen</button>`:''}
+  </div>`;
 }
 
 function renderRankingChart(){
@@ -1213,29 +1184,23 @@ function renderCareerEnd(){
   const motivo=G.careerEnded==='bankruptcy'
     ?'Las deudas pudieron con el proyecto. Trabajando a jornada completa y sin margen para entrenar, no había forma de remontar.'
     :'La carrera deportiva ha terminado.';
-  el.innerHTML=`
-    <div style="text-align:center;padding:20px 0 10px">
-      <div style="font-size:36px;margin-bottom:8px">📉</div>
-      <h1 style="font-size:22px;margin-bottom:4px">Se acabó</h1>
-      <p style="font-size:14px;color:var(--ink3)">${esc(G.runner.name||'El corredor')} · ${G.runner.age||25} años · ${modeLabel}</p>
+  // Paso 6 de la dirección visual (2026-10-30): variante por quiebra del Cierre: franja oscura
+  // del momento negativo con la deuda y la trayectoria del cierre. Sin hex.
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja negativo">
+      <svg class="pz-franja-fondo" viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 12 L70 20 L130 18 L180 34 L240 44 L300 58" style="fill:none;stroke:var(--card);stroke-width:2"/></svg>
+      <div class="pz-franja-sub" style="position:relative;margin:0 0 4px">Se acabó · ${esc(G.runner.name||'El corredor')} · ${G.runner.age||25} años · ${modeLabel}</div>
+      <div class="pz-franja-num" style="position:relative">${fmtEur(-(G.debt||0))}</div>
+      <div class="pz-franja-sub" style="position:relative">de deuda final</div>
     </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title">Trayectoria</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${[['Temporadas',Math.max(0,G.year-1)],['Ranking final',G.ranking<900?'#'+G.ranking:'—'],
-           ['Carreras',hist.length],['Victorias',totalWins],['Podios',totalPodiums],
-           ['Km totales',Math.round(G.totalCareerKm||0)+' km']].map(([l,v])=>`
-          <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${l}</div>
-            <div style="font-size:17px;font-weight:700">${v}</div>
-          </div>`).join('')}
-      </div>
+    <p class="pz-sub" style="color:var(--ink);line-height:1.6">${motivo}</p>
+    ${G.debtInterestTotal>0?`<div class="pz-diag ojo" style="margin-bottom:12px">Intereses pagados a lo largo de la carrera: <span class="pz-num">€${G.debtInterestTotal}</span>.</div>`:''}
+    <div class="pz-label" style="margin:6px 0">Trayectoria</div>
+    <div class="pz-tarjeta" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      ${[['Temporadas',Math.max(0,G.year-1)],['Ranking final',G.ranking<900?'#'+G.ranking:'—'],['Carreras',hist.length],['Victorias',totalWins],['Podios',totalPodiums],['Km totales',Math.round(G.totalCareerKm||0)+' km']].map(([l,v])=>`<div><div class="pz-label">${l}</div><div class="pz-num" style="font-size:22px">${v}</div></div>`).join('')}
     </div>
-    <div class="danger" style="margin-bottom:14px">
-      <strong>Deuda final: €${G.debt||0}</strong><br>${motivo}
-      ${G.debtInterestTotal>0?`<div style="font-size:12px;margin-top:6px">Intereses pagados a lo largo de la carrera: <strong>€${G.debtInterestTotal}</strong>.</div>`:''}
-    </div>
-    <button class="main" style="margin-top:6px" onclick="backToMainMenu()">← Menú principal</button>`;
+    <button class="pz-btn" onclick="backToMainMenu()">← Menú principal</button>
+  </div>`;
 }
 
 function renderRetirement(){
