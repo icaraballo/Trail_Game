@@ -107,21 +107,21 @@ function renderRankingChart(){
   const points=hist.map((d,i)=>`${tx(i).toFixed(1)},${ty(d.ranking).toFixed(1)}`).join(' ');
   // Y axis ticks
   const yTicks=[maxRank,Math.round((maxRank+minRank)/2),minRank];
-  const yTicksHtml=yTicks.map(v=>`<text x="${padL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#666">#${v}</text>`).join('');
+  const yTicksHtml=yTicks.map(v=>`<text x="${padL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" style="fill:var(--ink3)">#${v}</text>`).join('');
   // X axis labels (first and last race)
   const xTicksHtml=`
-    <text x="${padL}" y="${h-6}" text-anchor="middle" font-size="10" fill="#888">${hist[0].race}</text>
-    <text x="${tx(hist.length-1).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="10" fill="#888">${hist[hist.length-1].race}</text>`;
+    <text x="${padL}" y="${h-6}" text-anchor="middle" font-size="10" style="fill:var(--ink3)">${hist[0].race}</text>
+    <text x="${tx(hist.length-1).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="10" style="fill:var(--ink3)">${hist[hist.length-1].race}</text>`;
   // Dot on last point
   const lastX=tx(hist.length-1),lastY=ty(hist[hist.length-1].ranking);
-  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;border-radius:8px;background:#f9f9f7">
-    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+graphH}" stroke="#e0dfd8" stroke-width="0.5"/>
-    <line x1="${padL}" y1="${padT+graphH}" x2="${padL+graphW}" y2="${padT+graphH}" stroke="#e0dfd8" stroke-width="0.5"/>
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;border-radius:8px;background:var(--soft)">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+graphH}" style="stroke:var(--line)" stroke-width="0.5"/>
+    <line x1="${padL}" y1="${padT+graphH}" x2="${padL+graphW}" y2="${padT+graphH}" style="stroke:var(--line)" stroke-width="0.5"/>
     ${yTicksHtml}
     ${xTicksHtml}
-    <polyline points="${points}" fill="none" stroke="#4a90d9" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" fill="#4a90d9"/>
-    <text x="${padL}" y="${padT-3}" font-size="11" fill="#555" font-weight="600">Evolución ranking</text>
+    <polyline points="${points}" fill="none" style="stroke:var(--acc)" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" style="fill:var(--acc)"/>
+    <text x="${padL}" y="${padT-3}" font-size="11" style="fill:var(--ink2)" font-weight="600">Evolución ranking</text>
   </svg>`;
 }
 
@@ -134,7 +134,7 @@ function renderSavingsChart(){
   // de cero y se ve la caída; con proyección positiva el mínimo es el mismo de
   // antes, así que la escala habitual no cambia.
   const minMoney=Math.min(...proj.map(p=>p.money));
-  const color=proj[proj.length-1].money>G.money?'#4a8a2a':'#c0392b';
+  const color=proj[proj.length-1].money>G.money?'var(--pos)':'var(--neg)';
   const w=320,h=140,padL=52,padR=10,padT=16,padB=26;
   const graphW=w-padL-padR,graphH=h-padT-padB;
   const tx=(i)=>padL+(i/(proj.length-1||1))*graphW;
@@ -145,21 +145,21 @@ function renderSavingsChart(){
   // T126: el signo va delante del €, y el umbral del «k» mira el valor absoluto
   // para que −2.400 salga como −€2.4k y no como €-2400.
   const fmtEur=v=>(v<0?'−€':'€')+(Math.abs(v)>=1000?(Math.abs(v)/1000).toFixed(1)+'k':Math.abs(v));
-  const yTicksHtml=[maxMoney,yMid,minMoney].map(v=>`<text x="${padL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#666">${fmtEur(v)}</text>`).join('');
+  const yTicksHtml=[maxMoney,yMid,minMoney].map(v=>`<text x="${padL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" style="fill:var(--ink3)">${fmtEur(v)}</text>`).join('');
   // X ticks: hoy y mes 12
   const xTicksHtml=`
-    <text x="${padL}" y="${h-6}" text-anchor="middle" font-size="10" fill="#888">Hoy</text>
-    <text x="${tx(proj.length-1).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="10" fill="#888">+12m</text>`;
+    <text x="${padL}" y="${h-6}" text-anchor="middle" font-size="10" style="fill:var(--ink3)">Hoy</text>
+    <text x="${tx(proj.length-1).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="10" style="fill:var(--ink3)">+12m</text>`;
   const lastX=tx(proj.length-1),lastY=ty(proj[proj.length-1].money);
-  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;border-radius:8px;background:#f9f9f7">
-    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+graphH}" stroke="#e0dfd8" stroke-width="0.5"/>
-    <line x1="${padL}" y1="${padT+graphH}" x2="${padL+graphW}" y2="${padT+graphH}" stroke="#e0dfd8" stroke-width="0.5"/>
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;border-radius:8px;background:var(--soft)">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+graphH}" style="stroke:var(--line)" stroke-width="0.5"/>
+    <line x1="${padL}" y1="${padT+graphH}" x2="${padL+graphW}" y2="${padT+graphH}" style="stroke:var(--line)" stroke-width="0.5"/>
     ${yTicksHtml}
     ${xTicksHtml}
-    ${minMoney<0?`<line x1="${padL}" y1="${ty(0).toFixed(1)}" x2="${padL+graphW}" y2="${ty(0).toFixed(1)}" stroke="#c0392b" stroke-width="0.8" stroke-dasharray="3 3"/>`:''}
-    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" fill="${color}"/>
-    <text x="${padL}" y="${padT-3}" font-size="11" fill="#555" font-weight="600">Proyección ahorros</text>
+    ${minMoney<0?`<line x1="${padL}" y1="${ty(0).toFixed(1)}" x2="${padL+graphW}" y2="${ty(0).toFixed(1)}" style="stroke:var(--neg)" stroke-width="0.8" stroke-dasharray="3 3"/>`:''}
+    <polyline points="${points}" fill="none" style="stroke:${color}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" style="fill:${color}"/>
+    <text x="${padL}" y="${padT-3}" font-size="11" style="fill:var(--ink2)" font-weight="600">Proyección ahorros</text>
   </svg>`;
 }
 window.resolveMonthlyEvent=(evIdx,optIdx)=>{
@@ -425,8 +425,8 @@ function renderLifeAthleteOffer(){
   const isUrgent=false; // filosofía: el juego informa, el jugador decide — sin presión
   const enCoach=G.lifecyclePhase==='coach';   // v96: la oferta también llega siendo ya entrenador
   const slotLibre=enCoach?coachFreeSlotIdx():-1;
-  const potData=LIFE_POTENTIAL_LABEL[a.potential]||{label:a.potential,color:'#888',desc:''};
-  const persData=PERSONALITY_LABEL[a.personality]||{label:a.personality,color:'#888',emoji:'⚫',desc:''};
+  const potData=LIFE_POTENTIAL_LABEL[a.potential]||{label:a.potential,desc:''};
+  const persData=PERSONALITY_LABEL[a.personality]||{label:a.personality,emoji:'⚫',desc:''};
   const specLabel={fondista:'Fondista',montanero:'Montañero',tecnico:'Técnico',todoterreno:'Todoterreno'}[a.spec]||a.spec;
 
   const introTexts={
@@ -439,50 +439,41 @@ function renderLifeAthleteOffer(){
   };
   const intro=introTexts[a.id]||`Alguien busca un entrenador. Alguien que sepa lo que es correr de verdad.`;
 
-  el.innerHTML=`
-    <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px">Año ${G.year} · Un momento inesperado</div>
-    ${isUrgent?`<div class="warn" style="margin-bottom:16px">⚠ Llevas tiempo rechazando a gente. Este puede ser distinto.</div>`:''}
-    <div class="card" style="margin-bottom:16px;border-left:3px solid var(--line);padding-left:18px">
-      <p style="font-size:15px;line-height:1.7;color:var(--ink);font-style:italic">"${intro}"</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Momento: llega sin aviso; franja con el
+  // acento de Entrenador (es la puerta a ese modo), ficha del atleta y stats con tokens.
+  const chip=t=>`<span class="pz-chip" style="margin:0;background:var(--soft)">${t}</span>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja" style="background:var(--acc-entrenador)">
+      <div class="pz-franja-sub" style="margin:0 0 4px">Año ${G.year}</div>
+      <div class="pz-franja-num" style="font-size:34px">Un momento inesperado</div>
     </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;align-items:flex-start;gap:14px">
-        <div style="width:48px;height:48px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${a.flag}</div>
-        <div style="flex:1">
-          <div style="font-size:17px;font-weight:700;margin-bottom:2px">${esc(a.name)}</div>
-          <div style="font-size:13px;color:var(--ink3);margin-bottom:8px">${a.age} años · ${specLabel}</div>
-          <p style="font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:10px">${esc(a.bio)}</p>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <span style="font-size:12px;padding:2px 10px;border-radius:20px;background:var(--soft);color:${potData.color};font-weight:600">${potData.label}</span>
-            <span style="font-size:12px;padding:2px 10px;border-radius:20px;background:var(--soft);color:var(--ink2)">${persData.emoji} ${persData.label}</span>
-          </div>
-        </div>
+    ${isUrgent?`<div class="pz-diag ojo">Llevas tiempo rechazando a gente. Este puede ser distinto.</div>`:''}
+    <p style="font-style:italic;line-height:1.6">«${intro}»</p>
+    <div class="pz-tarjeta">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:28px">${a.flag}</span>
+        <span class="pz-fila-txt"><span class="pz-titulo" style="font-size:22px;margin:0">${esc(a.name)}</span><div class="pz-efectos">${a.age} años · ${specLabel}</div></span>
       </div>
+      <p style="margin:8px 0;color:var(--ink2)">${esc(a.bio)}</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${chip(potData.label)}${chip(persData.emoji+' '+persData.label)}</div>
     </div>
-
-    <div class="card" style="margin-bottom:20px;background:var(--soft)">
-      <div style="font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:10px">Stats iniciales</div>
-      ${['resistencia','velocidad','subida','bajada','nutricion','mental'].map(s=>`
-        <div class="bar-row">
-          <div class="bar-label">${s.charAt(0).toUpperCase()+s.slice(1)}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${a.baseStats[s]}%;background:${a.baseStats[s]>=60?'#4a8a2a':a.baseStats[s]>=45?'#c07a10':'#c0392b'}"></div></div>
-          <div class="bar-pct">${a.baseStats[s]}</div>
-        </div>`).join('')}
+    <div class="pz-label" style="margin:14px 0 6px">Stats iniciales</div>
+    <div class="pz-tarjeta">
+      ${['resistencia','velocidad','subida','bajada','nutricion','mental'].map(st=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="pz-efectos" style="width:84px">${st.charAt(0).toUpperCase()+st.slice(1)}</span>
+        <div class="pz-barra" style="flex:1"><div class="pz-relleno" style="width:${a.baseStats[st]}%;background:var(--acc-entrenador)"></div></div>
+        <span class="pz-num" style="width:26px;text-align:right">${a.baseStats[st]}</span></div>`).join('')}
     </div>
-
-    <div style="font-size:13px;color:var(--ink3);margin-bottom:16px;line-height:1.6">
-      ${enCoach?(slotLibre>=0?`Entraría en tu hueco ${slotLibre+1} de entrenamiento, junto a los atletas que ya llevas.`:'No tienes hueco libre: el 2.º se abre con reputación 40 y el 3.º con 70. Puedes decir que no; quizá vuelva a cruzarse contigo.'):'Aceptar implica dedicar horas a esta persona durante tus propias temporadas. No es gratis. Pero puede que merezca la pena.'}
-    </div>
-
-    ${enCoach&&slotLibre<0?'':`<button class="main" style="border-color:#4a8a2a;color:#2d5a1a" onclick="acceptLifeAthlete()">Acepto — quiero trabajar con ${esc(a.name.split(' ')[0])} →</button>`}
+    <div class="pz-diag ${enCoach&&slotLibre<0?'ojo':''}">${enCoach?(slotLibre>=0?`Entraría en tu hueco ${slotLibre+1} de entrenamiento, junto a los atletas que ya llevas.`:'No tienes hueco libre: el 2.º se abre con reputación 40 y el 3.º con 70. Puedes decir que no; quizá vuelva a cruzarse contigo.'):'Aceptar implica dedicar horas a esta persona durante tus propias temporadas. No es gratis. Pero puede que merezca la pena.'}</div>
+    ${enCoach&&slotLibre<0?'':`<button class="pz-btn" style="margin-top:12px;background:var(--acc-entrenador);border-color:var(--acc-entrenador)" onclick="acceptLifeAthlete()">Acepto — quiero trabajar con ${esc(a.name.split(' ')[0])} →</button>`}
     ${(()=>{
       const limitYear={facil:15,medio:13,dificil:10,hardcore:8}[G.gameMode||'medio']||13;
       const forced=!enCoach&&G.year>=limitYear;
       return forced
-        ? `<div class="warn" style="margin-top:10px">El cuerpo te lo pide. Ha llegado el momento de pasar el testigo.</div>`
-        : `<button class="main" style="margin-top:8px;opacity:0.65" onclick="rejectLifeAthlete()">Ahora no — puede que aparezca alguien más adelante</button>`;
-    })()}`;
+        ? `<div class="pz-diag ojo" style="margin-top:10px">El cuerpo te lo pide. Ha llegado el momento de pasar el testigo.</div>`
+        : `<button class="pz-btn sec" onclick="rejectLifeAthlete()">Ahora no — puede que aparezca alguien más adelante</button>`;
+    })()}
+  </div>`;
 }
 
 window.acceptLifeAthlete=()=>{
@@ -528,26 +519,21 @@ function renderOverlapHub(){
   const a=G.lifeAthlete;
   const athleteName=a?esc(a.name):'tu atleta';
   const athleteFirst=a?esc(a.name.split(' ')[0]):'el atleta';
-  el.innerHTML=`
-    <div style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Año ${G.year} · Solapamiento</div>
-    <h2 style="margin-bottom:6px">¿Qué haces hoy?</h2>
-    <p class="sub" style="margin-bottom:24px">Puedes seguir con tu carrera o gestionar a ${athleteFirst}. Tú decides.</p>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
-      <div onclick="goToRunnerFromOverlap()" style="background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:20px 16px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background='#fff'">
-        <div style="font-size:28px;margin-bottom:10px">🏃</div>
-        <div style="font-size:15px;font-weight:600;margin-bottom:4px">Seguir corriendo</div>
-        <div style="font-size:12px;color:var(--ink3);line-height:1.5">Temporada ${G.year} · ${esc(G.runner?.specialty||'')}<br>${G.selectedRaces?.length?G.selectedRaces.length+' carrera'+(G.selectedRaces.length!==1?'s':'')+' en calendario':'Sin carreras aún'}</div>
-      </div>
-      <div onclick="goToCoachFromOverlap()" style="background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:20px 16px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8f7f3'" onmouseleave="this.style.background='#fff'">
-        <div style="font-size:28px;margin-bottom:10px">📋</div>
-        <div style="font-size:15px;font-weight:600;margin-bottom:4px">Entrenador</div>
-        <div style="font-size:12px;color:var(--ink3);line-height:1.5">${athleteName}<br>${a?`${a.age} años · ${esc(a.spec)}`:'Pendiente de asignar'}</div>
-      </div>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Hub de modo con dos acentos: corredor (teja)
+  // y entrenador (azul pizarra), cada uno en su opción.
+  const lado=(onc,acc,ico,tit,txt)=>`<button class="pz-opcion sin-check" style="margin:0;border-top:4px solid var(${acc});padding:16px 14px" ${onc}>
+    <div style="font-size:26px;margin-bottom:6px">${ico}</div><b>${tit}</b><div class="pz-efectos" style="margin-top:2px">${txt}</div></button>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-label">Año ${G.year} · Solapamiento</div>
+    <div class="pz-titulo">¿Qué haces hoy?</div>
+    <p class="pz-sub">Puedes seguir con tu carrera o gestionar a ${athleteFirst}. Tú decides.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 16px">
+      ${lado('onclick="goToRunnerFromOverlap()"','--acc-clasico','🏃','Seguir corriendo',`Temporada ${G.year} · ${esc(G.runner?.specialty||'')}<br>${G.selectedRaces?.length?G.selectedRaces.length+' carrera'+(G.selectedRaces.length!==1?'s':'')+' en calendario':'Sin carreras aún'}`)}
+      ${lado('onclick="goToCoachFromOverlap()"','--acc-entrenador','📋','Entrenador',`${athleteName}<br>${a?`${a.age} años · ${esc(a.spec)}`:'Pendiente de asignar'}`)}
     </div>
-
-    ${G.lifeAthleteHours>0?`<div class="note" style="font-size:13px">Esta temporada dedicas <strong>${G.lifeAthleteHours}h a la semana</strong> a ${athleteFirst}: tu entrenamiento rinde al ${Math.round(lifeAthleteEffMult(G.lifeAthleteHours)*100)} % y, al cerrar la temporada, ${athleteFirst} ganará +1 en ${lifeAthleteSeasonGain(G.lifeAthleteHours)} stat${lifeAthleteSeasonGain(G.lifeAthleteHours)>1?'s':''}.</div>`:`<div class="hint" style="font-size:13px">Aún no has dedicado horas a ${athleteFirst} esta temporada. Puedes hacerlo desde el bloque de entrenamiento.</div>`}
-    <div class="hint" style="font-size:13px;margin-top:8px">🏁 Cuando cierres esta temporada, en el balance podrás <strong>dejar la competición</strong> y entrenar a ${athleteFirst} a tiempo completo.</div>`;
+    ${G.lifeAthleteHours>0?`<div class="pz-diag mas">Esta temporada dedicas <b>${G.lifeAthleteHours} h a la semana</b> a ${athleteFirst}: tu entrenamiento rinde al ${Math.round(lifeAthleteEffMult(G.lifeAthleteHours)*100)} % y, al cerrar la temporada, ${athleteFirst} ganará +1 en ${lifeAthleteSeasonGain(G.lifeAthleteHours)} stat${lifeAthleteSeasonGain(G.lifeAthleteHours)>1?'s':''}.</div>`:`<div class="pz-diag">Aún no has dedicado horas a ${athleteFirst} esta temporada. Puedes hacerlo desde el bloque de entrenamiento.</div>`}
+    <div class="pz-diag">🏁 Cuando cierres esta temporada, en el balance podrás <b>dejar la competición</b> y entrenar a ${athleteFirst} a tiempo completo.</div>
+  </div>`;
 }
 
 window.goToCoachFromOverlap=()=>{
@@ -943,43 +929,27 @@ function renderLifeRetirement(){
     ? `Continuar como entrenador de ${athleteFirst} →`
     : `Buscar un atleta y continuar como entrenador →`;
 
-  el.innerHTML=`
-    <div style="text-align:center;padding:20px 0 10px">
-      <div style="font-size:36px;margin-bottom:8px">🏔</div>
-      <h1 style="font-size:22px;margin-bottom:4px">Fin de la carrera deportiva</h1>
-      <p style="font-size:14px;color:var(--ink3)">${name} · ${age} años · ${modeLabel}</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Momento de cierre: franja oscura, cifras de
+  // la trayectoria y el paso a Entrenador con su acento.
+  const cifra=(l,v)=>`<div class="pz-tarjeta" style="margin:0;padding:8px 4px;text-align:center"><div class="pz-efectos">${l}</div><div class="pz-num" style="font-size:20px">${v}</div></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja cierre">
+      <div class="pz-franja-sub" style="margin:0 0 4px">🏔 ${name} · ${age} años · ${modeLabel}</div>
+      <div class="pz-franja-num" style="font-size:34px">Fin de la carrera deportiva</div>
     </div>
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="sec-title">Trayectoria completa</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${[['Temporadas',yearsActive],['Ranking final','#'+G.ranking],['Carreras',totalRaces],['Victorias',totalWins],['Podios',totalPodiums],['Premios','€'+totalPrize]].map(([l,v])=>`
-          <div style="background:var(--soft);border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:12px;color:var(--ink3);margin-bottom:3px">${l}</div>
-            <div style="font-size:17px;font-weight:700">${v}</div>
-          </div>`).join('')}
-      </div>
+    <div class="pz-label" style="margin:12px 0 6px">Trayectoria completa</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+      ${[['Temporadas',yearsActive],['Ranking final',G.ranking+'.º'],['Carreras',totalRaces],['Victorias',totalWins],['Podios',totalPodiums],['Premios',fmtEur(totalPrize)]].map(([l,v])=>cifra(l,v)).join('')}
     </div>
-
-    <div class="note" style="font-size:14px;line-height:1.75;margin-bottom:16px"><strong>Legado:</strong> ${legacy}</div>
-
-    <div style="border-top:1px solid var(--line);margin-bottom:20px;padding-top:20px">
-      <div class="card" style="border-left:3px solid #534AB7;padding-left:18px;margin-bottom:16px">
-        <p style="font-size:15px;line-height:1.7;color:var(--ink);font-style:italic">"${transitionText}"</p>
-      </div>
-      ${a?`
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#EEEDFE;border-radius:10px;margin-bottom:16px">
-          <div style="font-size:24px">${a.flag}</div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:#3C3489">${esc(a.name)}</div>
-            <div style="font-size:12px;color:#534AB7">${a.age} años · ${a.spec} · ${LIFE_POTENTIAL_LABEL[a.potential]?.label||''}</div>
-          </div>
-        </div>`:''}
-      <button class="main" style="border-color:#534AB7;color:#3C3489" onclick="confirmLifeCoachTransition()">
-        ${btnText}
-      </button>
-      <button class="main" style="margin-top:8px;opacity:0.55" onclick="G=freshState();render()">Nueva partida desde cero</button>
-    </div>`;
+    <p style="margin:14px 0"><b>Legado:</b> ${legacy}</p>
+    <p style="font-style:italic;line-height:1.6;border-left:3px solid var(--acc-entrenador);padding-left:12px">«${transitionText}»</p>
+    ${a?`<div class="pz-tarjeta" style="display:flex;align-items:center;gap:12px;border-color:var(--acc-entrenador)">
+      <span style="font-size:24px">${a.flag}</span>
+      <span><b>${esc(a.name)}</b><div class="pz-efectos">${a.age} años · ${a.spec} · ${LIFE_POTENTIAL_LABEL[a.potential]?.label||''}</div></span>
+    </div>`:''}
+    <button class="pz-btn" style="margin-top:8px;background:var(--acc-entrenador);border-color:var(--acc-entrenador)" onclick="confirmLifeCoachTransition()">${btnText}</button>
+    <button class="pz-btn sec" onclick="G=freshState();render()">Nueva partida desde cero</button>
+  </div>`;
 }
 
 window.confirmLifeCoachTransition=()=>{
@@ -1041,58 +1011,26 @@ function renderCoachIntro(){
   const totalPrize=(G.careerHistory||[]).reduce((a,r)=>a+(r.prize||0),0);
   const yearsActive=G.year-1;
 
-  el.innerHTML=`
-    <div style="text-align:center;padding:20px 0 10px">
-      <div style="font-size:36px;margin-bottom:8px">📋</div>
-      <h1 style="font-size:22px;margin-bottom:4px">Nuevo rol: Entrenador</h1>
-      <p style="font-size:14px;color:var(--ink3)">Año ${G.year} · Tu próximo capítulo comienza</p>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Momento: transición narrativa con franja del
+  // acento de Entrenador, el legado en cifras y el atleta.
+  const cifra=(l,v,ancho)=>`<div class="pz-tarjeta" style="margin:0;padding:8px 4px;text-align:center${ancho?';grid-column:1/-1':''}"><div class="pz-efectos">${l}</div><div class="pz-num" style="font-size:20px">${v}</div></div>`;
+  el.innerHTML=`<div class="pz">
+    <div class="pz-franja" style="background:var(--acc-entrenador)">
+      <div class="pz-franja-sub" style="margin:0 0 4px">📋 Año ${G.year} · Tu próximo capítulo comienza</div>
+      <div class="pz-franja-num" style="font-size:34px">Nuevo rol: Entrenador</div>
     </div>
-
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #8B6F47;padding-left:18px;background:#F5EFE3">
-      <div style="font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;margin-bottom:12px">Tu legado como corredor</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:var(--ink3)">Temporadas</div>
-          <div style="font-size:18px;font-weight:700">${yearsActive}</div>
-        </div>
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:var(--ink3)">Carreras</div>
-          <div style="font-size:18px;font-weight:700">${totalRaces}</div>
-        </div>
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:var(--ink3)">Victorias</div>
-          <div style="font-size:18px;font-weight:700">${totalWins}</div>
-        </div>
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:12px;color:var(--ink3)">Ranking mejor</div>
-          <div style="font-size:18px;font-weight:700">#${topRanking}</div>
-        </div>
-        <div style="background:var(--card);border-radius:8px;padding:10px;text-align:center;grid-column:1/-1">
-          <div style="font-size:12px;color:var(--ink3)">Premios ganados</div>
-          <div style="font-size:18px;font-weight:700">€${totalPrize.toLocaleString('es-ES')}</div>
-        </div>
-      </div>
+    <div class="pz-label" style="margin:12px 0 6px">Tu legado como corredor</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      ${cifra('Temporadas',yearsActive)}${cifra('Carreras',totalRaces)}${cifra('Victorias',totalWins)}${cifra('Ranking mejor',topRanking+'.º')}${cifra('Premios ganados',fmtEur(totalPrize),true)}
     </div>
-
-    <div class="card" style="margin-bottom:16px;border-left:3px solid #1D9E75;padding-left:18px;background:#E1F5EE">
-      <div style="font-size:11px;font-weight:600;color:#085041;text-transform:uppercase;margin-bottom:12px">Tu atleta</div>
-      <div style="display:flex;gap:12px;align-items:flex-start">
-        <div style="font-size:28px">${a?a.flag:'🇪🇸'}</div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#085041">${athleteName}</div>
-          <div style="font-size:12px;color:#1D9E75">${athleteAge} años · ${athleteSpec}</div>
-        </div>
-      </div>
+    <div class="pz-label" style="margin:14px 0 6px">Tu atleta</div>
+    <div class="pz-tarjeta" style="display:flex;align-items:center;gap:12px;border-left:3px solid var(--acc-entrenador)">
+      <span style="font-size:26px">${a?a.flag:'🇪🇸'}</span>
+      <span><b>${athleteName}</b><div class="pz-efectos">${athleteAge} años · ${athleteSpec}</div></span>
     </div>
-
-    <div class="card" style="margin-bottom:20px;background:var(--soft)">
-      <div style="font-size:14px;line-height:1.7;color:var(--ink)">
-        <p><strong>${athleteName} ha estado contigo en el solapamiento.</strong> Ahora empieza una nueva etapa: lo guiarás como su entrenador. Entrenamientos, carreras, su desarrollo. El monte te enseñó. Ahora es tu turno de enseñar.</p>
-      </div>
-    </div>
-
-    <button class="main" style="border-color:#534AB7;color:#3C3489;width:100%" onclick="G.screen='coachHome';G.activeTab='game';autoSave();render()">Comenzar como entrenador →</button>
-  `;
+    <p style="line-height:1.6"><b>${athleteName} ha estado contigo en el solapamiento.</b> Ahora empieza una nueva etapa: lo guiarás como su entrenador. Entrenamientos, carreras, su desarrollo. El monte te enseñó. Ahora es tu turno de enseñar.</p>
+    <button class="pz-btn" style="background:var(--acc-entrenador);border-color:var(--acc-entrenador)" onclick="G.screen='coachHome';G.activeTab='game';autoSave();render()">Comenzar como entrenador →</button>
+  </div>`;
 }
 
 // T29b (v87): panel de deuda con amortización voluntaria. Se pinta en «Entre
