@@ -69,7 +69,7 @@ addEventListener('keydown',e=>{
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="img/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<title>Trail Game · v103</title>
+<title>Trail Game · v104</title>
 <style>
 /* ══ DIRECCIÓN VISUAL (v102) · TOKENS ══════════════════════════════════════════
    Vault: Diseño/TG-Direccion-Visual § 2. ÚNICO sitio con hex permitido: los renders
@@ -793,22 +793,22 @@ input[type=text]:focus{border-color:var(--ink3)}
 </nav>
 
 
-<script src="js/constants.js?v=103"></script>
-<script src="js/state.js?v=103"></script>
-<script src="js/save.js?v=103"></script>
-<script src="js/race.js?v=103"></script>
-<script src="js/coach.js?v=103"></script>
-<script src="js/club.js?v=103"></script>
-<script src="js/canicross.js?v=103"></script>
-<script src="js/canicross-render.js?v=103"></script>
-<script src="js/backyard.js?v=103"></script>
-<script src="js/backyard-render.js?v=103"></script>
+<script src="js/constants.js?v=104"></script>
+<script src="js/state.js?v=104"></script>
+<script src="js/save.js?v=104"></script>
+<script src="js/race.js?v=104"></script>
+<script src="js/coach.js?v=104"></script>
+<script src="js/club.js?v=104"></script>
+<script src="js/canicross.js?v=104"></script>
+<script src="js/canicross-render.js?v=104"></script>
+<script src="js/backyard.js?v=104"></script>
+<script src="js/backyard-render.js?v=104"></script>
 <!-- T53 (v92): render.js partido en tres. El orden importa solo para las
      sentencias de nivel raíz, y entre estos tres no hay ninguna que dependa
      de otra — pero se mantiene el orden temático por legibilidad. -->
-<script src="js/render-core.js?v=103"></script>
-<script src="js/render-clasico.js?v=103"></script>
-<script src="js/render-temporada.js?v=103"></script>
+<script src="js/render-core.js?v=104"></script>
+<script src="js/render-clasico.js?v=104"></script>
+<script src="js/render-temporada.js?v=104"></script>
 <script>
 // T70 (v90): devmode.js solo sirve con ?dev=1. Se carga a
 // demanda; render() espera a que esté dentro para que renderDevOverlay()
@@ -820,7 +820,7 @@ input[type=text]:focus{border-color:var(--ink3)}
 G=freshState();
 if(window.DEV_ON){
   const s=document.createElement('script');
-  s.src='js/devmode.js?v=103';
+  s.src='js/devmode.js?v=104';
   s.onload=()=>render();
   s.onerror=()=>{console.warn('devmode.js no se pudo cargar; se arranca sin panel');window.DEV_ON=false;render();};
   document.body.appendChild(s);
