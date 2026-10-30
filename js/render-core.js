@@ -51,10 +51,12 @@ function renderAchievements(){
   const f=G._achF;
   let globalAchs={};
   try{globalAchs=JSON.parse(LS.get('globalAchs')||'{}');}catch(e){}
-  const RARITY={easy:{c:'#4a8a2a',bg:'#eaf4ea',l:'Fácil'},medium:{c:'#4a90d9',bg:'#e8f0fb',l:'Medio'},hard:{c:'#c07a10',bg:'#fdf0e0',l:'Difícil'},legendary:{c:'#8b2252',bg:'#f8e8f2',l:'Legendario'},joke:{c:'#b8860b',bg:'#fffbea',l:'😄 Secreto'}};
-  const rb=a=>{const r=RARITY[a.rarity]||{c:'#888',bg:'#eee',l:''};return`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:${r.bg};color:${r.c}">${r.l}</span>`;};
+  // Paso 6 de la dirección visual (2026-10-30): tipo Lista (§ 2 Comunes): la rareza como escala
+  // de grises (más rara, más oscura), no como colores; filtros como chips. Sin hex.
+  const RARITY={easy:{l:'Fácil',st:'border:1px solid var(--line2);color:var(--ink2)'},medium:{l:'Medio',st:'background:var(--tier-regional);color:var(--ink)'},
+    hard:{l:'Difícil',st:'background:var(--tier-nacional);color:var(--card)'},legendary:{l:'Legendario',st:'background:var(--tier-elite);color:var(--card)'},joke:{l:'😄 Secreto',st:'border:1px dashed var(--line2);color:var(--ink2)'}};
+  const rb=a=>{const r=RARITY[a.rarity]||{l:'',st:''};return`<span class="pz-chip" style="${r.st};margin:0">${r.l}</span>`;};
   const totalUnlocked=Object.keys(globalAchs).length;
-  // Tab filtering
   let list=ACHIEVEMENTS.filter(a=>{
     if(f.tab==='normal'&&a.mode)return false;
     if(f.tab==='expres'&&a.mode!=='expres')return false;
@@ -65,53 +67,40 @@ function renderAchievements(){
     if(f.status==='pending'&&isUnlocked)return false;
     return true;
   });
-  const chip=(label,field,val)=>`<button onclick="G._achF.${field}='${val}';render()" style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid ${f[field]===val?'#c07a10':'#ddd'};background:${f[field]===val?'var(--soft)':'var(--card)'};color:${f[field]===val?'var(--avi)':'var(--ink3)'};cursor:pointer;font-weight:${f[field]===val?'700':'400'}">${label}</button>`;
-  const tabBtn=(label,val)=>{const active=f.tab===val;return`<button onclick="G._achF.tab='${val}';render()" style="flex:1;padding:10px 8px;border:none;border-bottom:${active?'2px solid #c07a10':'2px solid transparent'};background:transparent;color:${active?'var(--avi)':'var(--ink3)'};font-size:13px;font-weight:${active?'700':'400'};cursor:pointer">${label}</button>`;};
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <button class="secondary" onclick="G.screen=G._achPrev||'modeSelect';if(G._achPrevTab)G.activeTab=G._achPrevTab;render()" style="font-size:13px;padding:6px 12px">← Volver</button>
-      <div>
-        <h2 style="margin:0;font-size:20px">🏅 Logros</h2>
-        <div style="font-size:12px;color:var(--ink3)">${totalUnlocked} de ${ACHIEVEMENTS.length} conseguidos</div>
-      </div>
+  const chip=(label,field,val)=>`<button class="pz-chip" onclick="G._achF.${field}='${val}';render()" style="cursor:pointer;margin:0;${f[field]===val?'background:var(--ink);color:var(--card);border:1px solid var(--ink)':'background:var(--card);border:1px solid var(--line2);color:var(--ink2)'}">${label}</button>`;
+  const tabBtn=(label,val)=>{const active=f.tab===val;return`<button onclick="G._achF.tab='${val}';render()" style="flex:1;padding:10px 6px;border:none;border-bottom:2.5px solid ${active?'var(--acc)':'transparent'};background:transparent;color:${active?'var(--ink)':'var(--ink3)'};font:inherit;font-size:14px;font-weight:${active?'600':'500'};cursor:pointer">${label}</button>`;};
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div><div class="pz-titulo" style="margin:0">🏅 Logros</div><div class="pz-efectos"><span class="pz-num">${totalUnlocked}</span> de ${ACHIEVEMENTS.length} conseguidos</div></div>
+      <button class="pz-btn sec" style="width:auto;padding:7px 12px;margin:0" onclick="G.screen=G._achPrev||'modeSelect';if(G._achPrevTab)G.activeTab=G._achPrevTab;render()">← Volver</button>
     </div>
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:12px">
-      ${tabBtn('Todos','all')}${tabBtn('Carrera','normal')}${tabBtn('Exprés','expres')}${tabBtn('Canicross','cn')}
+    <div style="display:flex;border-bottom:1px solid var(--line);margin:12px 0">${tabBtn('Todos','all')}${tabBtn('Carrera','normal')}${tabBtn('Exprés','expres')}${tabBtn('Canicross','cn')}</div>
+    <div class="pz-tarjeta">
+      <div class="pz-label" style="margin-bottom:6px">Rareza</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${chip('Todos','rarity','all')}${chip('Fácil','rarity','easy')}${chip('Medio','rarity','medium')}${chip('Difícil','rarity','hard')}${chip('Legendario','rarity','legendary')}${chip('😄 Secreto','rarity','joke')}</div>
+      <div class="pz-label" style="margin-bottom:6px">Estado</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${chip('Todos','status','all')}${chip('Conseguidos','status','unlocked')}${chip('Pendientes','status','pending')}</div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Rareza</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        ${chip('Todos','rarity','all')}${chip('Fácil','rarity','easy')}${chip('Medio','rarity','medium')}${chip('Difícil','rarity','hard')}${chip('Legendario','rarity','legendary')}${chip('😄 Secreto','rarity','joke')}
-      </div>
-      <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Estado</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${chip('Todos','status','all')}${chip('Conseguidos','status','unlocked')}${chip('Pendientes','status','pending')}
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">${list.length} logro${list.length!==1?'s':''} encontrado${list.length!==1?'s':''}</div>
-    <div class="card" style="padding:0">
-      ${list.length===0?`<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px">Sin logros con estos filtros</div>`:
-      list.map((ach,i)=>{
+    <div class="pz-efectos" style="margin-bottom:8px">${list.length} logro${list.length!==1?'s':''} encontrado${list.length!==1?'s':''}</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">
+      ${list.length===0?`<div class="pz-efectos" style="padding:20px;text-align:center">Sin logros con estos filtros</div>`:
+      list.map(ach=>{
         const meta=globalAchs[ach.id];
         const unlocked=!!meta;
         const isJoke=ach.rarity==='joke';
         const isHardDiff=unlocked&&(meta.difficulty==='dificil'||meta.difficulty==='hardcore');
         const modeIcon=f.tab==='all'?(ach.mode==='cn'?'🐕 ':ach.mode==='expres'?'⚡ ':'🏃 '):'';
-        const borderStyle=isHardDiff?'border:2px solid #c07a10;border-radius:6px;':'';
-        return`<div style="padding:10px 14px;${i<list.length-1?'border-bottom:1px solid var(--line);':''}display:flex;align-items:flex-start;gap:10px;${!unlocked?'opacity:0.55':''}${borderStyle}">
-          <span style="font-size:18px;margin-top:1px">${unlocked?'🏆':'🔒'}</span>
-          <div style="flex:1">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
-              <span style="font-size:13px;font-weight:600;color:var(--ink)">${modeIcon}${unlocked||!isJoke?esc(ach.label):'???'}</span>
-              ${rb(ach)}
-              ${ach.excl?`<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:#f0e8f8;color:#6b3fa0">Exclusivo</span>`:''}
-            </div>
-            <div style="font-size:12px;color:var(--ink3)">${unlocked||!isJoke?esc(ach.desc):'???'}</div>
-            ${meta?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">Conseguido en ${MODE_LABELS[meta.difficulty]?modeLabelFull(meta.difficulty):meta.difficulty} · Año ${meta.year}</div>`:''}
-          </div>
+        return`<div class="pz-fila" style="align-items:flex-start;${!unlocked?'color:var(--ink3)':''}">
+          <span style="font-size:18px;margin-top:1px;${unlocked?'':'opacity:.5'}">${unlocked?'🏆':'🔒'}</span>
+          <span class="pz-fila-txt">
+            <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${modeIcon}${unlocked||!isJoke?esc(ach.label):'???'}</b>${rb(ach)}${ach.excl?'<span class="pz-chip" style="margin:0;border:1px solid var(--line2)">Exclusivo</span>':''}${isHardDiff?'<span class="pz-chip" style="margin:0;border:1.5px solid var(--acc)">En difícil</span>':''}</span>
+            <div class="pz-efectos">${unlocked||!isJoke?esc(ach.desc):'???'}</div>
+            ${meta?`<div class="pz-efectos">Conseguido en ${MODE_LABELS[meta.difficulty]?modeLabelFull(meta.difficulty):meta.difficulty} · año ${meta.year}</div>`:''}
+          </span>
         </div>`;
       }).join('')}
-    </div>`;
+    </div>
+  </div>`;
 }
 // H15-bis (v95): la barra pintaba siempre G.year y el calendario de Clásico. En
 // Entrenador —suelto o en Carrera de Vida— y en Canicross ese año no avanza nunca,
@@ -190,7 +179,7 @@ function updateFinBar(){
   const bar=document.getElementById('fin-bar');
   if(!bar)return;
   // paso 6: en carrera la sustituye la cabecera de carrera (TG-Direccion-Visual § 4)
-  const screens=['intro','workSetup','canicrossAntigua','modeSelect','segment','aid','midRaceEvent'];   // la mañana de carrera sí lleva la barra (el dinero importa)
+  const screens=['intro','workSetup','canicrossAntigua','modeSelect','saveScreen','segment','aid','midRaceEvent'];   // la mañana de carrera sí lleva la barra (el dinero importa)
   bar.style.display=screens.includes(G.screen)?'none':'block';
   aplicarModoChasis();
   // T103 (v88): el saldo se pintaba de Canicross y el neto/mes seguía saliendo de
@@ -517,74 +506,55 @@ function renderSaveScreen(){
       else achNormal++;
     });
   }catch(e){}
-  el.innerHTML=`
-    <h1>Trail Game</h1>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><span style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></span>
-      <button class="opinar-btn" onclick="abrirOpinion()"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17.5H4A1.5 1.5 0 0 1 2.5 16V7A1.5 1.5 0 0 1 4 5.5z"/></svg>Opinar</button></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-      <p class="sub" style="margin-bottom:0;flex:1">Partidas guardadas</p>
-      <button onclick="G._achPrev='saveScreen';G.screen='achievements';render()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:var(--card);font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">🏅 Logros</button>
-      <button onclick="showTutorial()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:var(--card);font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f5f4f0'" onmouseleave="this.style.background='#fff'">📖 Tutorial</button>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Lista (§ 2 Comunes): las cinco ranuras como
+  // filas y el importar como campo, con el consejo de exportar plegable. Sin hex.
+  const B=(txt,click,prim)=>`<button class="pz-btn${prim?'':' sec'}" style="width:auto;padding:7px 12px;margin:0;font-size:14px" onclick="${click}">${txt}</button>`;
+  el.innerHTML=`<div class="pz">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="pz-titulo" style="margin:0">Trail Game</div>
+      <button class="opinar-btn" onclick="abrirOpinion()"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17.5H4A1.5 1.5 0 0 1 2.5 16V7A1.5 1.5 0 0 1 4 5.5z"/></svg>Opinar</button>
     </div>
-
+    <div class="pz-efectos" style="margin:2px 0 14px">v${GAME_BUILD} · <button class="enlace-priv" onclick="showPrivacy()">Privacidad</button></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span class="pz-label" style="flex:1">Partidas guardadas</span>
+      ${B('🏅 Logros',"G._achPrev='saveScreen';G.screen='achievements';render()")}
+      ${B('📖 Tutorial','showTutorial()')}
+    </div>
     ${slots.map(({slot,data,info})=>{
       const lbl=slotLabel(data);
       // PUB-02 (v99): lo que no se puede abrir ya no se pinta como «vacía».
-      if(info&&(info.kind==='future'||info.kind==='broken')) return `<div class="save-slot slot-locked">
-        <div class="save-slot-name">Ranura ${slot+1} — no se puede abrir</div>
-        <div class="save-slot-meta">${info.kind==='future'
+      if(info&&(info.kind==='future'||info.kind==='broken')) return `<div class="pz-tarjeta" style="border-style:dashed;border-color:var(--line2)">
+        <b>Ranura ${slot+1} — no se puede abrir</b>
+        <div class="pz-diag ojo">${info.kind==='future'
           ?`La guardó la v${info.build} y esta página es la v${GAME_BUILD}. Recarga la página para abrirla.`
           :`Hay una partida, pero ${esc(info.why)}. Copia sus datos antes de borrarla.`}</div>
-        <div class="save-btns">
-          ${info.kind==='future'?`<button class="save-btn primary" onclick="location.reload()">Recargar</button>`:''}
-          <button class="save-btn" onclick="exportRawSlot(${slot})">Copiar datos</button>
-          <button class="save-btn danger" onclick="confirmDeleteSlot(${slot})">Borrar</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          ${info.kind==='future'?B('Recargar','location.reload()',true):''}${B('Copiar datos',`exportRawSlot(${slot})`)}${B('Borrar',`confirmDeleteSlot(${slot})`)}
         </div>
       </div>`;
-      if(!lbl) return `<div class="save-slot empty">
-        <div class="flex-between-center">
-          <div>
-            <div class="save-slot-name" style="color:var(--ink3)">Ranura ${slot+1} — vacía</div>
-          </div>
-          <button class="save-btn primary" onclick="startNewInSlot(${slot})">Nueva partida</button>
-        </div>
+      if(!lbl) return `<div class="pz-tarjeta" style="border-style:dashed;border-color:var(--line2);display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span class="pz-efectos">Ranura ${slot+1} — vacía</span>${B('Nueva partida',`startNewInSlot(${slot})`,true)}
       </div>`;
-      return `<div class="save-slot">
-        <div class="flex-between">
-          <div class="save-slot-info">
-            <div class="save-slot-name">${lbl.runName?`"${esc(lbl.runName)}"`:lbl.name}${lbl.ended?` <span style="font-size:11px;padding:1px 7px;border-radius:4px;background:var(--soft);color:var(--neg-i);font-weight:600">📉 Carrera terminada</span>`:''}</div>
-            <div class="save-slot-meta">${lbl.runName?esc(lbl.name)+' · ':''}Año ${lbl.year} · Global ${lbl.ranking} · ${lbl.spec} ${lbl.specRanking}</div>
-            <div class="save-slot-meta" style="margin-top:2px">${lbl.mode}${lbl.phase?` · <span style="color:#534AB7;font-weight:500">${lbl.phase}</span>`:''}${lbl.totalKm?' · '+lbl.totalKm+'km':''} · ${lbl.date}</div>
-            <div class="save-slot-meta" style="margin-top:2px">🏆 ${achNormal} · 🐕 ${achCn} · ⚡ ${achExpres}</div>
-          </div>
-        </div>
-        <div class="save-btns">
-          <button class="save-btn primary" onclick="loadSlot(${slot})">Cargar</button>
-          <button class="save-btn" onclick="saveCurrentToSlot(${slot})">Sobreescribir</button>
-          <button class="save-btn" onclick="exportSlotToClipboard(${slot})">Exportar</button>
-          <button class="save-btn danger" onclick="confirmDeleteSlot(${slot})">Borrar</button>
+      return `<div class="pz-tarjeta">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:16px">${lbl.runName?`«${esc(lbl.runName)}»`:lbl.name}</b><span class="pz-efectos">Ranura ${slot+1}</span></div>
+        ${lbl.ended?`<div class="pz-diag menos">📉 Carrera terminada</div>`:''}
+        <div class="pz-efectos">${lbl.runName?esc(lbl.name)+' · ':''}Año ${lbl.year} · Global ${lbl.ranking} · ${lbl.spec} ${lbl.specRanking}</div>
+        <div class="pz-efectos">${lbl.mode}${lbl.phase?' · '+lbl.phase:''}${lbl.totalKm?' · '+lbl.totalKm+' km':''} · ${lbl.date}</div>
+        <div class="pz-efectos">🏆 ${achNormal} · 🐕 ${achCn} · ⚡ ${achExpres}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+          ${B('Cargar',`loadSlot(${slot})`,true)}${B('Sobreescribir',`saveCurrentToSlot(${slot})`)}${B('Exportar',`exportSlotToClipboard(${slot})`)}${B('Borrar',`confirmDeleteSlot(${slot})`)}
         </div>
       </div>`;
     }).join('')}
-
-    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px">
-      <div style="font-size:13px;font-weight:600;color:var(--ink3);margin-bottom:8px">Importar partida</div>
-      <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">Pega aquí el texto exportado y elige en qué ranura guardarla</div>
-      <div style="font-size:11px;color:#b8a88a;background:#fdf8f2;
-  border:1px solid #e8dfc8;border-radius:6px;padding:8px 10px;
-  margin-bottom:10px">
-        💡 <strong>Consejo:</strong> las partidas viven solo en este
-    navegador. Usa <strong>Exportar</strong> de vez en cuando y guarda el
-    texto: si borras los datos del navegador o cambias de móvil, lo
-    pegas aquí y sigues donde ibas.
-      </div>
-      <textarea class="import-area" id="import-txt" placeholder="Pega aquí el texto TRAIL_SAVE_V2::..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        ${slots.map(({slot})=>`<button class="save-btn" onclick="doImport(${slot})">→ Ranura ${slot+1}</button>`).join('')}
-      </div>
+    <div class="pz-label" style="margin:16px 0 6px">Importar partida</div>
+    ${consejoHTML('exportar','Las partidas viven solo en este navegador.','Usa Exportar de vez en cuando y guarda el texto: si borras los datos del navegador o cambias de móvil, lo pegas aquí y sigues donde ibas.')}
+    <p class="pz-efectos" style="margin-bottom:6px">Pega aquí el texto exportado y elige en qué ranura guardarla.</p>
+    <textarea class="import-area" id="import-txt" placeholder="Pega aquí el texto TRAIL_SAVE_V2::..."></textarea>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      ${slots.map(({slot})=>B('→ Ranura '+(slot+1),`doImport(${slot})`)).join('')}
     </div>
-
-    <button class="main" style="margin-top:20px" onclick="closeSaveScreen()">← Volver${G._prevScreen&&G._prevScreen!=='modeSelect'?' a la partida':''}</button>`;
+    <button class="pz-btn sec" style="margin-top:20px" onclick="closeSaveScreen()">← Volver${G._prevScreen&&G._prevScreen!=='modeSelect'?' a la partida':''}</button>
+  </div>`;
 }
 
 window.loadSlot=slot=>{
@@ -822,44 +792,35 @@ function renderIntro(){
   const _nm=document.getElementById('rname');if(_nm&&G.runner)G.runner.name=_nm.value;
   const el=$main();
   const r=G.runner;
-  el.innerHTML=`
-    <h1>Trail Game</h1>
-    <p class="sub">Crea tu corredor y empieza tu carrera deportiva</p>
-    <div style="display:inline-block;font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px;margin-bottom:8px">v${GAME_BUILD}</div>
-    ${G.gameMode==='expres'?`<div class="warn" style="margin-bottom:14px">⚡ <strong>Carrera Exprés</strong> — 3 temporadas · sin gestión de jornada · ganancias de entrenamiento ×1.5</div>`:''}
-    <label class="field-label">Nombre de la partida</label>
+  // Paso 6 de la dirección visual (2026-10-30): tipo Formulario (decisión + campos): campos de
+  // texto, opciones en tarjeta y el resumen de stats con lo que cambia la edad. Sin hex.
+  const _adj=applyAgeToStats(SPEC_STATS[r.specialty],r.age||25);
+  const _base=SPEC_STATS[r.specialty];
+  el.innerHTML=`<div class="pz">
+    <div class="pz-etiqueta acento">Nueva partida · v${GAME_BUILD}</div>
+    <div class="pz-titulo">Crea tu corredor</div>
+    <p class="pz-sub">Y empieza tu carrera deportiva.</p>
+    ${G.gameMode==='expres'?`<div class="pz-diag" style="margin-bottom:12px">⚡ <b>Carrera Exprés</b> — 3 temporadas · sin gestión de jornada · ganancias de entrenamiento ×1.5</div>`:''}
+    ${G.gameMode==='canicross'?`<div class="pz-diag" style="margin-bottom:12px">🐕 <b>Modo Canicross</b> — A continuación crearás tu perro y eliges raza.</div>`:''}
+    <label class="pz-label" for="runname" style="display:block;margin-bottom:6px">Nombre de la partida</label>
     <input id="runname" type="text" placeholder="Ej: Temporada del reto, Sin trabajo año 1..." value="${esc(G.runName||'')}" maxlength="30" style="margin-bottom:14px"/>
-    <label class="field-label">Tu nombre</label>
+    <label class="pz-label" for="rname" style="display:block;margin-bottom:6px">Tu nombre</label>
     <input id="rname" type="text" placeholder="Nombre del corredor" value="${esc(r.name)}" maxlength="22"/>
-    <label class="field-label">Edad inicial</label>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">
-      ${[18,22,25,28,30,35].map(a=>`<div onclick="G.runner.age=${a};G.runner.stats=applyAgeToStats({...SPEC_STATS[G.runner.specialty]},${a});render()" style="padding:7px 14px;border-radius:8px;border:1px solid ${(r.age||25)===a?'#1a1a1a':'#ddd'};background:${(r.age||25)===a?'var(--soft)':'var(--card)'};cursor:pointer;font-size:14px;font-weight:${(r.age||25)===a?'600':'400'}">${a}</div>`).join('')}
+    <div class="pz-label" style="margin-bottom:6px">Edad inicial</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:18px">
+      ${[18,22,25,28,30,35].map(a=>`<button class="pz-opcion sin-check${(r.age||25)===a?' sel':''}" style="padding:10px 0;margin:0;text-align:center" onclick="G.runner.age=${a};G.runner.stats=applyAgeToStats({...SPEC_STATS[G.runner.specialty]},${a});render()"><span class="pz-num" style="font-size:18px">${a}</span></button>`).join('')}
     </div>
-    <label class="field-label">Especialidad</label>
-    <div class="grid2" style="margin-bottom:20px">
-      ${[['fondista','Fondista','Fondo y llano rápido'],['montanero','Montañero','Subidas y altitud'],['tecnico','Técnico','Descensos difíciles'],['todoterreno','Todoterreno','Equilibrado en todo']].map(([id,l,d])=>`
-        <div class="spec ${r.specialty===id?'sel':''}" onclick="selSpec('${id}')">
-          <div class="spec-label">${l}</div>
-          <div class="spec-desc">${d}</div>
-        </div>`).join('')}
+    <div class="pz-label" style="margin-bottom:6px">Especialidad</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      ${[['fondista','Fondista','Fondo y llano rápido'],['montanero','Montañero','Subidas y altitud'],['tecnico','Técnico','Descensos difíciles'],['todoterreno','Todoterreno','Equilibrado en todo']].map(([id,l,d])=>`<button class="pz-opcion${r.specialty===id?' sel':''}" style="margin:0" onclick="selSpec('${id}')"><b>${l}</b><div class="pz-efectos">${d}</div></button>`).join('')}
     </div>
-    <div class="card" style="margin-bottom:18px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-        <div class="sec-title-sm" style="margin-bottom:0">Stats iniciales</div>
-        ${(r.age||25)!==25?`<div style="font-size:11px;color:var(--ink3)">vs. base edad 25</div>`:''}
-      </div>
-      ${(()=>{
-        const _adj=applyAgeToStats(SPEC_STATS[r.specialty],r.age||25);
-        const _base=SPEC_STATS[r.specialty];
-        return Object.entries(_adj).map(([k,v])=>{
-          const d=v-_base[k];
-          const dHtml=d>0?`<span style="color:var(--pos);font-size:11px;font-weight:700;margin-left:3px">+${d}</span>`:d<0?`<span style="color:var(--neg);font-size:11px;font-weight:700;margin-left:3px">${d}</span>`:'';
-          return `<div class="bar-row"><span class="bar-label">${k.charAt(0).toUpperCase()+k.slice(1)}${dHtml}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${v}%;background:${v>=62?'#4a8a2a':v>=45?'#4a90d9':'#c07a10'}"></div></div><span class="bar-pct">${v}</span></div>`;
-        }).join('');
-      })()}
+    <div class="pz-tarjeta">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><span class="pz-label">Stats iniciales</span>${(r.age||25)!==25?'<span class="pz-efectos">frente a la base de 25 años</span>':''}</div>
+      ${Object.entries(_adj).map(([k,v])=>{const d=v-_base[k];
+        return `<div class="bar-row"><span class="bar-label">${k.charAt(0).toUpperCase()+k.slice(1)}${d?` <span class="${d>0?'pz-mas':'pz-menos'}" style="font-size:12px">${d>0?'+':''}${d}</span>`:''}</span><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${v}%;background:var(--cuerpo)"></div></div><span class="bar-pct">${v}</span></div>`;}).join('')}
     </div>
-    ${G.gameMode==='canicross'?`<div class="note" style="margin-bottom:12px">🐕 <strong>Modo Canicross</strong> — A continuación crearás tu perro y eliges raza.</div>`:''}
-    <button class="main" onclick="${G.gameMode==='canicross'?'doStartCanicross':'doStart'}()">Empezar →</button>`;
+    <button class="pz-btn" onclick="${G.gameMode==='canicross'?'doStartCanicross':'doStart'}()">Empezar →</button>
+  </div>`;
   setTimeout(()=>{
     const i=document.getElementById('rname');
     if(i)i.oninput=e=>G.runner.name=e.target.value;
