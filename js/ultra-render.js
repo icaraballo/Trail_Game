@@ -69,7 +69,7 @@ function renderUtPre(){
     ${utPerfilHTML(race)}
     <div class="pz-diag ojo"><b>Barreras:</b> ${bars}. Si llegas tarde, fuera, aunque vayas bien.</div>
     ${enModo?utRecorridoHTML(race):''}
-    ${consejoHTML('ut_regla','Aquí no gana el que corre más.','Gana el que llega. Cada parada suma al reloj y el margen sobre la barrera baja mientras decides. De noche, sin luz, casi no se avanza.')}
+    ${fichaHTML('ut_barreras')}
     ${enModo?'':`<div class="pz-label" style="margin:14px 0 6px">¿Con quién corres?</div>
     ${ULTRA_CORREDORES.map(c=>`<button class="pz-opcion${sel.corredor===c.id?' sel':''}" onclick="G._utPre.corredor='${c.id}';render()"><b>${esc(c.name)}</b><div class="pz-efectos">${c.desc}</div></button>`).join('')}`}
     ${race.noches?`<div class="pz-label" style="margin:14px 0 6px">La batería de repuesto del frontal</div>

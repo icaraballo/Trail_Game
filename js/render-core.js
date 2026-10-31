@@ -145,6 +145,27 @@ function consejoHTML(id,negrita,resto){
   if(consejoCerrado(id))return `<div class="pz-consejo plegado" onclick="toggleConsejo('${id}')">${icono('bombilla')}Ver consejo</div>`;
   return `<div class="pz-consejo">${icono('bombilla')}<div><span class="pz-label" style="display:block;margin-bottom:2px">Consejo</span><b>${negrita}</b> ${resto||''}<br><button class="pz-consejo-ok" onclick="toggleConsejo('${id}')">Entendido</button></div></div>`;
 }
+// La ficha de sistema (FICHAS_SISTEMA, constants.js): sale una vez; «Entendido» la guarda como
+// vista (LS 'ficha_<id>') y desde entonces vive solo en el Glosario.
+function fichaVista(id){try{return LS.get('ficha_'+id)==='1';}catch(e){return false;}}
+window.fichaEntendida=id=>{try{LS.set('ficha_'+id,'1');}catch(e){}render();};
+function fichaHTML(id){
+  const f=FICHAS_SISTEMA[id];if(!f||fichaVista(id))return '';
+  return `<div class="pz-consejo ficha-sistema">${icono('bombilla')}<div><span class="pz-label" style="display:block;margin-bottom:2px">Cómo funciona · ${esc(f.titulo)}</span>${f.frases.map(x=>esc(x)).join(' ')}<br>
+    <button class="pz-consejo-ok" onclick="fichaEntendida('${id}')">Entendido</button> <span class="pz-efectos">· queda en el Glosario</span></div></div>`;
+}
+// El Glosario: todas las fichas, por modo (§ 28: «glosario en el menú»).
+function renderGlosario(){
+  const el=$main();hideChrome();
+  const porModo={};Object.entries(FICHAS_SISTEMA).forEach(([id,f])=>{(porModo[f.modo]=porModo[f.modo]||[]).push([id,f]);});
+  el.innerHTML=`<div class="pz">
+    <div class="pz-titulo">📚 Glosario</div>
+    <div class="pz-sub">Cómo funciona cada sistema, en tres frases. Las fichas salen una vez en la partida y se quedan aquí.</div>
+    ${Object.entries(porModo).map(([m,l])=>`<div class="pz-label" style="margin:14px 0 6px">${esc(m)}</div>
+      <div class="pz-tarjeta ut-filas">${l.map(([id,f])=>`<div class="pz-fila" style="align-items:flex-start"><span class="pz-fila-txt"><b>${esc(f.titulo)}</b><div class="pz-efectos">${f.frases.map(x=>esc(x)).join(' ')}</div></span></div>`).join('')}</div>`).join('')}
+    <button class="pz-btn sec" style="margin-top:12px" onclick="G.screen=G._glosPrev||'saveScreen';render();window.scrollTo(0,0)">← Volver</button>
+  </div>`;
+}
 // Nivel de carrera en escala de grises (§ 2 *Terreno*): local con borde, regional claro,
 // nacional y élite oscuros. Más prestigio, más oscuro.
 function nivelTag(tier,label){
@@ -186,7 +207,7 @@ function updateFinBar(){
   if(!bar)return;
   // paso 6: en carrera la sustituye la cabecera de carrera (TG-Direccion-Visual § 4)
   const screens=['intro','workSetup','canicrossAntigua','modeSelect','saveScreen','segment','aid','midRaceEvent',
-    'byMenu','byPre','byBell','byLoop','byCorral','byEnd'];   // Backyard no tiene dinero   // la mañana de carrera sí lleva la barra (el dinero importa)
+    'byMenu','byPre','byBell','byLoop','byCorral','byEnd','glosario'];   // Backyard no tiene dinero   // la mañana de carrera sí lleva la barra (el dinero importa)
   // Ultra y Ultratrail (ut*): la carrera no lleva barra y la carcasa pinta su dinero en el hub
   bar.style.display=screens.includes(G.screen)||(typeof G.screen==='string'&&/^ut[A-Z]/.test(G.screen))?'none':'block';
   aplicarModoChasis();
@@ -396,7 +417,7 @@ function screenRoutes(){
     coachIntro:renderCoachIntro,
     clubOffer:renderClubOffer,
     clubIntro:renderClubIntro,
-    achievements:renderAchievements,
+    achievements:renderAchievements,glosario:renderGlosario,
     debtCrisis:renderDebtCrisis,careerEnd:renderCareerEnd,   // T29 (v86)
   };
   // Patrón de carga de modos: las rutas que registra cada modo (canicross-render.js…)
@@ -528,6 +549,7 @@ function renderSaveScreen(){
       <span class="pz-label" style="flex:1">Partidas guardadas</span>
       ${B('🏅 Logros',"G._achPrev='saveScreen';G.screen='achievements';render()")}
       ${B('📖 Tutorial','showTutorial()')}
+      ${B('📚 Glosario',"G._glosPrev='saveScreen';G.screen='glosario';render()")}
     </div>
     ${slots.map(({slot,data,info})=>{
       const lbl=slotLabel(data);

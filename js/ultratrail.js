@@ -389,8 +389,18 @@ function utBackyardDif(){const ix=utIndice();const v=ix.valido?ix.valor:0;return
 // ── Puntos, índice, piedras y sorteo (§ 8, modelo real) ──
 // Tres sistemas que hacen tres cosas: los puntos dicen lo dura que es una carrera, el índice lo
 // bien que corres, y las piedras son boletos para el sorteo de la grande. Sustituyen a G.ranking.
-// Puntos de dificultad (tipo ITRA): km + D+/100, por tramos. Solo a quien termina en tiempo.
-function utPuntos(r){const e=r.km+r.dplus/100;return e<25?0:e<45?1:e<75?2:e<115?3:e<155?4:e<210?5:6;}
+// Puntos de dificultad (tipo ITRA, § 8.1): esfuerzo = km + D+/100, corregido por cómo es la
+// carrera, y por tramos de 0 a 6. Solo a quien termina en tiempo. Las correcciones:
+//  · avituallamientos: con más de 8 km de media entre ellos vas más en autonomía (+5 %); con
+//    menos de 5, menos (−3 %)
+//  · trazado: en circuito (sale y llega por el mismo sitio) −5 %; en línea, tal cual
+function utTrazado(r){const b=r.bloques||[];return b.length&&b[0].sector===b[b.length-1].sector?'circuito':'linea';}
+function utEsfuerzo(r){
+  const avit=Math.max(1,(r.bloques||[]).filter(b=>b.fin!=='meta').length);
+  const kmAvit=r.km/(avit+1);
+  return (r.km+r.dplus/100)*(kmAvit>8?1.05:kmAvit<5?0.97:1)*(utTrazado(r)==='circuito'?0.95:1);
+}
+function utPuntos(r){const e=r.bloques?utEsfuerzo(r):r.km+r.dplus/100;return e<25?0:e<45?1:e<75?2:e<115?3:e<155?4:e<210?5:6;}
 // Piedras por terminar. El modelo real da 50K 2, 100K 3, 100M 4; aquí, con cuatro carreras al año,
 // eso metía a cualquiera en la grande cada dos años. Calibrado con el motor (2026-10-30) para
 // entrar 3-4 veces en quince años: preparación 1, 100K 2, 100M 3; doble en la grande.

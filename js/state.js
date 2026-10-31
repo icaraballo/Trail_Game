@@ -281,6 +281,7 @@ function freshState(){
     _monthlySelections:null,     // {decisionId:opcionId} del consejo mensual
     _clubFromBetween:false,      // se entró al club desde la pantalla de gestión
     _clubUnlockedHint:false,
+    _glosPrev:null,              // a qué pantalla vuelve el Glosario (render-core)
   };
   // Patrón de carga de modos (2026-10-30): cada modo declara sus campos en MODE_STATE desde
   // su fichero de lógica (canicross.js…). Aquí se juntan; content.js los ve igual.

@@ -50,7 +50,7 @@ const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','g
   'utAceptarBackyard','utNoPuedeBackyard','utBackyardHoy','utEmpezarBackyard','utCerrarBackyard','utBackyardCorredor','utBackyardDif','UT_BACKYARD','byNoSalgo','byALaLineaLogica',
   'utSumarVeterania','utEnvejecer','utEpilogoDisparado','utCuentaPendiente','utPuedeMontar','utEpilogos','utElegirEpilogo','utCerrarCuenta','utCarreraPropia','utCorrerPropia',
   'utMontarCarrera','utPropias','utProyectos','utEmpezarProyecto','utEtapa','utCerrarReferencia','utResumenVida','UT_EDAD_FINAL',
-  'utCabecera','byFarolRival','byTensoTick','ultraGradoAlucina','utPerfilHTML','utSectorDuro','ultraSortearTiempo','ULTRA_TIEMPO','checkAndUnlockAchievements']);
+  'utCabecera','byFarolRival','byTensoTick','ultraGradoAlucina','utPerfilHTML','utSectorDuro','FICHAS_SISTEMA','fichaHTML','utEsfuerzo','utTrazado','ultraSortearTiempo','ULTRA_TIEMPO','checkAndUnlockAchievements']);
 const t=scorer();
 const setG=o=>{const g=T.freshState();Object.assign(g,o);T.setG(g);return g;};
 
@@ -1720,6 +1720,13 @@ console.log('\n── Ultratrail · lo que no entraba (otras carreras, logros, o
   const perfil=T.utPerfilHTML(T.ULTRA_RACES.find(r=>r.id==='macizo'));
   t('el perfil de salida lleva noche sombreada y barreras con su hora', /<svg/.test(perfil)&&/<rect/.test(perfil)&&/08:00/.test(perfil));
   t('el sector duro del Macizo es uno de sus bloques', T.ULTRA_RACES.find(r=>r.id==='macizo').bloques.some(b=>b.sector===T.utSectorDuro(T.ULTRA_RACES.find(r=>r.id==='macizo'))));
+  // § 28: la ficha de sistema, una vez, con tres frases
+  t('las fichas de sistema tienen tres frases y su modo', Object.values(T.FICHAS_SISTEMA).every(f=>f.frases.length===3&&f.modo&&f.titulo));
+  t('una ficha sin ver se pinta, y con «Entendido»', /Entendido/.test(T.fichaHTML('ut_fases'))&&T.fichaHTML('no_existe')==='');
+  t('cada ficha se usa en alguna pantalla', Object.keys(T.FICHAS_SISTEMA).every(id=>Object.values(src).some(x=>x.includes(`fichaHTML('${id}')`))));
+  // § 8.1: puntos corregidos por avituallamientos y trazado
+  t('el trazado: el Macizo es circuito, las Brañas en línea', T.utTrazado(T.ULTRA_RACES.find(r=>r.id==='macizo'))==='circuito'&&T.utTrazado(T.ULTRA_RACES.find(r=>r.id==='branas'))==='linea');
+  t('en circuito cuenta menos que en línea', T.utEsfuerzo(T.ULTRA_RACES.find(r=>r.id==='macizo'))<105+62);
   t('Ultratrail guarda la carrera a medias en cada bloque', /utGuardarCarrera\(\);render\(\)/.test(src['ultra-render.js']));
   t('y en cada parada, al salir de la bolsa y en el corral del backyard', /window\.utParar=id=>\{ultraParar\(id\);utGuardarCarrera\(\)/.test(src['ultra-render.js'])&&/byGuardar\(\);   \/\/ dejarlo a medias/.test(src['backyard.js']));
 }

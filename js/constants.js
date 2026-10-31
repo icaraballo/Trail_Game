@@ -836,6 +836,23 @@ const DAY_CONDITIONS=[
   {id:'calor_extra',   w:0.08, icon:'🌡', label:'Más calor de lo previsto. Bebe antes de salir.',energyMod:-3,legsMod:0, hydMod:-5},
 ];
 
+// La ficha de sistema (§ 28 del diseño de Ultratrail): «el jugador tiene que poder jugar sin
+// entender el sistema, y entenderlo tiene que hacerle mejor». Una tarjeta que sale UNA vez, la
+// primera vez que el sistema entra en juego: tres frases y «Entendido». Todas juntas, en el
+// Glosario del menú. Hecha una vez para todos los modos: hoy la usan Ultratrail y el Backyard.
+const FICHAS_SISTEMA={
+  ut_fases:{modo:'Ultratrail',titulo:'El ciclo por fases',frases:['Cada objetivo abre un ciclo hacia él: base, específico y afinado.','Una decisión por fase: el plan y el volumen. Las semanas de en medio corren solas.','Sin objetivo, el tiempo pasa de cuatro en cuatro semanas.']},
+  ut_preparaciones:{modo:'Ultratrail',titulo:'Las preparaciones',frases:['No se entrenan números: se entrena contra una forma concreta de romperse.','Son cinco, en semáforo contra lo que pide tu próximo objetivo; al tocarlas, el número.','Lo que te falta en carrera se paga en tiempo, energía, piernas y cabeza.']},
+  ut_carga:{modo:'Ultratrail',titulo:'La carga',frases:['Cada semana de entreno suma carga, y baja sola si no la alimentas.','Por encima de 70 el cuerpo deja de absorber lo que entrenas; al tope, te lesionas.','El afinado sirve para eso: llegar fresco a la salida.']},
+  ut_recuperacion:{modo:'Ultratrail',titulo:'Recuperar',frases:['Después de cada carrera el cuerpo pide semanas, más con los años y las secuelas.','No es un bloqueo: reposo total, entrenamiento cruzado o volver ya.','Volver antes está permitido, y a veces deja una secuela que no se va nunca.']},
+  ut_sorteo:{modo:'Ultratrail',titulo:'El sorteo de la grande',frases:['Cada piedra es tu nombre una vez más en la lotería: nunca es seguro.','Si entras se gastan todas; si no, quedan para el año que viene, activas dos años.','Hay otras puertas: la lista de espera, un índice alto o haber ido de voluntario.']},
+  ut_reco:{modo:'Ultratrail',titulo:'Conocer el recorrido',frases:['Cada carrera se conoce por sectores: desconocido, visto, reconocido o corrido.','De noche te pierdes justo donde no habías estado.','Se sube yendo a verla, con salidas de reconocimiento o corriéndola de día.']},
+  ut_material:{modo:'Ultratrail',titulo:'El material',frases:['La decisión buena es cuánto llevas: ligero es rápido, pero te expone.','La chaqueta es obligatoria en las de noche: sin ella no sales, y si no la llevas puede haber control.','Las zapatillas se gastan: a los 600 km, las piernas lo notan.']},
+  ut_barreras:{modo:'Ultratrail',titulo:'Barreras y margen',frases:['Aquí no gana el que corre más: gana el que llega.','Cada parada suma al reloj, y el margen sobre la siguiente barrera baja mientras decides.','Quedarse en una barrera es el resultado más común del deporte, no un abandono.']},
+  ut_final:{modo:'Ultratrail',titulo:'El final',frases:['Llega cuando ya no te dejan entrar: el índice no llega y el cuerpo pide meses.','No es un menú: es un acto, con una última carrera a elegir.','La pantalla final no dice si ganaste: dice si lo hiciste.']},
+  by_regla:{modo:'Backyard',titulo:'El backyard',frases:['Una vuelta de 6,7 km cada hora en punto: si no estás en la línea al sonar el cencerro, fuera.','Correr rápido no da ventaja: da minutos de descanso, y las piernas se gastan antes.','Gana el último en pie; todos los demás acaban como DNF.']},
+  by_corral:{modo:'Backyard',titulo:'El corral',frases:['La cuenta atrás es lo que te queda hasta el cencerro.','Cada acción la gasta: comer, curarte, dormir, o sentarte, que puede ser no levantarse.','Si fijas una rutina, las vueltas se encadenan solas hasta que algo la rompe.']},
+};
 const MODE_LABELS={
   facil:    {label:'Fácil',     emoji:'🟢'},
   medio:    {label:'Medio',     emoji:'🟡'},

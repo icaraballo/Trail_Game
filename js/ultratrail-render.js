@@ -149,7 +149,7 @@ function renderUtHub(){
         .map(([k,l])=>`<div><div class="pz-num">${Math.round(r.stats[k])}</div><span>${l}</span></div>`).join('')}</div>
       <div class="pz-efectos ut-vet">Veteranía <b class="pz-num">${Math.round(u.veterania||0)}</b>${(u.secuelas||[]).length?` · ${u.secuelas.length} secuela${u.secuelas.length===1?'':'s'}`:''}</div>
     </div>
-    ${consejoHTML('ut_hub','Aquí el tiempo va por fases.','Cada objetivo abre un ciclo hacia él: base, específico y afinado. El botón de abajo avanza una fase entera; las semanas de en medio corren solas.')}
+    ${fichaHTML('ut_fases')}${u.carga>50?fichaHTML('ut_carga'):''}
     ${u.diario.length?`<div class="pz-tarjeta">${u.diario.slice(-3).reverse().map(d=>`<div class="pz-diag">${esc(d.txt)}</div>`).join('')}</div>`:''}
     <button class="pz-btn" onclick="utBoton()">${boton}</button>
     <div class="pz-tarjeta ut-filas">
@@ -157,6 +157,7 @@ function renderUtHub(){
       ${utFilaNav('Piedras y sorteo',`${utPiedrasActivas()} · ${Math.round(utProbSorteo(utPiedrasActivas())*100)} %`,"G.screen='utPiedras';render();window.scrollTo(0,0)")}
       ${utFilaNav('Material',u.material.zapatillasKm>=UT_ZAPAS_VIDA?'<span class="pz-menos">zapatillas gastadas</span>':`zapatillas ${u.material.zapatillasKm} km`,"G._utMatVuelta='utHub';G.screen='utMaterial';render();window.scrollTo(0,0)")}
       ${utFilaNav('Finanzas',`${fmtEur(trabajo.sobrante,true)}/mes`,"G.screen='utFinanzas';render();window.scrollTo(0,0)")}
+      ${utFilaNav('Glosario','',"G._glosPrev='utHub';G.screen='glosario';render();window.scrollTo(0,0)")}
       ${utFilaNav('Guardar partida',G._saveSlot!=null?`ranura ${G._saveSlot+1}`:'sin ranura','openSaveScreen()')}
       ${utFilaNav('Menú principal','','backToMainMenu()')}
     </div>
@@ -199,6 +200,7 @@ function renderUtFase(){
     <div class="pz-titulo">Hacia ${esc(r.name)}</div>
     <div class="pz-sub">${af?'Las últimas semanas: lo que se construyó ya está. Ahora se trata de llegar entero.'
       :ci.fase==='base'?'Volumen y fondo. Lo que construyas aquí tarda en irse.':'Imitas lo que pide esta carrera en concreto.'}</div>
+    ${fichaHTML('ut_preparaciones')}
     ${utPrepsHTML(r)}
     <div class="pz-label" style="margin:14px 0 6px">El plan</div>
     ${UT_PLANES[ci.fase].map(p=>{const caro=p.coste&&u.dinero<p.coste,sim=utSimularFase(ci.fase,p.id,f.vol,n);
@@ -251,6 +253,7 @@ function renderUtRecup(){
   el.innerHTML=`<div class="pz">
     <span class="pz-etiqueta fam-cuerpo">Recuperación · ${n} semana${n===1?'':'s'}</span>
     <div class="pz-titulo">${ult?`Después de ${esc(ult.name)}`:'Recuperar'}</div>
+    ${fichaHTML('ut_recuperacion')}
     <div class="pz-sub">No es un bloqueo: es una decisión. El cuerpo necesita ${n} semana${n===1?'':'s'}.</div>
     ${UT_RECUPERACION.map(o=>{const sem=o.id==='volver'?0:Math.max(1,Math.ceil(n*o.semanas));
       return `<button class="pz-opcion" onclick="utElegirRecup('${o.id}')"><b>${o.label}</b><div class="pz-efectos">${o.desc}</div>
@@ -372,7 +375,7 @@ function renderUtPiedras(){
         :ix.n?'Caducado: ningún resultado en los dos últimos años.':'Sin resultados todavía: termina una carrera.'}</div>
       <div class="ut-filas" style="padding:0;margin-top:6px">${cats.map(([l,c])=>`<div class="pz-fila"><span class="pz-fila-txt">${l}</span><span class="pz-fila-dato">${c.valido?c.valor:'—'}</span></div>`).join('')}</div>
     </div>
-    ${consejoHTML('ut_sorteo','Tres puertas además de la lotería.',`Si no sale tu nombre, quedas en lista de espera (semana ${UT_SORTEO_ESPERA}). Con un índice alto, dorsal de cortesía. Y si vas de voluntario, el año siguiente tienes dorsal reservado. Al entrar por sorteo se gastan todas las piedras.`)}
+    ${fichaHTML('ut_sorteo')}
     ${intentos.length?`<div class="pz-label" style="margin:14px 0 6px">${esc(m.name)}, año a año</div>
     <div class="pz-tarjeta ut-filas">${intentos.map(x=>`<div class="pz-fila"><span class="pz-fila-txt">Temporada ${x.t}</span><span class="pz-fila-dato ${x.entro?'pz-mas':''}">${x.entro?{sorteo:'Sorteo',espera:'Lista de espera',indice:'Índice',voluntario:'Voluntario'}[x.via]||'Dentro':'No'}</span></div>`).join('')}</div>`:''}
     <button class="pz-btn sec" onclick="G.screen='utHub';render();window.scrollTo(0,0)">← Volver</button>
@@ -386,6 +389,7 @@ function renderUtMaterial(){
   const gratis=utEscalon().materialGratis,vuelta=G._utMatVuelta||'utHub';
   el.innerHTML=`<div class="pz">
     <div class="pz-titulo">Material</div>
+    ${fichaHTML('ut_material')}
     <div class="pz-sub">${gratis?'La marca te da lo que pidas.':'La decisión buena es cuánto llevas: ligero es rápido, pero te expone al frío y a la noche.'}</div>
     ${UT_MATERIAL.map(it=>{const tiene=utTiene(it.id),no=utNoPuedeComprar(it.id);
       const estado=it.id==='zapatillas'?(u.material.zapatillasKm>=UT_ZAPAS_VIDA?'<span class="pz-chip menos">gastadas</span>':`<span class="pz-chip">${u.material.zapatillasKm} / ${UT_ZAPAS_VIDA} km</span>`)
@@ -406,6 +410,7 @@ function renderUtReco(){
   const no=utNoPuedeReconocer(r.id),viaje=utEscalon().viajes?0:r.viaje;
   el.innerHTML=`<div class="pz">
     <div class="pz-titulo">Reconocer ${esc(r.name)}</div>
+    ${fichaHTML('ut_reco')}
     <div class="pz-sub">En un ${UT_TIPO_LABEL[r.tipo].toLowerCase()} te pierdes justo donde no habías estado. Lo que conoces, lo pasas mejor de noche.</div>
     ${no?motivoHTML(esc(no)):''}
     <div class="pz-label" style="margin:14px 0 6px">Salida de un día · ${fmtEur(Math.round(viaje/2))} · un sector</div>
@@ -515,6 +520,7 @@ function renderUtEpilogo(){
       <div class="pz-franja-num" style="font-size:34px">Una última</div>
       <div class="pz-franja-sub">Sin entrenador, sin club, sin gestionar a nadie. Elige qué cierra esto.</div>
     </div>
+    ${fichaHTML('ut_final')}
     ${utEpilogos().map(e=>`<button class="pz-opcion" onclick="utEpilogoSi('${e.id}')"><b>${e.label}</b><div class="pz-efectos">${esc(e.desc)}</div></button>`).join('')}
     ${utEpilogos().length<3?`<div class="pz-efectos">${!utCuentaPendiente()?'No hay cuenta pendiente: todo lo que empezaste, lo terminaste. ':''}${!utPuedeMontar()?'Para montar tu propia carrera hacía falta dejarse ver: dos veces de voluntario y seis sectores reconocidos.':''}</div>`:''}
   </div>`;

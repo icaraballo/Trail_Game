@@ -41,7 +41,7 @@ function renderByPre(){
       <div class="pz-franja-num" style="font-size:44px">Backyard</div>
       <div class="pz-franja-sub">${BY_KM_VUELTA.toString().replace('.',',')} km cada hora en punto. Gana el último en pie.</div>
     </div>
-    ${consejoHTML('by_regla','Correr rápido no da ventaja: da minutos.','Lo que no tardas en la vuelta es tu descanso en el corral, y ahí comes, te curas y duermes. Si no estás en la línea cuando suena el cencerro, fuera. Todos menos uno acaban como DNF.')}
+    ${fichaHTML('by_regla')}
     <div class="pz-label" style="margin:14px 0 6px">¿A qué backyard te apuntas?</div>
     ${Object.entries(BY_EVENTOS).map(([id,e])=>`<button class="pz-opcion${sel.dif===id?' sel':''}" onclick="G._byPre.dif='${id}';render()">
       <span style="float:right" class="pz-efectos">${rec[id]?`Tu récord: <b class="pz-num">${rec[id].laps}</b>${rec[id].gano?' 🏆':''}`:''}</span>
@@ -71,6 +71,7 @@ function renderByBell(){
     <div class="pz-cab-carrera">
       <div class="pz-cab-fila"><span class="pz-cab-nombre">${BY_EVENTOS[b.dif].label} · ${byHoraTxt(n)}${byEsNoche(n)?' · noche':''}</span><span class="pz-cab-dato">${solo?'Solo':`${vivos.length+1} en pie`}</span></div>
     </div>
+    ${fichaHTML('by_corral')}
     ${b.aviso?`<div class="pz-diag ojo"><b>${b.aviso}</b></div>`:''}
     ${b.bitacora?`<div class="pz-diag">${b.bitacora}</div>`:''}
     ${solo?`<div class="pz-diag menos"><b>Ya no sale nadie más.</b> Si completas esta vuelta, ganas. Si no la completas, este año no gana nadie.</div>`:''}
