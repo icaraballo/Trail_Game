@@ -22,7 +22,7 @@ const LS={
     localStorage.setItem(LS_PREFIX+'migrated_v41','1');
   }catch(e){}
 })();
-const GAME_BUILD=108; // incrementar con cada versión del juego
+const GAME_BUILD=109; // incrementar con cada versión del juego
 const SAVE_KEY='save_slot_';
 const SAVE_VERSION='TRAIL_SAVE_V2';
 const NUM_SLOTS=5;
@@ -223,7 +223,11 @@ function migrateState(saved){
   if(saved.coachAthlete) merged.coachAthlete={...saved.coachAthlete};
   if(saved.lifeAthlete)  merged.lifeAthlete={...base.lifeAthlete,...saved.lifeAthlete};
   if(saved.trainingMomentum) merged.trainingMomentum={...base.trainingMomentum,...saved.trainingMomentum};
-  if(saved.trainingBlock)merged.trainingBlock={...base.trainingBlock,...saved.trainingBlock};
+  // Entreno trimestral (2026-11-01): el bloque anual ya no existe. Sin migración (no hay
+  // partidas que importen): una partida de antes elige su plan en la pretemporada siguiente.
+  delete merged.trainingBlock;delete merged.trainingBlockApplied;delete merged.trainingBlockHours;
+  if(saved.trainingPlan)   merged.trainingPlan={...base.trainingPlan,...saved.trainingPlan};
+  if(saved.trainingApplied)merged.trainingApplied={...base.trainingApplied,...saved.trainingApplied};
   // T15 (v89): saves anteriores pueden traer el bonus horneado en runner.stats
   // (C2). No hay forma de saber cuánto era, así que no se intenta deshacer: se
   // garantiza que el campo existe y a cero para que a partir de aquí no vuelva

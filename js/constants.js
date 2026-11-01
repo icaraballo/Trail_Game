@@ -474,6 +474,14 @@ const TRAINING_BLOCKS=[
    crossBlock:true,
    flavor:['Pedaladas tranquilas al atardecer. Las piernas descansan, el corazón sigue trabajando.','Una hora en la piscina. El agua lleva el peso. El cuerpo lo agradece.','Yoga y movilidad. No es correr, pero el cuerpo lo necesita igual.']},
 ];
+// Entreno trimestral (2026-11-01, TG-Diseno-Entreno-Trimestral § 6): cuatro bloques al año,
+// elegidos en la pretemporada; cada uno se suma al acabar su trimestre. Las cifras de
+// TRAINING_BLOCKS siguen siendo las de un año entero: un bloque trimestral suma su parte.
+const TRAINING_QUARTER_SCALE=0.25;        // parte del efecto anual (stats y carga) que da un trimestre
+const TRAINING_EVENT_PROB=0.25;           // evento de entreno por trimestre aplicado: ~1 por temporada
+const TRAINING_MOMENTUM_STREAK=3;         // trimestres seguidos con el mismo bloque que disparan el momentum
+const TRAINING_QUARTER_MONTH={1:2,2:5,3:8,4:11}; // mes cuya estación cuenta para el bloque de cada trimestre
+const TAPER_BONUS={energy:6,legs:6};      // la descarga, en la primera carrera tras su trimestre
 
 const SPONSORS_DB=[
   // ── TIER 1 — Local (año 1+) ──────────────────────────────────────
@@ -571,7 +579,7 @@ const BETWEEN_EVENTS=[
   {id:'interrupted',title:'Entrenamiento interrumpido',desc:'El trabajo y los imprevistos no te han dejado completar el bloque.',
    choices:[{text:'Entrenamiento de emergencia (bloque al 80%)',effect:'train_emergency'},{text:'Asumir que llegas más justo (bloque al 65%)',effect:'train_penalty'}]},
   {id:'extreme_weather',title:'Condiciones extremas anunciadas',desc:'La próxima carrera tiene previsión de calor extremo o tormenta.',
-   choices:[{text:'Mantener el plan (penalización en carrera)',effect:'nothing'},{text:'Cambiar bloque de entrenamiento (pierdes progreso)',effect:'change_block'},{text:'Entrenamiento especial desplazándote (€150 extra)',effect:'special_train'}]},
+   choices:[{text:'Mantener el plan (penalización en carrera)',effect:'nothing'},{text:'Cambiar el plan de los trimestres que quedan',effect:'change_block'},{text:'Entrenamiento especial desplazándote (€150 extra)',effect:'special_train'}]},
   {id:'invite',title:'Invitación especial',desc:'Un organizador te ofrece una plaza gratis en una carrera fuera del calendario.',
    choices:[{text:'Aceptar — correr una prueba extra',effect:'add_race'},{text:'Declinar — mantener el plan',effect:'nothing'}]},
 ];

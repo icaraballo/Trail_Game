@@ -128,8 +128,8 @@ function renderCalendarTab(){
           ${spec.length>0?`<div class="pz-label" style="padding:10px 0 2px">★ Específicas de tu especialidad</div>${spec.map(r=>calRaceRow(r)).join('')}`:''}
         </div>`:''}
       </div>`;}).join('')}
-    ${G.trainingBlock?`<div class="pz-tarjeta"><div class="pz-label">Bloque de entrenamiento</div><b>${G.trainingBlock.name}</b><div class="pz-efectos">${G.trainingBlock.desc}</div></div>`
-      :`<div class="pz-efectos" style="text-align:center;padding:12px 0">Bloque de entrenamiento por elegir</div>`}
+    ${trainingPlanComplete()?`<div class="pz-tarjeta"><div class="pz-label">Plan de entrenamiento</div>${QUARTERS.map(q=>`<div class="pz-efectos"><span class="pz-num">${q.label}</span> ${trainingBlockOf(q.n).name}${G.trainingApplied?.[q.n]?' ✓':''}</div>`).join('')}</div>`
+      :`<div class="pz-efectos" style="text-align:center;padding:12px 0">Plan de entrenamiento por elegir</div>`}
   </div>`;
 }
 
@@ -960,7 +960,7 @@ function renderSponsors(){
     ${Object.keys(G._pendingSponsors||{}).length>0?`
     <div class="pz-diag ojo" style="margin:12px 0"><span><b>Tienes selecciones sin confirmar.</b> Toca un sponsor elegido para quitarlo, o confirma para firmar los contratos.</span></div>
     <button class="pz-btn" onclick="confirmSponsors()">Confirmar patrocinios</button>`:''}
-    <button class="pz-btn sec" onclick="G._pendingSponsors={};G.screen='training';autoSave();render()">Bloque de entrenamiento →</button>
+    <button class="pz-btn sec" onclick="G._pendingSponsors={};G.screen='training';autoSave();render()">Plan de entrenamiento →</button>
   </div>`;
 }
 
@@ -1013,22 +1013,72 @@ window.negotiatePenalty=id=>{
 // Paso 6 de la dirección visual (2026-10-30): tipo Decisión, referencia «Entreno» (§ 7):
 // versión limpia (sin etiquetas de color ni minibarras), tarjeta de estado con la carga, el
 // frío y la próxima carrera desplegable, y la frase real del bloque. Sin hex.
+// Entreno trimestral (2026-11-01): el plan del año, un bloque por trimestre. Cada trimestre
+// es una fila con su jornada y sus carreras; al tocarla se abren los bloques con lo que
+// sumarían allí (jornada, estación, edad, modo y techo del trimestre). A mitad de
+// temporada (evento «cambiar bloque») solo se tocan los trimestres que no han empezado.
+let trainingOpenQ=null;
+function trainingGainsHTML(b,q){
+  const g=trainingBlockGains(b,q);
+  const parts=Object.entries(g).map(([k,v])=>{
+    const r=Math.abs(v)>=1?String(Math.round(Math.abs(v))):Math.abs(v).toFixed(1).replace('.',',');
+    return `${k.charAt(0).toUpperCase()+k.slice(1)} <span class="${v>0?'pz-mas':'pz-menos'}">${v>0?'+':'−'}${r}</span>`;
+  });
+  return parts.join(' · ');
+}
 function renderTraining(){
   const el=$main();
-  const nextRace=G.selectedRaces[0];
-  const wo=curWorkOpt();
+  const started=G.raceResults.length>0||G.currentRaceIdx>0;
+  const nextRace=G.selectedRaces[G.currentRaceIdx];
   const hint=bodyLoadHint();
   const load=getBodyLoad();
   const lt=getLoadThresholdsByMode();
-  const curMonth=nextRace?nextRace.month:(new Date().getMonth()+1);
-  const se=getSeasonEffects(curMonth);
-  const seEffPct=Math.round(effForWork()*(1+se.trainingMod)*100);
   const diagCls={warn:'ojo',danger:'menos',note:'mas',hint:''};
+  if(trainingOpenQ&&trainingQuarterLocked(trainingOpenQ))trainingOpenQ=null;
+  if(trainingOpenQ===null)trainingOpenQ=QUARTERS.find(q=>!trainingQuarterLocked(q.n)&&!trainingBlockOf(q.n))?.n||null;
+  const quarterRow=q=>{
+    const b=trainingBlockOf(q.n);
+    const locked=trainingQuarterLocked(q.n);
+    const open=trainingOpenQ===q.n&&!locked;
+    const wo=curWorkOpt(q.n);
+    const nR=G.selectedRaces.filter(r=>r.quarter===q.n).length;
+    const estado=G.trainingApplied?.[q.n]?'hecho':locked?'en curso':'';
+    const streak=b?trainingStreak(q.n,b.id):0;
+    const later=G.selectedRaces.find(r=>r.quarter>q.n);
+    const opcion=bk=>{
+      const sel=b&&b.id===bk.id;
+      const dLoad=Math.round(bodyLoadAfterTraining(bk.id)-(G.bodyLoad||0));
+      const repH=Math.max(0,(wo?.trainingH||5)+vacTrainingHBonus(q.n)-(bk.hours||8));
+      const sk=trainingStreak(q.n,bk.id);
+      const taperHint=!bk.taperBlock?'':later?`<div class="pz-diag mas">+${TAPER_BONUS.energy} energía y +${TAPER_BONUS.legs} piernas en tu primera carrera después (${esc(later.name)}).</div>`:
+        q.n===4?`<div class="pz-diag">El bonus irá a la primera carrera de la temporada que viene.</div>`:`<div class="pz-diag">No te quedan carreras después de este trimestre: poco beneficio.</div>`;
+      const momWarn=sk>=TRAINING_MOMENTUM_STREAK?`<div class="pz-diag ojo">${sk}.º trimestre seguido con este bloque — más fácil que el cuerpo dé un salto o se estanque.</div>`:'';
+      const flavor=sel&&bk.flavor&&bk.flavor.length?`<div class="pz-efectos" style="font-style:italic;margin-top:6px">«${bk.flavor[0]}»</div>`:'';
+      return `<div class="pz-opcion${sel?' sel':''}" onclick="selectTraining(${q.n},'${bk.id}')">
+          <b>${bk.name}</b> <span class="pz-efectos">· ${bk.hours||8} h/sem · quedan ${repH} h para reputación</span>
+          <div class="pz-efectos" style="margin:2px 0 6px">${bk.desc} ${bk.detail}</div>
+          <div class="pz-efectos" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>${trainingGainsHTML(bk,q.n)||'Ningún stat sube'}</span><span>carga <span class="${dLoad>0?'pz-ojo':'pz-mas'}">${dLoad>0?'+':'−'}${Math.abs(dLoad)}</span></span></div>
+          ${taperHint}${momWarn}${flavor}
+        </div>`;
+    };
+    return `<div class="pz-tarjeta" style="padding:0;overflow:hidden">
+      <div class="pz-fila${locked?'':' navega'}" style="padding:12px 14px;border:none" ${locked?'':`onclick="toggleTrainingQ(${q.n})"`}>
+        <span class="pz-num">${q.label}</span>
+        <span class="pz-fila-txt"><b>${b?b.name:'Por elegir'}</b>
+          <div class="pz-efectos">${q.months} · ${wo?.label||'—'} · ${nR?nR+' carrera'+(nR>1?'s':''):'sin carreras'}</div>
+          ${b&&!open?`<div class="pz-efectos">${trainingGainsHTML(b,q.n)||'Ningún stat sube'}</div>`:''}
+          ${b&&!open&&!locked&&streak>=TRAINING_MOMENTUM_STREAK?`<div class="pz-diag ojo">${streak}.º trimestre seguido con este bloque</div>`:''}</span>
+        ${estado?`<span class="pz-fila-dato">${estado}</span>`:''}
+      </div>
+      ${open?`<div style="padding:0 14px 10px" onclick="event.stopPropagation()">${TRAINING_BLOCKS.map(opcion).join('')}</div>`:''}
+    </div>`;
+  };
+  const listo=trainingPlanComplete();
   el.innerHTML=`<div class="pz">
     <div class="pz-etiqueta fam-cuerpo">${icono('corredor')}Cuerpo · temporada ${G.year}</div>
-    <div class="pz-titulo">Bloque de entrenamiento</div>
-    <p class="pz-sub">Efectividad <span class="pz-num">${seEffPct} %</span> · ${wo?.trainingH||5} h/sem · ${se.label}</p>
-    ${consejoHTML('bloque','El bloque se aplica al cerrar la temporada, una sola vez:','las cifras de cada opción son lo que sumará entonces.')}
+    <div class="pz-titulo">Plan de entrenamiento</div>
+    <p class="pz-sub">Un bloque por trimestre${started?' · cambias los que no han empezado':''}</p>
+    ${consejoHTML('bloque_trimestral','Cada bloque se suma al acabar su trimestre:','las carreras del trimestre siguiente ya lo llevan, y el de Q4 se nota el año que viene. Las cifras cuentan tu jornada, la estación, la edad y el modo; un evento de entreno puede subirlas o bajarlas.')}
     <div class="pz-tarjeta pz-estado">
       <div class="pz-linea" style="display:block">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
@@ -1037,9 +1087,8 @@ function renderTraining(){
         </div>
         <div class="pz-barra"><div class="pz-relleno${load>=lt.warningLevel2?' menos':load>=lt.warningLevel1?' ojo':''}" style="width:${Math.min(100,load)}%"></div><div class="pz-umbral" style="left:70%"></div><div class="pz-umbral" style="left:calc(100% - 1.5px)"></div></div>
       </div>
-      ${G.zeroedOutThisRace&&G.postRaceConsequence?`<div class="pz-linea"><span class="pz-diag menos">Secuelas de la última carrera — <b>${G.postRaceConsequence.label}</b>. ${G.postRaceConsequence.id==='descanso_forzado'?`El bloque de esta temporada rinde un ${Math.round((1-restWeeksEffMult())*100)} % menos.`:G.postRaceConsequence.id==='sobrecarga'?'Subida, bajada y velocidad entrenan al 80 % esta temporada.':'Recuperación en curso.'}</span></div>`:''}
+      ${G.zeroedOutThisRace&&G.postRaceConsequence?`<div class="pz-linea"><span class="pz-diag menos">Secuelas de la última carrera — <b>${G.postRaceConsequence.label}</b>. ${G.postRaceConsequence.id==='descanso_forzado'?`Los bloques de esta temporada rinden un ${Math.round((1-restWeeksEffMult())*100)} % menos, y el próximo, la mitad.`:G.postRaceConsequence.id==='sobrecarga'?'Subida, bajada y velocidad entrenan al 80 % esta temporada, y el próximo bloque rinde la mitad.':'Recuperación en curso.'}</span></div>`:''}
       ${hint?`<div class="pz-linea"><span class="pz-diag ${diagCls[hint.type]||''}">${hint.msg}</span></div>`:''}
-      ${se.trainingMod!==0?`<div class="pz-linea"><span class="pz-diag">${se.note}</span></div>`:''}
       <div class="pz-linea" style="display:block">
         <button class="pz-btn sec" id="btn-nr" onclick="toggleNR()">Ver próxima carrera ↓</button>
         <div id="nr-panel" style="display:none;margin-top:10px">
@@ -1048,35 +1097,11 @@ function renderTraining(){
       </div>
     </div>
     <div style="margin-bottom:16px">
-      ${TRAINING_BLOCKS.map(b=>{
-        const sel=G.trainingBlock&&G.trainingBlock.id===b.id;
-        const eff=effForWork()*(1+se.trainingMod);
-        const loadAfter=Math.round(bodyLoadAfterTraining(b.id));
-        const loadCls=loadAfter>=70?'pz-menos':loadAfter>=50?'pz-ojo':'pz-num';
-        const hasFutureRace=nextRace!==null&&nextRace!==undefined;
-        const taperHint=b.taperBlock&&hasFutureRace?`<div class="pz-diag mas">Tienes carrera próxima — buen momento. +6 Energía y Piernas al salir.</div>`:
-                        b.taperBlock&&!hasFutureRace?`<div class="pz-diag">Sin carrera próxima — poco beneficio ahora.</div>`:'';
-        const mom=G.trainingMomentum;
-        const momWarn=mom&&mom.blockId===b.id&&mom.count>=2?`<div class="pz-diag ojo">${mom.count}.º trimestre seguido — riesgo de estancamiento o revelación.</div>`:'';
-        // La frase real del bloque, con la opción elegida
-        const flavor=sel&&b.flavor&&b.flavor.length?`<div class="pz-efectos" style="font-style:italic;margin-top:6px">«${b.flavor[0]}»</div>`:'';
-        const effs=b.taperBlock?
-          `Mental <span class="pz-mas">+2</span> · Carga <span class="pz-mas">−18 %</span>`:
-          Object.entries(b.effects).filter(([,v])=>v!==0).map(([k,v])=>{
-            const r=Math.round(v*eff*legsTrainingMult(k));
-            return `${k.charAt(0).toUpperCase()+k.slice(1)} <span class="${r>0?'pz-mas':'pz-menos'}">${r>0?'+':'−'}${Math.abs(r)}</span>`;
-          }).join(' · ');
-        const bkH=b.hours||8;const bkRepH=Math.max(0,(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1)-bkH);
-        return `<div class="pz-opcion${sel?' sel':''}" onclick="selectTraining('${b.id}')">
-          <b>${b.name}</b> <span class="pz-efectos">· ${bkH} h/sem · quedan ${bkRepH} h para reputación</span>
-          <div class="pz-efectos" style="margin:2px 0 6px">${b.desc} ${b.detail}</div>
-          <div class="pz-efectos" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>${effs}</span><span>carga → <span class="${loadCls}">${loadAfter} %</span></span></div>
-          ${taperHint}${momWarn}${flavor}
-        </div>`;}).join('')}
+      ${QUARTERS.map(quarterRow).join('')}
     </div>
-    ${G.trainingEvent?`<div class="pz-diag" style="margin-bottom:12px">${G.trainingEvent.icon} <b>Evento de entrenamiento:</b> ${G.trainingEvent.title} — ${G.trainingEvent.desc}</div>`:''}
+    ${G.trainingEvent?`<div class="pz-diag" style="margin-bottom:12px">${G.trainingEvent.icon} <b>Evento de entrenamiento en el próximo bloque:</b> ${G.trainingEvent.title} — ${G.trainingEvent.desc}</div>`:''}
     ${G.carreraVida&&G.lifecyclePhase==='overlap'&&G.lifeAthlete?renderAthleteHoursBlock():''}
-    <button class="pz-btn" onclick="doStartRaces()" ${!G.trainingBlock?'disabled':''}>${G.raceResults.length>0||G.currentRaceIdx>0?'Seguir con la temporada →':'¡Empezar temporada! →'}</button>
+    <button class="pz-btn" onclick="doStartRaces()" ${!listo?'disabled':''}>${!listo?'Elige el bloque de cada trimestre':started?'Seguir con la temporada →':'¡Empezar temporada! →'}</button>
   </div>`;
   // T106 (v93): esto era un `<script>` interpolado dentro del innerHTML. El
   // navegador NO ejecuta los <script> insertados por innerHTML, así que el
@@ -1086,6 +1111,7 @@ function renderTraining(){
   // engancha como en todas las demás pantallas, después de pintar.
   if(nextRace)attachProfHandlers(nextRace,nextRace.id+'preview','preview',0);
 }
+window.toggleTrainingQ=q=>{trainingOpenQ=trainingOpenQ===q?0:q;render();};
 
 // ── Bloque de horas al atleta (fase overlap) ──────────────────────────────────
 function renderAthleteHoursBlock(){
@@ -1332,7 +1358,7 @@ function renderFameTab(){
   const hasSponsor=Object.values(G.sponsors).some(Boolean);
   // Paso 6 de la dirección visual (2026-10-30): pestaña Reputación, tipo Lista (§ 7): las
   // acciones en filas con coste, seguidores, usos y el motivo si no se puede. Sin hex.
-  const wo=curWorkOpt();const blockH=G.trainingBlockHours||8;const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);const repH=Math.max(0,totalH-blockH);
+  const wo=curWorkOpt();const blockH=trainingHoursOf(G.currentQuarter||1);const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);const repH=Math.max(0,totalH-blockH);
   el.innerHTML=`<div class="pz">
     <div class="pz-etiqueta fam-gente">${icono('reputacion')}Gente · reputación</div>
     <div class="pz-titulo">Reputación</div>
@@ -1605,49 +1631,20 @@ window.confirmBreakSponsor=(cat)=>{
   autoSave();
   render();
 };
-window.selectTraining=id=>{
-  G.trainingBlock=TRAINING_BLOCKS.find(b=>b.id===id);
-  G.trainingBlockApplied=false; // T25 (v89): bloque nuevo, sin aplicar
-  G.trainingBlockHours=G.trainingBlock?.hours||8;
-  if(G.trainingBlock){
-    const nextRace=G.selectedRaces[0];
-    const curMonth=nextRace?nextRace.month:(new Date().getMonth()+1);
-    const se=getSeasonEffects(curMonth);
-    const eff=effForWork()*(1+se.trainingMod);
-    const b=G.trainingBlock;
-
-    // ── Momentum tracking ──────────────────────────────────────────
-    if(!G.trainingMomentum||G.trainingMomentum.blockId!==id){
-      G.trainingMomentum={blockId:id,count:1};
-    } else {
-      G.trainingMomentum.count++;
-    }
-
-    // ── Taper flag ─────────────────────────────────────────────────
-    if(b.taperBlock) G.taperBonus=true;
-    else G.taperBonus=false;
-    // ── Achievement tracking: training done ───────────────────────
-    G._seasonTrainingDone=true;
-
-    // ── Evento de entrenamiento (1 de cada ~4 veces) ───────────────
-    G.trainingEvent=getTrainingEvent(id);
-
-    // ── Toast: flavor text si existe, sino deltas ──────────────────
-    if(b.flavor&&b.flavor.length){
-      const txt=b.flavor[Math.floor(Math.random()*b.flavor.length)];
-      showToast('"'+txt+'"');
-    } else {
-      const parts=Object.entries(b.effects)
-        .filter(([,v])=>v!==0)
-        .map(([k,v])=>{const r=Math.round(v*eff);const label=k.charAt(0).toUpperCase()+k.slice(1);return r>0?`+${r} ${label}`:(r<0?`${r} ${label}`:'');}).filter(Boolean);
-      if(parts.length) showToast('Al cerrar la temporada: '+parts.join(' · '));   // BUG-02 (v96): parecía inmediato
-    }
-  }
+// Entreno trimestral (2026-11-01): elige el bloque de un trimestre y abre el siguiente por elegir.
+window.selectTraining=(q,id)=>{
+  const b=TRAINING_BLOCKS.find(x=>x.id===id);
+  if(!b||trainingQuarterLocked(q))return;
+  if(!G.trainingPlan)G.trainingPlan={1:null,2:null,3:null,4:null};
+  G.trainingPlan[q]=id;
+  G._seasonTrainingDone=true;   // logro «¿Entrenar para qué?»
+  if(b.flavor&&b.flavor.length)showToast('"'+b.flavor[Math.floor(Math.random()*b.flavor.length)]+'"');
+  trainingOpenQ=null;
   autoSave();render();
 };
 window.toggleNR=()=>{const p=document.getElementById('nr-panel'),b=document.getElementById('btn-nr');if(p){const v=p.style.display!=='none';p.style.display=v?'none':'block';if(b)b.textContent=v?'Ver próxima carrera ↓':'Ocultar ↑';}};
 window.doStartRaces=()=>{
-  if(!G.trainingBlock)return;
+  if(!trainingPlanComplete())return;
   // v96: con la temporada ya empezada esto no es empezar, es volver a la pantalla
   // de entrenamiento a mitad de temporada —el evento «cambiar bloque» lleva ahí, y
   // hasta v95 también el cambio de modo del solapamiento—. Vaciar raceResults y
@@ -1673,53 +1670,14 @@ function statCapMult(currentVal){
 }
 // T25 (v89): esta función no era idempotente y se llamaba desde CINCO sitios,
 // uno de ellos renderPreRace() — una función de render. Cualquier repintado con
-// el índice de carrera fuera de rango reaplicaba el bloque entero: subida de
-// stats, carga corporal y generación de eventos mensuales, otra vez. Ahora se
-// marca aplicado; la marca se limpia al elegir bloque y al empezar temporada.
-// `force` existe solo para el modo desarrollador.
-function applyTraining(force){
-  if(!G.trainingBlock)return;
-  if(G.trainingBlockApplied&&!force)return;
-  G.trainingBlockApplied=true;
-  const nextRace=G.selectedRaces[0];
-  const curMonth=nextRace?nextRace.month:(new Date().getMonth()+1);
-  const se=getSeasonEffects(curMonth);
-  let eff=effForWork()*(1+se.trainingMod)*(modeCfg().trainingMult||1.0)*(1-agingDeg()*0.6);
-
-  // Penalización brutal si llegaste a cero sin abandonar en carrera anterior
-  if(G.zeroedOutThisRace){eff=eff*0.5;G.zeroedOutThisRace=false;}
-
-  // Aplicar evento de entrenamiento si existe
-  const tev=G.trainingEvent;
-  if(tev){
-    if(tev.effMult) eff=eff*tev.effMult;
-    if(tev.statBonus) Object.entries(tev.statBonus).forEach(([k,v])=>{G.runner.stats[k]=Math.max(10,Math.min(100,(G.runner.stats[k]||50)+v));});
-    if(tev.loadMod) G.bodyLoad=Math.max(0,Math.min(100,(G.bodyLoad||0)+(tev.loadMod||0)));
-    // Toast del evento de entrenamiento (después de un pequeño delay para no solaparse)
-    setTimeout(()=>showToast(tev.icon+' '+tev.title),400);
-    G.trainingEvent=null;
-  }
-
-  // Taper: no sube stats pero sí aplica la carga reducida y activa el bono
-  if(G.trainingBlock.taperBlock){
-    G.runner.stats.mental=Math.max(10,Math.min(100,Math.round(G.runner.stats.mental+2*eff)));
-    G.bodyLoad=bodyLoadAfterTraining(G.trainingBlock.id);
-  } else if(G.trainingBlock.crossBlock){
-    // Entrenamiento cruzado: efectos normales pero carga mínima; acelera recuperación de lesión
-    const crossMult=G.injuryType?1.3:1.0;
-    Object.entries(G.trainingBlock.effects).forEach(([k,v])=>{
-      const capM=statCapMult(G.runner.stats[k]);
-      G.runner.stats[k]=Math.max(10,Math.min(100,Math.round(G.runner.stats[k]+v*eff*crossMult*capM*legsTrainingMult(k))));
-    });
-    G.bodyLoad=bodyLoadAfterTraining(G.trainingBlock.id);
-    if(G.injuryType&&G.injuryRacesLeft>0){G.injuryRacesLeft=Math.max(0,G.injuryRacesLeft-1);}
-  } else {
-    Object.entries(G.trainingBlock.effects).forEach(([k,v])=>{
-      const capM=statCapMult(G.runner.stats[k]);
-      G.runner.stats[k]=Math.max(10,Math.min(100,Math.round(G.runner.stats[k]+v*eff*capM*legsTrainingMult(k))));
-    });
-    G.bodyLoad=bodyLoadAfterTraining(G.trainingBlock.id);
-  }
+// el índice de carrera fuera de rango reaplicaba el bloque entero.
+// Entreno trimestral (2026-11-01): al cerrar la temporada suma los trimestres que
+// queden (siempre el Q4; los demás los suma initRace() al cambiar de trimestre).
+// Cada trimestre se marca en G.trainingApplied, así que llamarla otra vez no hace nada.
+function applyTraining(){
+  if(!QUARTERS.some(q=>trainingBlockOf(q.n)))return;
+  if(QUARTERS.every(q=>G.trainingApplied?.[q.n]))return;
+  QUARTERS.forEach(q=>applyQuarterBlock(q.n));
   G.trainingEff=1.0;
   generateMonthlyEvents();
 }

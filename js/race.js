@@ -197,9 +197,11 @@ function racePreviewCard(race, mode, raceProgress){
     ${profLeyenda(true)}
   </div>`;
 }
-function effForWork(){
-  const wo=curWorkOpt();
-  const vacBonus=vacTrainingHBonus(G.currentQuarter||1);
+// quarter: el trimestre de un bloque de entreno (cada uno con su jornada y vacaciones).
+function effForWork(quarter){
+  const q=quarter||G.currentQuarter||1;
+  const wo=curWorkOpt(q);
+  const vacBonus=vacTrainingHBonus(q);
   const brandH=brandHoursPerWeek(); // 6h/sem si marca activa sin empleado
   const promotionPenalty=G.trainingHPenalty||0; // 2h/sem por ascenso laboral aceptado
   const h=Math.max(0,(wo?.trainingH||5)+vacBonus-brandH-promotionPenalty);
@@ -286,6 +288,10 @@ function initRace(){
   const race=G.selectedRaces[G.currentRaceIdx];
   if(!race||G._raceInitialized)return;
   G._raceInitialized=true;
+  // Entreno trimestral: los bloques de los trimestres ya acabados se suman antes de
+  // salir, y la previa enseña lo que han dado (G.trainingNews).
+  G.trainingNews=[];
+  applyTrainingUpTo(race.quarter||1);
 
   const fw=window.devTake?.('weather');   // DEV: clima armado desde el panel
   G.weather=fw||(Math.random()<race.weather_risk?'extremo':Math.random()>0.5?'soleado':'nublado');
@@ -386,8 +392,8 @@ function initRace(){
   const dayHydMod=G.dayCondition?.hydMod||0;
 
   // ── Aplicar taper bonus ──────────────────────────────────────────
-  const taperE=G.taperBonus?6:0;
-  const taperL=G.taperBonus?6:0;
+  const taperE=G.taperBonus?TAPER_BONUS.energy:0;
+  const taperL=G.taperBonus?TAPER_BONUS.legs:0;
 
   G.runner.energy=injStart?injStart.energy:Math.min(energyCap,Math.round((100+nutr.energyBonus+dayEnergyMod+taperE)*(G.nextRaceEnergyStart!=null?G.nextRaceEnergyStart/100:1)));
   G.runner.hydration=injStart?injStart.hydration:Math.min(100,(G.nextRaceHydrationStart??100)+dayHydMod);
@@ -436,6 +442,14 @@ window.goPreRace=()=>{
   initRace();
   G.screen='preRace';render();
 };
+// Entreno trimestral: la línea de «Cómo llegas» con lo que dio el bloque de un trimestre.
+function trainingNewsLine(q,L){
+  const lg=G.trainingLog?.[q];
+  if(!lg)return '';
+  const b=TRAINING_BLOCKS.find(x=>x.id===lg.block);
+  const ev=lg.event?TRAINING_EVENTS_POOL.find(e=>e.id===lg.event):null;
+  return L('+',`💪 <b>Tu bloque de Q${q}</b> (${b?.name||lg.block}) — ${trainingDeltasText(lg)}${ev?` · ${ev.icon} ${ev.title}`:''}.`);
+}
 function renderPreRace(){
   const race=G.selectedRaces[G.currentRaceIdx];
   // No debería llegarse aquí sin carrera: los tres caminos normales ya llaman a
@@ -460,7 +474,8 @@ function renderPreRace(){
   const ad=agingDeg(),mm=G.mentalMomentum||0;
   const llegas=[
     G.dayCondition?L('±',`${G.dayCondition.icon} <b>Condición del día</b> — ${G.dayCondition.label}`):'',
-    G.taperBonus?L('+','💤 <b>Has hecho tapering</b> — llegas con más energía y las piernas más frescas (+6 energía, +6 piernas).'):'',
+    ...(G.trainingNews||[]).map(q=>trainingNewsLine(q,L)),
+    G.taperBonus?L('+',`💤 <b>Has hecho tapering</b> — llegas con más energía y las piernas más frescas (+${TAPER_BONUS.energy} energía, +${TAPER_BONUS.legs} piernas).`):'',
     G.weather==='extremo'?L('−','Condiciones extremas — hidratación crítica.'):G.weather==='soleado'&&se.label.includes('☀')?L('−','Calor intenso de verano.'):'',
     G.terrainCondition.id==='barro'?L('−','Terreno con barro — bajadas más lentas y mayor riesgo de caída.'):'',
     G.terrainCondition.id==='nieve'?L('−','Nieve en ruta — ritmo muy reducido en todas las subidas y bajadas.'):'',

@@ -358,7 +358,7 @@ window.devSimulateClasicoSeasons=(n)=>{
         finishRace();
         G.currentRaceIdx++;
       }
-      applyTraining(true); // T25 (v89): el simulador de temporadas sí quiere reaplicar
+      applyTraining(); // entreno trimestral: Q1-Q3 ya los sumó initRace(); aquí entran los que queden
       doNextYear(seasonYearNet());   // H19 (v95): con 0 la economía no se movía nunca
       if(G.careerEnded)break;
     }
@@ -696,7 +696,7 @@ const DEV_EVENT_GROUPS=[
     launch:id=>{const ev=BETWEEN_EVENTS.find(e=>e.id===id);G.pendingEvent={...ev};G.screen='betweenRace';}},
   {id:'training',label:'Clásico · entreno',mode:'clasico',when:'carrera',armKey:'trainingEvent',
     items:()=>TRAINING_EVENTS_POOL.map(e=>({id:e.id,title:(e.icon?e.icon+' ':'')+e.title})),
-    canLaunch:()=>devIsClassic()&&G.screen==='training'&&G.trainingBlock&&!G.trainingBlockApplied?null:'Necesita estar en Entreno con un bloque elegido y aún sin aplicar (se aplica al empezar la primera carrera)',
+    canLaunch:()=>devIsClassic()&&G.screen==='training'&&trainingPlanComplete()&&trainingNextQuarter()?null:'Necesita estar en Entreno con el plan elegido y algún trimestre sin sumar (sale en el próximo bloque que se sume)',
     canArm:()=>devIsClassic()?null:'Necesita una partida de Clásico',
     launch:id=>{G.trainingEvent=TRAINING_EVENTS_POOL.find(e=>e.id===id);}},
   {id:'monthly',label:'Clásico · mensual',mode:'clasico',when:'ya',

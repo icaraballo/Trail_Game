@@ -21,9 +21,14 @@ function freshState(){
     // pone a cero. Se persisten a propósito —son estado de la carrera en curso,
     // como G.seg o G.time— pero nunca tocan el stat base.
     raceModifiers:{mental:0,velocidad:0,subida:0},
-    trainingBlockApplied:false,  // T25 (v89): el bloque de esta temporada ya se aplicó
+    // Entreno trimestral (2026-11-01): un bloque por trimestre, elegidos en la pretemporada.
+    trainingPlan:{1:null,2:null,3:null,4:null},       // id de TRAINING_BLOCKS por trimestre
+    trainingApplied:{1:false,2:false,3:false,4:false}, // trimestres ya sumados esta temporada
+    trainingCarry:{},            // décimas de stat que quedan por sumar (un trimestre da ~¼ de punto en algunos stats)
+    trainingLog:{},              // lo que dio cada trimestre esta temporada: {q:{block,event,deltas:{k:[antes,después]}}}
+    trainingNews:[],             // trimestres sumados al empezar esta carrera (la previa los enseña)
     selectedRaces:[],sponsors:{zapatillas:null,ropa:null,nutricion:null,tecnologia:null},
-    club:CLUBS[0],clubReputation:0,clubCompanion:null,trainingBlock:null,trainingEff:1.0,
+    club:CLUBS[0],clubReputation:0,clubCompanion:null,trainingEff:1.0,
     spending:{fisio:false,entrenador:false,suplementos:false},
     currentRaceIdx:0,raceResults:[],careerHistory:[],
     time:0,seg:0,raceEvent:'',
@@ -183,7 +188,6 @@ function freshState(){
     // ── Sponsors provisionales ───────────
     _pendingSponsors:{},         // selecciones provisionales antes de confirmar
     // ── Reputación / Horas ───────────────
-    trainingBlockHours:8,        // h/sem que consume el bloque elegido
     repInvitations:[],           // invitaciones a carreras por seguidores esta temporada
     _thresholdsSeen:[],          // thresholds cruzados (para no repetir toasts)
     _workTipSeen:false,          // ya se mostró el tip de trabajo año 1 Q1
@@ -321,9 +325,9 @@ function dnfLabel(r){
   return 'No clasificado';
 }
 
-function currentWorkPct(){
+function currentWorkPct(quarter){
   if(G.forcedFullTime)return 100;
-  const q=G.currentQuarter||1;
+  const q=quarter||G.currentQuarter||1;
   const byQ=G.workByQuarter?.[q];
   if(Number.isFinite(byQ))return byQ;
   return Number.isFinite(G.workPct)?G.workPct:100;
@@ -344,8 +348,9 @@ function monthlyWorkIncome(){
   // era la escala por dificultad que queremos, metida en el sitio equivocado.
   return Math.round((base+(G.workBonus||0))*(modeCfg().workIncomeMult||1));
 }
-function curWorkOpt(){
-  return WORK_OPTIONS.find(o=>o.pct===currentWorkPct())||WORK_OPTIONS[0];
+// quarter: el de un bloque de entreno concreto; sin él, el trimestre en curso.
+function curWorkOpt(quarter){
+  return WORK_OPTIONS.find(o=>o.pct===currentWorkPct(quarter))||WORK_OPTIONS[0];
 }
 function followersSponsorMult(){
   const f=G.followers||0;
@@ -761,7 +766,7 @@ function checkDebtEscalation(){
 
 function availableFameHours(){
   const wo=curWorkOpt();
-  const blockH=G.trainingBlockHours||8;
+  const blockH=trainingHoursOf(G.currentQuarter||1);
   const totalH=(wo?.trainingH||5)+vacTrainingHBonus(G.currentQuarter||1);
   const repH=Math.max(0,totalH-blockH);
   return Math.max(0,repH-(G.fameHoursUsed||0));
@@ -967,12 +972,99 @@ function bodyLoadHint(){
   return null;
 }
 
+// Las cifras son las de un año entero de bloque; un trimestre suma su parte
+// (TRAINING_QUARTER_SCALE), también la rebaja del fisio.
 function bodyLoadAfterTraining(blockId){
   const deltas={volumen:18,velocidad:12,tecnico:10,recuperacion:-12,taper:-18,cruzado:4};
   const base=deltas[blockId]||0;
   // Con edad, la recuperación activa es menos efectiva
-  const aged=base<0?Math.round(base*(1-agingDeg()*0.5)):base;
-  return Math.max(0,Math.min(100,(G.bodyLoad||0)+aged-(hasFisio()?5:0)));
+  const aged=base<0?base*(1-agingDeg()*0.5):base;
+  return Math.max(0,Math.min(100,Math.round((G.bodyLoad||0)+(aged-(hasFisio()?5:0))*TRAINING_QUARTER_SCALE)));
+}
+
+// ── Entreno trimestral (2026-11-01, TG-Diseno-Entreno-Trimestral § 6) ──
+// Un bloque por trimestre en G.trainingPlan, elegidos en la pretemporada. Cada uno se
+// suma al acabar su trimestre: initRace() aplica los de los trimestres anteriores al
+// de la carrera y applyTraining(), al cerrar la temporada, los que queden.
+function trainingBlockOf(q){return TRAINING_BLOCKS.find(b=>b.id===G.trainingPlan?.[q])||null;}
+function trainingPlanComplete(){return QUARTERS.every(q=>trainingBlockOf(q.n));}
+function trainingHoursOf(q){return trainingBlockOf(q)?.hours||8;}
+// Un trimestre ya sumado, o el de la carrera en curso, no se cambia.
+function trainingQuarterLocked(q){
+  if(G.trainingApplied?.[q])return true;
+  if(!(G.raceResults.length>0||G.currentRaceIdx>0))return false;
+  const cur=G.selectedRaces[G.currentRaceIdx]?.quarter||5;
+  return q<=cur;
+}
+// El primer trimestre sin sumar es el que se lleva el ×0,5 de haber llegado a cero.
+function trainingNextQuarter(){return QUARTERS.find(q=>!G.trainingApplied?.[q.n])?.n||null;}
+function trainingQuarterEff(q){
+  const se=getSeasonEffects(TRAINING_QUARTER_MONTH[q]);
+  const zero=G.zeroedOutThisRace&&q===trainingNextQuarter()?0.5:1;
+  return effForWork(q)*(1+se.trainingMod)*(modeCfg().trainingMult||1.0)*(1-agingDeg()*0.6)*zero;
+}
+// Lo que sumará cada stat un bloque en el trimestre q, sin el evento aleatorio (no se
+// puede saber). Con decimales: un trimestre da poco y el resto se guarda en trainingCarry.
+function trainingBlockGains(b,q){
+  const eff=trainingQuarterEff(q)*(b.crossBlock&&G.injuryType?1.3:1);
+  const fx=b.taperBlock?{mental:2}:b.effects;
+  const out={};
+  Object.entries(fx).forEach(([k,v])=>{
+    if(!v)return;
+    const capLegs=b.taperBlock?1:statCapMult(G.runner.stats[k])*legsTrainingMult(k);
+    out[k]=v*TRAINING_QUARTER_SCALE*eff*capLegs;
+  });
+  return out;
+}
+// Trimestres seguidos con el bloque id si se elige para q (contando q y lo ya entrenado).
+function trainingStreak(q,id){
+  const m=G.trainingMomentum;
+  let n=1;
+  for(let i=q-1;i>=1;i--){
+    if(G.trainingApplied?.[i])return n+(m&&m.blockId===id?m.count:0);
+    if(G.trainingPlan?.[i]!==id)return n;
+    n++;
+  }
+  return n+(m&&m.blockId===id?m.count:0);
+}
+function applyQuarterBlock(q){
+  if(!G.trainingApplied)G.trainingApplied={1:false,2:false,3:false,4:false};
+  if(G.trainingApplied[q])return;
+  const b=trainingBlockOf(q);
+  if(!b){G.trainingApplied[q]=true;return;}
+  const m=G.trainingMomentum;
+  G.trainingMomentum=m&&m.blockId===b.id?{blockId:b.id,count:m.count+1}:{blockId:b.id,count:1};
+  const gains=trainingBlockGains(b,q);   // antes de marcarlo: lleva el ×0,5 si toca
+  G.trainingApplied[q]=true;
+  G.zeroedOutThisRace=false;
+  const tev=G.trainingEvent||getTrainingEvent(b.id);
+  G.trainingEvent=null;
+  const before={...G.runner.stats};
+  if(tev){
+    if(tev.statBonus)Object.entries(tev.statBonus).forEach(([k,v])=>{G.runner.stats[k]=Math.max(10,Math.min(100,(G.runner.stats[k]||50)+v));});
+    if(tev.loadMod)G.bodyLoad=Math.max(0,Math.min(100,(G.bodyLoad||0)+tev.loadMod));
+  }
+  if(!G.trainingCarry)G.trainingCarry={};
+  Object.entries(gains).forEach(([k,v])=>{
+    const raw=v*(tev?.effMult||1)+(G.trainingCarry[k]||0);
+    const n=Math.round(raw);
+    G.trainingCarry[k]=raw-n;
+    G.runner.stats[k]=Math.max(10,Math.min(100,G.runner.stats[k]+n));
+  });
+  G.bodyLoad=bodyLoadAfterTraining(b.id);
+  if(b.crossBlock&&G.injuryType&&G.injuryRacesLeft>0)G.injuryRacesLeft=Math.max(0,G.injuryRacesLeft-1);
+  if(b.taperBlock)G.taperBonus=true;
+  const deltas={};
+  Object.keys(G.runner.stats).forEach(k=>{if(G.runner.stats[k]!==before[k])deltas[k]=[before[k],G.runner.stats[k]];});
+  if(!G.trainingLog)G.trainingLog={};
+  G.trainingLog[q]={block:b.id,event:tev?.id||null,deltas};
+  (G.trainingNews=G.trainingNews||[]).push(q);
+}
+function applyTrainingUpTo(q){for(let i=1;i<q;i++)applyQuarterBlock(i);}
+// «Tu bloque de Q1 (Volumen alto): Resistencia 55 → 57 · …», para la previa y el balance.
+function trainingDeltasText(log){
+  const d=Object.entries(log?.deltas||{}).map(([k,[a,b]])=>`${k.charAt(0).toUpperCase()+k.slice(1)} ${a} → ${b}`);
+  return d.length?d.join(' · '):'sin cambios en los stats';
 }
 
 // DS01 (v95): lo que suma una carrera a la carga corporal, sin mirar de quién es.
@@ -1007,12 +1099,13 @@ function getSeasonEffects(month){
 function getTrainingEvent(blockId){
   const ft=window.devTake?.('trainingEvent');   // DEV: evento armado desde el panel
   if(ft)return TRAINING_EVENTS_POOL.find(e=>e.id===ft)||null;
-  // Solo se activa ~1 de cada 4 trimestres
-  if(Math.random()>0.28) return null;
-  // Momentum: si llevas 2+ trimestres con el mismo bloque, subir prob de revelation/plateau
+  // ~1 por temporada: se tira el dado en cada trimestre aplicado
+  if(Math.random()>TRAINING_EVENT_PROB) return null;
+  // Momentum: con TRAINING_MOMENTUM_STREAK trimestres seguidos del mismo bloque (contando
+  // este, y cruzando temporadas), sube la probabilidad de revelación o estancamiento
   const momentum=G.trainingMomentum;
   let pool=[...TRAINING_EVENTS_POOL];
-  if(momentum&&momentum.blockId===blockId&&momentum.count>=2){
+  if(momentum&&momentum.blockId===blockId&&momentum.count>=TRAINING_MOMENTUM_STREAK){
     pool=pool.map(e=>({...e,prob:e.id==='revelation'?e.prob*2.2:e.id==='plateau'?e.prob*2.0:e.prob}));
   }
   const total=pool.reduce((a,e)=>a+e.prob,0);

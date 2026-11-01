@@ -15,7 +15,7 @@
 // en _bundle.js, compartido con content.js.
 const {build,scorer,domStub}=require('./_bundle');
 const {T,ctx,src}=build(['freshState','modeCfg','currentWorkPct','setWorkPct','getEffStat',
-  'applyTraining','checkSponsorObjective','isDNF','finishedResults','dnfLabel','migrateState',
+  'applyTraining','applyTrainingUpTo','trainingPlanComplete','trainingQuarterLocked','trainingStreak','trainingBlockGains','checkSponsorObjective','isDNF','finishedResults','dnfLabel','migrateState',
   'TRAINING_BLOCKS','monthlyWorkIncome','curWorkOpt','endRaceCleanup',
   'resetRaceFlags','resetRaceDayState','drain','bumpStat','raceHistoryFor',
   'runnerCritState','screenRoutes','profBounds','serializableState',
@@ -117,8 +117,8 @@ T.endRaceCleanup();
 t('endRaceCleanup vacía los modificadores', T.getG().raceModifiers.mental===0);
 t('y no ha tocado el stat base', T.getG().runner.stats.mental===20);
 
-console.log('\n── T25 · applyTraining es idempotente ──');
-setG({trainingBlock:T.TRAINING_BLOCKS[0],trainingBlockApplied:false,selectedRaces:[]});
+console.log('\n── T25 · applyTraining es idempotente (entreno trimestral) ──');
+setG({trainingPlan:{1:'volumen',2:'volumen',3:'volumen',4:'volumen'},selectedRaces:[]});
 const antes=JSON.stringify(T.getG().runner.stats);
 T.applyTraining();
 const trasUna=JSON.stringify(T.getG().runner.stats);
@@ -126,9 +126,38 @@ T.applyTraining(); T.applyTraining(); T.applyTraining();
 const trasCuatro=JSON.stringify(T.getG().runner.stats);
 t('la primera llamada sube stats', antes!==trasUna, antes+' → '+trasUna);
 t('las tres siguientes no hacen NADA', trasUna===trasCuatro, trasUna+' vs '+trasCuatro);
-t('queda marcado como aplicado', T.getG().trainingBlockApplied===true);
-T.applyTraining(true);
-t('force:true sí reaplica (modo desarrollador)', JSON.stringify(T.getG().runner.stats)!==trasCuatro);
+t('los cuatro trimestres quedan sumados', [1,2,3,4].every(q=>T.getG().trainingApplied[q]===true));
+t('y cada uno deja su línea para el balance', [1,2,3,4].every(q=>T.getG().trainingLog[q]?.block==='volumen'));
+
+console.log('\n── Entreno trimestral (2026-11-01) ──');
+{
+  const rnd=Math.random; Math.random=()=>0.99;   // sin evento de entreno: las cifras son fijas
+  const plan={1:'volumen',2:'tecnico',3:'taper',4:'recuperacion'};
+  const g=setG({trainingPlan:{...plan},selectedRaces:[{quarter:1},{quarter:3}],currentRaceIdx:1,raceResults:[{}],bodyLoad:30});
+  t('sin plan completo no se empieza', (()=>{const h=setG({});return T.trainingPlanComplete()===false;})());
+  T.setG(g);
+  t('con el plan completo, sí', T.trainingPlanComplete()===true);
+  const b0=g.runner.stats.bajada;
+  T.applyTrainingUpTo(3);
+  t('una carrera de Q3 suma Q1 y Q2, no Q3', g.trainingApplied[1]&&g.trainingApplied[2]&&!g.trainingApplied[3]);
+  t('el técnico de Q2 sube la bajada', g.runner.stats.bajada>b0, b0+' → '+g.runner.stats.bajada);
+  t('la previa sabe qué trimestres enseñar', JSON.stringify(g.trainingNews)==='[1,2]', JSON.stringify(g.trainingNews));
+  t('Q3, el de la carrera en curso, ya no se cambia', T.trainingQuarterLocked(3)&&!T.trainingQuarterLocked(4));
+  t('la carga de un trimestre es la cuarta parte de la del año', g.bodyLoad===38, g.bodyLoad);   // 30 +18/4 +10/4
+  T.applyTraining();
+  t('la descarga de Q3 deja el bonus para la carrera siguiente', g.taperBonus===true);
+  // racha: tres trimestres seguidos con el mismo bloque, cruzando la temporada
+  const h=setG({trainingPlan:{1:'volumen',2:'volumen',3:null,4:null},trainingMomentum:{blockId:'volumen',count:1}});
+  t('Q4 → Q1 → Q2 con el mismo bloque es el 3.º seguido', T.trainingStreak(2,'volumen')===3, T.trainingStreak(2,'volumen'));
+  t('cambiar de bloque corta la racha', T.trainingStreak(2,'tecnico')===1);
+  // las décimas no se pierden: cuatro trimestres de recuperación suman lo de un año
+  const r=setG({trainingPlan:{1:'recuperacion',2:'recuperacion',3:'recuperacion',4:'recuperacion'}});
+  const m0=r.runner.stats.mental;
+  const eff=[1,2,3,4].reduce((a,q)=>a+T.trainingBlockGains(T.TRAINING_BLOCKS.find(x=>x.id==='recuperacion'),q).mental,0);
+  T.applyTraining();
+  t('las décimas de cada trimestre se acumulan', Math.abs((r.runner.stats.mental-m0)-eff)<=1, (r.runner.stats.mental-m0)+' vs '+eff.toFixed(2));
+  Math.random=rnd;
+}
 
 console.log('\n── T74 (v90) · un solo reset de carrera ──');
 // Eran cuatro copias de las mismas líneas. Son DOS resets distintos a propósito:

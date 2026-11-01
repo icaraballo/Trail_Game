@@ -25,7 +25,7 @@ function renderSeasonBalance(){
   const yearNet=seasonYearNet();   // H19 (v95): la misma cuenta que usa el modo dev
   // Paso 6 de la dirección visual (2026-10-30): tipo Resumen, referencia «Finanzas» (§ 1): la
   // tarjeta principal con el resultado del año y su diagnóstico con punto, filas y total.
-  // Pendiente del inventario: «Resistencia 55 → 59» del bloque (el valor de antes no se guarda).
+  // Entreno trimestral (2026-11-01): «Q1 Volumen alto · Resistencia 55 → 57» por trimestre.
   const pen=Object.values(G.workChangePenalties||{}).reduce((a,v)=>a+(v?.amount||v||0),0);
   const F=(txt,v)=>`<div class="pz-fila"><span class="pz-fila-txt">${txt}</span><span class="pz-fila-dato ${v>=0?'pz-mas':'pz-menos'}">${fmtEur(v,true)}</span></div>`;
   el.innerHTML=`<div class="pz">
@@ -71,6 +71,10 @@ function renderSeasonBalance(){
       ${pen>0?F('Penalización cambios de jornada',-pen):''}
       <div class="pz-fila" style="font-weight:600"><span class="pz-fila-txt">Resultado del año</span><span class="pz-fila-dato ${yearNet>=0?'pz-mas':'pz-menos'}" style="font-size:18px">${fmtEur(yearNet,true)}</span></div>
     </div>
+
+    ${Object.keys(G.trainingLog||{}).length?`<div class="pz-label" style="margin:14px 0 6px">Entreno del año</div>
+    <div class="pz-tarjeta" style="padding:2px 14px">${QUARTERS.filter(q=>G.trainingLog[q.n]).map(q=>{const lg=G.trainingLog[q.n];const ev=lg.event?TRAINING_EVENTS_POOL.find(e=>e.id===lg.event):null;
+      return `<div class="pz-fila" style="align-items:flex-start"><span class="pz-num" style="width:30px">${q.label}</span><span class="pz-fila-txt">${TRAINING_BLOCKS.find(b=>b.id===lg.block)?.name||lg.block}<div class="pz-efectos">${trainingDeltasText(lg)}${ev?' · '+ev.icon+' '+ev.title:''}</div></span></div>`;}).join('')}</div>`:''}
 
     <div class="pz-tarjeta"><div class="pz-label" style="margin-bottom:8px">Stats tras el entrenamiento</div>
       ${Object.entries(G.runner.stats).map(([k,v])=>srow(k.charAt(0).toUpperCase()+k.slice(1),v)).join('')}</div>
@@ -321,7 +325,9 @@ window.doNextYear=yearNet=>{
   }
   // Traspasar clasificación Harrigorri
   G.zegamaQual=G.zegamaQualNext;G.zegamaQualNext=false;
-  G.selectedRaces=[];G.trainingBlock=null;G.trainingBlockApplied=false;G.raceResults=[];G.currentRaceIdx=0;G.trainingEff=1.0; // T25 (v89)
+  // Entreno trimestral: el plan del año pasado se queda como propuesta; el momentum y una
+  // descarga de Q4 aún sin usar pasan a la temporada nueva.
+  G.selectedRaces=[];G.trainingApplied={1:false,2:false,3:false,4:false};G.trainingLog={};G.trainingNews=[];G.raceResults=[];G.currentRaceIdx=0;G.trainingEff=1.0; // T25 (v89)
   G.activeTab='game';G.lastRaceGains=[];
   G.workByQuarter={1:G.workPct,2:G.workPct,3:G.workPct,4:G.workPct};
   G.currentQuarter=1;G.fameActionsThisSeason={};G.fameHoursUsed=0;
@@ -337,7 +343,6 @@ window.doNextYear=yearNet=>{
   G.injuryRacesLeft=0;G.injuryType=null;G.injuryStatus=null;
   recoverInjurySequel(INJURY_SEQUEL_RECOVERY.preseason);
   G.fatBurning=false;
-  G.trainingMomentum=null;G.taperBonus=false;
   G.dayConditionGenerated=false;G.dayCondition=null;
   G.gelsCarried=0;G.gelsUsed=0;G.warmedUp=false;G.startStrategy=null;
   // Arco narrativo — actualizar atleta y resetear horas
@@ -1179,6 +1184,7 @@ window.postRaceContinue=()=>{
 //  MODO ENTRENADOR — RENDER & LOGIC
 // ══════════════════════════════════════
 window.afterRace=()=>{
+  G.taperBonus=false;   // la descarga vale para una sola carrera
   // v96 · secuela: cada carrera que pasa (corrida, abandonada o de baja) devuelve un 15 %
   // de lo pendiente, salvo si llegas con la carga corporal en aviso 2.
   if(getBodyLoad()<getLoadThresholdsByMode().warningLevel2)recoverInjurySequel(INJURY_SEQUEL_RECOVERY.perRace);
