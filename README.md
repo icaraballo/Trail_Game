@@ -32,7 +32,9 @@ Trail Game **no tiene servidor, ni cuentas, ni analítica, ni cookies**.
   Si borras los datos del sitio, se borran.
 - «Exportar partida» crea un texto que **solo sale de tu móvil si tú lo compartes**.
 - Si mandas una opinión con «Opinar», **va a un formulario de Google** con la versión del
-  juego, el modo y el momento de la partida. Tu nombre y tu contacto, solo si los escribes.
+  juego, el modo y el momento de la partida. Tu nombre y tu contacto, solo si los escribes. Lo recibe
+  Google LLC y se guarda mientras sirva para mejorar el juego o hasta que pidas borrarlo (desde «Opinar»
+  o en inigo.caraballo.apps@gmail.com).
 - GitHub, que aloja la página, y Google, si opinas, **ven tu dirección IP**, como cualquier web.
 
 Lo mismo se lee dentro del juego: «Privacidad», junto a la versión, en la pantalla de partidas,

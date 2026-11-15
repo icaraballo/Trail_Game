@@ -916,7 +916,7 @@ const PRIVACY_PARAGRAPHS=[
   'Trail Game no tiene servidor, ni cuentas, ni analítica, ni cookies.',
   'Tus partidas (5 ranuras) y tus logros se guardan solo en este navegador; si borras los datos del sitio, se borran.',
   '«Exportar partida» crea un texto que solo sale de tu móvil si tú lo compartes.',
-  'Si mandas una opinión, va a un formulario de Google con la versión del juego, el modo y el momento de la partida. Tu nombre y tu contacto, solo si los escribes.',
+  'Si mandas una opinión, va a un formulario de Google (Google LLC) con la versión del juego, el modo y el momento de la partida. Tu nombre y tu contacto, solo si los escribes. Se guarda mientras sirva para mejorar el juego o hasta que pidas borrarla (desde «Opinar» o en inigo.caraballo.apps@gmail.com).',
   'GitHub, que aloja la página, y Google, si opinas, ven tu dirección IP, como cualquier web.',
 ];
 const PRIVACY_KEY_PHRASES=[
